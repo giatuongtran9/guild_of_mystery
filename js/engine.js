@@ -217,7 +217,7 @@ function groupEventsToRows(events, battleSnapshot) {
 
     if (ev.type === 'status') {
       if (activeTurn) {
-        activeTurn.subrows.push({ type: 'status', text: ev.text });
+        activeTurn.subrows.push({ type: 'status', text: ev.text, subtype: ev.subtype, stat: ev.stat, curVal: ev.curVal, maxVal: ev.maxVal, isFreeze: ev.isFreeze });
       } else {
         r.rows.push({
           id: `status_${ev.round}_${i}`,
@@ -478,6 +478,35 @@ function hasThreadCC(agentUnit) {
 
 function threadUsage(state,agent){return (agent.threadTargets||[]).length+((state&&state.battleMarionettes)||[]).filter(m=>m.ownerId===agent.id&&m.unit.alive).length;}
 function threadCooldownFor(agent){const sp=unlockedAbilities(agent).find(x=>x.effectId==='thread_binding'||x.id==='thread_binding');const cd=Number(sp?.cooldown??5);return cd>0?cd+1:0;}
+
+function checkThreadInterruptOnTarget(target, state, lines=[]) {
+  if (!target || !target.thread) return false;
+  const ownerId = target.thread.ownerId;
+  const allUnits = [...(state?.allies || []), ...(state?.enemies || [])];
+  const ownerUnit = allUnits.find(u => (u.agent?.id || u.id) === ownerId);
+  const ownerAgent = ownerUnit?.agent || ownerUnit;
+  if (ownerAgent) {
+    releaseThread(ownerAgent, target);
+    const msg = `The thread on ${target.name} is interrupted and its progress resets.`;
+    if (lines) lines.push({ text: msg, kind: 'status' });
+    emitCombatEvent(state, {
+      round: state?.currentRound || 1,
+      type: 'thread',
+      subtype: 'interrupt',
+      actorId: ownerAgent.id,
+      actorName: ownerAgent.name,
+      actorTeam: teamOf(ownerAgent, state),
+      targetId: target.id,
+      targetName: target.name,
+      targetTeam: teamOf(target, state),
+      text: msg
+    });
+    if (ownerAgent._threadAttempts > 0) ownerAgent._threadAttempts--;
+    return true;
+  }
+  return false;
+}
+
 function releaseThread(agent,enemy){
   agent.cooldowns=agent.cooldowns||{};agent.cooldowns.thread_binding=threadCooldownFor(agent); // CD counts from the moment the thread resolves
   agent.threadTargets=(agent.threadTargets||[]).filter(id=>id!==enemy.id);
@@ -543,17 +572,33 @@ function joinMarionette(state,owner,target,lines=[]){if(!lines)lines=[];
   lines.push({text:`${name} rises under ${owner.name||'its owner'}'s control (55% stats) and joins the fight.`,kind:'quirk'});
   emitCombatEvent(state,{round:state?.currentRound||1,type:'system',text:`${name} joins ${owner.name||'the owner'}'s side as a Marionette.`});
 }
-function processSpiritThreads(state,lines=[]){if(!lines)lines=[];const allUnits=[...state.allies,...state.enemies];for(const ally of allUnits.filter(x=>x.alive&&isThreadBeyonder(x.agent||x))){const agent=ally.agent||ally;const targets=state.allies.includes(ally)?state.enemies:state.allies;for(const enemy of targets.filter(x=>x.thread?.ownerId===agent.id)){const t=enemy.thread;if(!enemy.alive){releaseThread(agent,enemy);lines.push({text:`The thread ends because ${enemy.name} is dead; the slot is freed.`,kind:"system"});continue;}if(!ally.alive||hasThreadCC(ally)){releaseThread(agent,enemy);lines.push({text:`The thread on ${enemy.name} is interrupted and its progress resets.`,kind:"status"});if(agent._threadAttempts>0)agent._threadAttempts--;continue;}t.progress++;
+function processSpiritThreads(state,lines=[]){if(!lines)lines=[];const allUnits=[...state.allies,...state.enemies];for(const ally of allUnits.filter(x=>x.alive&&isThreadBeyonder(x.agent||x))){const agent=ally.agent||ally;const targets=state.allies.includes(ally)?state.enemies:state.allies;for(const enemy of targets.filter(x=>x.thread?.ownerId===agent.id)){const t=enemy.thread;if(!enemy.alive){releaseThread(agent,enemy);lines.push({text:`The thread ends because ${enemy.name} is dead; the slot is freed.`,kind:"system"});continue;}if(!ally.alive||hasThreadCC(ally)||hasStatus(enemy,'untargetable')||hasStatus(enemy,'banished')){
+        releaseThread(agent,enemy);
+        const interruptMsg = `The thread on ${enemy.name} is interrupted and its progress resets.`;
+        lines.push({text:interruptMsg,kind:"status"});
+        emitCombatEvent(state,{round:state?.currentRound||1,type:'thread',subtype:'interrupt',actorId:agent.id,actorName:agent.name,actorTeam:teamOf(agent,state),targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),text:interruptMsg});
+        if(agent._threadAttempts>0)agent._threadAttempts--;
+        continue;
+      }
+      t.progress++;
+      let debuffMsg = '';
       if(t.progress===1){
         enemy._threadSpeedDebuff=0.15;
+        debuffMsg = `${enemy.name} suffers -15% Speed from tightening Spirit Threads.`;
       }else if(t.progress===2){
         enemy._threadDodgeDebuff=-0.10;
         enemy._threadHitDebuff=0.10;
+        debuffMsg = `${enemy.name} suffers -10% Dodge and +10% Miss chance from tightening Spirit Threads.`;
       }else if(t.progress===3){
         enemy._threadSpeedDebuff=0.35;
         enemy._threadLockDodge=true;
+        debuffMsg = `${enemy.name} suffers -35% Speed and cannot dodge from tightening Spirit Threads.`;
       }else if(t.progress===4){
-        // Stage 4: 30% chance to be bound each turn
+        debuffMsg = `${enemy.name} is on the verge of total control (30% chance to be bound each turn).`;
+      }
+      if(debuffMsg){
+        lines.push({text:debuffMsg,kind:'status'});
+        emitCombatEvent(state,{round:state?.currentRound||1,type:'thread',subtype:'debuff',actorId:agent.id,actorName:agent.name,actorTeam:teamOf(agent,state),targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),text:debuffMsg});
       }
       if(t.progress>=t.required){
         enemy.hp=0;enemy.alive=false;releaseThread(agent,enemy);changeMeter(agent,"fool",18);
@@ -823,7 +868,13 @@ function abilityReady(agent,spec){ensureCombatResource(agent);const cost=Math.ro
 function abilityAvailable(agent,effectId){return unlockedAbilities(agent).some(x=>x.effectId===effectId||x.id===effectId);}
 function chooseStructuredAbility(agent,actor,enemy,state){
  if(hasStatus(actor,'silenced')||hasStatus(agent,'silenced'))return null;
- const hpRatio=actor.hp/Math.max(1,actor.maxHp); let specs=activeSpecs(agent).filter(x=>x.effectId!=='thread_binding'&&abilityReady(agent,x));  // Thread Binding is resolved in powerEffect via applySpiritThread
+ const hpRatio=actor.hp/Math.max(1,actor.maxHp); let specs=activeSpecs(agent).filter(x=>x.effectId!=='thread_binding'&&abilityReady(agent,x));
+  // Teammate will not cast an ability to banish an enemy currently having a thread attached
+  if (enemy && enemy.thread) {
+    specs = specs.filter(s => !abilityEffects(s).some(e => e.type === 'banish' || (e.type === 'status' && e.status === 'banished')));
+    if (!specs.length) return null;
+  }
+  // Thread Binding is resolved in powerEffect via applySpiritThread
  if(!specs.length)return null;
  // Fool: bank SP for Thread Binding (45 SP) instead of spending it on cheap casts every round.
  if(agent.path==='fool'&&agent.sequence<=5&&abilityAvailable(agent,'thread_binding')&&!(agent.cooldowns?.thread_binding>0)&&threadUsage(state,agent)<threadSlots(agent.sequence)&&(agent.sp||0)<45)return null;
@@ -963,7 +1014,7 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
   else if(e.type==='heal')for(const t of tgs){if(hasStatus(t,'no_heal'))continue;const amount=Math.round(t.maxHp*Number(e.maxHpRatio||0)+(e.scaling==='INT'?agent.stats.int*Number(e.multiplier||0):0));if(amount>0){const beforeHp=t.hp;t.hp=Math.min(t.maxHp,t.hp+amount);const restored=t.hp-beforeHp;lines.push({text:`${t.name} recovers ${restored} HP (${t.hp}/${t.maxHp}).`,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'heal',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),amount:restored,hpAfter:t.hp,maxHp:t.maxHp});}}
   else if(e.type==='buff')for(const t of tgs){const d=fxDuration(e,'buff'),m=1+Number(e.amount||0);if(e.stat==='all'){for(const k of ['atk','def','int'])addFx(t,'buff',k,m,d);}else addFx(t,'buff',e.stat,m,d);emitCombatEvent(state,{round:state?.currentRound||1,type:'status',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`${t.name} gains +${Math.round((m-1)*100)}% ${e.stat.toUpperCase()} for ${d} round(s)`});}
   else if(e.type==='debuff')for(const t of targets){const d=fxDuration(e,'debuff'),m=1-Number(e.amount||0);if(e.stat==='speed')addFx(t,'speed_debuff','speed',m,d);else if(e.stat==='outgoing')addFx(t,'outgoing','outgoing',m,d);else addFx(t,'debuff',e.stat,m,d);emitCombatEvent(state,{round:state?.currentRound||1,type:'status',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`${t.name} suffers -${Math.round((1-m)*100)}% ${e.stat.toUpperCase()} for ${d} round(s)`});}
-  else if(e.type==='status'){const selfSt=SELF_STATUSES.includes(e.status);for(const t of (selfSt?[actor]:targets))if(t.alive){const mental=['sleep','silenced','confused','charmed','stunned','bound','dreambound','controlled','fear','illusion'].includes(e.status);const resist=(mental&&!selfSt)?Number(combatRates(t.agent||t).resistance||0):0;if((e.chance==null||r()<Number(e.chance))&&r()>=resist&&r()>=(selfSt?0:statusResistChance(t,e.status))){if(e.status==='sleep')t._sleepAppliedThisAction=true;if(e.status==='banished'){const skipTurns=(!t._actedThisRound)?2:1;t._skipTurns=skipTurns;addStatus(t,'untargetable',skipTurns,actor.name);addStatus(t,'banished',skipTurns,actor.name);lines.push({text:`${t.name} is banished into a spatial fold for ${skipTurns} turn(s).`,kind:'status'});}else addStatus(t,e.status,Number(e.duration||1),actor.name,e.status==='evade'&&e.dodgeRate!==undefined?{dodgeRate:Number(e.dodgeRate)}:{});emitCombatEvent(state,{round:state?.currentRound||1,type:'status',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`${t.name} is afflicted with ${e.status} (${e.duration||1} round${Number(e.duration||1)===1?'':'s'})`});}}}
+  else if(e.type==='status'){const selfSt=SELF_STATUSES.includes(e.status);for(const t of (selfSt?[actor]:targets))if(t.alive){const mental=['sleep','silenced','confused','charmed','stunned','bound','dreambound','controlled','fear','illusion'].includes(e.status);const resist=(mental&&!selfSt)?Number(combatRates(t.agent||t).resistance||0):0;if((e.chance==null||r()<Number(e.chance))&&r()>=resist&&r()>=(selfSt?0:statusResistChance(t,e.status))){if(e.status==='sleep')t._sleepAppliedThisAction=true;if(e.status==='banished'){const skipTurns=(!t._actedThisRound)?2:1;t._skipTurns=skipTurns;addStatus(t,'untargetable',skipTurns,actor.name);addStatus(t,'banished',skipTurns,actor.name);lines.push({text:`${t.name} is banished into a spatial fold for ${skipTurns} turn(s).`,kind:'status'});checkThreadInterruptOnTarget(t,state,lines);}else { addStatus(t,e.status,Number(e.duration||1),actor.name,e.status==='evade'&&e.dodgeRate!==undefined?{dodgeRate:Number(e.dodgeRate)}:{}); if(e.status==='untargetable')checkThreadInterruptOnTarget(t,state,lines); }emitCombatEvent(state,{round:state?.currentRound||1,type:'status',subtype:e.status==='freeze'?'freeze':undefined,isFreeze:e.status==='freeze',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`${t.name} is afflicted with ${e.status} (${e.duration||1} round${Number(e.duration||1)===1?'':'s'})`});}}}
   else if(e.type==='status_pool'){for(const t of targets)if(t.alive){const pool=e.statuses||[];if(pool.length&&(e.chance==null||r()<Number(e.chance))){const st=pickR(r,pool);addStatus(t,st,Number(e.duration||1),actor.name);}}}
   else if(e.type==='status_chance'){for(const t of targets)if(t.alive){const mental=['sleep','silenced','confused','charmed','stunned','bound','dreambound','controlled','fear','illusion'].includes(e.status);const resist=mental?Number(combatRates(t.agent||t).resistance||0):0;if(r()<Number(e.chance||0)*(1-resist)*(1-statusResistChance(t,e.status)))addStatus(t,e.status,Number(e.duration||1),actor.name);}}
   else if(e.type==='skill_misfire'){const mTargets=foesOf(actor,state).filter(x=>x.alive);for(const t of mTargets){t._skillMisfireChance=Math.max(t._skillMisfireChance||0,Number(e.chance||.3));t._skillMisfireDuration=Math.max(t._skillMisfireDuration||0,Number(e.duration||2));lines.push({text:`${t.name} is afflicted by skill misfire (${Math.round(Number(e.chance||.3)*100)}% chance).`,kind:'status'});}}
@@ -1019,7 +1070,7 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
   else if(e.type==='sp_drain')for(const t of targets)t.sp=Math.max(0,(t.sp||0)-Number(e.amount||0));
   else if(e.type==='sp_cost_increase')for(const t of targets){t._spCostMultiplier=Math.max(t._spCostMultiplier||0,Number(e.amount||0));t._spCostDuration=Number(e.duration||1);}
   else if(e.type==='cooldown_increase')for(const t of targets){t._cooldownPenalty=Math.max(t._cooldownPenalty||0,Number(e.amount||0));t._cooldownDuration=Number(e.duration||1);}
-  else if(e.type==='steal_stat')for(const t of targets){const stat=e.stat,amount=Number(e.amount||0);if(stat==='hp'){const hp=Math.round(t.maxHp*amount);t.hp=Math.max(1,t.hp-hp);actor.hp=Math.min(actor.maxHp,actor.hp+hp);emitCombatEvent(state,{round:state?.currentRound||1,type:'damage',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),amount:hp,damageType:'physical',hpAfter:t.hp,maxHp:t.maxHp});emitCombatEvent(state,{round:state?.currentRound||1,type:'heal',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:actor.id,targetName:actor.name,targetTeam:teamOf(actor,state),amount:hp,hpAfter:actor.hp,maxHp:actor.maxHp});}else if(['atk','def','int'].includes(stat)){const d=fxDuration(e,'steal_stat');addFx(t,'debuff',stat,1-amount,d);addFx(actor,'buff',stat,1+amount,d);emitCombatEvent(state,{round:state?.currentRound||1,type:'status',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`Steals ${Math.round(amount*100)}% ${stat.toUpperCase()} from ${t.name} for ${d} round(s)`});}}
+  else if(e.type==='steal_stat')for(const t of targets){const stat=e.stat,amount=Number(e.amount||0);if(stat==='hp'){const hp=Math.round(t.maxHp*amount);t.hp=Math.max(1,t.hp-hp);actor.hp=Math.min(actor.maxHp,actor.hp+hp);emitCombatEvent(state,{round:state?.currentRound||1,type:'damage',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),amount:hp,damageType:'physical',hpAfter:t.hp,maxHp:t.maxHp});emitCombatEvent(state,{round:state?.currentRound||1,type:'heal',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:actor.id,targetName:actor.name,targetTeam:teamOf(actor,state),amount:hp,hpAfter:actor.hp,maxHp:actor.maxHp});}else if(['atk','def','int'].includes(stat)){const d=fxDuration(e,'steal_stat');addFx(t,'debuff',stat,1-amount,d);addFx(actor,'buff',stat,1+amount,d);const baseStat=(t.agent?.stats?.[stat]||t[stat]||0);const curStat=Math.max(0,Math.round(baseStat*(1-amount)));emitCombatEvent(state,{round:state?.currentRound||1,type:'status',subtype:'steal_stat',stat:stat.toUpperCase(),curVal:curStat,maxVal:baseStat,actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`Steals ${Math.round(amount*100)}% ${stat.toUpperCase()} from ${t.name} for ${d} round(s)`});}}
   else if(e.type==='revive'){if(e.self)agent._revivePending=true;else{const dead=allies.find(x=>!x.alive);if(dead){dead.alive=true;dead.inCombat=true;dead.hp=Math.round(dead.maxHp*Number(e.hpRatio||.25));}}}
   else if(e.type==='transfer_debuffs'){const NEG=['burn','bleed','poison','curse','silenced','confused','sleep','stunned','frozen','freeze','bound','dreambound','controlled','root','no_heal','no_shield'];const team=(state.allies||[]).includes(actor)?state.allies:state.enemies;const moved=[],statuses=new Set();
    for(const al of team){if(!al.alive)continue;const keep=[];for(const f of al._fx||[]){if(f.cat==='debuff'||f.cat==='speed_debuff')moved.push(f);else keep.push(f);}al._fx=keep;recomputeFx(al);for(const st of [...(al.status||[])])if(NEG.includes(st)){statuses.add(st);removeStatus(al,st);}}
