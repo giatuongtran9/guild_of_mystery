@@ -110,6 +110,14 @@ function groupEventsToRows(events, battleSnapshot) {
       continue;
     }
 
+    // Reflect damage is emitted while the attacker's own hit is still resolving, i.e. BEFORE that hit's damage event.
+    // Keep it inside the attack row (it hit the row's actor) instead of closing the row and splitting the attack in three.
+    if (activeTurn && ev.type === 'damage' && ev.isReflect && ev.targetId === activeTurn.actorId) {
+      (activeTurn.reflects = activeTurn.reflects || []).push(ev);
+      activeTurn.subrows.push({ type: 'reflect', text: `${ev.actorName} reflects ${abbrNum(ev.amount)} damage back at ${ev.targetName}.` });
+      continue;
+    }
+
     if (activeTurn && ev.actorId === activeTurn.actorId && ev.type === 'damage') {
       activeTurn.damages.push(ev);
       continue;
@@ -658,10 +666,7 @@ function attackOnce(agent,actor,enemy,state,lines,r,mult=1){
  const rates=combatRates(agent,actor); let critChance=Math.min(.95,rates.crit+(weapon.crit||0)); if(actor._nextCritFail){critChance=0;actor._nextCritFail=0;} let critical=false; if(r()<critChance){critical=true;dmg=Math.round(dmg*(1+rates.critDamage));trace.critical=true;trace.effectContributions.push({type:'critical',multiplier:1+rates.critDamage});}
  trace.final=dmg;
  if(state?.balanceTrace) state.balanceTrace.push(trace);
- const tk=resolveIncoming(actor,enemy,dmg,state,lines,r,{damageType:'physical'});const dealt=tk.hpLoss+tk.absorbed;
- const totalLifeSteal=Math.max(0,pm.lifesteal+Number(traitData(agent).lifesteal||0)); if(totalLifeSteal>0&&dealt>0){const heal=Math.round(dealt*totalLifeSteal);actor.hp=Math.min(actor.maxHp,actor.hp+heal);lines.push({text:`${actor.name} recovers ${heal} HP from Lifesteal.`,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'heal',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:actor.id,targetName:actor.name,targetTeam:teamOf(actor,state),amount:heal,hpAfter:actor.hp,maxHp:actor.maxHp});}
- if(weapon.id!=='none') state.weaponUsage[weapon.id]=(state.weaponUsage[weapon.id]||0)+1;
- const displayedAtk=Math.round(agent.stats.atk+(weapon.atk||0)); lines.push({text:`${actor.name} attacks with ${weapon.name==='Bare Hands'?'bare hands':weapon.name} (ATK ${displayedAtk}); ${enemy.name} suffers ${dmg}${critical?' critical':''} damage.`,kind:'normal'});
+ // Open the attack row BEFORE the hit resolves: reflect / Mythical Form events fired inside resolveIncoming belong to this attack.
  emitCombatEvent(state, {
    round: state?.currentRound || 1,
    type: 'cast',
@@ -672,6 +677,10 @@ function attackOnce(agent,actor,enemy,state,lines,r,mult=1){
    costSP: 0,
    cooldown: 0
  });
+ const tk=resolveIncoming(actor,enemy,dmg,state,lines,r,{damageType:'physical'});const dealt=tk.hpLoss+tk.absorbed;
+ const totalLifeSteal=Math.max(0,pm.lifesteal+Number(traitData(agent).lifesteal||0)); if(totalLifeSteal>0&&dealt>0){const heal=Math.round(dealt*totalLifeSteal);actor.hp=Math.min(actor.maxHp,actor.hp+heal);lines.push({text:`${actor.name} recovers ${heal} HP from Lifesteal.`,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'heal',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:actor.id,targetName:actor.name,targetTeam:teamOf(actor,state),amount:heal,hpAfter:actor.hp,maxHp:actor.maxHp});}
+ if(weapon.id!=='none') state.weaponUsage[weapon.id]=(state.weaponUsage[weapon.id]||0)+1;
+ const displayedAtk=Math.round(agent.stats.atk+(weapon.atk||0)); lines.push({text:`${actor.name} attacks with ${weapon.name==='Bare Hands'?'bare hands':weapon.name} (ATK ${displayedAtk}); ${enemy.name} suffers ${dmg}${critical?' critical':''} damage.`,kind:'normal'});
  emitCombatEvent(state, {
    round: state?.currentRound || 1,
    type: 'damage',
