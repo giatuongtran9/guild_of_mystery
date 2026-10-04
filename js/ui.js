@@ -190,7 +190,7 @@ function renderTurnRowHtml(row, showDetails) {
     : '';
 
   const sublinesHtml = (row.subrows && row.subrows.length)
-    ? `<div class="b-sublines">${row.subrows.map(s => `<span class="b-subline ${s.type==='thread'?'thread':'status'}">${s.type==='thread'?'🧵':'•'} ${esc(s.text)}</span>`).join('')}</div>`
+    ? `<div class="b-sublines">${row.subrows.map(s => `<span class="b-subline ${s.type==='thread'?'thread':'status'}">${s.type==='thread'?'🧵':s.type==='mythical'?'✨':'•'} ${esc(s.text)}</span>`).join('')}</div>`
     : '';
 
   const deathsHtml = (row.deaths && row.deaths.length)
