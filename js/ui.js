@@ -132,8 +132,18 @@ function renderTurnRowHtml(row, showDetails) {
 
   if (row.type === 'thread' || row.type === 'status') {
     const isTh = row.type === 'thread';
+    let extra = '';
+    if (showDetails) {
+      if (row.curVal !== undefined && row.maxVal !== undefined && row.stat) {
+        extra = ` (${row.stat} ${abbrNum(row.curVal)}/${abbrNum(row.maxVal)})`;
+      } else if (row.subtype === 'freeze' || row.isFreeze || (row.text && row.text.includes('afflicted with freeze'))) {
+        if (!row.text.includes('DEF') && !row.text.includes('SPEED')) {
+          extra = ` (- 10% DEF/ 20% SPEED)`;
+        }
+      }
+    }
     return `<div class="b-row ${isTh ? 'b-subline thread' : 'b-subline status'}">
-      <span>${isTh ? '🧵' : '⏳'} ${esc(row.text)}</span>
+      <span>${isTh ? '🧵' : '⏳'} ${esc(row.text)}${extra}</span>
     </div>`;
   }
 
@@ -168,11 +178,12 @@ function renderTurnRowHtml(row, showDetails) {
       d.isDrain ? '<span class="b-badge drain" style="background:#4a1259;color:#f3d7ff">🩸 DRAIN</span>' : ''
     ].filter(Boolean).join(' ');
 
+    const hpDetail = (showDetails && d.hpAfter !== undefined && d.maxHp) ? ` (HP ${abbrNum(d.hpAfter)}/${abbrNum(d.maxHp)})` : '';
     return `<div class="b-sub-outcome">
       <span class="b-tree-branch">↳</span>
       <span class="b-arrow">→</span>
       <span class="b-target ${targetClass}">${esc(d.targetName || 'Target')}</span>
-      <span class="b-outcome damage" title="Exact: ${exact}">−${abbrNum(d.amount)} <small>${esc(d.damageType || 'dmg')}</small></span>
+      <span class="b-outcome damage" title="Exact: ${exact}">−${abbrNum(d.amount)} <small>${esc(d.damageType || 'dmg')}</small>${hpDetail}</span>
       ${badges}
     </div>`;
   }).join('');
@@ -196,7 +207,19 @@ function renderTurnRowHtml(row, showDetails) {
     : '';
 
   const sublinesHtml = (row.subrows && row.subrows.length)
-    ? `<div class="b-sublines">${row.subrows.map(s => `<span class="b-subline ${s.type==='thread'?'thread':'status'}">${s.type==='thread'?'🧵':s.type==='mythical'?'✨':s.type==='reflect'?'↩️':'•'} ${esc(s.text)}</span>`).join('')}</div>`
+    ? `<div class="b-sublines">${row.subrows.map(s => {
+        let extra = '';
+        if (showDetails) {
+          if (s.curVal !== undefined && s.maxVal !== undefined && s.stat) {
+            extra = ` (${s.stat} ${abbrNum(s.curVal)}/${abbrNum(s.maxVal)})`;
+          } else if (s.subtype === 'freeze' || s.isFreeze || (s.text && s.text.includes('afflicted with freeze'))) {
+            if (!s.text.includes('DEF') && !s.text.includes('SPEED')) {
+              extra = ` (- 10% DEF/ 20% SPEED)`;
+            }
+          }
+        }
+        return `<span class="b-subline ${s.type==='thread'?'thread':'status'}">${s.type==='thread'?'🧵':s.type==='mythical'?'✨':s.type==='reflect'?'↩️':'•'} ${esc(s.text)}${extra}</span>`;
+      }).join('')}</div>`
     : '';
 
   const deathsHtml = (row.deaths && row.deaths.length)
