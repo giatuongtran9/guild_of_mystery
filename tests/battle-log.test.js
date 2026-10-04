@@ -47,11 +47,9 @@ const res1v1 = g.resolveQuest(ally1v1, quest1v1, 42, {
   simulationOpponents: [{ path: 'door', sequence: 9 }]
 });
 
-assert(Array.isArray(res1v1.lines), 'Legacy lines must exist');
-assert(res1v1.lines.length > 0, 'Legacy lines must not be empty');
 assert(Array.isArray(res1v1.events), 'Structured events must exist');
 assert(res1v1.events.length > 0, 'Events array must not be empty');
-console.log(`✓ 1v1 simulation produced ${res1v1.lines.length} legacy lines and ${res1v1.events.length} structured events`);
+console.log(`✓ 1v1 simulation produced ${res1v1.events.length} structured events`);
 
 // 3. 2v2 Simulation Test
 console.log('Checking 2v2 simulation event emission...');
@@ -66,10 +64,9 @@ const res2v2 = g.resolveQuest(ally2v2, quest2v2, 12345, {
   simulationOpponents: [{ path: 'red_priest', sequence: 0 }, { path: 'demoness', sequence: 0 }]
 });
 
-assert(Array.isArray(res2v2.lines), 'Legacy lines must exist in 2v2');
 assert(Array.isArray(res2v2.events), 'Structured events must exist in 2v2');
 assert(res2v2.events.length > 20, '2v2 events should be substantial');
-console.log(`✓ 2v2 simulation produced ${res2v2.lines.length} legacy lines and ${res2v2.events.length} structured events`);
+console.log(`✓ 2v2 simulation produced ${res2v2.events.length} structured events`);
 
 // 4. Test Event Ordering and Stability
 console.log('Checking event order stability within rounds...');
@@ -119,12 +116,12 @@ assert.strictEqual(mergedRowsFound, castEventsWithDamage,
   `Merged rows (${mergedRowsFound}) must match cast events with damage (${castEventsWithDamage})`);
 console.log(`✓ Verified ${mergedRowsFound} cast-with-damage actions each produced exactly one merged row`);
 
-// 6. Test Legacy Lines Continuity
-console.log('Checking legacy lines continuity...');
-const roundLines = res2v2.lines.filter(l => /^· Round /.test(l.text));
-assert(roundLines.length > 0, 'Legacy round markers must be present');
-const actionLines = res2v2.lines.filter(l => /^ACTION:/.test(l.text));
-assert(actionLines.length > 0, 'Legacy ACTION lines must be present');
-console.log(`✓ Legacy lines intact (${res2v2.lines.length} total lines, ${actionLines.length} ACTION lines)`);
+// 6. Test Structured Round & Action Continuity
+console.log('Checking structured round and action continuity...');
+const roundEvents = res2v2.events.filter(e => e.type === 'system' && e.subtype === 'initiative');
+assert(roundEvents.length > 0, 'Structured initiative round events must be present');
+const castEvents = res2v2.events.filter(e => e.type === 'cast' || e.type === 'basic_attack');
+assert(castEvents.length > 0, 'Structured cast / basic_attack action events must be present');
+console.log(`✓ Structured events intact (${res2v2.events.length} total events across ${roundEvents.length} rounds, ${castEvents.length} actions)`);
 
 console.log('All Battle Log unit tests passed successfully!');
