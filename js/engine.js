@@ -352,7 +352,7 @@ function resolveIncoming(attacker,defender,dmg,state,lines,r,opt={}){
   const mult=incomingMultiplier(defender);
   if(mult!==1&&rem>0){const reduced=Math.max(0,Math.round(rem*mult));if(reduced!==rem)lines.push({text:`${defender.name}'s damage ${mult<1?'reduction':'vulnerability'} changes ${rem} damage to ${reduced}.`,kind:'status'});rem=reduced;}
   defender.hp-=rem;res.hpLoss=rem;
-  if(defender.hp>0&&defender.agent){tryMythicalForm(defender.agent,defender,state,lines,r);}
+  if(defender.hp>0&&(defender.agent||(defender.path&&defender.sequence!=null))){tryMythicalForm(defender.agent||defender,defender,state,lines,r);}
  }
  if(rf&&attacker&&attacker!==defender&&attacker.alive){
   let refl=0;
@@ -537,8 +537,21 @@ function basePathSpeed(path,sequence=9){
   if(!path||sequence>=10) return 55;
   return tableStats(path,sequence).spd;
 }
-function speedFor(agent){ const st=agent.stats||{}; const base=Number(agent.basePathSpeed||tableStats(agent.path,agent.sequence||9).spd||100); const raw=base+(0.2*(st.int||0))+(0.1*(st.atk||0)); const variance=Number(agent.speedVariance||agent.statVariance?.speed||1); const freezeMult = (hasStatus(agent,'freeze')||hasStatus(agent.agent||{},'freeze')) ? 0.8 : 1; return Math.max(1,raw*variance*(traitData(agent).spd_mult||1)*(agent._buffs?.speed||1)*(1-(agent._speedDebuff?1-agent._speedDebuff:0))*(1-(agent._threadSpeedDebuff||0))*freezeMult); }
-function actionValueFor(agent){return 10000/speedFor(agent);}
+function speedFor(agent){
+  const spdCfg = G9D?.formulas?.speed_and_turn_order || {};
+  const intWeight = Number(spdCfg.stat_weights?.int ?? 0.2);
+  const atkWeight = Number(spdCfg.stat_weights?.atk ?? 0.1);
+  const freezeMult = (hasStatus(agent,'freeze')||hasStatus(agent.agent||{},'freeze')) ? Number(spdCfg.freeze_speed_multiplier ?? 0.8) : 1;
+  const st = agent.stats || {};
+  const base = Number(agent.basePathSpeed || tableStats(agent.path, agent.sequence || 9).spd || 100);
+  const raw = base + (intWeight * (st.int || 0)) + (atkWeight * (st.atk || 0));
+  const variance = Number(agent.speedVariance || agent.statVariance?.speed || 1);
+  return Math.max(1, raw * variance * (traitData(agent).spd_mult || 1) * (agent._buffs?.speed || 1) * (1 - (agent._speedDebuff ? 1 - agent._speedDebuff : 0)) * (1 - (agent._threadSpeedDebuff || 0)) * freezeMult);
+}
+function actionValueFor(agent){
+  const avConstant = Number(G9D?.formulas?.speed_and_turn_order?.action_value_constant ?? 10000);
+  return avConstant / speedFor(agent);
+}
 function maxSPFor(agent){ return Math.round(spTableFor(agent).max*(traitData(agent).sp_mult||1)); }
 // Initiative bonuses are percentages so they stay meaningful as Speed grows with Sequence.
 function initiativeScore(agent){return speedFor(agent)*(1+(passiveCombatModifier(agent).initiative||0)/100);}
@@ -547,9 +560,25 @@ function unitInitiative(u){return u.agent?initiativeScore(u.agent):speedFor(u);}
 function combatRates(agent,actor=agent){
   const pm=passiveCombatModifier(agent),sm=statusCombatModifier(actor),int=agent.stats.int||10,def=agent.stats.def||10;
   const close=weaponFor(agent).kind==='unarmed'?weaponMasteryValue(agent,'unarmed'):0;
-  let dodgeRate=Math.min(.75,.05+.22*int/(int+150)+pm.dodge+sm.dodge+close*.015+(agent._dodgeBonus||0)+(agent._threadDodgeDebuff||0));
-  if(agent._threadLockDodge) dodgeRate=0;
-  else dodgeRate=Math.max(0, dodgeRate);
+  
+  const crCfg = G9D?.formulas?.combat_rates || {};
+  const critBase = Number(crCfg.crit?.base_rate ?? 0.15);
+  const critMax = Number(crCfg.crit?.max_rate ?? 1.00); // 100% max crit rate
+
+  const dodgeBase = Number(crCfg.dodge?.base_rate ?? 0.05);
+  const dodgeIntNum = Number(crCfg.dodge?.int_scaling_num ?? 0.22);
+  const dodgeIntDenom = Number(crCfg.dodge?.int_scaling_denom ?? 150);
+  const dodgeMastery = Number(crCfg.dodge?.close_quarters_mastery_factor ?? 0.015);
+  const dodgeMax = Number(crCfg.dodge?.max_rate ?? 0.75);
+
+  const counterBase = Number(crCfg.counter?.base_rate ?? 0.03);
+  const counterDefNum = Number(crCfg.counter?.def_scaling_num ?? 0.20);
+  const counterDefDenom = Number(crCfg.counter?.def_scaling_denom ?? 200);
+  const counterMax = Number(crCfg.counter?.max_rate ?? 0.45);
+
+  let dodgeRate = Math.min(dodgeMax, dodgeBase + (dodgeIntNum * int) / (int + dodgeIntDenom) + pm.dodge + sm.dodge + close * dodgeMastery + (agent._dodgeBonus || 0) + (agent._threadDodgeDebuff || 0));
+  if(agent._threadLockDodge) dodgeRate = 0;
+  else dodgeRate = Math.max(0, dodgeRate);
 
   const mergedResistances = {
     ...(G9D?.balance?.element_resistance_rules?.path_resistances?.[agent.path]||{}),
@@ -572,14 +601,14 @@ function combatRates(agent,actor=agent){
   });
 
   return {
-    crit:Math.min(.95,.15+pm.crit),
-    critDamage:pm.critDamage,
-    dodge:dodgeRate,
-    counter:Math.min(.45,.03+.20*def/(def+200)+pm.counter+sm.counter+(agent._counterBonus||0)),
-    speed:speedFor(agent),
-    av:actionValueFor(agent),
-    resistance:traitData(agent).resistance||0,
-    resistances:mergedResistances,
+    crit: Math.min(critMax, critBase + pm.crit),
+    critDamage: pm.critDamage,
+    dodge: dodgeRate,
+    counter: Math.min(counterMax, counterBase + (counterDefNum * def) / (def + counterDefDenom) + pm.counter + sm.counter + (agent._counterBonus || 0)),
+    speed: speedFor(agent),
+    av: actionValueFor(agent),
+    resistance: traitData(agent).resistance || 0,
+    resistances: mergedResistances,
     passives
   };
 }
@@ -1012,7 +1041,8 @@ function powerEffect(a,actor,enemy,state,lines,r){
     const threadSpec = unlockedAbilities(a).find(x => x.effectId === 'thread_binding' || x.id === 'thread_binding');
     const threadCost = Number(threadSpec?.costSP ?? 45);
     const threadCd = Number(threadSpec?.cooldown ?? 5);
-    const budget=({5:1,4:2,3:2,2:3,1:3,0:4})[a.sequence]||1;
+    const threadSlotsCfg = G9D?.formulas?.spirit_threads_rules?.sequence_slots || {5:1,4:2,3:2,2:3,1:3,0:4};
+    const budget = threadSlotsCfg[String(a.sequence)] ?? (G9D?.formulas?.spirit_threads_rules?.default_slots ?? 1);
     if(!enemy.thread && (a.sp||0)>=threadCost && !(a.cooldowns?.thread_binding>0) && (a._threadAttempts||0)<budget && threadUsage(state,a)<threadSlots(a.sequence)){
       a.sp-=threadCost; a.cooldowns.thread_binding=999; // locked until the thread resolves (releaseThread sets the real CD)
       lines.push({text:`ACTION: ${actor.name} casts [Thread Binding] (Cost: ${threadCost} SP | ${threadCd}-Turn CD).`,kind:'action'});
@@ -1080,7 +1110,7 @@ function resolveQuest(members,quest,seed=Date.now(),decisions={}){
    for (const u of [...allies, ...enemies]) u._actedThisRound = false;                                                                
    const initiativeLine=[...allies.filter(x=>x.alive),...enemies.filter(x=>x.alive)].sort((a,b)=>{const sa=unitInitiative(a);const sb=unitInitiative(b);return sb-sa;}).map(x=>`${x.name} ${unitInitiative(x).toFixed(1)}`).join(' → '); lines.push({text:`Initiative: ${initiativeLine}`,kind:'system'}); emitCombatEvent(state, {round, type: 'system', subtype: 'initiative', details: initiativeLine, text: `Initiative: ${initiativeLine}`});
    processSpiritThreads(state,lines);                                                                 
-   for(const unit of [...allies,...enemies])processStatuses(unit,t=>lines.push({text:t,kind:'status'}));
+   for(const unit of [...allies,...enemies])processStatuses(unit,t=>lines.push({text:t,kind:'status'}));if(unit.alive)tryMythicalForm(unit.agent||unit,unit,state,lines,r);
    tickCombatEffectDurations([...allies,...enemies]);applyPassiveAuras([...allies,...enemies],state);
    const order=[...allies.filter(x=>x.alive),...enemies.filter(x=>x.alive)].sort((a,b)=>unitInitiative(b)-unitInitiative(a));
    const actors=order;
