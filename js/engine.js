@@ -151,6 +151,10 @@ function groupEventsToRows(events, battleSnapshot) {
     }
 
     if (ev.type === 'miss') {
+      if (activeTurn && activeTurn.actorId === ev.actorId) {
+        activeTurn.subrows.push({ type: 'miss', text: ev.text });
+        continue;
+      }
       if (activeTurn) {
         r.rows.push(activeTurn);
       }
@@ -233,6 +237,23 @@ function groupEventsToRows(events, battleSnapshot) {
           id: `death_${ev.round}_${i}`,
           round: ev.round,
           type: 'death',
+          targetName: ev.targetName,
+          targetTeam: ev.targetTeam,
+          text: ev.text
+        });
+      }
+      continue;
+    }
+
+    if (ev.type === 'revive') {
+      if (activeTurn) {
+        (activeTurn.revives = activeTurn.revives || []).push(ev);
+        activeTurn.subrows.push({ type: 'revive', text: ev.text });
+      } else {
+        r.rows.push({
+          id: `revive_${ev.round}_${i}`,
+          round: ev.round,
+          type: 'revive',
           targetName: ev.targetName,
           targetTeam: ev.targetTeam,
           text: ev.text
@@ -429,7 +450,7 @@ function tickFx(u){
 function hasStatus(target,status){return !!target?.status?.includes(status);}
 const SELF_STATUSES=['evade','untargetable','guarded','inspired','possession_phase'];
 function statusImmune(t,s){try{return (passiveCombatModifier(t?.agent||t).immunities||[]).includes(s);}catch(e){return false;}}
-function addStatus(target,status,duration=1,source="unknown",extraMeta={}){if(statusImmune(target,status))return;target.status=target.status||[];target.statusMeta=target.statusMeta||{};if(!target.status.includes(status))target.status.push(status);target.statusMeta[status]={duration,source,...(extraMeta||{})};}
+function addStatus(target,status,duration=1,source="unknown",extraMeta={}){if(statusImmune(target,status))return;target.status=target.status||[];target.statusMeta=target.statusMeta||{};if(!target.status.includes(status))target.status.push(status);const isSelf=(source===target.name||source===target.id);target.statusMeta[status]={duration,source,_grace:isSelf,...(extraMeta||{})};}
 function removeStatus(target,status){if(!target?.status)return;target.status=target.status.filter(x=>x!==status);if(target.statusMeta)delete target.statusMeta[status];}
 function processStatuses(unit,add){if(!unit.alive)return;unit.status=unit.status||[];unit.statusMeta=unit.statusMeta||{};const isUntargetable=hasStatus(unit,"untargetable");if(!isUntargetable){if(hasStatus(unit,"burn")){const d=Math.max(1,Math.round(unit.maxHp*.07));unit.hp-=d;add(`${unit.name} suffers ${d} Burn damage (7% Max HP).`);} if(hasStatus(unit,"poison")){const d=Math.max(1,Math.round(unit.maxHp*.05));unit.hp-=d;add(`${unit.name} suffers ${d} Poison damage (5% Max HP).`);} if(hasStatus(unit,"curse")){const d=Math.max(1,Math.round(unit.maxHp*.03));unit.hp-=d;add(`${unit.name} suffers ${d} Curse damage (3% Max HP).`);} if(hasStatus(unit,"decay")){const d=Math.max(1,Math.round(unit.maxHp*.025));unit.hp-=d;add(`${unit.name} withers under Decay.`);} if(hasStatus(unit,'bleed')){const d=Math.max(1,Math.round(unit.maxHp*.03));unit.hp-=d;add(`${unit.name} loses ${d} HP to Bleed (3% Max HP).`);} }if(unit.hp<=0){unit.hp=0;unit.alive=false;}}
 
@@ -439,6 +460,7 @@ function tickUnitStatuses(unit){
   for(const st of [...unit.status]){
     const m=unit.statusMeta[st];
     if(m){
+      if(m._grace){delete m._grace;continue;}
       m.duration--;
       if(m.duration<=0)removeStatus(unit,st);
     }
@@ -1020,7 +1042,7 @@ function applyStructuredAbility(agent,actor,enemy,state,lines,r,spec){
  const trueDamage=damageRule?.rule==='true', psychicTrue=damageRule?.rule==='psychic_true';
  const componentEffects=effects.filter(e=>e.type==='damage_component');
  const effectiveDamageSpec=componentEffects.length?{...(spec.damage||{}),components:componentEffects.map(e=>({stat:e.stat,multiplier:Number(e.multiplier||0)}))}:(spec.damage||null);
- if((effectiveDamageSpec?.multiplier||spec.scale||0)>0 || componentEffects.length){for(const t of targets){if(!t.alive)continue;let mult=spec.damage?.multiplier||spec.scale||0;const baseAbilityMultiplier=mult;const effectContributions=[];const statBonus=effects.find(e=>e.type==='damage_stat_bonus');if(statBonus&&statBonus.stat==='INT'){const f=1+Number(statBonus.amount||0);mult*=f;effectContributions.push({type:'damage_stat_bonus',amount:Number(statBonus.amount||0),multiplier:f});}if(agent._damageStatBonus){const f=agent._damageStatBonus;mult*=f;effectContributions.push({type:'passive_damage_stat_bonus',multiplier:f});}if(agent._lowHpBonus&&actor.hp/actor.maxHp<.5){const f=1+agent._lowHpBonus;mult*=f;effectContributions.push({type:'low_hp_bonus',amount:agent._lowHpBonus,multiplier:f});}if(agent._nextDamageBonus){const f=1+agent._nextDamageBonus;mult*=f;effectContributions.push({type:'next_damage_bonus',amount:agent._nextDamageBonus,multiplier:f});agent._nextDamageBonus=0;}const trace={round:state.currentRound||0,attacker:actor.name,target:t.name,ability:spec.text?.split(' — ')[0]||spec.name||spec.id,abilityId:spec.id||spec.effectId,stat:spec.damage?.scaling||spec.stat||'INT',abilityMultiplier:baseAbilityMultiplier,effectiveMultiplier:mult,effectContributions,damageType:effectiveDamageSpec?.element||effectiveDamageSpec?.type||spec.damageType||'physical'};let dmg=v15Damage(effectiveDamageSpec?.formula||spec.formula||(spec.stat==='ATK'?'empowered_hybrid_physical':'pure_caster_ability'),{agent,actor,target:t,abilityMult:mult,defPen:defPen(spec,effects),trueDamage,psychicTrue,damageSpec:{...(effectiveDamageSpec||{}),type:(effectiveDamageSpec?.type||'physical'),element:(effectiveDamageSpec?.element||'physical')},trace});const prePostEffects=dmg;const vuln=t._vulnerability||1;if(vuln!==1){dmg=Math.round(dmg*vuln);trace.effectContributions.push({type:'vulnerability',multiplier:vuln});}const ex=effects.find(e=>e.type==='execute');if(ex&&t.hp/t.maxHp<Number(ex.threshold||0)){dmg=Math.max(dmg,t.hp+(t.shield||0));trace.effectContributions.push({type:'execute',instantKill:true});lines.push({text:`EXECUTE: ${t.name} is instantly executed!`,kind:'quirk'});}const critBonus=Number(agent._abilityCritDamageBonus||0)+effects.filter(e=>e.type==='critDamage').reduce((n,e)=>n+Number(e.amount||0),0);const rates=combatRates(agent,actor);let critChance=Math.min(.95,rates.crit);if(effects.some(e=>e.type==='crit'))critChance+=effectAmount(spec,'crit');if(t._nextCritFail){critChance=0;t._nextCritFail=0;}let critical=false;if(r()<Math.min(.95,critChance)){critical=true;const f=1+rates.critDamage+critBonus;dmg=Math.round(dmg*f);trace.effectContributions.push({type:'critical',multiplier:f});}trace.final=dmg;trace.critical=critical;trace.critBonus=critBonus;trace.critChance=Math.min(.95,critChance);state.balanceTrace.push(trace);if(hasStatus(t,'sleep')&&!t._sleepAppliedThisAction){handleSleepWake(t,lines);}const tk=resolveIncoming(actor,t,dmg,state,lines,r,{damageType:effectiveDamageSpec?.element||effectiveDamageSpec?.type||spec.damageType||'physical'});didDamage=true;totalDamage+=tk.hpLoss+tk.absorbed;const finalDamage=tk.hpLoss+tk.absorbed;lines.push({text:`IMPACT: ${spec.damage?.element||spec.damage?.type||'physical'} damage ${finalDamage} to ${t.name}${critical?' critical':''}${trueDamage?' (TRUE DAMAGE)':''}.`,kind:'damage'});
+ if((effectiveDamageSpec?.multiplier||spec.scale||0)>0 || componentEffects.length){for(const t of targets){if(!t.alive)continue;if(hasStatus(t,"evade")){lines.push({text:`${t.name}'s Evasion lets them slip away untouched — ${actor.name}'s ${spec.text?.split(" — ")[0]||spec.name||"attack"} misses.`,kind:"status"});emitCombatEvent(state,{round:state?.currentRound||1,type:"miss",actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`${t.name}'s Evasion lets them slip away untouched — ${actor.name}'s attack misses.`});continue;}let mult=spec.damage?.multiplier||spec.scale||0;const baseAbilityMultiplier=mult;const effectContributions=[];const statBonus=effects.find(e=>e.type==='damage_stat_bonus');if(statBonus&&statBonus.stat==='INT'){const f=1+Number(statBonus.amount||0);mult*=f;effectContributions.push({type:'damage_stat_bonus',amount:Number(statBonus.amount||0),multiplier:f});}if(agent._damageStatBonus){const f=agent._damageStatBonus;mult*=f;effectContributions.push({type:'passive_damage_stat_bonus',multiplier:f});}if(agent._lowHpBonus&&actor.hp/actor.maxHp<.5){const f=1+agent._lowHpBonus;mult*=f;effectContributions.push({type:'low_hp_bonus',amount:agent._lowHpBonus,multiplier:f});}if(agent._nextDamageBonus){const f=1+agent._nextDamageBonus;mult*=f;effectContributions.push({type:'next_damage_bonus',amount:agent._nextDamageBonus,multiplier:f});agent._nextDamageBonus=0;}const trace={round:state.currentRound||0,attacker:actor.name,target:t.name,ability:spec.text?.split(' — ')[0]||spec.name||spec.id,abilityId:spec.id||spec.effectId,stat:spec.damage?.scaling||spec.stat||'INT',abilityMultiplier:baseAbilityMultiplier,effectiveMultiplier:mult,effectContributions,damageType:effectiveDamageSpec?.element||effectiveDamageSpec?.type||spec.damageType||'physical'};let dmg=v15Damage(effectiveDamageSpec?.formula||spec.formula||(spec.stat==='ATK'?'empowered_hybrid_physical':'pure_caster_ability'),{agent,actor,target:t,abilityMult:mult,defPen:defPen(spec,effects),trueDamage,psychicTrue,damageSpec:{...(effectiveDamageSpec||{}),type:(effectiveDamageSpec?.type||'physical'),element:(effectiveDamageSpec?.element||'physical')},trace});const prePostEffects=dmg;const vuln=t._vulnerability||1;if(vuln!==1){dmg=Math.round(dmg*vuln);trace.effectContributions.push({type:'vulnerability',multiplier:vuln});}const ex=effects.find(e=>e.type==='execute');if(ex&&t.hp/t.maxHp<Number(ex.threshold||0)){dmg=Math.max(dmg,t.hp+(t.shield||0));trace.effectContributions.push({type:'execute',instantKill:true});lines.push({text:`EXECUTE: ${t.name} is instantly executed!`,kind:'quirk'});}const critBonus=Number(agent._abilityCritDamageBonus||0)+effects.filter(e=>e.type==='critDamage').reduce((n,e)=>n+Number(e.amount||0),0);const rates=combatRates(agent,actor);let critChance=Math.min(.95,rates.crit);if(effects.some(e=>e.type==='crit'))critChance+=effectAmount(spec,'crit');if(t._nextCritFail){critChance=0;t._nextCritFail=0;}let critical=false;if(r()<Math.min(.95,critChance)){critical=true;const f=1+rates.critDamage+critBonus;dmg=Math.round(dmg*f);trace.effectContributions.push({type:'critical',multiplier:f});}trace.final=dmg;trace.critical=critical;trace.critBonus=critBonus;trace.critChance=Math.min(.95,critChance);state.balanceTrace.push(trace);if(hasStatus(t,'sleep')&&!t._sleepAppliedThisAction){handleSleepWake(t,lines);}const tk=resolveIncoming(actor,t,dmg,state,lines,r,{damageType:effectiveDamageSpec?.element||effectiveDamageSpec?.type||spec.damageType||'physical'});didDamage=true;totalDamage+=tk.hpLoss+tk.absorbed;const finalDamage=tk.hpLoss+tk.absorbed;lines.push({text:`IMPACT: ${spec.damage?.element||spec.damage?.type||'physical'} damage ${finalDamage} to ${t.name}${critical?' critical':''}${trueDamage?' (TRUE DAMAGE)':''}.`,kind:'damage'});
  emitCombatEvent(state, {
    round: state?.currentRound || 1,
    type: 'damage',
