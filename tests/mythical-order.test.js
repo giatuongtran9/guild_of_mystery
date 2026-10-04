@@ -28,28 +28,27 @@ const mk = (path, seq, id) => { const a = g.makeAgent(Math.random, { sequence: s
   const rows = g.groupEventsToRows(ev)[0].rows;
   assert.deepStrictEqual(rows.map(r => r.type), ['turn', 'story'], 'chronological order preserved');
 }
-// --- real battles: whenever a hit awakens a Mythical Form it is inside a turn row
-let seen = 0;
-for (let sd = 1; sd <= 80; sd++) {
+// --- real battles: an awakening caused by a hit must sit inside THAT attacker's row (basic attacks included)
+let _seed = 99;
+const seededRng = () => ((_seed = Math.imul(1664525, _seed) + 1013904223) >>> 0) / 4294967296;
+const mkSeeded = (path, seq, id) => { const a = g.makeAgent(seededRng, { sequence: seq, path, trait: 'Stout Vitality' }); Object.assign(a, { id, name: g.pathOf(path).name + ' Seq ' + seq, awakened: true, path, sequence: seq, recommendedPath: path, injuries: 0, weaponId: 'none', weaponMastery: {} }); g.restatAgent(a); a.sp = g.maxSPFor(a); return a; };
+let seen = 0, basic = 0;
+for (let sd = 1; sd <= 150; sd++) {
   const q = { id: 's', name: 'x', brief: '', story: '', objective: 'combat', difficultySequence: 0, encounter: true, mundane: false, rewards: { funds: 0, reputation: 0, materials: {} }, enemyCount: 2, requiredPath: 'door' };
-  const res = g.resolveQuest([mk('wheel_of_fortune', 0, 'W'), mk('fool', 0, 'F')], q, sd, { individual: false, simulationOpponents: [{ path: 'door', sequence: 0 }, { path: 'error', sequence: 0 }] });
-  // Only awakenings that happen while an attack row is pending (a cast/damage/miss earlier in the same round).
-  // A DoT tick at the start of a round has no pending attack row, so a standalone row is correct there.
-  const midAttack = (e) => {
-    const i = res.events.indexOf(e);
-    for (let j = i - 1; j >= 0; j--) {
-      const t = res.events[j].type;
-      if (t === 'round_start') return false;
-      if (t === 'cast' || t === 'damage' || t === 'miss') return true;
-    }
-    return false;
-  };
-  const mythEvents = res.events.filter(e => e.subtype === 'mythical_form' && e.inTurn && midAttack(e));
-  const rows = g.groupEventsToRows(res.events).flatMap(r => r.rows);
-  for (const e of mythEvents) {
-    seen++;
-    assert(!rows.some(r => r.type === 'story' && r.text === e.text), 'in-hit awakening must not be a standalone row');
-    assert(rows.some(r => r.type === 'turn' && r.subrows.some(s => s.type === 'mythical' && s.text === e.text)), 'in-hit awakening must be a subrow of the attack turn');
-  }
+  const res = g.resolveQuest([mkSeeded('wheel_of_fortune', 0, 'W'), mkSeeded('fool', 0, 'F')], q, sd, { individual: false, simulationOpponents: [{ path: 'door', sequence: 0 }, { path: 'error', sequence: 0 }] });
+  const ev = res.events, rows = g.groupEventsToRows(ev).flatMap(r => r.rows);
+  ev.forEach((e, i) => {
+    if (!(e.subtype === 'mythical_form' && e.inTurn)) return;
+    // the hit that caused it = first non-reflect damage after it, in the same round
+    let hit = null;
+    for (let j = i + 1; j < ev.length; j++) { if (ev[j].type === 'round_start') break; if (ev[j].type === 'damage' && !ev[j].isReflect) { hit = ev[j]; break; } }
+    if (!hit) return; // not caused by an attack hit (e.g. start-of-round DoT tick)
+    seen++; if (ev.slice(i + 1, ev.indexOf(hit)).some(x => x.type === 'cast')) basic++;
+    assert(!rows.some(r => r.type === 'story' && r.text === e.text), `seed ${sd}: in-hit awakening must not be a standalone row`);
+    const row = rows.find(r => r.type === 'turn' && r.subrows.some(sr => sr.type === 'mythical' && sr.text === e.text));
+    assert(row, `seed ${sd}: awakening must be a subrow of an attack turn`);
+    assert.strictEqual(row.actorId, hit.actorId, `seed ${sd}: awakening shown under ${row.actorName}'s row but caused by ${hit.actorName}'s hit`);
+  });
 }
-console.log(`PASS mythical-order (${seen} in-hit awakenings checked)`);
+assert(seen > 50, 'test must actually exercise in-hit awakenings');
+console.log(`PASS mythical-order (${seen} in-hit awakenings checked, each under the right attacker's row)`);
