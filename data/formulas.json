@@ -68,7 +68,7 @@
       "int_scaling_num": 0.22,
       "int_scaling_denom": 150,
       "close_quarters_mastery_factor": 0.015,
-      "max_rate": 0.75
+      "max_rate": 1
     },
     "counter": {
       "base_rate": 0.03,
