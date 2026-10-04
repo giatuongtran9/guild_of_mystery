@@ -158,6 +158,8 @@ function tryMythicalForm(agent, actor, state, lines, r) {
     emitCombatEvent(state, {
       round: state.currentRound || 1,
       type: 'story',
+      subtype: 'mythical_form',
+      inTurn: !!state._mythicalFromHit,
       actorId: unit.id,
       actorName: unit.name,
       actorTeam: teamOf(unit, state),
