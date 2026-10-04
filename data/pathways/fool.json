@@ -362,7 +362,8 @@
           {
             "type": "status",
             "status": "stunned",
-            "duration": 1
+            "duration": 1,
+            "ignoreResistance": true
           }
         ]
       }
