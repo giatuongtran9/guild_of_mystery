@@ -618,7 +618,16 @@ function attackOnce(agent,actor,enemy,state,lines,r,mult=1){
  if(hasStatus(enemy,'untargetable')){lines.push({text:`${actor.name} cannot target ${enemy.name}.`,kind:'status'});return false;}
  if(!canAffect(agent.sequence,enemy.sequence)) { lines.push({text:`${actor.name}'s attack is suppressed by the enemy's higher Authority.`,kind:'system'}); return false; }
  const pm=passiveCombatModifier(agent), weapon=weaponStats(agent);
- const targetStats=enemy.agent?.stats||enemy; const enemyRates=combatRates(enemy.agent||enemy,enemy); const dodgeChance=Math.max(.03,Math.min(.55,.05+((targetStats.int-agent.stats.int)/Math.max(1,agent.stats.int))*.25+(enemyRates.dodge||0)-(pm.hitChance||0)));
+ const targetStats=enemy.agent?.stats||enemy; const enemyRates=combatRates(enemy.agent||enemy,enemy); 
+  
+ if(enemy.alive&&hasStatus(enemy,'evade')){
+    lines.push({text:`${enemy.name}'s Evasion lets them slip away untouched — ${actor.name}'s attack misses.`,kind:'status'});
+    emitCombatEvent(state,{round:state?.currentRound||1,type:'miss',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),text:`${enemy.name}'s Evasion lets them slip away untouched — ${actor.name}'s attack misses.`});
+    return false;
+ } 
+
+ const dodgeMaxCap=Number(G9D?.formulas?.combat_rates?.dodge?.max_rate??1.0);
+ const dodgeChance=Math.max(.03,Math.min(dodgeMaxCap,.05+((targetStats.int-agent.stats.int)/Math.max(1,agent.stats.int))*.25+(enemyRates.dodge||0)-(pm.hitChance||0)));
  if(r()<dodgeChance){lines.push({text:`${actor.name}'s attack misses as ${enemy.name} reads the movement and dodges.`,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'miss',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),text:`${actor.name}'s attack misses as ${enemy.name} reads the movement and dodges.`});return false;}
  const missChance=Math.max(0,Math.min(.95,weapon.masteryMiss-pm.hitChance+(actor._hitChanceDebuff||0)+(actor._threadHitDebuff||0))); if(r()<missChance){const missMsg=`${actor.name} misses with ${weapon.name}. ${weapon.kind==='gun'?`Gun Mastery Lv.${weapon.mastery} gives ${Math.round((1-missChance)*100)}% accuracy.`:'The attack misses.'}`;lines.push({text:missMsg,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'miss',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),text:missMsg});return false;}
  handleSleepWake(enemy,lines); // v15 basic_physical_attack: round((ATK*ATK_mod + Weapon_Bonus_DMG) * Strike_Mult - DEF*0.5)
