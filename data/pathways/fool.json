@@ -246,7 +246,8 @@
           {
             "type": "status",
             "status": "evade",
-            "duration": 1
+            "duration": 1,
+            "dodgeRate": 0.5
           }
         ]
       }
