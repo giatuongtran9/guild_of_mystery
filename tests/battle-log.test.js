@@ -3,9 +3,13 @@ const g = require('../js/node-loader.js');
 
 console.log('--- Running Battle Log Unit Tests ---');
 
+// Deterministic agent stats: with Math.random the test only failed on runs where Fool happened to roll a reflect.
+let _seed = 2024;
+const seededRng = () => ((_seed = Math.imul(1664525, _seed) + 1013904223) >>> 0) / 4294967296;
+
 // Helper to create test agents
 function makeTestAgent(path, seq, id) {
-  const a = g.makeAgent(Math.random, { sequence: seq, path, trait: 'Stout Vitality' });
+  const a = g.makeAgent(seededRng, { sequence: seq, path, trait: 'Stout Vitality' });
   a.id = id;
   a.name = g.pathOf(path).name + ' Seq ' + seq;
   a.awakened = true;
