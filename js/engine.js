@@ -377,7 +377,7 @@ function canAffect(attackerSeq, defenderSeq) {
 
 // ---- Incoming damage pipeline: negate (reflect buff) -> shield absorbs -> damage reduction -> HP, then reflect.
 function incomingMultiplier(u){let pm=1;try{pm=passiveCombatModifier(u.agent||u).damageTaken||1;}catch(e){}return pm*Number(u._damageTakenMultiplier||1);}
-function resolveIncoming(attacker,defender,dmg,state,lines,r,opt={}){
+function resolveIncoming(attacker,defender,dmg,state,lines=[],r,opt={}){if(!lines)lines=[];
  const incoming=Math.max(0,Math.round(dmg)),res={incoming,absorbed:0,hpLoss:0,negated:false,reflected:0};
  if(!defender||!defender.alive||incoming<=0)return res;
  if(hasStatus(defender,'untargetable')){res.negated=true;lines.push({text:`${defender.name} is untargetable and avoids damage.`,kind:'status'});return res;}
@@ -450,7 +450,7 @@ function tickFx(u){
 function hasStatus(target,status){return !!target?.status?.includes(status);}
 const SELF_STATUSES=['evade','untargetable','guarded','inspired','possession_phase'];
 function statusImmune(t,s){try{return (passiveCombatModifier(t?.agent||t).immunities||[]).includes(s);}catch(e){return false;}}
-function addStatus(target,status,duration=1,source="unknown",extraMeta={}){if(statusImmune(target,status))return;target.status=target.status||[];target.statusMeta=target.statusMeta||{};if(!target.status.includes(status))target.status.push(status);const isSelf=(source===target.name||source===target.id);target.statusMeta[status]={duration,source,_grace:isSelf,...(extraMeta||{})};}
+function addStatus(target,status,duration=1,source="unknown",extraMeta={}){if(statusImmune(target,status))return;target.status=target.status||[];target.statusMeta=target.statusMeta||{};if(!target.status.includes(status))target.status.push(status);const isSelf=(source===target.name||source===target.id);const isActing=target._acting===true;target.statusMeta[status]={duration,source,_grace:isSelf||isActing,...(extraMeta||{})};}
 function removeStatus(target,status){if(!target?.status)return;target.status=target.status.filter(x=>x!==status);if(target.statusMeta)delete target.statusMeta[status];}
 function processStatuses(unit,add){if(!unit.alive)return;unit.status=unit.status||[];unit.statusMeta=unit.statusMeta||{};const isUntargetable=hasStatus(unit,"untargetable");if(!isUntargetable){if(hasStatus(unit,"burn")){const d=Math.max(1,Math.round(unit.maxHp*.07));unit.hp-=d;add(`${unit.name} suffers ${d} Burn damage (7% Max HP).`);} if(hasStatus(unit,"poison")){const d=Math.max(1,Math.round(unit.maxHp*.05));unit.hp-=d;add(`${unit.name} suffers ${d} Poison damage (5% Max HP).`);} if(hasStatus(unit,"curse")){const d=Math.max(1,Math.round(unit.maxHp*.03));unit.hp-=d;add(`${unit.name} suffers ${d} Curse damage (3% Max HP).`);} if(hasStatus(unit,"decay")){const d=Math.max(1,Math.round(unit.maxHp*.025));unit.hp-=d;add(`${unit.name} withers under Decay.`);} if(hasStatus(unit,'bleed')){const d=Math.max(1,Math.round(unit.maxHp*.03));unit.hp-=d;add(`${unit.name} loses ${d} HP to Bleed (3% Max HP).`);} }if(unit.hp<=0){unit.hp=0;unit.alive=false;}}
 
@@ -490,10 +490,15 @@ function releaseThread(agent,enemy){
   enemy._threadLockDodge=false;
   enemy._threadStiffened=false;
 }
-function applySpiritThread(agent,enemy,actor,state,lines,r){
+function applySpiritThread(agent,enemy,actor,state,lines=[],r){if(!lines)lines=[];
  if(!isThreadBeyonder(agent))return false;
  const slots=threadSlots(agent.sequence);
- if(threadUsage(state,agent)>=slots){lines.push({text:`${actor.name} has reached their personal thread limit (${slots}).`,kind:'system'});return false;}
+ if(threadUsage(state,agent)>=slots){
+   const limitMsg = `${actor.name} has reached their personal thread limit (${slots}).`;
+   lines.push({text:limitMsg,kind:'system'});
+   emitCombatEvent(state, {round:state?.currentRound||1,type:'status',actorId:agent.id,actorName:agent.name,actorTeam:teamOf(agent,state),targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),text:limitMsg});
+   return false;
+ }
 
  if(enemy.thread)return false;
  // Attempt budget per fight: keeps thread-kills a meaningful gamble now that fights last several rounds.
@@ -502,13 +507,21 @@ function applySpiritThread(agent,enemy,actor,state,lines,r){
  agent._threadAttempts=(agent._threadAttempts||0)+1;
  const intGap=(enemy.resistanceInt??enemy.int)-agent.stats.int;
  const resist=Math.max(.08,Math.min(.70,({5:.62,4:.55,3:.45,2:.35,1:.25,0:.20})[agent.sequence]+Math.max(0,enemy.sequence-agent.sequence)*.16+Math.max(0,intGap)/Math.max(1,agent.stats.int)*.5));
- if(r()<resist){lines.push({text:`${enemy.name} resists the Spirit Body Thread.`,kind:'status'});changeMeter(agent,'fool',5); if (agent._threadAttempts > 0) agent._threadAttempts--; return false;}
+ if(r()<resist){
+   const resistMsg = `${enemy.name} resists the Spirit Body Thread.`;
+   lines.push({text:resistMsg,kind:'status'});
+   emitCombatEvent(state, {round:state?.currentRound||1,type:'status',actorId:agent.id,actorName:agent.name,actorTeam:teamOf(agent,state),targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),text:resistMsg});
+   changeMeter(agent,'fool',5); if (agent._threadAttempts > 0) agent._threadAttempts--; return false;
+ }
  enemy.thread={ownerId:agent.id,progress:0,required:5};
  agent.threadTargets=[...(agent.threadTargets||[]),enemy.id];agent.activeThreads=agent.threadTargets.length;changeMeter(agent,'fool',-12);
  addStatus(enemy,'threaded',enemy.thread.required,'Spirit Body Thread');
- lines.push({text:`${actor.name} grasps the invisible Spirit Body Thread attached to ${enemy.name}.`,kind:'quirk'});return true;
+ const graspMsg = `${actor.name} grasps the invisible Spirit Body Thread attached to ${enemy.name}.`;
+ lines.push({text:graspMsg,kind:'quirk'});
+ emitCombatEvent(state, {round:state?.currentRound||1,type:'thread',actorId:agent.id,actorName:agent.name,actorTeam:teamOf(agent,state),targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),text:graspMsg});
+ return true;
 }
-function joinMarionette(state,owner,target,lines){
+function joinMarionette(state,owner,target,lines=[]){if(!lines)lines=[];
   // Battle-only Marionette: 55% of the dead unit's stats, fights for the thread owner's side, never saved to the roster.
   const pct=.55,ownerAllied=state.allies.some(x=>x.id===owner.id),rng=state.rng||Math.random;
   const src=target.agent?{hp:target.maxHp,atk:target.agent.stats.atk,def:target.agent.stats.def,int:target.agent.stats.int}:{hp:target.maxHp,atk:target.atk,def:target.def,int:target.int};
@@ -530,7 +543,7 @@ function joinMarionette(state,owner,target,lines){
   lines.push({text:`${name} rises under ${owner.name||'its owner'}'s control (55% stats) and joins the fight.`,kind:'quirk'});
   emitCombatEvent(state,{round:state?.currentRound||1,type:'system',text:`${name} joins ${owner.name||'the owner'}'s side as a Marionette.`});
 }
-function processSpiritThreads(state,lines){const allUnits=[...state.allies,...state.enemies];for(const ally of allUnits.filter(x=>x.alive&&isThreadBeyonder(x.agent||x))){const agent=ally.agent||ally;const targets=state.allies.includes(ally)?state.enemies:state.allies;for(const enemy of targets.filter(x=>x.thread?.ownerId===agent.id)){const t=enemy.thread;if(!enemy.alive){releaseThread(agent,enemy);lines.push({text:`The thread ends because ${enemy.name} is dead; the slot is freed.`,kind:"system"});continue;}if(!ally.alive||hasThreadCC(ally)){releaseThread(agent,enemy);lines.push({text:`The thread on ${enemy.name} is interrupted and its progress resets.`,kind:"status"});if(agent._threadAttempts>0)agent._threadAttempts--;continue;}t.progress++;
+function processSpiritThreads(state,lines=[]){if(!lines)lines=[];const allUnits=[...state.allies,...state.enemies];for(const ally of allUnits.filter(x=>x.alive&&isThreadBeyonder(x.agent||x))){const agent=ally.agent||ally;const targets=state.allies.includes(ally)?state.enemies:state.allies;for(const enemy of targets.filter(x=>x.thread?.ownerId===agent.id)){const t=enemy.thread;if(!enemy.alive){releaseThread(agent,enemy);lines.push({text:`The thread ends because ${enemy.name} is dead; the slot is freed.`,kind:"system"});continue;}if(!ally.alive||hasThreadCC(ally)){releaseThread(agent,enemy);lines.push({text:`The thread on ${enemy.name} is interrupted and its progress resets.`,kind:"status"});if(agent._threadAttempts>0)agent._threadAttempts--;continue;}t.progress++;
       if(t.progress===1){
         enemy._threadSpeedDebuff=0.15;
       }else if(t.progress===2){
@@ -652,8 +665,8 @@ function combatRates(agent,actor=agent){
     passives
   };
 }
-function maybeCounter(target,attacker,state,lines,r){if(!target?.agent||!target.alive)return;const rates=combatRates(target.agent,target);if(r()<rates.counter){const w=weaponStats(target.agent);const dmg=Math.max(1,Math.round((target.agent.stats.atk*.38+w.atk)*damageMultiplier(target.agent.sequence,attacker.sequence,target.agent.path,attacker.path)-(attacker.def||attacker.agent?.stats?.def||10)*.15));lines.push({text:`${target.name} counters for ${dmg} damage (${Math.round(rates.counter*100)}% counter chance).`,kind:'quirk'});resolveIncoming(target,attacker,dmg,state,lines,r);if(attacker.hp<=0){attacker.hp=0;attacker.alive=false;lines.push({text:`${attacker.name} falls.`,kind:'victory'});}}}
-function attackOnce(agent,actor,enemy,state,lines,r,mult=1){
+function maybeCounter(target,attacker,state,lines=[],r){if(!lines)lines=[];if(!target?.agent||!target.alive)return;const rates=combatRates(target.agent,target);if(r()<rates.counter){const w=weaponStats(target.agent);const dmg=Math.max(1,Math.round((target.agent.stats.atk*.38+w.atk)*damageMultiplier(target.agent.sequence,attacker.sequence,target.agent.path,attacker.path)-(attacker.def||attacker.agent?.stats?.def||10)*.15));lines.push({text:`${target.name} counters for ${dmg} damage (${Math.round(rates.counter*100)}% counter chance).`,kind:'quirk'});resolveIncoming(target,attacker,dmg,state,lines,r);if(attacker.hp<=0){attacker.hp=0;attacker.alive=false;lines.push({text:`${attacker.name} falls.`,kind:'victory'});}}}
+function attackOnce(agent,actor,enemy,state,lines=[],r,mult=1){if(!lines)lines=[];
  if(actor._nextAttackMiss){const forced=r()<Number(actor._nextAttackMiss);actor._nextAttackMiss=0;if(forced){lines.push({text:`${actor.name}'s next attack is forced to miss.`,kind:'status'});return false;}}
  if(hasStatus(enemy,'untargetable')){lines.push({text:`${actor.name} cannot target ${enemy.name}.`,kind:'status'});return false;}
  if(!canAffect(agent.sequence,enemy.sequence)) { lines.push({text:`${actor.name}'s attack is suppressed by the enemy's higher Authority.`,kind:'system'}); return false; }
@@ -794,7 +807,7 @@ function runActiveAbility(agent,actor,enemy,state,lines,r,effectId){
 function actionDisabled(unit){
  return ['stunned','frozen','sleep','polymorphed'].some(s=>hasStatus(unit,s)) || hasStatus(unit,'bound') || hasStatus(unit,'unconscious') || (unit._skipTurns > 0) || hasStatus(unit,'banished');
 }
-function handleSleepWake(target,lines){
+function handleSleepWake(target,lines=[]){if(!lines)lines=[];
  if(hasStatus(target,'sleep')){removeStatus(target,'sleep');lines.push({text:`${target.name} wakes from Sleep when struck.`,kind:'status'});}
 }
 
@@ -922,7 +935,7 @@ function getCopiedEnemyAbility(actor, enemy, state) {
     .filter(x => (x.type === 'active' || x.kind === 'active') && (x.id || x.effectId) !== 'combat_record');
   return enemySpecs.length ? cloneE(enemySpecs[0]) : null;
 }
-function applyStructuredAbility(agent,actor,enemy,state,lines,r,spec){
+function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lines)lines=[];
  ensureCombatResource(agent); let cost=Number(spec.costSP||0);
  
  if((agent.sp||0)<cost)return false;
@@ -1085,7 +1098,7 @@ function applyStructuredAbility(agent,actor,enemy,state,lines,r,spec){
 }
 function syncUnitToAgent(u){if(u&&u.agent&&u.agent!==u){for(const k of ['_buffs','_speedDebuff','_spCostMultiplier','_cooldownPenalty','_dodgeBonus','_counterBonus'])u.agent[k]=u[k];}}
 function defPen(spec,effects){return effects.filter(e=>e.type==='defPen'||e.type==='defense_penetration').reduce((n,e)=>n+Number(e.amount||0),0);}
-function powerEffect(a,actor,enemy,state,lines,r){
+function powerEffect(a,actor,enemy,state,lines=[],r){if(!lines)lines=[];
   ensureCombatResource(a); a._hpRatio=actor.hp/Math.max(1,actor.maxHp); tryMythicalForm(a,actor,state,lines,r);
   if(a.path==='fool'&&a.sequence<=5&&!hasStatus(actor,'silenced')&&!hasStatus(a,'silenced')&&abilityAvailable(a,'thread_binding')){
     const threadSpec = unlockedAbilities(a).find(x => x.effectId === 'thread_binding' || x.id === 'thread_binding');
@@ -1164,7 +1177,7 @@ function resolveQuest(members,quest,seed=Date.now(),decisions={}){
    tickCombatEffectDurations([...allies,...enemies]);applyPassiveAuras([...allies,...enemies],state);
    const order=[...allies.filter(x=>x.alive),...enemies.filter(x=>x.alive)].sort((a,b)=>unitInitiative(b)-unitInitiative(a));
    const actors=order;
-   for(const c of actors){try{if(!c.alive||c.inCombat===false)continue;beginTurn(c);c._actedThisRound = true;
+   for(const c of actors){try{if(!c.alive||c.inCombat===false)continue;c._acting = true; beginTurn(c);c._actedThisRound = true;
        if(c._skipTurns>0||hasStatus(c,'banished')){if(c._skipTurns>0)c._skipTurns--;lines.push({text:`${c.name} is banished in a spatial fold and cannot act.`,kind:'status'});if(!c._skipTurns||c._skipTurns<=0){removeStatus(c,'banished');removeStatus(c,'untargetable');}continue;}
        if(c.agent){const pressure=0;
        if((c.agent.madness||0)>=50&&r()<.18){lines.push({text:`${c.name} loses the action to mounting Madness.`,kind:'status'});continue;}if(actionDisabled(c)){
@@ -1201,7 +1214,7 @@ function resolveQuest(members,quest,seed=Date.now(),decisions={}){
        if(t.hp>0&&t.hp<before){}
 
    }
-   }finally{tickUnitStatuses(c);}
+   }finally{c._acting = false; tickUnitStatuses(c);}
    }
  }
  const success=allies.some(x=>x.alive&&x.inCombat)&&!enemies.some(x=>x.alive); if(success)lines.push({text:'The hostile force is defeated and the guild completes the contract.',kind:'victory'});else lines.push({text:'The guild is defeated in the encounter.',kind:'failure'});
