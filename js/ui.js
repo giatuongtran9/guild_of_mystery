@@ -63,6 +63,12 @@ function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
         if (target) { target.curHp = 0; target.curShield = 0; }
       }
     }
+    if (row.revives) {
+      for (const rv of row.revives) {
+        const target = hpMap[rv.targetId] || hpMap[rv.targetName];
+        if (target) { target.curHp = rv.hpAfter !== undefined ? rv.hpAfter : (rv.amount || 1); }
+      }
+    }
     if (row.type === 'death' && (row.targetId || row.targetName)) {
       const target = hpMap[row.targetId] || hpMap[row.targetName];
       if (target) { target.curHp = 0; target.curShield = 0; }
