@@ -68,6 +68,16 @@ function groupEventsToRows(events, battleSnapshot) {
     }
 
     if (ev.type === 'story') {
+      // Awakened by the hit that is still being resolved: show it inside that attack row (cast -> hit -> awakening -> stuns).
+      if (ev.subtype === 'mythical_form' && ev.inTurn && activeTurn) {
+        activeTurn.subrows.push({ type: 'mythical', text: ev.text });
+        continue;
+      }
+      // Any other story line is chronologically after the pending turn, so close that turn first.
+      if (activeTurn) {
+        r.rows.push(activeTurn);
+        activeTurn = null;
+      }
       r.rows.push({
         id: `story_${ev.round}_${i}`,
         round: ev.round,
@@ -352,7 +362,7 @@ function resolveIncoming(attacker,defender,dmg,state,lines,r,opt={}){
   const mult=incomingMultiplier(defender);
   if(mult!==1&&rem>0){const reduced=Math.max(0,Math.round(rem*mult));if(reduced!==rem)lines.push({text:`${defender.name}'s damage ${mult<1?'reduction':'vulnerability'} changes ${rem} damage to ${reduced}.`,kind:'status'});rem=reduced;}
   defender.hp-=rem;res.hpLoss=rem;
-  if(defender.hp>0&&(defender.agent||(defender.path&&defender.sequence!=null))){tryMythicalForm(defender.agent||defender,defender,state,lines,r);}
+  if(defender.hp>0&&(defender.agent||(defender.path&&defender.sequence!=null))){if(state)state._mythicalFromHit=true;try{tryMythicalForm(defender.agent||defender,defender,state,lines,r);}finally{if(state)state._mythicalFromHit=false;}}
  }
  if(rf&&attacker&&attacker!==defender&&attacker.alive){
   let refl=0;
