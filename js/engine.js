@@ -1110,7 +1110,7 @@ function resolveQuest(members,quest,seed=Date.now(),decisions={}){
    for (const u of [...allies, ...enemies]) u._actedThisRound = false;                                                                
    const initiativeLine=[...allies.filter(x=>x.alive),...enemies.filter(x=>x.alive)].sort((a,b)=>{const sa=unitInitiative(a);const sb=unitInitiative(b);return sb-sa;}).map(x=>`${x.name} ${unitInitiative(x).toFixed(1)}`).join(' → '); lines.push({text:`Initiative: ${initiativeLine}`,kind:'system'}); emitCombatEvent(state, {round, type: 'system', subtype: 'initiative', details: initiativeLine, text: `Initiative: ${initiativeLine}`});
    processSpiritThreads(state,lines);                                                                 
-   for(const unit of [...allies,...enemies])processStatuses(unit,t=>lines.push({text:t,kind:'status'}));if(unit.alive)tryMythicalForm(unit.agent||unit,unit,state,lines,r);
+   for(const unit of [...allies,...enemies]){processStatuses(unit,t=>lines.push({text:t,kind:'status'}));if(unit.alive)tryMythicalForm(unit.agent||unit,unit,state,lines,r);}
    tickCombatEffectDurations([...allies,...enemies]);applyPassiveAuras([...allies,...enemies],state);
    const order=[...allies.filter(x=>x.alive),...enemies.filter(x=>x.alive)].sort((a,b)=>unitInitiative(b)-unitInitiative(a));
    const actors=order;
