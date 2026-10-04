@@ -110,7 +110,7 @@ function tryRevive(t, lines, state) {
   if (state && typeof emitCombatEvent === 'function') {
     emitCombatEvent(state, {
       round: state.currentRound || 1,
-      type: 'heal',
+      type: 'revive',
       actorId: t.id,
       actorName: t.name,
       actorTeam: teamOf(t, state),
