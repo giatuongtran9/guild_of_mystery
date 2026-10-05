@@ -8,7 +8,7 @@
   // 1. Character Sprite Mapping (Fool Pathway Seq 9 to 0 under data/assets/characters/)
   function getCharacterSprite(pathKey, seqNum) {
     if (pathKey === 'fool' && seqNum >= 0 && seqNum <= 9) {
-      return `data/assets/characters/fool_seq${seqNum}.png`;
+      return `data/assets/characters/fool/fool_seq${seqNum}.png`;
     }
     return null;
   }
