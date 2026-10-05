@@ -12,7 +12,7 @@ vm.runInContext(source.slice(0, source.indexOf('function battlefieldImageFor')),
 const render = unit => context.getCombatSprite(unit);
 const imageSource = html => html.match(/src="([^"]+)"/)[1];
 
-for (const pathway of ['door', 'fool']) {
+for (const pathway of ['door', 'fool', 'visionary']) {
   for (let sequence = 0; sequence <= 9; sequence++) {
     const file = imageSource(render({ path: pathway, sequence, name: 'Test' }));
     assert.equal(file, `data/assets/characters/${pathway}/${pathway}_seq${sequence}.png`);
@@ -28,9 +28,12 @@ assert.equal(imageSource(render({ path: 'door', name: 'Door Seq 2' })), 'data/as
 assert.equal(imageSource(render({ path: 'door', name: 'Missing sequence' })), 'data/assets/characters/door/door_seq9.png');
 assert.equal(imageSource(render({ path: 'door', sequence: 10 })), 'data/assets/characters/door/door_seq9.png');
 assert.equal(imageSource(render({ path: 'door', sequence: '0' })), 'data/assets/characters/door/door_seq0.png');
+context.state.roster = [{ id: 'visionary-agent', name: 'Spectator', path: 'visionary', sequence: 9 }];
+assert.equal(imageSource(render({ id: 'visionary-agent', name: 'Spectator' })), 'data/assets/characters/visionary/visionary_seq9.png');
+assert.equal(imageSource(render({ id: 'visionary-agent', path: 'door', sequence: 2 })), 'data/assets/characters/door/door_seq2.png');
 assert.equal(imageSource(render({ path: 'error', sequence: 5 })), 'data/assets/characters/fool/fool_seq5.png');
 
-for (const pathway of ['door', 'fool']) {
+for (const pathway of ['door', 'fool', 'visionary']) {
   const html = render({ path: pathway, sequence: 4, name: '<Mage>' });
   assert.ok(html.includes('&lt;M'), 'Fallback initials must be HTML escaped');
   const fallback = { style: { display: 'none' } };
@@ -43,4 +46,4 @@ for (const pathway of ['door', 'fool']) {
   assert.equal(fallback.style.display, 'flex');
 }
 
-console.log('Combat sprite checks passed: all Door/Fool assets, roster snapshots, sequence resolution, and image fallback.');
+console.log('Combat sprite checks passed: all Door/Fool/Visionary assets, roster snapshots, sequence resolution, and image fallback.');
