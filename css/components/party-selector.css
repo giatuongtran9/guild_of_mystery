@@ -1,0 +1,113 @@
+/* party selector — see css/README.md for ownership. */
+
+.choice-list {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.choice {
+  text-align: left;
+  display: block;
+}
+
+.choice b,
+.choice span {
+  display: block;
+}
+
+.choice span {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+.choice.selected {
+  border-color: var(--gold);
+  background: #252218;
+}
+
+.assign-list {
+  display: grid;
+  gap: 7px;
+  max-height: 260px;
+  overflow: auto;
+}
+
+.assign-row {
+  display: flex!important;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  background: #191a16;
+  color: var(--bone)!important;
+  cursor: pointer;
+}
+
+.assign-row input {
+  accent-color: #b89a61;
+}
+
+.assign-row span {
+  display: flex;
+  flex-direction: column;
+}
+
+.assign-row small {
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.assign-actions {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+.assign-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  border: 1px solid #3e362e;
+  background: #171411;
+  color: #e8dfd2;
+  padding: 11px;
+  margin-bottom: 7px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.assign-row.selected {
+  border-color: #b9985d;
+  background: #211c16;
+}
+
+.assign-row small {
+  display: block;
+  color: #8f877c;
+  margin-top: 3px;
+}
+
+.assign-check {
+  font-size: 18px;
+  color: #c9aa6d;
+  min-width: 20px;
+}
+
+.party-solo-bonus {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  padding: 4px 10px;
+  background: rgba(60, 140, 90, 0.2);
+  border: 1px solid rgba(75, 185, 120, 0.4);
+  border-radius: 4px;
+  font-size: 0.78rem;
+  color: #79e2a5;
+  font-weight: 600;
+}

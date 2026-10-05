@@ -1,0 +1,117 @@
+/* contract cards — see css/README.md for ownership. */
+
+.quest h3 {
+  margin: 0;
+  font-weight: 500;
+}
+
+.quest {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  border-top: 1px solid #2b2c25;
+  padding: 15px 0;
+}
+
+.quest:first-of-type {
+  border-top: 0;
+}
+
+.quest p {
+  color: var(--muted);
+  margin: 5px 0;
+}
+
+.deploy-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #2b2c25;
+  font-size: 13px;
+}
+
+.quest {
+  cursor: pointer;
+}
+
+.quest button {
+  cursor: pointer;
+}
+
+.quest:hover {
+  border-color: #5b5848;
+}
+
+.requirement-box {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px;
+  background: #171411;
+  border: 1px solid #3e362e;
+  margin: 10px 0;
+}
+
+.requirement-box span {
+  padding: 6px 9px;
+  background: #221d18;
+  border-radius: 4px;
+}
+
+.requirement-box {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,.08);
+  margin: 10px 0;
+}
+
+.quest.wanted {
+  border-left: 3px solid #9b4a4a;
+}
+
+.wanted-card {
+  border: 1px solid var(--line);
+  padding: 22px;
+  margin: 14px 0;
+  background: var(--panel);
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0,0,0,.08);
+}
+
+.wanted-card blockquote {
+  margin: 16px 0;
+  padding: 14px 18px;
+  border-left: 3px solid var(--accent);
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.wanted-eyebrow {
+  letter-spacing: .16em;
+  font-size: .72rem;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.wanted-meta {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: .88rem;
+  margin: 8px 0 14px;
+}
+
+.wanted-code {
+  font-family: ui-monospace,SFMono-Regular,Menlo,monospace;
+  background: rgba(0,0,0,.05);
+  padding: 10px 12px;
+  border-radius: 6px;
+}
+
+.wanted-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}

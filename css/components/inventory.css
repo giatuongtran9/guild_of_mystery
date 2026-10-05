@@ -1,0 +1,80 @@
+/* inventory — see css/README.md for ownership. */
+
+.inventory-summary {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.inventory-summary>div {
+  padding: 16px;
+  background: #171411;
+  border: 1px solid #3e362e;
+}
+
+.inventory-summary span,
+.material small {
+  display: block;
+  color: #8f877c;
+  font-size: 11px;
+  letter-spacing: .08em;
+}
+
+.inventory-summary b {
+  font-size: 24px;
+}
+
+.material-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
+  gap: 10px;
+}
+
+.material {
+  padding: 14px;
+  background: #171411;
+  border: 1px solid #3e362e;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.material>span {
+  font-size: 28px;
+  color: #c9aa6d;
+}
+
+.material button {
+  margin-top: 8px;
+}
+
+.equipment-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 10px 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-2,#171717);
+}
+
+.equipment-card b {
+  grid-column: 1/-1;
+  font-size: 1.05rem;
+}
+
+.equipment-card span {
+  font-size: .88rem;
+  color: var(--muted,#aaa);
+}
+
+.equipment-card strong {
+  color: var(--accent,#e7c56a);
+}
+
+.equipment-card button {
+  grid-column: 1/-1;
+  justify-self: start;
+}

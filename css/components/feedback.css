@@ -1,0 +1,102 @@
+/* feedback — see css/README.md for ownership. */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  background: #e0d6bd;
+  color: #14130f;
+  padding: 10px 15px;
+  z-index: 20;
+  box-shadow: 0 10px 35px #000;
+  font-weight: bold;
+}
+
+.empty {
+  padding: 35px 10px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.typing {
+  opacity: .6;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: .2;
+  }
+}
+
+.warning {
+  padding: 10px 12px;
+  border-left: 3px solid #b24b4b;
+  background: rgba(178,75,75,.08);
+}
+
+.warning-symbol {
+  display: inline-block;
+  margin-right: 8px;
+  font-size: 1.1rem;
+  color: #d6a24b;
+  font-weight: 800;
+}
+
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: radial-gradient(circle at top,#1a1914 0,#0d0e0c 48%,#080907 100%);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.loading-card {
+  width: min(520px,100%);
+  border: 1px solid var(--line);
+  background: var(--panel);
+  padding: 30px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.loading-card .brand-mark {
+  display: inline-block;
+  margin-bottom: 18px;
+}
+
+.loading-card h1 {
+  font-size: 28px;
+  font-weight: 500;
+  margin: 0 0 8px;
+}
+
+.loading-card p {
+  color: var(--muted);
+  margin: 6px 0;
+}
+
+.loading-progress {
+  height: 4px;
+  background: var(--line);
+  margin: 24px 0 10px;
+  overflow: hidden;
+}
+
+.loading-progress i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--gold);
+  transition: width .2s ease;
+}
+
+.loading-error {
+  color: var(--red)!important;
+  white-space: pre-wrap;
+  text-align: left;
+  margin-top: 18px!important;
+}

@@ -1,0 +1,364 @@
+/* dungeon arena — see css/README.md for ownership. */
+
+.gm-dungeon-arena {
+  position: relative;
+  width: 100%;
+  min-height: 290px;
+  max-height: 360px;
+  margin: 0 0 16px 0;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(210, 180, 120, 0.25);
+  background: #11151a;
+  user-select: none;
+}
+
+.gm-dungeon-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 30%, #1e2630 0%, #0d1117 75%, #05070a 100%);
+}
+
+.gm-dungeon-ceiling {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 25px;
+  background: linear-gradient(to bottom, #05080c, #111720);
+  border-bottom: 2px solid #202b38;
+}
+
+.gm-dungeon-backwall {
+  position: absolute;
+  top: 25px;
+  left: 14%;
+  right: 14%;
+  height: 95px;
+  background-color: #19212c;
+  background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 24px 16px;
+  border-bottom: 3px solid #0d131a;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.gm-dungeon-door {
+  position: relative;
+  width: 58px;
+  height: 72px;
+  background: #090c10;
+  border: 3px solid #2b394b;
+  border-bottom: none;
+  border-radius: 28px 28px 0 0;
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.5);
+}
+
+.gm-dungeon-door::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px dashed rgba(210, 180, 120, 0.25);
+  border-bottom: none;
+  border-radius: 20px 20px 0 0;
+}
+
+.gm-torch {
+  position: absolute;
+  top: 25px;
+  width: 6px;
+  height: 16px;
+  background: #3a2e1d;
+  border-radius: 2px;
+}
+
+.gm-torch.left {
+  left: 24px;
+}
+
+.gm-torch.right {
+  right: 24px;
+}
+
+.gm-torch::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: -4px;
+  width: 14px;
+  height: 14px;
+  background: radial-gradient(circle, #ffe699 0%, #ff8c00 50%, transparent 80%);
+  border-radius: 50%;
+  filter: blur(1px);
+  opacity: 0.85;
+  animation: gmTorchFlicker 2s infinite alternate;
+}
+
+@keyframes gmTorchFlicker {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.75;
+  }
+
+  50% {
+    transform: scale(1.15);
+    opacity: 0.95;
+  }
+
+  100% {
+    transform: scale(1.0);
+    opacity: 0.85;
+  }
+}
+
+.gm-dungeon-wall-left {
+  position: absolute;
+  top: 25px;
+  left: 0;
+  width: 14%;
+  height: 100%;
+  background: linear-gradient(to right, #0a0f16, #161e29);
+  clip-path: polygon(0 0, 100% 0, 100% 95px, 0 100%);
+  border-right: 2px solid #263345;
+}
+
+.gm-dungeon-wall-right {
+  position: absolute;
+  top: 25px;
+  right: 0;
+  width: 14%;
+  height: 100%;
+  background: linear-gradient(to left, #0a0f16, #161e29);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 95px);
+  border-left: 2px solid #263345;
+}
+
+.gm-dungeon-floor {
+  position: absolute;
+  top: 120px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #131922;
+  background-image: linear-gradient(rgba(210, 180, 120, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(210, 180, 120, 0.05) 1px, transparent 1px);
+  background-size: 36px 36px;
+  transform-origin: top center;
+  perspective: 400px;
+  box-shadow: inset 0 20px 40px rgba(0, 0, 0, 0.8);
+}
+
+.gm-stage-playfield {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  min-height: 290px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 16px 20px 14px;
+}
+
+.gm-rank-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 24px;
+  width: 100%;
+}
+
+.gm-rank-enemies {
+  padding-top: 10px;
+  min-height: 105px;
+}
+
+.gm-arena-midline {
+  flex: 1;
+  min-height: 10px;
+}
+
+.gm-rank-allies {
+  padding-bottom: 2px;
+  min-height: 130px;
+}
+
+.gm-arena-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  width: 96px;
+}
+
+.gm-arena-unit.dead {
+  opacity: 0.35;
+  filter: grayscale(0.9) brightness(0.6);
+}
+
+.gm-unit-sprite-anchor {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  margin-bottom: 4px;
+}
+
+.gm-unit-shadow {
+  position: absolute;
+  bottom: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 52px;
+  height: 12px;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0) 75%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.gm-unit-sprite {
+  position: relative;
+  z-index: 2;
+  width: 68px;
+  height: 68px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.combat-sprite-img {
+  max-width: 68px;
+  max-height: 68px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.8));
+}
+
+.combat-sprite-fallback {
+  width: 52px;
+  height: 52px;
+  background: #252d3a;
+  border: 1px solid #c9aa71;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #f3e6cf;
+}
+
+.combat-enemy-avatar {
+  width: 52px;
+  height: 52px;
+  background: rgba(30, 16, 20, 0.85);
+  border: 1px solid rgba(220, 70, 70, 0.4);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 12px rgba(200, 40, 40, 0.3);
+}
+
+.enemy-skull {
+  font-size: 1.6rem;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.9));
+}
+
+.gm-unit-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  z-index: 3;
+}
+
+.gm-unit-name-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-bottom: 2px;
+  width: 100%;
+}
+
+.unit-name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #e5edf5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 82px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+}
+
+.unit-seq-badge {
+  font-size: 0.62rem;
+  padding: 1px 4px;
+  background: rgba(180, 145, 90, 0.25);
+  color: #dfcaa2;
+  border: 1px solid rgba(180, 145, 90, 0.45);
+  border-radius: 3px;
+  font-weight: 700;
+  text-shadow: none;
+}
+
+.gm-float-gauge {
+  width: 76px;
+  margin-top: 2px;
+  position: relative;
+}
+
+.gm-float-track {
+  width: 100%;
+  height: 5px;
+  background: rgba(10, 14, 20, 0.85);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.12);
+}
+
+.gm-float-fill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.gm-float-fill.hp {
+  background: linear-gradient(90deg, #d32f2f, #f44336);
+  box-shadow: 0 0 4px rgba(244, 67, 54, 0.6);
+}
+
+.gm-arena-unit.enemy .gm-float-fill.hp {
+  background: linear-gradient(90deg, #b71c1c, #e53935);
+}
+
+.gm-float-fill.shield {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: linear-gradient(90deg, #1976d2, #42a5f5);
+  opacity: 0.85;
+}
+
+.gm-float-fill.mp {
+  background: linear-gradient(90deg, #1565c0, #29b6f6);
+  box-shadow: 0 0 4px rgba(41, 182, 246, 0.6);
+}
+
+.gm-float-num {
+  font-size: 0.58rem;
+  color: #a4b3c6;
+  font-family: monospace;
+  letter-spacing: -0.2px;
+  display: block;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+  margin-top: 1px;
+}

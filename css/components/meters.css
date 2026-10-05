@@ -1,0 +1,41 @@
+/* meters — see css/README.md for ownership. */
+
+.meter {
+  margin: 5px 0;
+  font: 10px system-ui;
+  color: #9f9d92;
+}
+
+.meter>div {
+  display: flex;
+  justify-content: space-between;
+}
+
+.meter i {
+  display: block;
+  height: 4px;
+  background: #292a24;
+  border: 1px solid #34352d;
+  margin-top: 2px;
+}
+
+.meter em {
+  display: block;
+  height: 100%;
+  background: #8e7a56;
+}
+
+.special-meter {
+  margin: 14px 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(214,174,93,.28);
+  background: rgba(214,174,93,.05);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.special-meter small {
+  opacity: .72;
+  line-height: 1.45;
+}

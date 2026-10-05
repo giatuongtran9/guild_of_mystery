@@ -1,0 +1,155 @@
+/* battle simulator — see css/README.md for ownership. */
+
+.sim-unit label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: .82rem;
+}
+
+.sim-unit select {
+  width: 100%;
+  padding: .7rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  color: var(--text);
+}
+
+.battle-simulator .sim-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.sim-side {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.sim-unit {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.sim-actions {
+  display: flex;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.sim-result {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+
+.sim-log {
+  max-height: 520px;
+  overflow: auto;
+  background: rgba(0,0,0,.15);
+  padding: 12px;
+  border-radius: 10px;
+}
+
+.sim-log p {
+  margin: .35rem 0;
+  font-size: .84rem;
+}
+
+.sim-hp {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 12px;
+}
+
+.sim-log .damage {
+  font-weight: 600;
+}
+
+.sim-log .victory {
+  font-weight: 700;
+}
+
+.sim-log .status {
+  opacity: .9;
+}
+
+@media(max-width:800px) {
+  .battle-simulator .sim-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sim-unit {
+    grid-template-columns: 1fr;
+  }
+}
+
+.balance-panel {
+  margin-top: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  overflow: hidden;
+}
+
+.balance-table-wrap {
+  overflow: auto;
+}
+
+.balance-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  min-width: 1150px;
+}
+
+.balance-table th,
+.balance-table td {
+  padding: 9px 8px;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+  vertical-align: top;
+}
+
+.balance-table th:nth-child(2),
+.balance-table th:nth-child(3),
+.balance-table td:nth-child(2),
+.balance-table td:nth-child(3) {
+  text-align: left;
+}
+
+.balance-table th {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  white-space: nowrap;
+}
+
+.balance-table small {
+  display: block;
+  opacity: .65;
+  margin-top: 3px;
+  font-size: 10px;
+}
+
+.balance-table td:nth-child(12) {
+  font-size: 14px;
+}
+
+.sim-raw-log {
+  margin-top: 14px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.sim-raw-log summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.sim-raw-log .sim-log {
+  margin-top: 10px;
+}

@@ -1,0 +1,22 @@
+/* utilities — see css/README.md for ownership. */
+
+.muted {
+  color: var(--muted);
+}
+
+.compact {
+  justify-content: center;
+}
+
+.full {
+  width: 100%;
+  margin-top: 14px;
+}
+
+.dead {
+  opacity: .62;
+}
+
+.gold-note {
+  color: #c9aa6d;
+}

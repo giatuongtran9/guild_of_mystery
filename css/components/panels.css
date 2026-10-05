@@ -1,0 +1,37 @@
+/* panels — see css/README.md for ownership. */
+
+.panel {
+  background: linear-gradient(145deg,#191a16,#12130f);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.section-head h2 {
+  font-weight: 500;
+  margin: 0;
+  font-size: 22px;
+}
+
+.section-head p {
+  margin: 3px 0;
+  color: var(--muted);
+}
+
+.tag {
+  display: inline-block;
+  font: 9px system-ui;
+  letter-spacing: .08em;
+  border: 1px solid #565648;
+  padding: 3px 5px;
+  margin-right: 5px;
+  color: #bcae8c;
+}

@@ -1,0 +1,13 @@
+/* base — see css/README.md for ownership. */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top,#1a1914 0,#0d0e0c 42%,#080907 100%);
+  color: var(--bone);
+  font: 14px/1.5 Georgia,serif;
+  min-height: 100vh;
+}

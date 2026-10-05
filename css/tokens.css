@@ -1,0 +1,15 @@
+/* tokens — see css/README.md for ownership. */
+
+:root {
+  --bg: #0d0e0c;
+  --panel: #171815;
+  --panel2: #1d1e19;
+  --line: #393a31;
+  --bone: #ded7c5;
+  --muted: #989688;
+  --gold: #b89a61;
+  --green: #7ea98a;
+  --red: #b56b67;
+  --blue: #7895aa;
+  --shadow: 0 16px 45px rgba(0,0,0,.35);
+}
