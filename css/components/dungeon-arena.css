@@ -18,138 +18,20 @@
   inset: 0;
   pointer-events: none;
   overflow: hidden;
-  background: radial-gradient(circle at 50% 30%, #1e2630 0%, #0d1117 75%, #05070a 100%);
+  background: #11151a;
 }
 
-.gm-dungeon-ceiling {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 25px;
-  background: linear-gradient(to bottom, #05080c, #111720);
-  border-bottom: 2px solid #202b38;
-}
-
-.gm-dungeon-backwall {
-  position: absolute;
-  top: 25px;
-  left: 14%;
-  right: 14%;
-  height: 95px;
-  background-color: #19212c;
-  background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-  background-size: 24px 16px;
-  border-bottom: 3px solid #0d131a;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-}
-
-.gm-dungeon-door {
-  position: relative;
-  width: 58px;
-  height: 72px;
-  background: #090c10;
-  border: 3px solid #2b394b;
-  border-bottom: none;
-  border-radius: 28px 28px 0 0;
-  box-shadow: inset 0 0 15px rgba(0,0,0,0.9), 0 0 8px rgba(0,0,0,0.5);
-}
-
-.gm-dungeon-door::after {
-  content: '';
-  position: absolute;
-  inset: 6px;
-  border: 1px dashed rgba(210, 180, 120, 0.25);
-  border-bottom: none;
-  border-radius: 20px 20px 0 0;
-}
-
-.gm-torch {
-  position: absolute;
-  top: 25px;
-  width: 6px;
-  height: 16px;
-  background: #3a2e1d;
-  border-radius: 2px;
-}
-
-.gm-torch.left {
-  left: 24px;
-}
-
-.gm-torch.right {
-  right: 24px;
-}
-
-.gm-torch::after {
-  content: '';
-  position: absolute;
-  top: -8px;
-  left: -4px;
-  width: 14px;
-  height: 14px;
-  background: radial-gradient(circle, #ffe699 0%, #ff8c00 50%, transparent 80%);
-  border-radius: 50%;
-  filter: blur(1px);
-  opacity: 0.85;
-  animation: gmTorchFlicker 2s infinite alternate;
-}
-
-@keyframes gmTorchFlicker {
-  0% {
-    transform: scale(0.9);
-    opacity: 0.75;
-  }
-
-  50% {
-    transform: scale(1.15);
-    opacity: 0.95;
-  }
-
-  100% {
-    transform: scale(1.0);
-    opacity: 0.85;
-  }
-}
-
-.gm-dungeon-wall-left {
-  position: absolute;
-  top: 25px;
-  left: 0;
-  width: 14%;
+.gm-battlefield-image {
+  width: 100%;
   height: 100%;
-  background: linear-gradient(to right, #0a0f16, #161e29);
-  clip-path: polygon(0 0, 100% 0, 100% 95px, 0 100%);
-  border-right: 2px solid #263345;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  image-rendering: pixelated;
 }
 
-.gm-dungeon-wall-right {
-  position: absolute;
-  top: 25px;
-  right: 0;
-  width: 14%;
-  height: 100%;
-  background: linear-gradient(to left, #0a0f16, #161e29);
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 95px);
-  border-left: 2px solid #263345;
-}
-
-.gm-dungeon-floor {
-  position: absolute;
-  top: 120px;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #131922;
-  background-image: linear-gradient(rgba(210, 180, 120, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(210, 180, 120, 0.05) 1px, transparent 1px);
-  background-size: 36px 36px;
-  transform-origin: top center;
-  perspective: 400px;
-  box-shadow: inset 0 20px 40px rgba(0, 0, 0, 0.8);
+.gm-battlefield-image[hidden] {
+  display: none;
 }
 
 .gm-stage-playfield {
