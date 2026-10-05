@@ -97,7 +97,22 @@ function getCombatSprite(u) {
 
   return `<img class="combat-sprite-img" src="data/assets/characters/fool/fool_seq${spriteSeq}.png" onerror="this.onerror=null;this.src='data/assets/characters/fool/seq${spriteSeq}.png';this.onerror=()=>{this.style.display='none';const fb=this.parentElement.querySelector('.combat-sprite-fallback');if(fb)fb.style.display='flex';};" alt="Seq ${spriteSeq}"><div class="combat-sprite-fallback" style="display:none">${esc((u.name||'?').slice(0,2).toUpperCase())}</div>`;
 }
-function renderHpStrip(hpMap, allies, enemies) {
+function battlefieldImageFor(quest = {}, isSim = false) {
+  const config = typeof G9D !== 'undefined' ? G9D.contracts.battlefields || {} : {};
+  const image = value => typeof value === 'string' ? value.trim() : '';
+  if (isSim) return image(config.simulatorImage) || image(config.defaultImage);
+  for (const key of [quest.battlefield, quest.target, quest.name]) {
+    const match = image(config.encounters?.[key]);
+    if (match) return match;
+  }
+  for (const key of [quest.environment, quest.lastSeen, ...(quest.tags || [])]) {
+    const match = image(config.environments?.[key]);
+    if (match) return match;
+  }
+  return image(config.defaultImage);
+}
+
+function renderHpStrip(hpMap, allies, enemies, battlefieldImage = '') {
   function combatEntity(u, team) {
     const data = (u.id && hpMap[u.id]) || (u.name && hpMap[u.name]) || { curHp: u.hp || u.maxHp, maxHp: u.maxHp, curShield: 0, curMp: u.mp || 100, maxMp: u.maxMp || 100 };
     const curHp = Math.max(0, data.curHp !== undefined ? data.curHp : (u.hp || u.maxHp || 100));
@@ -152,17 +167,8 @@ function renderHpStrip(hpMap, allies, enemies) {
   }
 
   return `<div class="gm-dungeon-arena" aria-label="Guild Master Dungeon Arena">
-    <!-- 3D Perspective Dungeon Room Background -->
-    <div class="gm-dungeon-backdrop">
-      <div class="gm-dungeon-ceiling"></div>
-      <div class="gm-dungeon-backwall">
-        <div class="gm-dungeon-door"></div>
-        <div class="gm-torch left"></div>
-        <div class="gm-torch right"></div>
-      </div>
-      <div class="gm-dungeon-wall-left"></div>
-      <div class="gm-dungeon-wall-right"></div>
-      <div class="gm-dungeon-floor"></div>
+    <div class="gm-dungeon-backdrop" aria-hidden="true">
+      ${battlefieldImage ? `<img class="gm-battlefield-image" src="${esc(battlefieldImage)}" alt="" onerror="this.hidden=true">` : ''}
     </div>
 
     <!-- Arena Stage Playfield -->
@@ -327,36 +333,21 @@ function renderBattleLogComponent({
   speed,
   summaryText,
   isSim,
-  onScrollHandler
+  battlefieldImage = ''
 }) {
   const visible = flattenedRows.slice(0, shownCount);
   const hpMap = calculateCurrentHp(allies, enemies, visible);
 
-  let contentHtml = '';
-  if (visible.length > 70) {
-    const older = visible.slice(0, visible.length - 40);
-    const recent = visible.slice(visible.length - 40);
-    contentHtml = `<details class="collapsed-rounds"><summary>Previous turns (${older.length} events) — click to expand</summary>${older.map(r => renderTurnRowHtml(r, showDetails)).join('')}</details>${recent.map(r => renderTurnRowHtml(r, showDetails)).join('')}`;
-  } else {
-    contentHtml = visible.map(r => renderTurnRowHtml(r, showDetails)).join('');
-  }
+  // Keep earlier turns in place so incoming events cannot collapse the text being read.
+  const contentHtml = visible.map(r => renderTurnRowHtml(r, showDetails)).join('');
 
   return `<div class="battle-log-wrap" role="log" aria-live="polite">
-    ${renderHpStrip(hpMap, allies, enemies)}
-    <div class="battle-ticker-viewport" id="${isSim ? 'sim-viewport' : 'battle-viewport'}" onscroll="${onScrollHandler}">
-      ${contentHtml}
-      ${!isDone ? '<div class="typing" style="padding:6px 8px;font-style:italic;color:var(--muted)">Battling…</div>' : ''}
-    </div>
-    ${isDone && summaryText ? `<div class="b-result-box ${summaryText.includes('defeated') || summaryText.includes('Team A') ? 'victory' : 'failure'}">
-      <h4>Encounter Summary</h4>
-      <p>${esc(summaryText)}</p>
-    </div>` : ''}
     <div class="battle-toolbar">
       <div class="speed-controls">
         <button type="button" class="${speed===1?'active':''}" onclick="window.G9.setTickerSpeed(1)">1x</button>
         <button type="button" class="${speed===2?'active':''}" onclick="window.G9.setTickerSpeed(2)">2x</button>
         <button type="button" class="${speed===4?'active':''}" onclick="window.G9.setTickerSpeed(4)">4x</button>
-        ${!isDone ? `<button type="button" onclick="window.G9.skipTicker()">Skip</button>` : ''}
+        ${!isDone ? `<button type="button" onclick="window.G9.skipTicker(${isSim})">Skip</button>` : ''}
       </div>
       <div>
         <button type="button" class="${showDetails?'active':''}" onclick="${isSim ? 'window.G9.toggleSimDetails()' : 'window.G9.toggleDetails()'}">
@@ -364,13 +355,22 @@ function renderBattleLogComponent({
         </button>
       </div>
     </div>
+    ${renderHpStrip(hpMap, allies, enemies, battlefieldImage)}
+    <div class="battle-ticker-viewport" id="${isSim ? 'sim-viewport' : 'battle-viewport'}">
+      ${contentHtml}
+      ${!isDone ? '<div class="typing" style="padding:6px 8px;font-style:italic;color:var(--muted)">Battling…</div>' : ''}
+    </div>
+    ${isDone && summaryText ? `<div class="b-result-box ${summaryText.includes('defeated') || summaryText.includes('Team A') ? 'victory' : 'failure'}">
+      <h4>Encounter Summary</h4>
+      <p>${esc(summaryText)}</p>
+    </div>` : ''}
   </div>`;
 }
 
 // ===== Browser UI =====
 if (typeof document !== 'undefined') (() => {
   'use strict';
-  let state=loadGame()||newGame(), tab='hall', selected=null, previewPath=PATH_KEYS[0], planning=null, run=null, notice='', tickerTimer=null, tickerSpeed=1, showBattleDetails=false, simBattleDetails=false, userScrolledUp=false, simMode='1v1', simA=[{path:PATH_KEYS[0],sequence:9},{path:PATH_KEYS[0],sequence:9}], simB=[{path:PATH_KEYS[1]||PATH_KEYS[0],sequence:9},{path:PATH_KEYS[1]||PATH_KEYS[0],sequence:9}], simResult=null;
+  let state=loadGame()||newGame(), tab='hall', selected=null, previewPath=PATH_KEYS[0], planning=null, run=null, notice='', tickerTimer=null, tickerSpeed=1, showBattleDetails=false, simBattleDetails=false, simMode='1v1', simA=[{path:PATH_KEYS[0],sequence:9},{path:PATH_KEYS[0],sequence:9}], simB=[{path:PATH_KEYS[1]||PATH_KEYS[0],sequence:9},{path:PATH_KEYS[1]||PATH_KEYS[0],sequence:9}], simResult=null;
   const app=document.getElementById('app');
   const clone=v=>JSON.parse(JSON.stringify(v));
   const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -381,25 +381,38 @@ if (typeof document !== 'undefined') (() => {
   function commit(fn){const draft=clone(state);fn(draft);state=draft;saveGame(draft);render();}
   function toast(msg){notice=msg;render();setTimeout(()=>{if(notice===msg){notice='';render()}},2400)}
   function render(){
+    const pagePosition = { x: window.scrollX, y: window.scrollY };
+    const scrollPositions = Array.from(app.querySelectorAll('.quest-modal, .battle-ticker-viewport')).map(el => ({
+      selector: el.id ? `#${el.id}` : '.quest-modal',
+      top: el.scrollTop,
+      left: el.scrollLeft,
+      follow: el.classList.contains('battle-ticker-viewport') && el.scrollHeight - el.scrollTop - el.clientHeight <= 35
+    }));
     const active=activeRoster();
     app.innerHTML=`<header class="top"><div><div class="eyebrow">LEDGER OF THE GUILD</div><h1>Guild of Mystery</h1><p>Day ${state.day} · Reputation ${state.reputation}</p></div><div class="brand-mark">XXII</div></header>
     <section class="resources"><div><span>FUNDS</span><b>£${state.funds.toLocaleString()}</b></div><div><span>REPUTATION</span><b>${state.reputation}</b></div><div><span>CONTRACTS</span><b>${state.quests.length}</b></div></section>
     <nav class="tabs">${[['hall','Guild Hall'],['preview','Pathways'],['simulator','Battle Simulator'],['recruit','Recruitment'],['quests','Contracts'],['wanted','Wanted'],['inventory','Inventory'],['chronicle','Chronicle']].map(([id,label])=>`<button class="${tab===id?'active':''}" onclick="window.G9.tab('${id}')">${label}</button>`).join('')}</nav>
     <main>${tab==='hall'?hall():tab==='preview'?pathwayPreview():tab==='simulator'?battleSimulator():tab==='recruit'?recruit():tab==='quests'?quests():tab==='wanted'?wanted():tab==='inventory'?inventory():chronicleView()}</main>
     ${selected?dossier():''}${planning?assignmentModal():''}${run?runModal():''}${notice?`<div class="toast">${esc(notice)}</div>`:''}`;
-    if(run && run.currentTurn < (run.turnRows||[]).length && !tickerTimer){
+    for (const position of scrollPositions) {
+      const el = app.querySelector(position.selector);
+      if (!el) continue;
+      el.scrollTop = position.follow ? el.scrollHeight : position.top;
+      el.scrollLeft = position.left;
+    }
+    window.scrollTo(pagePosition.x, pagePosition.y);
+    const playing = run || (tab === 'simulator' ? simResult : null);
+    if (playing && playing.currentTurn < playing.turnRows.length && !tickerTimer) {
       const delay = tickerSpeed === 4 ? 100 : (tickerSpeed === 2 ? 250 : 500);
       tickerTimer = setTimeout(() => {
-        run.currentTurn++;
         tickerTimer = null;
+        const current = run || (tab === 'simulator' ? simResult : null);
+        if (current === playing) playing.currentTurn++;
         render();
-        if (!userScrolledUp) {
-          const vp = document.getElementById('battle-viewport');
-          if (vp) vp.scrollTop = vp.scrollHeight;
-        }
       }, delay);
     }
   }
+
   function pathwayPreview(){
     const p=pathOf(previewPath)||pathOf(PATH_KEYS[0]);
     const intro=p.quirkText||G9D.pathways.introductions[previewPath]||`${p.name} is one of the twenty-two supernatural Pathways.`;
@@ -431,13 +444,13 @@ if (typeof document !== 'undefined') (() => {
     allies: simResult.teamA,
     enemies: simResult.teamB,
     flattenedRows: simResult.turnRows,
-    shownCount: simResult.turnRows.length,
-    isDone: true,
+    shownCount: simResult.currentTurn,
+    isDone: simResult.currentTurn >= simResult.turnRows.length,
     showDetails: simBattleDetails,
-    speed: 1,
+    speed: tickerSpeed,
     summaryText: simResult.summaryText,
     isSim: true,
-    onScrollHandler: ''
+    battlefieldImage: battlefieldImageFor({}, true)
   })}
 </div></div>`:'<p class="muted">Choose both sides and press Simulate Battle. No guild resources or roster characters are changed.</p>'}</section>`;
   }
@@ -483,7 +496,7 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
       speed: tickerSpeed,
       summaryText: summary.summaryText,
       isSim: false,
-      onScrollHandler: 'window.G9.onTickerScroll(this)'
+      battlefieldImage: battlefieldImageFor(q)
     });
 
     return `<div class="overlay"><div class="modal quest-modal">
@@ -496,7 +509,9 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
   }
   window.G9={
     setTickerSpeed: spd => {
-      tickerSpeed = Number(spd) || 1;
+      tickerSpeed = [1, 2, 4].includes(Number(spd)) ? Number(spd) : 1;
+      clearTimeout(tickerTimer);
+      tickerTimer = null;
       render();
     },
     toggleDetails: () => {
@@ -507,14 +522,9 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
       simBattleDetails = !simBattleDetails;
       render();
     },
-    onTickerScroll: el => {
-      if (!el) return;
-      const atBottom = (el.scrollHeight - el.scrollTop - el.clientHeight) <= 35;
-      userScrolledUp = !atBottom;
-    },
     tab:t=>{tab=t;render()},previewPath:path=>{if(PATH_KEYS.includes(path)){previewPath=path;render()}},simMode:m=>{simMode=m;render()},simSet:(team,i,key,value)=>{const arr=team==='A'?simA:simB;if(arr[i])arr[i][key]=value;render()},clearSimulation:()=>{simResult=null;render()},runSimulation:()=>{const seed=Date.now()%2147483647;const count=simMode==='1v1'?1:2;const mk=(x,i)=>{const a=makeAgent(Math.random,{sequence:x.sequence,path:x.path,trait:'Stout Vitality'});a.id=`sim_${i}_${x.path}_${x.sequence}`;a.name=`${pathOf(x.path).name} Seq ${x.sequence}`;a.awakened=true;a.path=x.path;a.sequence=x.sequence;a.recommendedPath=x.path;a.injuries=0;a.weaponId='none';a.weaponMastery={};a.sp=maxSPFor(a);restatAgent(a);return a;};const members=simA.slice(0,count).map((x,i)=>mk(x,i));const opponents=simB.slice(0,count).map((x,i)=>({path:x.path,sequence:x.sequence}));const q={id:'sim',name:`${simMode} Battle`,brief:'Battle Simulator',story:'A controlled simulation. No guild resources are changed.',objective:'combat',difficultySequence:Math.min(...opponents.map(x=>x.sequence)),encounter:true,mundane:false,rewards:{funds:0,reputation:0,materials:{}},enemyCount:count,requiredPath:opponents[0].path};const res=resolveQuest(members,q,seed,{individual:count===1,simulationOpponents:opponents});const snap=res.battleSnapshot||{allies:[],enemies:[]};const simTurns = flattenTurnRows(groupEventsToRows(res.events||[]));
     const simSummary = summarizeBattleEvents(res.events||[], snap);
-    simResult={success:res.success,rounds:(res.events&&res.events.length)?Math.max(1,...res.events.map(e=>e.round||1)):(res.lines?res.lines.filter(x=>/^· Round /.test(x.text)).length:1),lines:res.lines,events:res.events||[],turnRows:simTurns,summaryText:simSummary.summaryText,teamA: members.map((m, i) => ({
+    simResult={currentTurn:0,success:res.success,rounds:(res.events&&res.events.length)?Math.max(1,...res.events.map(e=>e.round||1)):(res.lines?res.lines.filter(x=>/^· Round /.test(x.text)).length:1),lines:res.lines,events:res.events||[],turnRows:simTurns,summaryText:simSummary.summaryText,teamA: members.map((m, i) => ({
   ...m,
   id: m.id,
   name: m.name,
@@ -534,7 +544,7 @@ teamB: opponents.map((o, i) => ({
   alive: snap.enemies[i] ? snap.enemies[i].alive : true,
   hp: snap.enemies[i] ? snap.enemies[i].hp : 100,
   maxHp: snap.enemies[i] ? snap.enemies[i].maxHp : 100
-})),balanceTrace:snap.balanceTrace||[]};render()},fastTicker:()=>{if(!run)return;run.currentTurn=Math.min(run.turnRows.length,run.currentTurn+5);render();},skipTicker:()=>{if(!run)return;run.currentTurn=run.turnRows.length;render();},dossier:id=>{selected=id;render()},closeDossier:()=>{selected=null;render()},recruitInfo:id=>{const a=state.recruitPool.find(x=>x.id===id);if(a){toast(`${a.name}: ${a.occupation}. Recommended ${pathName(a.recommendedPath)}.`)}},
+})),balanceTrace:snap.balanceTrace||[]};render()},fastTicker:()=>{if(!run)return;run.currentTurn=Math.min(run.turnRows.length,run.currentTurn+5);render();},skipTicker:(isSim=false)=>{const playing=isSim?simResult:run;if(!playing)return;playing.currentTurn=playing.turnRows.length;clearTimeout(tickerTimer);tickerTimer=null;render();},dossier:id=>{selected=id;render()},closeDossier:()=>{selected=null;render()},recruitInfo:id=>{const a=state.recruitPool.find(x=>x.id===id);if(a){toast(`${a.name}: ${a.occupation}. Recommended ${pathName(a.recommendedPath)}.`)}},
     hire:id=>{const a=state.recruitPool.find(x=>x.id===id);if(!a)return;if(state.funds<150)return toast('Not enough funds.');commit(d=>{d.funds-=150;d.recruitPool=d.recruitPool.filter(x=>x.id!==id);a.history=[{day:d.day,text:`Hired from the Recruitment Office as an ordinary ${a.occupation.toLowerCase()}.`}];d.roster.push(clone(a));chronicle(d,`${a.name} joins the guild as an ordinary ${a.occupation.toLowerCase()}.`);if(!d.recruitPool.length){d.recruitPool=makeRecruitPool(4,Date.now(),d.reputation);d.recruitRefreshDay=d.day+7}})},
     refreshRecruit:()=>{if(state.day<state.recruitRefreshDay)return toast(`The office is not ready to refresh for ${state.recruitRefreshDay-state.day} more day(s).`);commit(d=>{d.recruitPool=makeRecruitPool(4,Date.now(),d.reputation);d.recruitRefreshDay=d.day+7;chronicle(d,'The Recruitment Office refreshes its candidates.')})},
     choosePath:(id,path)=>{const a=state.roster.find(x=>x.id===id);if(!a||a.awakened||!PATH_KEYS.includes(path))return;const cost=1;if((state.materials[pathOf(path).material]||0)<cost)return toast(`You need 1 ${pathOf(path).material} to awaken.`);commit(d=>{const x=d.roster.find(y=>y.id===id);x.path=path;x.sequence=9;x.awakened=true;x.digest=0;x.stats=awakenStats(x,path);x.baseStats={...x.stats};x.maxSP=maxSPFor(x);x.sp=x.maxSP;x.cooldowns={};x.basePathSpeed=basePathSpeed(path);x.humanStats=x.humanStats||{...x.stats};const aw=tierFor(path,9), awA=aw.abilities?.[0]||{};x.abilities=[awA];x.abilityHistory=[{sequence:9,name:aw.name,ability:awA.text||aw.abilityText||aw.ability,type:awA.type||aw.type,effectId:awA.effectId||aw.effectId,damage:awA.damage||null,effects:awA.effects||[],effects:awA.effects||[]}];noteAgent(x,d.day,`Drank the ${pathName(path)} Sequence 9 potion and awakened as Sequence 9 ${tierFor(path,9).name}.`);chronicle(d,`${x.name} awakens as Sequence 9 ${pathName(path)}.`);d.materials[pathOf(path).material]-=cost;d.day+=1;if(d.quests.every(q=>!q.encounter))d.quests.push(makeQuest(()=>.5,9,10,Math.max(5,d.reputation),[path]));})},
