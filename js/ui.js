@@ -1,517 +1,523 @@
-// js/ui.js — Responsive Guild Master UI with Fool Sprites, Party Dispatch & Stage Combat
-(() => {
-  // Load or create the game state
-  let state = (typeof loadGame === 'function' ? loadGame() : null);
-  if (!state && typeof newGame === 'function') {
-    state = newGame();
-    if (typeof saveGame === 'function') saveGame(state);
-  }
+const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 
-  let activeTab = 'contracts';
-  let activeBattleData = null;
-  let inspectingAgentId = null;
-  let partySelection = [];
-
-  // 1. Character Sprite Mapping (Supports both data/assets/characters/fool/ and data/assets/characters/)
-  function getCharacterSprite(pathKey, seqNum) {
-    if (pathKey === 'fool' && seqNum >= 0 && seqNum <= 9) {
-      return `data/assets/characters/fool/fool_seq${seqNum}.png`;
-    }
-    return null;
-  }
-
-  // Sequence Badge Titles and Fallback Emojis
-  function getSequenceBadge(pathKey, seqNum) {
-    if (pathKey === 'fool') {
-      const foolBadges = {
-        9: { icon: "🔮", title: "Seer" },
-        8: { icon: "🎭", title: "Clown" },
-        7: { icon: "🎩", title: "Magician" },
-        6: { icon: "👤", title: "Faceless" },
-        5: { icon: "🧵", title: "Marionettist" },
-        4: { icon: "🎪", title: "Bizarro Sorcerer" },
-        3: { icon: "⏳", title: "Scholar of Yore" },
-        2: { icon: "✨", title: "Miracle Invoker" },
-        1: { icon: "👁️", title: "Attendant of Mysteries" },
-        0: { icon: "🃏", title: "The Fool" }
-      };
-      return foolBadges[seqNum] || { icon: "🃏", title: `Seq ${seqNum}` };
-    }
-    return { icon: "⚡", title: `Seq ${seqNum}` };
-  }
-
-  // Renders sprite img with fallback to emoji
-  function renderAvatar(hero, extraStyle = '') {
-    const sprite = getCharacterSprite(hero.path, hero.sequence);
-    const badge = getSequenceBadge(hero.path, hero.sequence);
-    if (sprite) {
-      return `
-        <div class="gm-avatar-wrapper" ${extraStyle}>
-          <img src="${sprite}" class="gm-sprite-img" alt="${hero.name || badge.title}" onerror="this.style.display='none';if(this.nextElementSibling)this.nextElementSibling.style.display='flex'">
-          <span class="gm-avatar-fallback" style="display:none">${badge.icon}</span>
-        </div>
-      `;
-    }
-    return `
-      <div class="gm-avatar-wrapper" ${extraStyle}>
-        <span class="gm-avatar-fallback">${badge.icon}</span>
-      </div>
-    `;
-  }
-
-  function renderApp(currentState) {
-    if (currentState) state = currentState;
-    const root = document.getElementById('app');
-    if (!root || !state) return;
-
-    const gold = state.funds ?? state.resources?.gold ?? 1000;
-    const materialsCount = state.materials ? Object.values(state.materials).reduce((a,b)=>a+b, 0) : 0;
-    const rosterCount = (state.roster || []).length;
-    const questsAvailable = (state.quests || []).length;
-
-    root.innerHTML = `
-      <header class="gm-header">
-        <div class="gm-header-title">
-          <span>Guild of Mystery</span>
-          <span style="color:var(--gold-bright)">Day ${state.day || 1}</span>
-        </div>
-        <div class="gm-res-row">
-          <div class="gm-res-item"><span class="gm-res-label">Funds:</span><span class="gm-res-val" style="color:var(--gold-bright)">🪙 £${gold}</span></div>
-          <div class="gm-res-item"><span class="gm-res-label">Materials:</span><span class="gm-res-val">📦 ${materialsCount}</span></div>
-          <div class="gm-res-item"><span class="gm-res-label">Beyonders:</span><span class="gm-res-val">👥 ${rosterCount}</span></div>
-          <div class="gm-res-item"><span class="gm-res-label">Reputation:</span><span class="gm-res-val">⭐ ${state.reputation || 0}</span></div>
-        </div>
-      </header>
-
-      <main class="gm-content-view">
-        ${renderActiveTab(state)}
-      </main>
-
-      <nav class="gm-tab-nav">
-        <button class="gm-tab-btn ${activeTab==='contracts'?'active':''}" onclick="window.GM.setTab('contracts')">
-          <span class="gm-tab-icon">📜</span>
-          <span>Contracts</span>
-        </button>
-        <button class="gm-tab-btn ${activeTab==='roster'?'active':''}" onclick="window.GM.setTab('roster')">
-          <span class="gm-tab-icon">👥</span>
-          <span>Roster</span>
-        </button>
-        <button class="gm-tab-btn ${activeTab==='pathways'?'active':''}" onclick="window.GM.setTab('pathways')">
-          <span class="gm-tab-icon">🔮</span>
-          <span>Pathways</span>
-        </button>
-        <button class="gm-tab-btn ${activeTab==='guild'?'active':''}" onclick="window.GM.setTab('guild')">
-          <span class="gm-tab-icon">🏛️</span>
-          <span>Guild</span>
-        </button>
-      </nav>
-
-      ${inspectingAgentId ? renderInspectModal(state, inspectingAgentId) : ''}
-    `;
-  }
-
-  function renderActiveTab(state) {
-    switch (activeTab) {
-      case 'contracts': return renderContractsTab(state);
-      case 'roster': return renderRosterTab(state);
-      case 'pathways': return renderPathwaysTab(state);
-      case 'guild': return renderGuildTab(state);
-      default: return renderContractsTab(state);
+function flattenTurnRows(groupedRounds) {
+  const flattened = [];
+  for (const gr of groupedRounds) {
+    flattened.push({ isRoundHeader: true, round: gr.round, initiative: gr.initiative });
+    for (const row of gr.rows) {
+      flattened.push(row);
     }
   }
+  return flattened;
+}
 
-  // --- CONTRACTS & PARTY DISPATCH ---
-  function renderContractsTab(state) {
-    if (activeBattleData) return renderActiveBattle(state, activeBattleData);
-
-    const quests = state.quests || [];
-    const roster = (state.roster || []).filter(a => a.status === 'active');
-    const isSolo = partySelection.length === 1;
-
-    return `
-      <div class="gm-section-title">
-        <span>Party Deployment (1–3 Beyonders)</span>
-        <small style="color:${partySelection.length > 0 ? 'var(--gold-bright)' : 'var(--muted)'}">
-          ${partySelection.length}/3 Selected
-        </small>
-      </div>
-
-      <div class="gm-dispatch-box">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span style="font-size:12px;color:var(--muted)">Select 1, 2, or 3 Beyonders for the expedition:</span>
-          ${partySelection.length > 0 ? `<button onclick="window.GM.clearParty()" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;text-decoration:underline">Clear Selection</button>` : ''}
-        </div>
-
-        <div class="gm-party-selector">
-          ${roster.length === 0 ? `<div style="font-size:12px;color:var(--muted);padding:8px">No active Beyonders in roster. Visit the Guild tab to recruit!</div>` : ''}
-          ${roster.map(a => {
-            const sel = partySelection.includes(a.id);
-            const badge = getSequenceBadge(a.path, a.sequence);
-            return `
-              <div class="gm-party-chip ${sel ? 'selected' : ''}" onclick="window.GM.togglePartySelect('${a.id}')">
-                <div style="display:flex;justify-content:center;margin-bottom:4px">
-                  ${renderAvatar(a)}
-                </div>
-                <div style="font-size:11px;font-weight:600">${(a.name || 'Agent').split(' ')[0]}</div>
-                <small style="color:var(--gold);font-size:10px">${badge.title}</small>
-              </div>
-            `;
-          }).join('')}
-        </div>
-
-        ${isSolo ? `
-          <div class="gm-dispatch-notice">
-            <span>⚡</span>
-            <span><strong>Solo Dispatch Active:</strong> +50% Potion Digestion Bonus upon contract completion!</span>
-          </div>
-        ` : ''}
-      </div>
-
-      <div class="gm-section-title">Available Contracts</div>
-
-      <div class="gm-cards-grid">
-        ${quests.length === 0 ? `<div class="gm-card" style="color:var(--muted)">No contracts available right now.</div>` : ''}
-        ${quests.map(q => `
-          <div class="gm-card">
-            <div class="gm-card-header">
-              <div class="gm-avatar-wrapper"><span style="font-size:22px">⚔️</span></div>
-              <div class="gm-card-info">
-                <div class="gm-card-title">${q.name || q.title || 'Dungeon Contract'}</div>
-                <div class="gm-card-subtitle">Difficulty: Seq ${q.difficultySequence ?? 9}</div>
-              </div>
-            </div>
-            <p style="font-size:12px;color:var(--muted);margin:8px 0">${q.brief || q.story || 'Venture into the depths to retrieve mystical materials.'}</p>
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
-              <div style="font-size:11px;color:var(--gold)">
-                Reward: 🪙 £${q.rewards?.funds || 50} • Rep +${q.rewards?.reputation || 2}
-              </div>
-              <button class="gm-btn" ${partySelection.length === 0 ? 'disabled' : ''} onclick="window.GM.startExpedition('${q.id}')">
-                ${partySelection.length === 0 ? 'Select Party' : `Deploy (${partySelection.length})`}
-              </button>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    `;
+function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
+  const hpMap = {};
+  for (const a of (initialAllies || [])) {
+    const entry = { ...a, curHp: a.maxHp, maxHp: a.maxHp, curShield: 0 };
+    if (a.id) hpMap[a.id] = entry;
+    if (a.name) hpMap[a.name] = entry;
+  }
+  for (const e of (initialEnemies || [])) {
+    const entry = { ...e, curHp: e.maxHp, maxHp: e.maxHp, curShield: 0 };
+    if (e.id) hpMap[e.id] = entry;
+    if (e.name) hpMap[e.name] = entry;
   }
 
-  // --- GUILD MASTER COMBAT PRESENTATION (No Animations) ---
-  function renderActiveBattle(state, battle) {
-    const party = battle.party || [];
-    const enemy = battle.enemy || { name: "Corrupted Entity", hp: 120, maxHp: 120 };
-    const logs = battle.logs || [];
-
-    const enemyMaxHp = enemy.maxHp || 100;
-    const enemyCurHp = Math.max(0, enemy.hp ?? enemyMaxHp);
-    const enemyPct = Math.round((enemyCurHp / enemyMaxHp) * 100);
-
-    return `
-      <div class="gm-section-title">
-        <span>Dungeon Expedition</span>
-        <small style="color:var(--red);font-weight:bold">IN COMBAT</small>
-      </div>
-
-      <div class="gm-battle-stage-wrapper">
-        <!-- Stage: Enemy Opposite at Top, Party Sprites at Bottom -->
-        <div class="gm-battle-arena">
-          <!-- TOP: ENEMY OPPOSITE -->
-          <div class="gm-arena-enemy-top">
-            <div class="gm-enemy-sprite-box">
-              <div class="gm-enemy-avatar">👾</div>
-              <div style="font-weight:700;font-size:13px;color:var(--bone)">${enemy.name}</div>
-              <div class="gm-bar-track" style="width:140px;height:8px">
-                <div class="gm-bar-fill-hp" style="width:${enemyPct}%"></div>
-              </div>
-              <small style="font-size:10px;color:var(--muted)">${enemyCurHp} / ${enemyMaxHp} HP</small>
-            </div>
-          </div>
-
-          <!-- BOTTOM: PARTY SPRITES WITH LIVE HP/MP BARS -->
-          <div class="gm-arena-party-bottom">
-            ${party.map(hero => {
-              const maxHp = (hero.stats && hero.stats.hp) ? hero.stats.hp : 100;
-              const curHp = Math.max(0, hero.currentHp ?? maxHp);
-              const hpPct = Math.round((curHp / maxHp) * 100);
-
-              const maxMp = (hero.stats && hero.stats.mp) ? hero.stats.mp : (hero.maxSP || 50);
-              const curMp = Math.max(0, hero.currentMp ?? maxMp);
-              const mpPct = Math.round((curMp / maxMp) * 100);
-
-              return `
-                <div class="gm-combat-hero">
-                  ${renderAvatar(hero, 'style="width:56px;height:56px"')}
-                  <div class="gm-combat-name">${(hero.name || 'Hero').split(' ')[0]}</div>
-                  <div class="gm-combat-bars">
-                    <div class="gm-bar-track">
-                      <div class="gm-bar-fill-hp" style="width:${hpPct}%" title="HP: ${curHp}/${maxHp}"></div>
-                    </div>
-                    <div class="gm-bar-track">
-                      <div class="gm-bar-fill-mp" style="width:${mpPct}%" title="MP: ${curMp}/${maxMp}"></div>
-                    </div>
-                  </div>
-                </div>
-              `;
-            }).join('')}
-          </div>
-        </div>
-
-        <!-- UNDERNEATH: CHRONOLOGICAL BATTLE LOG -->
-        <div>
-          <div class="gm-section-title">Chronological Battle Log</div>
-          <div class="gm-battle-log-card" id="gmBattleLog">
-            ${logs.length === 0 ? `<div style="color:var(--muted)">Combat commencing...</div>` : ''}
-            ${logs.map((log, idx) => `
-              <div class="gm-log-entry">
-                <span style="color:var(--muted)">[Turn ${idx + 1}]</span> ${log}
-              </div>
-            `).join('')}
-          </div>
-          <div style="margin-top:10px;display:flex;justify-content:flex-end">
-            ${battle.isDone ? `
-              <button class="gm-btn" onclick="window.GM.finishExpedition()">Return to Guild</button>
-            ` : `
-              <button class="gm-btn" onclick="window.GM.stepCombat()">Next Round</button>
-            `}
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  // --- ROSTER TAB ---
-  function renderRosterTab(state) {
-    const roster = state.roster || [];
-    return `
-      <div class="gm-section-title">
-        <span>Beyonders Roster</span>
-        <small>${roster.length} Recruited</small>
-      </div>
-      <div class="gm-cards-grid">
-        ${roster.length === 0 ? `<div class="gm-card" style="color:var(--muted)">No Beyonders recruited yet. Go to Guild tab to hire!</div>` : ''}
-        ${roster.map(a => {
-          const badge = getSequenceBadge(a.path, a.sequence);
-          const maxHp = (a.stats && a.stats.hp) ? a.stats.hp : 100;
-          return `
-            <div class="gm-card" style="cursor:pointer" onclick="window.GM.inspectAgent('${a.id}')">
-              <div class="gm-card-header">
-                ${renderAvatar(a)}
-                <div class="gm-card-info">
-                  <div class="gm-card-title">${a.name}</div>
-                  <div class="gm-card-subtitle">Sequence ${a.sequence} • ${badge.title}</div>
-                  <div style="font-size:11px;color:var(--muted);margin-top:3px">
-                    HP: ${maxHp} • Digestion: ${Math.round(a.digest || a.digestion || 0)}%
-                  </div>
-                </div>
-                <span style="color:var(--line-gold);font-size:18px">›</span>
-              </div>
-            </div>
-          `;
-        }).join('')}
-      </div>
-    `;
-  }
-
-  // --- PATHWAYS TAB ---
-  function renderPathwaysTab(state) {
-    const foolSeqs = [9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
-    return `
-      <div class="gm-section-title">
-        <span>The Fool Pathway</span>
-        <small style="color:var(--gold)">Lord of the Mysteries</small>
-      </div>
-      <div class="gm-cards-grid">
-        ${foolSeqs.map(seq => {
-          const badge = getSequenceBadge('fool', seq);
-          const dummy = { path: 'fool', sequence: seq, name: badge.title };
-          return `
-            <div class="gm-card">
-              <div class="gm-card-header">
-                ${renderAvatar(dummy)}
-                <div class="gm-card-info">
-                  <div class="gm-card-title">Sequence ${seq}: ${badge.title}</div>
-                  <div class="gm-card-subtitle" style="color:var(--muted)">data/assets/characters/fool/fool_seq${seq}.png</div>
-                </div>
-              </div>
-            </div>
-          `;
-        }).join('')}
-      </div>
-    `;
-  }
-
-  // --- GUILD TAB (Recruiting & Facilities) ---
-  function renderGuildTab(state) {
-    const pool = state.recruitPool || [];
-    return `
-      <div class="gm-section-title">Recruitment Office</div>
-      <div class="gm-cards-grid">
-        ${pool.length === 0 ? `<div class="gm-card" style="color:var(--muted)">No candidates available right now.</div>` : ''}
-        ${pool.map(c => `
-          <div class="gm-card">
-            <div class="gm-card-header">
-              <div class="gm-avatar-wrapper"><span style="font-size:20px">👤</span></div>
-              <div class="gm-card-info">
-                <div class="gm-card-title">${c.name}</div>
-                <div class="gm-card-subtitle">${c.occupation || 'Civilian'} • Recommended: ${c.recommendedPath || 'fool'}</div>
-              </div>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
-              <span style="font-size:11px;color:var(--gold)">Cost: £150</span>
-              <button class="gm-btn" onclick="window.GM.hire('${c.id}')">Hire</button>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  }
-
-  // --- INSPECT MODAL ---
-  function renderInspectModal(state, agentId) {
-    const a = (state.roster || []).find(x => x.id === agentId);
-    if (!a) return '';
-    const badge = getSequenceBadge(a.path, a.sequence);
-
-    return `
-      <div style="position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px">
-        <div class="gm-card" style="width:100%;max-width:420px;background:#171813;border:1px solid var(--line-gold);box-shadow:var(--shadow)">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <span style="font-weight:700;color:var(--gold-bright)">Beyonder Dossier</span>
-            <button onclick="window.GM.closeInspect()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer">✕</button>
-          </div>
-          <div style="display:flex;gap:12px;align-items:center;margin-bottom:14px">
-            ${renderAvatar(a, 'style="width:64px;height:64px"')}
-            <div>
-              <div style="font-size:16px;font-weight:700;color:var(--bone)">${a.name}</div>
-              <div style="color:var(--gold);font-size:12px">Seq ${a.sequence} • ${badge.title}</div>
-              <div style="color:var(--muted);font-size:11px">Digestion: ${Math.round(a.digest || a.digestion || 0)}%</div>
-            </div>
-          </div>
-          <div style="font-size:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;background:#11120e;padding:10px;border-radius:6px;border:1px solid var(--line)">
-            <div>HP: <strong>${a.stats?.hp || 100}</strong></div>
-            <div>MP/SP: <strong>${a.stats?.mp || a.sp || 50}</strong></div>
-            <div>ATK: <strong>${a.stats?.atk || 12}</strong></div>
-            <div>DEF: <strong>${a.stats?.def || 10}</strong></div>
-          </div>
-          <div style="margin-top:14px;text-align:right">
-            <button class="gm-btn" onclick="window.GM.closeInspect()">Close</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  // --- WINDOW CONTROLLER EXPORTS ---
-  window.GM = {
-    setTab(t) {
-      activeTab = t;
-      renderApp();
-    },
-    togglePartySelect(id) {
-      const idx = partySelection.indexOf(id);
-      if (idx >= 0) {
-        partySelection.splice(idx, 1);
-      } else {
-        if (partySelection.length < 3) {
-          partySelection.push(id);
+  for (const row of shownRows) {
+    if (row.shields) {
+      for (const s of row.shields) {
+        const target = hpMap[s.targetId] || hpMap[s.targetName];
+        if (target) {
+          target.curShield = (target.curShield || 0) + (s.amount || 0);
         }
       }
-      renderApp();
-    },
-    clearParty() {
-      partySelection = [];
-      renderApp();
-    },
-    inspectAgent(id) {
-      inspectingAgentId = id;
-      renderApp();
-    },
-    closeInspect() {
-      inspectingAgentId = null;
-      renderApp();
-    },
-    hire(id) {
-      if (!state) return;
-      const c = (state.recruitPool || []).find(x => x.id === id);
-      if (!c) return;
-      if ((state.funds || 0) < 150) {
-        alert("Not enough funds (£150 required).");
-        return;
-      }
-      state.funds -= 150;
-      state.recruitPool = state.recruitPool.filter(x => x.id !== id);
-      c.status = 'active';
-      c.path = c.recommendedPath || 'fool';
-      c.sequence = 9;
-      c.digest = 0;
-      c.stats = { hp: 100, mp: 50, atk: 15, def: 10 };
-      state.roster.push(c);
-      if (typeof saveGame === 'function') saveGame(state);
-      renderApp();
-    },
-    startExpedition(questId) {
-      if (!state) return;
-      const q = (state.quests || []).find(x => x.id === questId);
-      const party = (state.roster || []).filter(a => partySelection.includes(a.id));
-      if (party.length === 0) return;
-
-      activeBattleData = {
-        quest: q,
-        party: JSON.parse(JSON.stringify(party)),
-        enemy: { name: (q && q.name) ? "Guards of " + q.name : "Corrupted Entity", hp: 100 + (q?.difficultySequence ? (10-q.difficultySequence)*30 : 20), maxHp: 100 + (q?.difficultySequence ? (10-q.difficultySequence)*30 : 20) },
-        isDone: false,
-        logs: [
-          `Expedition launched into ${q?.name || 'the dungeon'} with ${party.length} Beyonder(s).`,
-          party.length === 1 ? "⚡ Solo Dispatch Active: +50% Potion Digestion Bonus applied." : "Coordinated party formation assembled."
-        ]
-      };
-      renderApp();
-    },
-    stepCombat() {
-      if (!activeBattleData) return;
-      const b = activeBattleData;
-      if (b.isDone) return;
-
-      // Instant calculation (No animations)
-      const dmgToEnemy = b.party.reduce((sum, hero) => sum + (hero.stats?.atk || 12), 0);
-      b.enemy.hp = Math.max(0, b.enemy.hp - dmgToEnemy);
-      b.logs.push(`Party assaulted the enemy for ${dmgToEnemy} damage!`);
-
-      if (b.enemy.hp <= 0) {
-        b.isDone = true;
-        const isSolo = b.party.length === 1;
-        const digestGain = isSolo ? 30 : 20;
-        b.logs.push(`Enemy defeated! Contract fulfilled.`);
-        b.logs.push(`Party members digested +${digestGain}% of their current potion!`);
-        
-        // Apply rewards to state
-        if (state) {
-          state.funds = (state.funds || 0) + (b.quest?.rewards?.funds || 60);
-          state.reputation = (state.reputation || 0) + (b.quest?.rewards?.reputation || 2);
-          for (const member of b.party) {
-            const r = state.roster.find(x => x.id === member.id);
-            if (r) r.digest = Math.min(100, (r.digest || 0) + digestGain);
+    }
+    if (row.damages || row.reflects) {
+      for (const d of [...(row.damages || []), ...(row.reflects || [])]) {
+        const target = hpMap[d.targetId] || hpMap[d.targetName];
+        if (target) {
+          if (d.absorbed) {
+            target.curShield = Math.max(0, (target.curShield || 0) - (d.absorbed || 0));
           }
-          state.quests = (state.quests || []).filter(x => x.id !== b.quest?.id);
-          if (typeof saveGame === 'function') saveGame(state);
+          if (d.shieldAfter !== undefined) {
+            target.curShield = d.shieldAfter;
+          }
+          if (d.hpAfter !== undefined) target.curHp = d.hpAfter;
+          else target.curHp = Math.max(0, target.curHp - (d.amount || 0));
         }
-      } else {
-        const target = b.party[Math.floor(Math.random() * b.party.length)];
-        const enemyDmg = 12;
-        target.currentHp = Math.max(0, (target.currentHp ?? target.stats?.hp ?? 100) - enemyDmg);
-        b.logs.push(`${b.enemy.name} struck ${target.name} for ${enemyDmg} damage!`);
       }
-      renderApp();
-    },
-    finishExpedition() {
-      activeBattleData = null;
-      partySelection = [];
-      renderApp();
     }
+    if (row.heals) {
+      for (const h of row.heals) {
+        const target = hpMap[h.targetId] || hpMap[h.targetName];
+        if (target) {
+          if (h.hpAfter !== undefined) target.curHp = h.hpAfter;
+          else target.curHp = Math.min(target.maxHp, target.curHp + (h.amount || 0));
+        }
+      }
+    }
+    if (row.deaths) {
+      for (const d of row.deaths) {
+        const target = hpMap[d.targetId] || hpMap[d.targetName];
+        if (target) { target.curHp = 0; target.curShield = 0; }
+      }
+    }
+    if (row.revives) {
+      for (const rv of row.revives) {
+        const target = hpMap[rv.targetId] || hpMap[rv.targetName];
+        if (target) { target.curHp = rv.hpAfter !== undefined ? rv.hpAfter : (rv.amount || 1); }
+      }
+    }
+    if (row.type === 'death' && (row.targetId || row.targetName)) {
+      const target = hpMap[row.targetId] || hpMap[row.targetName];
+      if (target) { target.curHp = 0; target.curShield = 0; }
+    }
+  }
+  return hpMap;
+}
+
+
+function getCombatSprite(u) {
+  if (u.path === 'fool' || u.pathName === 'The Fool' || (u.path && String(u.path).toLowerCase().includes('fool'))) {
+    const seq = (u.sequence !== undefined && u.sequence !== null) ? u.sequence : 9;
+    return `<img class="combat-sprite-img" src="data/assets/characters/fool/fool_seq${seq}.png" onerror="this.onerror=null;this.src='data/assets/characters/fool/seq${seq}.png';this.style.display=this.src.endsWith('.png')?'':'none'" alt="Seq ${seq}">`;
+  }
+  const initial = (u.name || '?').slice(0, 2).toUpperCase();
+  return `<div class="combat-sprite-fallback">${esc(initial)}</div>`;
+}
+function renderHpStrip(hpMap, allies, enemies) {
+  function combatCard(u, team) {
+    const data = (u.id && hpMap[u.id]) || (u.name && hpMap[u.name]) || { curHp: u.hp || u.maxHp, maxHp: u.maxHp, curShield: 0, curMp: u.mp || 100, maxMp: u.maxMp || 100 };
+    const curHp = Math.max(0, data.curHp !== undefined ? data.curHp : (u.hp || u.maxHp || 100));
+    const maxHp = Math.max(1, data.maxHp || u.maxHp || 100);
+    const shield = Math.max(0, data.curShield || 0);
+    const hpPct = Math.min(100, Math.round((curHp / maxHp) * 100));
+    const shieldPct = Math.min(100, Math.round((shield / maxHp) * 100));
+    const dead = curHp <= 0;
+
+    // MP / Spirit calculation
+    const curMp = Math.max(0, data.curMp !== undefined ? data.curMp : (u.mp || 80));
+    const maxMp = Math.max(1, data.maxMp || u.maxMp || 100);
+    const mpPct = Math.min(100, Math.round((curMp / maxMp) * 100));
+
+    const sprite = team === 'ally' ? getCombatSprite(u) : `<div class="combat-enemy-avatar">💀</div>`;
+
+    return `<div class="gm-combat-card ${team} ${dead ? 'dead' : ''}">
+      <div class="gm-card-sprite-slot">
+        ${sprite}
+      </div>
+      <div class="gm-card-body">
+        <div class="gm-card-name-row">
+          <span class="gm-card-name">${esc(u.name)}</span>
+          ${u.sequence !== undefined ? `<span class="gm-card-seq">Seq ${u.sequence}</span>` : ''}
+        </div>
+        <!-- HP Bar -->
+        <div class="gm-gauge hp-gauge">
+          <div class="gm-gauge-label"><span>HP</span><span>${abbrNum(curHp)}/${abbrNum(maxHp)}</span></div>
+          <div class="gm-gauge-track">
+            <div class="gm-gauge-fill hp" style="width:${hpPct}%"></div>
+            ${shieldPct > 0 ? `<div class="gm-gauge-fill shield" style="width:${shieldPct}%"></div>` : ''}
+          </div>
+        </div>
+        <!-- MP Gauge -->
+        <div class="gm-gauge mp-gauge">
+          <div class="gm-gauge-label"><span>MP</span><span>${curMp}/${maxMp}</span></div>
+          <div class="gm-gauge-track">
+            <div class="gm-gauge-fill mp" style="width:${mpPct}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  return `<div class="gm-battle-stage" aria-label="Guild Master Battle Stage">
+    <!-- ENEMY OPPOSITE AT TOP -->
+    <div class="gm-stage-section gm-enemy-stage">
+      <div class="gm-stage-title">OPPONENT</div>
+      <div class="gm-enemy-cards">
+        ${(enemies || []).map(e => combatCard(e, 'enemy')).join('')}
+      </div>
+    </div>
+    
+    <div class="gm-stage-divider"><span>⚔️ VS ⚔️</span></div>
+
+    <!-- PARTY SPRITES SIDE-BY-SIDE AT BOTTOM -->
+    <div class="gm-stage-section gm-party-stage">
+      <div class="gm-stage-title">PARTY SQUAD (${(allies || []).length}/3)</div>
+      <div class="gm-party-cards">
+        ${(allies || []).map(a => combatCard(a, 'ally')).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderTurnRowHtml(row, showDetails) {
+  if (row.isRoundHeader) {
+    return `<div class="battle-round-title">
+      <span class="round-badge">── Round ${row.round} ──</span>
+      ${showDetails && row.initiative ? `<span class="round-init">Init: ${esc(row.initiative)}</span>` : ''}
+    </div>`;
+  }
+
+  if (row.isSkip) {
+    return `<div class="b-row skip-row ${row.actorTeam}-turn">
+      <span class="b-actor ${row.actorTeam}">${esc(row.actorName)}</span>
+      <span class="muted">${esc(row.text || 'loses action to status')}</span>
+    </div>`;
+  }
+
+  if (row.isMiss) {
+    return `<div class="b-row ${row.actorTeam}-turn">
+      <span class="b-actor ${row.actorTeam}">${esc(row.actorName)}</span>
+      <span class="b-arrow">→</span>
+      <span class="b-target ${row.targetTeam || 'enemy'}">${esc(row.targetName || 'Enemy')}</span>
+      <span class="b-outcome miss">💨 ${esc(row.text || 'Missed')}</span>
+    </div>`;
+  }
+
+  if (row.type === 'thread' || row.type === 'status') {
+    const isTh = row.type === 'thread';
+    let extra = '';
+    if (showDetails) {
+      if (row.curVal !== undefined && row.maxVal !== undefined && row.stat) {
+        extra = ` (${row.stat} ${abbrNum(row.curVal)}/${abbrNum(row.maxVal)})`;
+      } else if (row.subtype === 'freeze' || row.isFreeze || (row.text && row.text.includes('afflicted with freeze'))) {
+        if (!row.text.includes('DEF') && !row.text.includes('SPEED')) {
+          extra = ` (- 10% DEF/ 20% SPEED)`;
+        }
+      }
+    }
+    return `<div class="b-row ${isTh ? 'b-subline thread' : 'b-subline status'}">
+      <span>${isTh ? '🧵' : '⏳'} ${esc(row.text)}${extra}</span>
+    </div>`;
+  }
+
+  if (row.type === 'death') {
+    return `<div class="b-row death-row">
+      <span>${row.converted?'🧵':'💀'} <b>${esc(row.targetName || 'Unit')}</b> ${row.converted?'is converted into a Marionette.':'falls.'}</span>
+    </div>`;
+  }
+
+  if (row.type === 'story' || row.type === 'system') {
+    return `<div class="b-row" style="color:var(--muted);font-style:italic">
+      <span>${esc(row.text)}</span>
+    </div>`;
+  }
+
+  if (row.type === 'result') {
+    return `<div class="b-row" style="font-weight:bold;color:${row.success ? 'var(--green)' : 'var(--red)'}">
+      <span>${esc(row.text)}</span>
+    </div>`;
+  }
+
+  // Merged action row (tree style)
+  const actorClass = row.actorTeam || 'ally';
+  const damagesHtml = (row.damages || []).map(d => {
+    const targetClass = d.targetTeam || (actorClass === 'ally' ? 'enemy' : 'ally');
+    const exact = Number(d.amount || 0).toLocaleString();
+    const badges = [
+      d.critical ? '<span class="b-badge crit" title="Critical Hit">💥 CRIT</span>' : '',
+      d.trueDamage ? '<span class="b-badge true-dmg" title="True Damage">⚡ TRUE</span>' : '',
+      d.instantKill ? '<span class="b-badge execute" title="Execute">☠️ EXECUTE</span>' : '',
+      d.isReflect ? '<span class="b-badge reflect" style="background:#5e35b1;color:#fff">🔄 REFLECT</span>' : '',
+      d.isDrain ? '<span class="b-badge drain" style="background:#4a1259;color:#f3d7ff">🩸 DRAIN</span>' : ''
+    ].filter(Boolean).join(' ');
+
+    const hpDetail = (showDetails && d.hpAfter !== undefined && d.maxHp) ? ` (HP ${abbrNum(d.hpAfter)}/${abbrNum(d.maxHp)})` : '';
+    return `<div class="b-sub-outcome">
+      <span class="b-tree-branch">↳</span>
+      <span class="b-arrow">→</span>
+      <span class="b-target ${targetClass}">${esc(d.targetName || 'Target')}</span>
+      <span class="b-outcome damage" title="Exact: ${exact}">−${abbrNum(d.amount)} <small>${esc(d.damageType || 'dmg')}</small>${hpDetail}</span>
+      ${badges}
+    </div>`;
+  }).join('');
+
+  const healsHtml = (row.heals || []).map(h => {
+    return `<div class="b-sub-outcome">
+      <span class="b-tree-branch">↳</span>
+      <span class="b-outcome heal" title="Recovered ${h.amount} HP">+${abbrNum(h.amount)} HP</span>
+    </div>`;
+  }).join('');
+
+  const shieldsHtml = (row.shields || []).map(s => {
+    return `<div class="b-sub-outcome">
+      <span class="b-tree-branch">↳</span>
+      <span class="b-outcome shield" title="Gained ${s.amount} shield">🛡️ +${abbrNum(s.amount)} Shield</span>
+    </div>`;
+  }).join('');
+
+  const detailsHtml = showDetails && (row.costSP !== undefined || row.cooldown !== undefined)
+    ? `<span class="b-details-info">[Cost: ${row.costSP || 0} SP | ${row.cooldown || 0} CD]</span>`
+    : '';
+
+  const sublinesHtml = (row.subrows && row.subrows.length)
+    ? `<div class="b-sublines">${row.subrows.map(s => {
+        let extra = '';
+        if (showDetails) {
+          if (s.curVal !== undefined && s.maxVal !== undefined && s.stat) {
+            extra = ` (${s.stat} ${abbrNum(s.curVal)}/${abbrNum(s.maxVal)})`;
+          } else if (s.subtype === 'freeze' || s.isFreeze || (s.text && s.text.includes('afflicted with freeze'))) {
+            if (!s.text.includes('DEF') && !s.text.includes('SPEED')) {
+              extra = ` (- 10% DEF/ 20% SPEED)`;
+            }
+          }
+        }
+        return `<span class="b-subline ${s.type==='thread'?'thread':'status'}">${s.type==='thread'?'🧵':s.type==='mythical'?'✨':s.type==='reflect'?'↩️':'•'} ${esc(s.text)}${extra}</span>`;
+      }).join('')}</div>`
+    : '';
+
+  const deathsHtml = (row.deaths && row.deaths.length)
+    ? row.deaths.map(d => `<div class="b-sublines"><span class="b-subline" style="color:#ff8b8b;font-weight:600">${d.converted?'🧵':'💀'} ${esc(d.targetName)} ${d.converted?'is converted into a Marionette.':'falls.'}</span></div>`).join('')
+    : '';
+
+  const hasOutcomes = !!(damagesHtml || healsHtml || shieldsHtml);
+
+  return `<div class="b-row ${actorClass}-turn">
+    <div class="b-turn-header">
+      <span class="b-actor ${actorClass}">${esc(row.actorName)}</span>
+      <span class="b-ability">· ${esc(row.ability)}</span>
+      ${detailsHtml}
+    </div>
+    ${hasOutcomes ? `<div class="b-outcomes-block">${damagesHtml}${healsHtml}${shieldsHtml}</div>` : ''}
+    ${sublinesHtml}
+    ${deathsHtml}
+  </div>`;
+}
+
+function renderBattleLogComponent({
+  allies,
+  enemies,
+  flattenedRows,
+  shownCount,
+  isDone,
+  showDetails,
+  speed,
+  summaryText,
+  isSim,
+  onScrollHandler
+}) {
+  const visible = flattenedRows.slice(0, shownCount);
+  const hpMap = calculateCurrentHp(allies, enemies, visible);
+
+  let contentHtml = '';
+  if (visible.length > 70) {
+    const older = visible.slice(0, visible.length - 40);
+    const recent = visible.slice(visible.length - 40);
+    contentHtml = `<details class="collapsed-rounds"><summary>Previous turns (${older.length} events) — click to expand</summary>${older.map(r => renderTurnRowHtml(r, showDetails)).join('')}</details>${recent.map(r => renderTurnRowHtml(r, showDetails)).join('')}`;
+  } else {
+    contentHtml = visible.map(r => renderTurnRowHtml(r, showDetails)).join('');
+  }
+
+  return `<div class="battle-log-wrap" role="log" aria-live="polite">
+    ${renderHpStrip(hpMap, allies, enemies)}
+    <div class="battle-ticker-viewport" id="${isSim ? 'sim-viewport' : 'battle-viewport'}" onscroll="${onScrollHandler}">
+      ${contentHtml}
+      ${!isDone ? '<div class="typing" style="padding:6px 8px;font-style:italic;color:var(--muted)">Battling…</div>' : ''}
+    </div>
+    ${isDone && summaryText ? `<div class="b-result-box ${summaryText.includes('defeated') || summaryText.includes('Team A') ? 'victory' : 'failure'}">
+      <h4>Encounter Summary</h4>
+      <p>${esc(summaryText)}</p>
+    </div>` : ''}
+    <div class="battle-toolbar">
+      <div class="speed-controls">
+        <button type="button" class="${speed===1?'active':''}" onclick="window.G9.setTickerSpeed(1)">1x</button>
+        <button type="button" class="${speed===2?'active':''}" onclick="window.G9.setTickerSpeed(2)">2x</button>
+        <button type="button" class="${speed===4?'active':''}" onclick="window.G9.setTickerSpeed(4)">4x</button>
+        ${!isDone ? `<button type="button" onclick="window.G9.skipTicker()">Skip</button>` : ''}
+      </div>
+      <div>
+        <button type="button" class="${showDetails?'active':''}" onclick="${isSim ? 'window.G9.toggleSimDetails()' : 'window.G9.toggleDetails()'}">
+          ${showDetails ? 'Hide Details' : 'Show Details'}
+        </button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ===== Browser UI =====
+if (typeof document !== 'undefined') (() => {
+  'use strict';
+  let state=loadGame()||newGame(), tab='hall', selected=null, previewPath=PATH_KEYS[0], planning=null, run=null, notice='', tickerTimer=null, tickerSpeed=1, showBattleDetails=false, simBattleDetails=false, userScrolledUp=false, simMode='1v1', simA=[{path:PATH_KEYS[0],sequence:9},{path:PATH_KEYS[0],sequence:9}], simB=[{path:PATH_KEYS[1]||PATH_KEYS[0],sequence:9},{path:PATH_KEYS[1]||PATH_KEYS[0],sequence:9}], simResult=null;
+  const app=document.getElementById('app');
+  const clone=v=>JSON.parse(JSON.stringify(v));
+  const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  const pathName=p=>pathOf(p).name;
+  const tierName=(p,s)=>tierFor(p,s).name;
+  const activeRoster=()=>state.roster.filter(a=>a.status==='active');
+  const combatReady=()=>activeRoster().filter(a=>a.awakened&&a.sequence<=9);
+  function commit(fn){const draft=clone(state);fn(draft);state=draft;saveGame(draft);render();}
+  function toast(msg){notice=msg;render();setTimeout(()=>{if(notice===msg){notice='';render()}},2400)}
+  function render(){
+    const active=activeRoster();
+    app.innerHTML=`<header class="top"><div><div class="eyebrow">LEDGER OF THE GUILD</div><h1>Guild of Mystery</h1><p>Day ${state.day} · Reputation ${state.reputation}</p></div><div class="brand-mark">XXII</div></header>
+    <section class="resources"><div><span>FUNDS</span><b>£${state.funds.toLocaleString()}</b></div><div><span>REPUTATION</span><b>${state.reputation}</b></div><div><span>CONTRACTS</span><b>${state.quests.length}</b></div></section>
+    <nav class="tabs">${[['hall','Guild Hall'],['preview','Pathways'],['simulator','Battle Simulator'],['recruit','Recruitment'],['quests','Contracts'],['wanted','Wanted'],['inventory','Inventory'],['chronicle','Chronicle']].map(([id,label])=>`<button class="${tab===id?'active':''}" onclick="window.G9.tab('${id}')">${label}</button>`).join('')}</nav>
+    <main>${tab==='hall'?hall():tab==='preview'?pathwayPreview():tab==='simulator'?battleSimulator():tab==='recruit'?recruit():tab==='quests'?quests():tab==='wanted'?wanted():tab==='inventory'?inventory():chronicleView()}</main>
+    ${selected?dossier():''}${planning?assignmentModal():''}${run?runModal():''}${notice?`<div class="toast">${esc(notice)}</div>`:''}`;
+    if(run && run.currentTurn < (run.turnRows||[]).length && !tickerTimer){
+      const delay = tickerSpeed === 4 ? 100 : (tickerSpeed === 2 ? 250 : 500);
+      tickerTimer = setTimeout(() => {
+        run.currentTurn++;
+        tickerTimer = null;
+        render();
+        if (!userScrolledUp) {
+          const vp = document.getElementById('battle-viewport');
+          if (vp) vp.scrollTop = vp.scrollHeight;
+        }
+      }, delay);
+    }
+  }
+  function pathwayPreview(){
+    const p=pathOf(previewPath)||pathOf(PATH_KEYS[0]);
+    const intro=p.quirkText||G9D.pathways.introductions[previewPath]||`${p.name} is one of the twenty-two supernatural Pathways.`;
+    const seqs=p.sequences.slice().sort((a,b)=>b.sequence-a.sequence);
+    const abilityMultiplier=t=>{
+      const a=t.abilities?.[0]||t;
+      const d=a.damage; return d?`${Math.round((d.multiplier||0)*100)}% ${d.scaling||'INT'} ${d.type==='elemental'?(d.element||'elemental'):d.type||'damage'} damage${d.type==='true'?' · ignores resistance':''}`:'Non-damaging / passive effect';
+    };
+    return `<section class="panel pathway-preview"><div class="section-head"><div><h2>Pathway Preview</h2><p>Explore every Pathway from Sequence 9 through Sequence 0.</p></div><span>${PATH_KEYS.length}/22 Pathways</span></div>
+      <div class="preview-layout">
+        <aside class="pathway-picker"><label><b>Pathway</b><select onchange="window.G9.previewPath(this.value)">${PATH_KEYS.map(k=>`<option value="${k}" ${k===previewPath?'selected':''}>${esc(pathOf(k).name)}</option>`).join('')}</select></label><p class="muted">Select any of the 22 Pathways to inspect its Sequence 9 → 0 abilities.</p></aside>
+        <article class="pathway-detail">
+          <div class="eyebrow">${esc(p.group||'PATHWAY')} · ${esc(p.archetype||'')}</div>
+          <h2>${esc(p.name)}</h2><p class="path-intro">${esc(intro)}</p>
+          <div class="path-meta"><span><b>Role</b>${esc(p.role||'')}</span><span><b>Mythical Form</b>${esc(p.mythicalForm||'')}</span><span><b>Material</b>${esc(p.material||'')}</span></div>
+          <h3>Abilities · Sequence 9 → 0</h3>
+          <div class="preview-abilities">${seqs.map(t=>`<div class="preview-ability"><div class="preview-seq">SEQ ${t.sequence}</div><div><h4>${esc(t.name)}</h4><p>${esc(t.abilityText||t.ability||'')}</p><span class="multiplier">${esc(abilityMultiplier(t))}</span></div></div>`).join('')}</div>
+        </article>
+      </div>
+    </section>`;
+  }
+
+  function battleSimulator(){
+    const count=simMode==='1v1'?1:2;
+    const side=(arr,label)=>`<div class="sim-side"><h3>${label}</h3>${arr.slice(0,count).map((x,i)=>`<div class="sim-unit"><label>${label} ${i+1} Pathway<select onchange="window.G9.simSet('${label==='Team A'?'A':'B'}',${i},'path',this.value)">${PATH_KEYS.map(k=>`<option value="${k}" ${x.path===k?'selected':''}>${esc(pathOf(k).name)}</option>`).join('')}</select></label><label>Sequence<select onchange="window.G9.simSet('${label==='Team A'?'A':'B'}',${i},'sequence',Number(this.value))">${Array.from({length:10},(_,j)=>9-j).map(n=>`<option value="${n}" ${x.sequence===n?'selected':''}>Sequence ${n}</option>`).join('')}</select></label></div>`).join('')}</div>`;
+    return `<section class="panel battle-simulator"><div class="section-head"><div><h2>Battle Simulator</h2><p>Run a deterministic preview battle between any Pathway and Sequence combination.</p></div><div><button class="${simMode==='1v1'?'active':''}" onclick="window.G9.simMode('1v1')">1v1</button><button class="${simMode==='2v2'?'active':''}" onclick="window.G9.simMode('2v2')">2v2</button></div></div><div class="sim-grid">${side(simA,'Team A')}${side(simB,'Team B')}</div><div class="sim-actions"><button class="primary" onclick="window.G9.runSimulation()">Simulate Battle</button><button onclick="window.G9.clearSimulation()">Clear Log</button></div>${simResult?`<div class="sim-result"><div class="section-head"><h3>${simResult.success?'Team A Victory':'Team B Victory / Draw'}</h3><span>${simResult.rounds} rounds · ${simResult.balanceTrace.length} damage events</span></div><div class="sim-hp"><div><b>Team A</b> ${simResult.teamA.filter(x=>x.alive).length}/${simResult.teamA.length} standing</div><div><b>Team B</b> ${simResult.teamB.filter(x=>x.alive).length}/${simResult.teamB.length} standing</div></div><div class="balance-panel"><div class="section-head"><div><h3>Damage Breakdown</h3><p>Every hit: ability multiplier → raw damage → resistance → DEF → final damage, including effect contributions.</p></div></div><div class="balance-table-wrap"><table class="balance-table"><thead><tr><th>Rnd</th><th>Attacker</th><th>Ability</th><th>Stat</th><th>Mult.</th><th>Raw</th><th>Resist.</th><th>After Resist.</th><th>DEF</th><th>DEF Reduction</th><th>Effects</th><th>Final</th></tr></thead><tbody>${simResult.balanceTrace.map(t=>`<tr><td>${t.round}</td><td>${esc(t.attacker)}</td><td><b>${esc(t.ability)}</b><small>${esc(t.damageType)}${t.critical?' · CRIT':''}</small></td><td>${esc(t.stat)}</td><td>${(Number(t.abilityMultiplier||0)*100).toFixed(0)}%${t.effectiveMultiplier!==t.abilityMultiplier?`<small>eff ${(Number(t.effectiveMultiplier||0)*100).toFixed(0)}%</small>`:''}</td><td>${Math.round(t.raw||0)}</td><td>${Number(t.resistance||0).toFixed(1)}%</td><td>${Math.round(t.afterResistance||0)}</td><td>${Math.round(t.defense||0)}</td><td>${Math.round(t.defenseReduction||0)}</td><td>${t.effectContributions?.length?t.effectContributions.map(e=>`${esc(e.type)}${e.multiplier!=null?` ×${Number(e.multiplier).toFixed(2)}`:''}`).join('<br>'):'—'}</td><td><b>${Math.round(t.final||0)}</b></td></tr>`).join('')}</tbody></table></div></div><div class="sim-battle-log-wrap" style="margin-top:16px">
+  <div class="section-head"><div><h3>Combat Log</h3><p>Unified turn-by-turn combat view.</p></div></div>
+  ${renderBattleLogComponent({
+    allies: simResult.teamA,
+    enemies: simResult.teamB,
+    flattenedRows: simResult.turnRows,
+    shownCount: simResult.turnRows.length,
+    isDone: true,
+    showDetails: simBattleDetails,
+    speed: 1,
+    summaryText: simResult.summaryText,
+    isSim: true,
+    onScrollHandler: ''
+  })}
+</div></div>`:'<p class="muted">Choose both sides and press Simulate Battle. No guild resources or roster characters are changed.</p>'}</section>`;
+  }
+  function hall(){return `<section class="grid two"><div class="panel"><div class="section-head"><div><h2>Guild Roster</h2><p>Every character begins as an ordinary person.</p></div><span>${combatReady().length} combat-ready</span></div>${state.roster.map(agentCard).join('')||'<div class="empty"><h3>The roster is empty.</h3><p>Visit the Recruitment Office to hire your first ordinary person.</p></div>'}</div><div class="panel"><div class="section-head"><h2>Guild Ledger</h2><button class="small" onclick="window.G9.reset()">Reset</button></div><div class="ledger"><p><b>Reputation</b></p><p>${state.reputation} — measures the guild's standing. Higher reputation unlocks more contracts, higher rewards and more dangerous supernatural work.</p><p><b>Digesting</b></p><p>Successful quests advance a character's understanding of their current potion. Individual contracts digest faster than team contracts.</p><p><b>Permanent loss</b></p><p>Death and failed advancement remove the character from the roster.</p></div></div></section>`}
+  function statusBar(label,value){return `<div class="meter"><div><span>${label}</span><b>${Math.round(value||0)}/100</b></div><i><em style="width:${Math.min(100,Math.max(0,value||0))}%"></em></i></div>`}
+  function agentCard(a){const dead=a.status!=='active';return `<article class="agent ${dead?'dead':''} ${a.awakened?'':'unawakened'}" onclick="window.G9.dossier('${a.id}')"><div class="portrait">${esc(a.name.slice(0,1))}</div><div class="agent-main"><div class="agent-title"><div><h3>${esc(a.name)}</h3><p>${esc(a.occupation||'Ordinary person')} · ${a.awakened?esc(pathName(a.path))+' · Sequence '+a.sequence+' — '+esc(tierName(a.path,a.sequence)):'Recommended: '+esc(pathName(a.recommendedPath))}</p></div><span class="status ${a.status}">${a.awakened?'active':'unawakened'}</span></div><div class="stats">${(()=>{const s=combatDisplayStats(a),b=a.stats;return statPair('HP',s.hp,b.hp)+statPair('SP',Math.round(a.sp??maxSPFor(a)),maxSPFor(a))+statPair('ATK',s.atk,b.atk)+statPair('DEF',s.def,b.def)+statPair('INT',s.int,b.int)})()}</div>${a.awakened?`<div class="variance-box"><b>Individual Variance</b><span>HP ×${(a.statVariance?.hp||1).toFixed(2)}</span><span>ATK ×${(a.statVariance?.atk||1).toFixed(2)}</span><span>DEF ×${(a.statVariance?.def||1).toFixed(2)}</span><span>INT ×${(a.statVariance?.int||1).toFixed(2)}</span><span>Speed ×${(a.statVariance?.speed||1).toFixed(2)}</span></div>`:''}${statusBar('Madness',a.madness)}${statusBar('Corruption',a.corruption)}${statusBar('Injuries',a.injuries)}${a.madness>=50?'<p class="warning">Madness above 50 causes action loss; at 100 the character becomes a corrupted monster and is permanently lost.</p>':''}${a.injuries>0?'<p class="muted">Injuries reduce effective HP and other stats by up to 30% until treated.</p>':''}${a.awakened?statusBar('Digesting',a.digest):`<p class="muted">Recommended Pathway: <b>${esc(pathName(a.recommendedPath))}</b>. Click to view awakening requirements.</p>`}<div class="agent-actions">${!dead&&a.awakened&&a.unitType!=='marionette'&&a.sequence>0?`<button onclick="event.stopPropagation();window.G9.advance('${a.id}')">Advance</button>`:''}${!dead&&(a.injuries||0)>0?`<button onclick="event.stopPropagation();window.G9.heal('${a.id}')">Heal</button>`:''}</div></div></article>`}
+  function recruit(){return `<section class="panel"><div class="section-head"><div><h2>Recruitment Office</h2><p>Ordinary people with occupations, characteristics and recommended Pathways. The office refreshes periodically.</p></div><button onclick="window.G9.refreshRecruit()">Refresh Office</button></div><div class="recruit-grid">${state.recruitPool.map(a=>`<article class="recruit" onclick="window.G9.recruitInfo('${a.id}')"><div class="portrait large">${esc(a.name.slice(0,1))}</div><h3>${esc(a.name)}</h3><p>${esc(a.occupation)}</p><strong>Recommended: ${esc(pathName(a.recommendedPath))}</strong><div class="stats compact">${Object.entries(a.stats).map(([k,v])=>`<span>${k.toUpperCase()} ${v}</span>`).join('')}</div><p class="muted">Combat Trait: <b>${esc(a.trait||'Stout Vitality')}</b> — ${esc(TRAITS[a.trait||'Stout Vitality'].desc)}</p><button class="primary" onclick="event.stopPropagation();window.G9.hire('${a.id}')">Hire · £150</button></article>`).join('')}</div><p class="muted office-note">Next automatic refresh: ${state.recruitRefreshDay-state.day>0?`in ${state.recruitRefreshDay-state.day} day(s)`:'now'}.</p></section>`}
+  function quests(){const rep=state.reputation;const tier=rep<5?'Local Services':rep<15?'Trusted Investigations':rep<30?'Mystery Contracts':'Occult Contracts';const target=questCountForReputation(rep);return `<section class="panel"><div class="section-head"><div><h2>Contract Board</h2><p>Reputation ${rep} · ${tier} · ${state.quests.length}/${target} contracts available.</p><p class="muted">Low reputation means fewer jobs and mostly mundane work. As the guild earns trust, more dangerous and better-paying contracts appear.</p></div></div>${state.quests.map(q=>`<article class="quest" onclick="window.G9.plan('${q.id}')"><div>${q.difficultySequence<10&&q.difficultySequence<=Math.max(5,maxContractSequence(rep)-2)?'<span class="warning-symbol" title="This contract is above the guild normal reputation range.">⚠</span>':''}<span class="tag">${q.difficultySequence===10?'NORMAL':`SEQ ${q.difficultySequence}`}</span><span class="tag">${q.tags?.[0]?.toUpperCase()||'CONTRACT'}</span>${q.requiredPath?`<span class="tag">${esc(pathName(q.requiredPath))}</span>`:''}<h3>${esc(q.name)}</h3><p>${esc(q.brief)}</p><small>Reward £${q.rewards.funds} · +${q.rewards.reputation} reputation</small></div><button onclick="event.stopPropagation();window.G9.plan('${q.id}')">Open Contract</button><button class="small danger-btn" onclick="event.stopPropagation();window.G9.decline('${q.id}')">Decline</button></article>`).join('')}</section>`}
+  function wanted(){return `<section class="panel"><div class="section-head"><div><h2>Wanted Board</h2><p>Named supernatural targets. No trait-based decision making; combat is fully automated.</p></div></div>${state.wanted?.length?state.wanted.map(q=>`<article class="wanted-card" onclick="window.G9.planWanted('${q.id}')"><div class="wanted-eyebrow">WANTED — ${esc((q.name||'TARGET').replace(/^Wanted:\s*/i,''))}</div><h3>${esc(q.target||q.name)}</h3><div class="wanted-meta"><span><b>Known Path:</b> ${esc(q.knownPath||'Unknown')}</span><span><b>Threat:</b> ${esc(q.threat||'★★★☆☆')}</span><span><b>Last Seen:</b> ${esc(q.lastSeen||'Unknown')}</span></div><blockquote>${esc(q.story||q.brief)}</blockquote><h4>Objective</h4><p class="wanted-code">${esc(q.objectiveText||`Capture or kill ${q.target||q.name}`)}</p><h4>Reward</h4><p class="wanted-code">£${q.rewards?.funds||0}<br>+ ${q.rewards?.reputation||0} Reputation<br>+ ${Object.values(q.rewards?.materials||{})[0]||0} rare materials</p><div class="wanted-actions"><button onclick="event.stopPropagation();window.G9.planWanted('${q.id}')">Hunt Target</button><button class="small danger-btn" onclick="event.stopPropagation();window.G9.declineWanted('${q.id}')">Decline</button></div></article>`).join(''):'<div class="empty"><h3>No active warrants.</h3><p>New warrants appear as the guild gains reputation.</p></div>'}</section>`}
+function inventory(){const entries=Object.entries(state.materials);return `<section class="panel"><div class="section-head"><div><h2>Guild Inventory</h2><p>Everything currently owned by the guild.</p></div></div><div class="inventory-summary"><div><span>FUNDS</span><b>£${state.funds.toLocaleString()}</b></div><div><span>REPUTATION</span><b>${state.reputation}</b></div><div><span>ROSTER</span><b>${activeRoster().length}</b></div></div><h3>Weapons</h3><div class="material-grid">${Object.values(WEAPONS).filter(w=>w.id!=='none').map(w=>`<article class="material"><b>${esc(w.name)}</b><span>${state.weapons?.[w.id]||0} available</span><small>+${w.atk} ATK · ${w.kind==='gun'?'Gun accuracy starts at 50% and gains +5% per Gun Mastery level':'Weapon Mastery improves damage'}${w.bleed?` · ${Math.round(w.bleed*100)}% Bleed`:''}</small><small>${esc(w.text)}</small></article>`).join('')}</div><h3>Materials</h3><div class="material-grid">${entries.map(([name,count])=>`<article class="material"><b>${esc(name)}</b><span>${count}</span><small>Used for ${esc(Object.values(PATHS).find(x=>x.material===name)?.name||'Pathway')} advancement.</small><button class="small" onclick="window.G9.buyMaterial('${Object.keys(PATHS).find(k=>PATHS[k].material===name)}')">Buy +1 · £180</button></article>`).join('')}</div></section>`}
+  function chronicleView(){return `<section class="panel"><div class="section-head"><h2>Guild Chronicle</h2><span>${state.chronicle.length} entries</span></div>${state.chronicle.map(x=>`<div class="chronicle"><span>DAY ${x.day}</span><p>${esc(x.text)}</p></div>`).join('')}</section>`}
+  function combatDisplayStats(a){
+  const base={...(a.stats||{})}; const pm=passiveCombatModifier(a); const w=weaponStats(a); const buff=a._buffs||{};
+  return {hp:Math.round(base.hp*(pm.hp||1)*(buff.hp||1)),atk:Math.round(base.atk*pm.atk*(buff.atk||1)+w.atk),def:Math.round(base.def*pm.def*(buff.def||1)),int:Math.round(base.int*pm.int*(buff.int||1)),spd:Math.round(speedFor(a))};
+}
+function statPair(label,final,base){return `<span>${label} <b>${final}</b> <small>(${base})</small></span>`;}
+
+function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id==='none'||w.id===a.weaponId||(state.weapons[w.id]||0)>0).map(w=>`<option value="${w.id}" ${a.weaponId===w.id?'selected':''}>${esc(w.name)} (+${w.atk} ATK) · ${state.weapons[w.id]||0} available</option>`).join('');return `<label class="equipment-select"><span>Equip Weapon</span><select onchange="window.G9.setWeapon('${a.id}',this.value)">${options}</select></label>`}
+  function dossier(){
+    const a=state.roster.find(x=>x.id===selected); if(!a)return '';
+    const tier=tierFor(a.path,a.sequence);
+    const eff=a.awakened?combatDisplayStats(a):a.stats;
+    const intro=a.introduction||`An ordinary ${a.occupation||'person'} whose life has begun to intersect with the hidden world.`;
+    const pathButtons=PATH_KEYS.map(p=>`<button class="path-choice ${a.recommendedPath===p?'recommended':''}" onclick="window.G9.choosePath('${a.id}','${p}')"><b>${esc(pathName(p))}</b><span>${esc(pathOf(p).role)}</span>${a.recommendedPath===p?'<small>Recommended</small>':''}</button>`).join('');
+    const abilities=(a.abilityHistory&&a.abilityHistory.length?a.abilityHistory:((a.abilities||[]).map((x,i)=>({sequence:a.sequence+i,name:tierFor(a.path,a.sequence+i).name,ability:x.text||x.ability,type:x.type,effectId:x.effectId,damage:x.damage,effects:x.effects,effects:x.effects}))))
+      .slice().sort((x,y)=>y.sequence-x.sequence).map(x=>`<div><b>Sequence ${x.sequence} — ${esc(x.name)}</b><span class="tag">${esc(x.type||'passive').toUpperCase()}</span><p>${esc(x.ability||'')}</p><small>${x.damage?`${Math.round((x.damage.multiplier||0)*100)}% ${esc(x.damage.scaling||'INT')} ${esc(x.damage.type==='elemental'?(x.damage.element||'Elemental'):x.damage.type||'damage')}${x.damage.type==='true'?' · TRUE DAMAGE':''}`:'Non-damaging / passive effect'}${x.effects?.length?` · ${esc(x.effects.map(e=>e.type+(e.status?`:${e.status}`:'')).join(', '))}`:''}</small></div>`).join('');
+    const next=a.awakened&&a.sequence>0?canTrain(state,a):null;
+    return `<div class="overlay" onclick="window.G9.closeDossier()"><div class="modal" onclick="event.stopPropagation()"><button class="close" onclick="window.G9.closeDossier()">×</button><div class="eyebrow">CHARACTER DOSSIER</div><h2>${esc(a.name)}</h2><p>${esc(a.occupation||'Ordinary person')} · ${a.awakened?esc(pathName(a.path))+' · Sequence '+a.sequence+' · '+esc(tier.name):'Unawakened'}</p><div class="intro"><h3>Introduction</h3><p>${esc(intro)}</p></div><div class="big-stats">${[['HP',eff.hp],['ATK',eff.atk],['DEF',eff.def],['INT',eff.int]].map(x=>`<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div>${statusBar('Madness',a.madness)}${statusBar('Corruption',a.corruption)}${statusBar('Injuries',a.injuries)}${a.awakened?`<div class="combat-rates"><b>Combat Rates</b>${(()=>{const cr=combatRates(a);return `<span>Crit ${Math.round(cr.crit*100)}%</span><span>Crit Damage +${Math.round(cr.critDamage*100)}%</span><span>Dodge ${Math.round(cr.dodge*100)}%</span><span>Counter ${Math.round(cr.counter*100)}%</span><span>Speed ${cr.speed.toFixed(1)} · AV ${cr.av.toFixed(1)}</span><span>Archetype ${archetypeOf(a.path)}</span><span>Max SP ${maxSPFor(a)}</span><span>Element Resistance: ${Object.entries(cr.resistances||{}).map(([k,v])=>`${esc(k)} ${v>0?'+':''}${Math.round(v)}%`).join(' · ')||'None'}</span>${cr.passives&&cr.passives.length?`<span>Passives: ${cr.passives.map(esc).join(' · ')}</span>`:''}`;})()}<span>Weapon Mastery: Gun ${weaponMasteryValue(a,'gun')} · Melee ${weaponMasteryValue(a,'weapon')} · Bare Hand ${weaponMasteryValue(a,'unarmed')}</span></div>${statusBar('Digesting',a.digest)}<div class="special-meter"><b>${esc(specialStatFor(a.path,a.sequence,a).name)} ${Math.round(specialStatFor(a.path,a.sequence,a).value)}/100</b><small>Gain: ${esc(specialStatFor(a.path,a.sequence,a).gain)} · Spend: ${esc(specialStatFor(a.path,a.sequence,a).spend)}</small></div>`:`<h3>Awakening — Sequence 9</h3><p>This character is an ordinary human. Sequence 9 begins their supernatural pathway; it is not an ordinary-human tier. Choose the Pathway whose nature best fits their characteristics.</p><div class="path-grid">${pathButtons}</div>`}<h3>Equipment</h3><div class="equipment-card"><b>${esc(weaponFor(a).name)}</b><span>Weapon ATK: +${weaponFor(a).atk}</span><span>Current ATK: <strong>${combatDisplayStats(a).atk}</strong> <small>(${a.stats.atk})</small></span><span>${weaponFor(a).kind==='gun'?`Gun Accuracy: ${Math.round((1-weaponStats(a).masteryMiss)*100)}% · Gun Mastery Lv.${weaponStats(a).mastery}`:`${weaponFor(a).kind==='unarmed'?'Bare Hand':'Melee'} Mastery Lv.${weaponStats(a).mastery}`}</span><span>Mastery is permanently attached to this character; changing weapons does not reset it.</span>${weaponFor(a).bleed?`<span>Bleed: ${Math.round(weaponFor(a).bleed*100)}% if target survives</span>`:''}${equipmentPicker(a)}</div><h3>Sequence abilities</h3><div class="ability-list">${abilities||'<p class="muted">No Beyonder abilities yet. Awaken to Sequence 9.</p>'}</div>${next?`<h3>Advancement</h3><p>Next: <b>Sequence ${a.sequence-1} — ${esc(next.next.name)}</b>. Digesting: ${Math.round(a.digest||0)}%.</p><div class="requirement-box"><b>Requirements</b><span>Digesting: ${next.ready?'Complete':'Not complete'}</span><span>${esc(next.mat)}: ${state.materials[next.mat]||0}/${next.materialCost}</span><span>Funds: £${state.funds.toLocaleString()}/£${next.fundsCost}</span></div><button class="primary full" onclick="window.G9.advance('${a.id}')">Review Advancement</button>`:''}${a.awakened&&a.sequence===0?'<p class="gold-note">Sequence 0 — Deity. No further advancement.</p>':''}<h3>Combat Trait</h3><p><b>${esc(a.trait||'Stout Vitality')}</b> — ${esc((TRAITS[a.trait||'Stout Vitality']||TRAITS['Stout Vitality']).desc)}</p><p class="muted">Each stat has an individual variance roll of ±10% at awakening. Variance is shown below and remains fixed for this character.</p><h3>History</h3>${(a.history||[]).slice().reverse().map(h=>`<p class="history"><small>Day ${h.day}</small> ${esc(h.text)}</p>`).join('')}</div></div>`;
+  }
+  function assignmentModal(){const q=planning;const ready=combatReady();const saved=state.teams[q.id]||[];return `<div class="overlay"><div class="modal"><button class="close" onclick="window.G9.cancelPlan()">×</button><div class="eyebrow">CONTRACT ASSIGNMENT</div><h2>${esc(q.name)}</h2><p>${esc(q.story||q.brief)}</p><p><b>Threat:</b> Sequence ${q.difficultySequence} · <b>Reward:</b> £${q.rewards.funds}</p><div class="dispatch-header"><h3>Assign Party (1–3 Beyonders) <span class="dispatch-count">${window.G9.selectedIds.length}/3 Selected</span></h3>${window.G9.selectedIds.length === 1 ? '<div class="solo-bonus-badge">⚡ <b>Solo Dispatch Active:</b> +50% Potion Digestion Bonus upon completion!</div>' : ''}</div><div class="assign-list">${ready.length?ready.map(a=>`<button type="button" class="assign-row ${window.G9.selectedIds.includes(a.id)?'selected':''}" onclick="window.G9.toggleAssign('${a.id}')"><span class="assign-check">${window.G9.selectedIds.includes(a.id)?'✓':'○'}</span><span><b>${esc(a.name)}</b> · ${esc(pathName(a.path))} Seq ${a.sequence}<small>Digest ${a.digest||0}% · HP ${a.stats.hp} · Weapon: ${esc(weaponFor(a).name)}</small></span><select onclick="event.stopPropagation()" onchange="window.G9.setWeapon('${a.id}',this.value)">${Object.values(WEAPONS).filter(w=>w.id==='none'||w.id===a.weaponId||(state.weapons[w.id]||0)>0).map(w=>`<option value="${w.id}" ${a.weaponId===w.id?'selected':''}>${esc(w.name)} (${state.weapons[w.id]||0})</option>`).join('')}</select></button>`).join(''):'<p class="muted">No awakened characters are available. Recruit and awaken someone first.</p>'}</div><div class="assign-actions"><button onclick="window.G9.saveTeam()">Save Selected Team</button><button onclick="window.G9.clearSelection()">Clear</button></div><button class="primary full" onclick="window.G9.launch()">Begin Contract</button></div></div>`}
+  function runModal(){
+    const q=run.quest;
+    const wanted=q.target||q.name?.startsWith('Wanted');
+    const isDone = run.currentTurn >= run.turnRows.length;
+    const summary = summarizeBattleEvents(run.result.events||[], run.result.battleSnapshot);
+    const logHtml = renderBattleLogComponent({
+      allies: run.initialAllies,
+      enemies: run.initialEnemies,
+      flattenedRows: run.turnRows,
+      shownCount: run.currentTurn,
+      isDone,
+      showDetails: showBattleDetails,
+      speed: tickerSpeed,
+      summaryText: summary.summaryText,
+      isSim: false,
+      onScrollHandler: 'window.G9.onTickerScroll(this)'
+    });
+
+    return `<div class="overlay"><div class="modal quest-modal">
+      <div class="eyebrow">${wanted?'WANTED HUNT':'CONTRACT RESOLUTION'}</div>
+      <h2>${esc(q.target||q.name)}</h2>
+      ${wanted?`<div class="wanted-meta"><span><b>Known Path:</b> ${esc(q.knownPath||'Unknown')}</span><span><b>Threat:</b> ${esc(q.threat||'★★★☆☆')}</span><span><b>Last Seen:</b> ${esc(q.lastSeen||'Unknown')}</span></div><blockquote>${esc(q.story||q.brief)}</blockquote><h4>Objective</h4><p class="wanted-code">${esc(q.objectiveText||'Capture or kill the target')}</p><h4>Reward</h4><p class="wanted-code">£${q.rewards?.funds||0}<br>+ ${q.rewards?.reputation||0} Reputation</p>`:''}
+      ${logHtml}
+      ${isDone?`<div class="result ${run.result.success?'success':'failure'}">${run.result.success?(wanted?'TARGET ELIMINATED':'CONTRACT FULFILLED'):(wanted?'HUNT FAILED':'CONTRACT FAILED')}</div><button class="primary full" onclick="window.G9.closeQuest()">Return to Guild</button>`:''}
+    </div></div>`;
+  }
+  window.G9={
+    setTickerSpeed: spd => {
+      tickerSpeed = Number(spd) || 1;
+      render();
+    },
+    toggleDetails: () => {
+      showBattleDetails = !showBattleDetails;
+      render();
+    },
+    toggleSimDetails: () => {
+      simBattleDetails = !simBattleDetails;
+      render();
+    },
+    onTickerScroll: el => {
+      if (!el) return;
+      const atBottom = (el.scrollHeight - el.scrollTop - el.clientHeight) <= 35;
+      userScrolledUp = !atBottom;
+    },
+    tab:t=>{tab=t;render()},previewPath:path=>{if(PATH_KEYS.includes(path)){previewPath=path;render()}},simMode:m=>{simMode=m;render()},simSet:(team,i,key,value)=>{const arr=team==='A'?simA:simB;if(arr[i])arr[i][key]=value;render()},clearSimulation:()=>{simResult=null;render()},runSimulation:()=>{const seed=Date.now()%2147483647;const count=simMode==='1v1'?1:2;const mk=(x,i)=>{const a=makeAgent(Math.random,{sequence:x.sequence,path:x.path,trait:'Stout Vitality'});a.id=`sim_${i}_${x.path}_${x.sequence}`;a.name=`${pathOf(x.path).name} Seq ${x.sequence}`;a.awakened=true;a.path=x.path;a.sequence=x.sequence;a.recommendedPath=x.path;a.injuries=0;a.weaponId='none';a.weaponMastery={};a.sp=maxSPFor(a);restatAgent(a);return a;};const members=simA.slice(0,count).map((x,i)=>mk(x,i));const opponents=simB.slice(0,count).map((x,i)=>({path:x.path,sequence:x.sequence}));const q={id:'sim',name:`${simMode} Battle`,brief:'Battle Simulator',story:'A controlled simulation. No guild resources are changed.',objective:'combat',difficultySequence:Math.min(...opponents.map(x=>x.sequence)),encounter:true,mundane:false,rewards:{funds:0,reputation:0,materials:{}},enemyCount:count,requiredPath:opponents[0].path};const res=resolveQuest(members,q,seed,{individual:count===1,simulationOpponents:opponents});const snap=res.battleSnapshot||{allies:[],enemies:[]};const simTurns = flattenTurnRows(groupEventsToRows(res.events||[]));
+    const simSummary = summarizeBattleEvents(res.events||[], snap);
+    simResult={success:res.success,rounds:(res.events&&res.events.length)?Math.max(1,...res.events.map(e=>e.round||1)):(res.lines?res.lines.filter(x=>/^· Round /.test(x.text)).length:1),lines:res.lines,events:res.events||[],turnRows:simTurns,summaryText:simSummary.summaryText,teamA:snap.allies,teamB:snap.enemies,balanceTrace:snap.balanceTrace||[]};render()},fastTicker:()=>{if(!run)return;run.currentTurn=Math.min(run.turnRows.length,run.currentTurn+5);render();},skipTicker:()=>{if(!run)return;run.currentTurn=run.turnRows.length;render();},dossier:id=>{selected=id;render()},closeDossier:()=>{selected=null;render()},recruitInfo:id=>{const a=state.recruitPool.find(x=>x.id===id);if(a){toast(`${a.name}: ${a.occupation}. Recommended ${pathName(a.recommendedPath)}.`)}},
+    hire:id=>{const a=state.recruitPool.find(x=>x.id===id);if(!a)return;if(state.funds<150)return toast('Not enough funds.');commit(d=>{d.funds-=150;d.recruitPool=d.recruitPool.filter(x=>x.id!==id);a.history=[{day:d.day,text:`Hired from the Recruitment Office as an ordinary ${a.occupation.toLowerCase()}.`}];d.roster.push(clone(a));chronicle(d,`${a.name} joins the guild as an ordinary ${a.occupation.toLowerCase()}.`);if(!d.recruitPool.length){d.recruitPool=makeRecruitPool(4,Date.now(),d.reputation);d.recruitRefreshDay=d.day+7}})},
+    refreshRecruit:()=>{if(state.day<state.recruitRefreshDay)return toast(`The office is not ready to refresh for ${state.recruitRefreshDay-state.day} more day(s).`);commit(d=>{d.recruitPool=makeRecruitPool(4,Date.now(),d.reputation);d.recruitRefreshDay=d.day+7;chronicle(d,'The Recruitment Office refreshes its candidates.')})},
+    choosePath:(id,path)=>{const a=state.roster.find(x=>x.id===id);if(!a||a.awakened||!PATH_KEYS.includes(path))return;const cost=1;if((state.materials[pathOf(path).material]||0)<cost)return toast(`You need 1 ${pathOf(path).material} to awaken.`);commit(d=>{const x=d.roster.find(y=>y.id===id);x.path=path;x.sequence=9;x.awakened=true;x.digest=0;x.stats=awakenStats(x,path);x.baseStats={...x.stats};x.maxSP=maxSPFor(x);x.sp=x.maxSP;x.cooldowns={};x.basePathSpeed=basePathSpeed(path);x.humanStats=x.humanStats||{...x.stats};const aw=tierFor(path,9), awA=aw.abilities?.[0]||{};x.abilities=[awA];x.abilityHistory=[{sequence:9,name:aw.name,ability:awA.text||aw.abilityText||aw.ability,type:awA.type||aw.type,effectId:awA.effectId||aw.effectId,damage:awA.damage||null,effects:awA.effects||[],effects:awA.effects||[]}];noteAgent(x,d.day,`Drank the ${pathName(path)} Sequence 9 potion and awakened as Sequence 9 ${tierFor(path,9).name}.`);chronicle(d,`${x.name} awakens as Sequence 9 ${pathName(path)}.`);d.materials[pathOf(path).material]-=cost;d.day+=1;if(d.quests.every(q=>!q.encounter))d.quests.push(makeQuest(()=>.5,9,10,Math.max(5,d.reputation),[path]));})},
+    advance:id=>{const a=state.roster.find(x=>x.id===id);const info=canTrain(state,a);if(!info)return;const readyText=info.ready?'READY':'NOT READY';const ok=confirm(`ADVANCE ${a.name}\n\nNext: Sequence ${a.sequence-1} ${info.next.name}\nDigesting: ${Math.round(a.digest||0)}% (${readyText})\nSuccess chance: ${Math.round(info.successChance*100)}%\n\nMaterials: ${info.mat} × ${info.materialCost}\nFunds: £${info.fundsCost}\n\nAdvance now?`);if(!ok)return;if(!info.ready)return toast('The potion is not fully digested yet. Complete more contracts.');if(!info.affordable)return toast(`You need ${info.materialCost} ${info.mat} and £${info.fundsCost}.`);const outcome=attemptTraining(a,Date.now()%2147483647);commit(d=>{const x=d.roster.find(y=>y.id===id);d.funds-=info.fundsCost;d.materials[info.mat]=(d.materials[info.mat]||0)-info.materialCost;if(outcome.ok){x.sequence-=1;x.digest=0;x.stats=advanceStats(x.stats,x.path,x.sequence);x.maxSP=maxSPFor(x);x.sp=Math.min(x.maxSP,x.sp||x.maxSP);x.cooldowns={};const nextA=info.next.abilities?.[0]||{};x.abilities=[...(x.abilities||[]),nextA];x.abilityHistory=[...(x.abilityHistory||[]),{sequence:x.sequence,name:info.next.name,ability:nextA.text||info.next.abilityText||info.next.ability,type:nextA.type||info.next.type,effectId:nextA.effectId||info.next.effectId,damage:nextA.damage||null,effects:nextA.effects||[],effects:nextA.effects||[]}];noteAgent(x,d.day,`Advanced to Sequence ${x.sequence} — ${info.next.name}. All prior abilities remain part of the character.`);chronicle(d,`${x.name} advances to Sequence ${x.sequence} (${info.next.name}).`)}else applyConsequences(d,[outcome.consequence]);d.day+=1;});toast(outcome.line)},
+    heal:id=>{const a=state.roster.find(x=>x.id===id);if(!a||a.injuries<=0)return;const c=healCost(a);if(state.funds<c.funds)return toast(`Healing requires £${c.funds}.`);const mat=Object.keys(state.materials).find(k=>state.materials[k]>=c.material);if(!mat)return toast(`Healing requires ${c.material} material.`);commit(d=>{const x=d.roster.find(y=>y.id===id);d.funds-=c.funds;d.materials[mat]-=c.material;x.injuries=0;x.madness=Math.max(0,(x.madness||0)-15);noteAgent(x,d.day,'Received guild medical and occult treatment. Injuries restored to 0/100 and Madness reduced by 15.');chronicle(d,`${x.name} is treated for injuries.`);d.day+=1})},
+    decline:id=>{if(!state.quests.some(q=>q.id===id))return;commit(d=>{d.quests=d.quests.filter(q=>q.id!==id);const target=questCountForReputation(d.reputation);if(!d.wanted.length&&d.reputation>=15){const w=makeWantedQuest(d.reputation,()=>.99,d.roster.filter(a=>a.awakened).map(a=>a.path));d.wanted.push(w);}if(d.quests.length<target)d.quests.push(...makeQuestBoard(target-d.quests.length,Date.now(),d.reputation,d.roster.filter(a=>a.awakened).map(a=>a.path)));chronicle(d,'The guild declined a contract.');});},declineWanted:id=>{commit(d=>{d.wanted=(d.wanted||[]).filter(q=>q.id!==id);chronicle(d,'The guild declined a wanted warrant.');});},planWanted:id=>{planning=state.wanted.find(q=>q.id===id)||null;window.G9.selectedIds=[...(state.teams[id]||[])];render()},plan:id=>{planning=state.quests.find(q=>q.id===id)||null;window.G9.selectedIds=[...(state.teams[id]||[])];render()},
+    setWeapon:(id,w)=>{const a=state.roster.find(x=>x.id===id);if(!a)return;if(w===a.weaponId)return;if(w!=='none'&&!(state.weapons[w]||0))return toast('No copies of that weapon remain.');commit(d=>{const x=d.roster.find(y=>y.id===id);if(x.weaponId&&x.weaponId!=='none')d.weapons[x.weaponId]=(d.weapons[x.weaponId]||0)+1;if(w&&w!=='none')d.weapons[w]=Math.max(0,(d.weapons[w]||0)-1);x.weaponId=w;});},
+    toggleAssign:id=>{const i=window.G9.selectedIds.indexOf(id);if(i>=0)window.G9.selectedIds.splice(i,1);else if(window.G9.selectedIds.length<3)window.G9.selectedIds.push(id);else toast('A party can contain at most 3 characters.');render()},
+    individual:()=>{if(window.G9.selectedIds.length!==1)toast('Select exactly one character first.');else render()},
+    team:()=>{if(window.G9.selectedIds.length<2)toast('Select at least two characters for a team.');else render()},
+    clearSelection:()=>{window.G9.selectedIds=[];render()},
+    saveTeam:()=>{if(!planning||window.G9.selectedIds.length<1)return toast('Select at least one character.') ;commit(d=>{d.teams[planning.id]=[...window.G9.selectedIds];chronicle(d,`A team was saved for ${planning.name}.`);planning=d.quests.find(q=>q.id===planning.id)});render()},
+    cancelPlan:()=>{planning=null;render()},
+    launch:()=>{if(!planning)return;const ids=window.G9.selectedIds||[];if(ids.length<1)return toast('Assign at least one character.');const members=state.roster.filter(a=>ids.includes(a.id)&&a.status==='active'&&a.awakened);if(!members.length)return toast('At least one awakened character is required.');const owners=new Set(members.filter(a=>a.unitType!=='marionette').map(a=>a.id));for(const m of members.filter(a=>a.unitType==='marionette')){if(!owners.has(m.ownerId))return toast('A Marionette can only deploy while its owner is in the party.');const owner=state.roster.find(a=>a.id===m.ownerId);const count=members.filter(a=>a.unitType==='marionette'&&a.ownerId===m.ownerId).length;if(count>threadSlots(owner.sequence))return toast(`The owner can deploy only ${threadSlots(owner.sequence)} Marionette(s) at this Sequence.`);}const q=planning;const individual=members.length===1;const result=resolveQuest(clone(members),q,Date.now()%2147483647,{individual});planning=null;const initialAllies = clone(members).map(m=>({id:m.id,name:m.name,team:'ally',maxHp:effectiveStats(m).hp,hp:effectiveStats(m).hp}));
+    const initialEnemies = (result.battleSnapshot?.enemies||[]).map(e=>({id:e.id,name:e.name,team:'enemy',maxHp:e.maxHp,hp:e.maxHp}));
+    const turnRows = flattenTurnRows(groupEventsToRows(result.events||[]));
+    run={quest:q,result,initialAllies,initialEnemies,turnRows,currentTurn:0,isSolo:individual};render()},
+    closeQuest:()=>{if(!run||run.currentTurn<run.turnRows.length)return;const q=run.quest,res=run.result;commit(d=>{applyConsequences(d,res.consequences);
+if(run.isSolo && res.success){
+  for(const ally of (run.initialAllies||[])){
+    const ag = d.roster.find(x=>x.id===ally.id);
+    if(ag && ag.status==='active'){
+      const baseGain = 10;
+      const soloBonus = Math.round(baseGain * 0.5);
+      ag.digest = Math.min(100, (ag.digest||0) + soloBonus);
+      chronicle(d, `${ag.name} gained +${soloBonus}% Potion Digestion from Solo Dispatch bonus.`);
+    }
+  }
+}
+addMarionettes(d,res);d.funds+=res.rewards.funds;d.reputation+=res.rewards.reputation;for(const[k,v]of Object.entries(res.rewards.materials||{}))d.materials[k]=(d.materials[k]||0)+v;d.quests=d.quests.filter(x=>x.id!==q.id);d.wanted=d.wanted||[];d.wanted=d.wanted.filter(x=>x.id!==q.id);d.day+=res.dayCost||1;chronicle(d,res.success?`${q.name}: contract fulfilled.`:`${q.name}: contract failed.`);if(d.recruitRefreshDay<=d.day){d.recruitPool=makeRecruitPool(4,Date.now(),d.reputation);d.recruitRefreshDay=d.day+7;}const target=questCountForReputation(d.reputation);if(!d.wanted.length&&d.reputation>=15){const w=makeWantedQuest(d.reputation,()=>.99,d.roster.filter(a=>a.awakened).map(a=>a.path));d.wanted.push(w);}if(d.quests.length<target){d.quests.push(...makeQuestBoard(target-d.quests.length,Date.now(),d.reputation,d.roster.filter(a=>a.awakened).map(a=>a.path)));}if(d.roster.some(a=>a.awakened)&&d.quests.every(q=>!q.encounter))d.quests[0]=makeQuest(()=>.5,9,10,Math.max(5,d.reputation),d.roster.filter(a=>a.awakened).map(a=>a.path));});run=null;tab='hall';render()},
+    buyMaterial:(path)=>{const p=pathOf(path);if(!p)return;if(state.funds<180)return toast('Buying a Pathway material requires £180.');commit(d=>{d.funds-=180;d.materials[p.material]=(d.materials[p.material]||0)+1;chronicle(d,`Purchased 1 ${p.material}.`);});},reset:()=>{if(confirm('Erase the current guild and begin again?')){clearSave();state=newGame();state.schema=4;state.recruitRefreshDay=8;window.G9.selectedIds=[];tab='hall';saveGame(state);render()}}
   };
-
-  // Expose both window.GM and window.G9 for full compatibility
-  window.G9 = window.GM;
-
-  // Render on initial load to clear loading screen
-  renderApp();
+  window.G9.selectedIds=[];
+  if(!state.schema){state=newGame();state.schema=4;state.recruitRefreshDay=8;saveGame(state)}
+  if(!state.recruitRefreshDay)state.recruitRefreshDay=state.day+7;
+  render();
 })();
