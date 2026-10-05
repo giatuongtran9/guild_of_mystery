@@ -563,3 +563,16 @@
   border-radius: 3px;
   transition: width 0.2s ease;
 }
+File: js/ui.js
+const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+
+function flattenTurnRows(groupedRounds) {
+  const flattened = [];
+  for (const gr of groupedRounds) {
+    flattened.push({ isRoundHeader: true, round: gr.round, initiative: gr.initiative });
+    for (const row of gr.rows) {
+      flattened.push(row);
+    }
+  }
+  return flattened;
+}
