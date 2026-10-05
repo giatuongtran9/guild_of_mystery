@@ -94,8 +94,9 @@ function getCombatSprite(u) {
   }
   if (seq === null || isNaN(seq)) seq = 9;
   const spriteSeq = Math.max(0, Math.min(9, seq === 10 ? 9 : seq));
+  const spritePath = path === 'door' ? 'door' : 'fool';
 
-  return `<img class="combat-sprite-img" src="data/assets/characters/fool/fool_seq${spriteSeq}.png" onerror="this.onerror=null;this.src='data/assets/characters/fool/seq${spriteSeq}.png';this.onerror=()=>{this.style.display='none';const fb=this.parentElement.querySelector('.combat-sprite-fallback');if(fb)fb.style.display='flex';};" alt="Seq ${spriteSeq}"><div class="combat-sprite-fallback" style="display:none">${esc((u.name||'?').slice(0,2).toUpperCase())}</div>`;
+  return `<img class="combat-sprite-img" src="data/assets/characters/${spritePath}/${spritePath}_seq${spriteSeq}.png" onerror="this.onerror=null;this.src='data/assets/characters/${spritePath}/seq${spriteSeq}.png';this.onerror=()=>{this.style.display='none';const fb=this.parentElement.querySelector('.combat-sprite-fallback');if(fb)fb.style.display='flex';};" alt="Seq ${spriteSeq}"><div class="combat-sprite-fallback" style="display:none">${esc((u.name||'?').slice(0,2).toUpperCase())}</div>`;
 }
 function battlefieldImageFor(quest = {}, isSim = false) {
   const config = typeof G9D !== 'undefined' ? G9D.contracts.battlefields || {} : {};
