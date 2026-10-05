@@ -83,16 +83,22 @@ function getCombatSprite(u) {
     ? (state.roster.find(r => r.id === u.id || r.name === u.name) || u)
     : u;
   const path = u.path || agent.path || '';
-  const seq = (u.sequence !== undefined && u.sequence !== null)
-    ? u.sequence
-    : (agent.sequence !== undefined && agent.sequence !== null ? agent.sequence : 9);
+  let seq = null;
+  if (u.sequence !== undefined && u.sequence !== null) {
+    seq = Number(u.sequence);
+  } else if (agent && agent.sequence !== undefined && agent.sequence !== null) {
+    seq = Number(agent.sequence);
+  } else {
+    const match = String(u.name || '').match(/Seq(?:uence)?\s*(\d+)/i);
+    if (match) seq = parseInt(match[1], 10);
+  }
+  if (seq === null || isNaN(seq)) seq = 9;
   const spriteSeq = Math.max(0, Math.min(9, seq === 10 ? 9 : seq));
 
-  // Primary: Fool sprite path
   return `<img class="combat-sprite-img" src="data/assets/characters/fool/fool_seq${spriteSeq}.png" onerror="this.onerror=null;this.src='data/assets/characters/fool/seq${spriteSeq}.png';this.onerror=()=>{this.style.display='none';const fb=this.parentElement.querySelector('.combat-sprite-fallback');if(fb)fb.style.display='flex';};" alt="Seq ${spriteSeq}"><div class="combat-sprite-fallback" style="display:none">${esc((u.name||'?').slice(0,2).toUpperCase())}</div>`;
 }
 function renderHpStrip(hpMap, allies, enemies) {
-  function combatCard(u, team) {
+  function combatEntity(u, team) {
     const data = (u.id && hpMap[u.id]) || (u.name && hpMap[u.name]) || { curHp: u.hp || u.maxHp, maxHp: u.maxHp, curShield: 0, curMp: u.mp || 100, maxMp: u.maxMp || 100 };
     const curHp = Math.max(0, data.curHp !== undefined ? data.curHp : (u.hp || u.maxHp || 100));
     const maxHp = Math.max(1, data.maxHp || u.maxHp || 100);
@@ -101,57 +107,77 @@ function renderHpStrip(hpMap, allies, enemies) {
     const shieldPct = Math.min(100, Math.round((shield / maxHp) * 100));
     const dead = curHp <= 0;
 
-    // MP / Spirit calculation
     const curMp = Math.max(0, data.curMp !== undefined ? data.curMp : (u.mp || 80));
     const maxMp = Math.max(1, data.maxMp || u.maxMp || 100);
     const mpPct = Math.min(100, Math.round((curMp / maxMp) * 100));
 
-    const sprite = team === 'ally' ? getCombatSprite(u) : `<div class="combat-enemy-avatar">💀</div>`;
+    let seqDisplay = '';
+    if (u.sequence !== undefined && u.sequence !== null) {
+      seqDisplay = `Seq ${u.sequence}`;
+    } else {
+      const match = String(u.name || '').match(/Seq(?:uence)?\s*(\d+)/i);
+      if (match) seqDisplay = `Seq ${match[1]}`;
+    }
 
-    return `<div class="gm-combat-card ${team} ${dead ? 'dead' : ''}">
-      <div class="gm-card-sprite-slot">
-        ${sprite}
+    const sprite = team === 'ally' ? getCombatSprite(u) : `<div class="combat-enemy-avatar"><span class="enemy-skull">💀</span></div>`;
+
+    return `<div class="gm-arena-unit ${team} ${dead ? 'dead' : ''}">
+      <div class="gm-unit-sprite-anchor">
+        <div class="gm-unit-shadow"></div>
+        <div class="gm-unit-sprite">${sprite}</div>
       </div>
-      <div class="gm-card-body">
-        <div class="gm-card-name-row">
-          <span class="gm-card-name">${esc(u.name)}</span>
-          ${u.sequence !== undefined ? `<span class="gm-card-seq">Seq ${u.sequence}</span>` : ''}
+      <div class="gm-unit-info">
+        <div class="gm-unit-name-label" title="${esc(u.name)}">
+          <span class="unit-name">${esc(u.name)}</span>
+          ${seqDisplay ? `<span class="unit-seq-badge">${seqDisplay}</span>` : ''}
         </div>
-        <!-- HP Bar -->
-        <div class="gm-gauge hp-gauge">
-          <div class="gm-gauge-label"><span>HP</span><span>${abbrNum(curHp)}/${abbrNum(maxHp)}</span></div>
-          <div class="gm-gauge-track">
-            <div class="gm-gauge-fill hp" style="width:${hpPct}%"></div>
-            ${shieldPct > 0 ? `<div class="gm-gauge-fill shield" style="width:${shieldPct}%"></div>` : ''}
+        <!-- Floating HP Bar -->
+        <div class="gm-float-gauge hp">
+          <div class="gm-float-track">
+            <div class="gm-float-fill hp" style="width:${hpPct}%"></div>
+            ${shieldPct > 0 ? `<div class="gm-float-fill shield" style="width:${shieldPct}%"></div>` : ''}
           </div>
+          <span class="gm-float-num">${abbrNum(curHp)}/${abbrNum(maxHp)}</span>
         </div>
-        <!-- MP Gauge -->
-        <div class="gm-gauge mp-gauge">
-          <div class="gm-gauge-label"><span>MP</span><span>${curMp}/${maxMp}</span></div>
-          <div class="gm-gauge-track">
-            <div class="gm-gauge-fill mp" style="width:${mpPct}%"></div>
+        ${team === 'ally' ? `
+        <!-- Floating MP Bar -->
+        <div class="gm-float-gauge mp">
+          <div class="gm-float-track">
+            <div class="gm-float-fill mp" style="width:${mpPct}%"></div>
           </div>
-        </div>
+          <span class="gm-float-num">${curMp} MP</span>
+        </div>` : ''}
       </div>
     </div>`;
   }
 
-  return `<div class="gm-battle-stage" aria-label="Guild Master Battle Stage">
-    <!-- ENEMY OPPOSITE AT TOP -->
-    <div class="gm-stage-section gm-enemy-stage">
-      <div class="gm-stage-title">OPPONENT</div>
-      <div class="gm-enemy-cards">
-        ${(enemies || []).map(e => combatCard(e, 'enemy')).join('')}
+  return `<div class="gm-dungeon-arena" aria-label="Guild Master Dungeon Arena">
+    <!-- 3D Perspective Dungeon Room Background -->
+    <div class="gm-dungeon-backdrop">
+      <div class="gm-dungeon-ceiling"></div>
+      <div class="gm-dungeon-backwall">
+        <div class="gm-dungeon-door"></div>
+        <div class="gm-torch left"></div>
+        <div class="gm-torch right"></div>
       </div>
+      <div class="gm-dungeon-wall-left"></div>
+      <div class="gm-dungeon-wall-right"></div>
+      <div class="gm-dungeon-floor"></div>
     </div>
-    
-    <div class="gm-stage-divider"><span>⚔️ VS ⚔️</span></div>
 
-    <!-- PARTY SPRITES SIDE-BY-SIDE AT BOTTOM -->
-    <div class="gm-stage-section gm-party-stage">
-      <div class="gm-stage-title">PARTY SQUAD (${(allies || []).length}/3)</div>
-      <div class="gm-party-cards">
-        ${(allies || []).map(a => combatCard(a, 'ally')).join('')}
+    <!-- Arena Stage Playfield -->
+    <div class="gm-stage-playfield">
+      <!-- Enemy formation (opposite / back row) -->
+      <div class="gm-rank-row gm-rank-enemies">
+        ${(enemies || []).map(e => combatEntity(e, 'enemy')).join('')}
+      </div>
+
+      <!-- Mid-room distance spacer -->
+      <div class="gm-arena-midline"></div>
+
+      <!-- Ally Beyonders party (foreground / bottom row) -->
+      <div class="gm-rank-row gm-rank-allies">
+        ${(allies || []).map(a => combatEntity(a, 'ally')).join('')}
       </div>
     </div>
   </div>`;
@@ -488,7 +514,27 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
     },
     tab:t=>{tab=t;render()},previewPath:path=>{if(PATH_KEYS.includes(path)){previewPath=path;render()}},simMode:m=>{simMode=m;render()},simSet:(team,i,key,value)=>{const arr=team==='A'?simA:simB;if(arr[i])arr[i][key]=value;render()},clearSimulation:()=>{simResult=null;render()},runSimulation:()=>{const seed=Date.now()%2147483647;const count=simMode==='1v1'?1:2;const mk=(x,i)=>{const a=makeAgent(Math.random,{sequence:x.sequence,path:x.path,trait:'Stout Vitality'});a.id=`sim_${i}_${x.path}_${x.sequence}`;a.name=`${pathOf(x.path).name} Seq ${x.sequence}`;a.awakened=true;a.path=x.path;a.sequence=x.sequence;a.recommendedPath=x.path;a.injuries=0;a.weaponId='none';a.weaponMastery={};a.sp=maxSPFor(a);restatAgent(a);return a;};const members=simA.slice(0,count).map((x,i)=>mk(x,i));const opponents=simB.slice(0,count).map((x,i)=>({path:x.path,sequence:x.sequence}));const q={id:'sim',name:`${simMode} Battle`,brief:'Battle Simulator',story:'A controlled simulation. No guild resources are changed.',objective:'combat',difficultySequence:Math.min(...opponents.map(x=>x.sequence)),encounter:true,mundane:false,rewards:{funds:0,reputation:0,materials:{}},enemyCount:count,requiredPath:opponents[0].path};const res=resolveQuest(members,q,seed,{individual:count===1,simulationOpponents:opponents});const snap=res.battleSnapshot||{allies:[],enemies:[]};const simTurns = flattenTurnRows(groupEventsToRows(res.events||[]));
     const simSummary = summarizeBattleEvents(res.events||[], snap);
-    simResult={success:res.success,rounds:(res.events&&res.events.length)?Math.max(1,...res.events.map(e=>e.round||1)):(res.lines?res.lines.filter(x=>/^· Round /.test(x.text)).length:1),lines:res.lines,events:res.events||[],turnRows:simTurns,summaryText:simSummary.summaryText,teamA:snap.allies,teamB:snap.enemies,balanceTrace:snap.balanceTrace||[]};render()},fastTicker:()=>{if(!run)return;run.currentTurn=Math.min(run.turnRows.length,run.currentTurn+5);render();},skipTicker:()=>{if(!run)return;run.currentTurn=run.turnRows.length;render();},dossier:id=>{selected=id;render()},closeDossier:()=>{selected=null;render()},recruitInfo:id=>{const a=state.recruitPool.find(x=>x.id===id);if(a){toast(`${a.name}: ${a.occupation}. Recommended ${pathName(a.recommendedPath)}.`)}},
+    simResult={success:res.success,rounds:(res.events&&res.events.length)?Math.max(1,...res.events.map(e=>e.round||1)):(res.lines?res.lines.filter(x=>/^· Round /.test(x.text)).length:1),lines:res.lines,events:res.events||[],turnRows:simTurns,summaryText:simSummary.summaryText,teamA: members.map((m, i) => ({
+  ...m,
+  id: m.id,
+  name: m.name,
+  path: m.path,
+  sequence: m.sequence,
+  unitType: m.unitType,
+  alive: snap.allies[i] ? snap.allies[i].alive : true,
+  hp: snap.allies[i] ? snap.allies[i].hp : (m.stats ? m.stats.hp : 100),
+  maxHp: snap.allies[i] ? snap.allies[i].maxHp : (m.stats ? m.stats.hp : 100)
+})),
+teamB: opponents.map((o, i) => ({
+  id: `opp_${i}`,
+  name: `${pathOf(o.path).name} Seq ${o.sequence}`,
+  path: o.path,
+  sequence: o.sequence,
+  team: 'enemy',
+  alive: snap.enemies[i] ? snap.enemies[i].alive : true,
+  hp: snap.enemies[i] ? snap.enemies[i].hp : 100,
+  maxHp: snap.enemies[i] ? snap.enemies[i].maxHp : 100
+})),balanceTrace:snap.balanceTrace||[]};render()},fastTicker:()=>{if(!run)return;run.currentTurn=Math.min(run.turnRows.length,run.currentTurn+5);render();},skipTicker:()=>{if(!run)return;run.currentTurn=run.turnRows.length;render();},dossier:id=>{selected=id;render()},closeDossier:()=>{selected=null;render()},recruitInfo:id=>{const a=state.recruitPool.find(x=>x.id===id);if(a){toast(`${a.name}: ${a.occupation}. Recommended ${pathName(a.recommendedPath)}.`)}},
     hire:id=>{const a=state.recruitPool.find(x=>x.id===id);if(!a)return;if(state.funds<150)return toast('Not enough funds.');commit(d=>{d.funds-=150;d.recruitPool=d.recruitPool.filter(x=>x.id!==id);a.history=[{day:d.day,text:`Hired from the Recruitment Office as an ordinary ${a.occupation.toLowerCase()}.`}];d.roster.push(clone(a));chronicle(d,`${a.name} joins the guild as an ordinary ${a.occupation.toLowerCase()}.`);if(!d.recruitPool.length){d.recruitPool=makeRecruitPool(4,Date.now(),d.reputation);d.recruitRefreshDay=d.day+7}})},
     refreshRecruit:()=>{if(state.day<state.recruitRefreshDay)return toast(`The office is not ready to refresh for ${state.recruitRefreshDay-state.day} more day(s).`);commit(d=>{d.recruitPool=makeRecruitPool(4,Date.now(),d.reputation);d.recruitRefreshDay=d.day+7;chronicle(d,'The Recruitment Office refreshes its candidates.')})},
     choosePath:(id,path)=>{const a=state.roster.find(x=>x.id===id);if(!a||a.awakened||!PATH_KEYS.includes(path))return;const cost=1;if((state.materials[pathOf(path).material]||0)<cost)return toast(`You need 1 ${pathOf(path).material} to awaken.`);commit(d=>{const x=d.roster.find(y=>y.id===id);x.path=path;x.sequence=9;x.awakened=true;x.digest=0;x.stats=awakenStats(x,path);x.baseStats={...x.stats};x.maxSP=maxSPFor(x);x.sp=x.maxSP;x.cooldowns={};x.basePathSpeed=basePathSpeed(path);x.humanStats=x.humanStats||{...x.stats};const aw=tierFor(path,9), awA=aw.abilities?.[0]||{};x.abilities=[awA];x.abilityHistory=[{sequence:9,name:aw.name,ability:awA.text||aw.abilityText||aw.ability,type:awA.type||aw.type,effectId:awA.effectId||aw.effectId,damage:awA.damage||null,effects:awA.effects||[],effects:awA.effects||[]}];noteAgent(x,d.day,`Drank the ${pathName(path)} Sequence 9 potion and awakened as Sequence 9 ${tierFor(path,9).name}.`);chronicle(d,`${x.name} awakens as Sequence 9 ${pathName(path)}.`);d.materials[pathOf(path).material]-=cost;d.day+=1;if(d.quests.every(q=>!q.encounter))d.quests.push(makeQuest(()=>.5,9,10,Math.max(5,d.reputation),[path]));})},
