@@ -79,12 +79,17 @@ function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
 
 
 function getCombatSprite(u) {
-  if (u.path === 'fool' || u.pathName === 'The Fool' || (u.path && String(u.path).toLowerCase().includes('fool'))) {
-    const seq = (u.sequence !== undefined && u.sequence !== null) ? u.sequence : 9;
-    return `<img class="combat-sprite-img" src="data/assets/characters/fool/fool_seq${seq}.png" onerror="this.onerror=null;this.src='data/assets/characters/fool/seq${seq}.png';this.style.display=this.src.endsWith('.png')?'':'none'" alt="Seq ${seq}">`;
-  }
-  const initial = (u.name || '?').slice(0, 2).toUpperCase();
-  return `<div class="combat-sprite-fallback">${esc(initial)}</div>`;
+  const agent = (typeof state !== 'undefined' && state.roster)
+    ? (state.roster.find(r => r.id === u.id || r.name === u.name) || u)
+    : u;
+  const path = u.path || agent.path || '';
+  const seq = (u.sequence !== undefined && u.sequence !== null)
+    ? u.sequence
+    : (agent.sequence !== undefined && agent.sequence !== null ? agent.sequence : 9);
+  const spriteSeq = Math.max(0, Math.min(9, seq === 10 ? 9 : seq));
+
+  // Primary: Fool sprite path
+  return `<img class="combat-sprite-img" src="data/assets/characters/fool/fool_seq${spriteSeq}.png" onerror="this.onerror=null;this.src='data/assets/characters/fool/seq${spriteSeq}.png';this.onerror=()=>{this.style.display='none';const fb=this.parentElement.querySelector('.combat-sprite-fallback');if(fb)fb.style.display='flex';};" alt="Seq ${spriteSeq}"><div class="combat-sprite-fallback" style="display:none">${esc((u.name||'?').slice(0,2).toUpperCase())}</div>`;
 }
 function renderHpStrip(hpMap, allies, enemies) {
   function combatCard(u, team) {
@@ -497,7 +502,7 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
     clearSelection:()=>{window.G9.selectedIds=[];render()},
     saveTeam:()=>{if(!planning||window.G9.selectedIds.length<1)return toast('Select at least one character.') ;commit(d=>{d.teams[planning.id]=[...window.G9.selectedIds];chronicle(d,`A team was saved for ${planning.name}.`);planning=d.quests.find(q=>q.id===planning.id)});render()},
     cancelPlan:()=>{planning=null;render()},
-    launch:()=>{if(!planning)return;const ids=window.G9.selectedIds||[];if(ids.length<1)return toast('Assign at least one character.');const members=state.roster.filter(a=>ids.includes(a.id)&&a.status==='active'&&a.awakened);if(!members.length)return toast('At least one awakened character is required.');const owners=new Set(members.filter(a=>a.unitType!=='marionette').map(a=>a.id));for(const m of members.filter(a=>a.unitType==='marionette')){if(!owners.has(m.ownerId))return toast('A Marionette can only deploy while its owner is in the party.');const owner=state.roster.find(a=>a.id===m.ownerId);const count=members.filter(a=>a.unitType==='marionette'&&a.ownerId===m.ownerId).length;if(count>threadSlots(owner.sequence))return toast(`The owner can deploy only ${threadSlots(owner.sequence)} Marionette(s) at this Sequence.`);}const q=planning;const individual=members.length===1;const result=resolveQuest(clone(members),q,Date.now()%2147483647,{individual});planning=null;const initialAllies = clone(members).map(m=>({id:m.id,name:m.name,team:'ally',maxHp:effectiveStats(m).hp,hp:effectiveStats(m).hp}));
+    launch:()=>{if(!planning)return;const ids=window.G9.selectedIds||[];if(ids.length<1)return toast('Assign at least one character.');const members=state.roster.filter(a=>ids.includes(a.id)&&a.status==='active'&&a.awakened);if(!members.length)return toast('At least one awakened character is required.');const owners=new Set(members.filter(a=>a.unitType!=='marionette').map(a=>a.id));for(const m of members.filter(a=>a.unitType==='marionette')){if(!owners.has(m.ownerId))return toast('A Marionette can only deploy while its owner is in the party.');const owner=state.roster.find(a=>a.id===m.ownerId);const count=members.filter(a=>a.unitType==='marionette'&&a.ownerId===m.ownerId).length;if(count>threadSlots(owner.sequence))return toast(`The owner can deploy only ${threadSlots(owner.sequence)} Marionette(s) at this Sequence.`);}const q=planning;const individual=members.length===1;const result=resolveQuest(clone(members),q,Date.now()%2147483647,{individual});planning=null;const initialAllies = clone(members).map(m=>({id:m.id,name:m.name,team:'ally',path:m.path,sequence:m.sequence,unitType:m.unitType,maxHp:effectiveStats(m).hp,hp:effectiveStats(m).hp}));
     const initialEnemies = (result.battleSnapshot?.enemies||[]).map(e=>({id:e.id,name:e.name,team:'enemy',maxHp:e.maxHp,hp:e.maxHp}));
     const turnRows = flattenTurnRows(groupEventsToRows(result.events||[]));
     run={quest:q,result,initialAllies,initialEnemies,turnRows,currentTurn:0,isSolo:individual};render()},
