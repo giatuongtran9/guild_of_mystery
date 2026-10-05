@@ -158,5 +158,23 @@
     ],
     "sequence_odds_note": "Higher-reputation guilds shift contract-board weight toward higher-difficulty contracts, but Sequence 9 remains available at every reputation because low-sequence agents still need contracts for digestion and advancement. Odds are analogous to TFT tier odds: higher tiers become more common rather than lower tiers being hard-disabled.",
     "sequence_9_always_available": true
+  },
+  "battlefields": {
+    "defaultImage": null,
+    "simulatorImage": null,
+    "encounters": {
+      "A Missing Cat": null,
+      "The Stolen Heirloom": null,
+      "Murder at Bell House": null,
+      "The Whispering Tenant": null,
+      "A Vanished Watchman": null,
+      "The Chapel Below": null,
+      "The Red Ledger": null
+    },
+    "environments": {
+      "South Wharf": null,
+      "Old Market": null,
+      "Clockmaker’s Row": null
+    }
   }
 }
