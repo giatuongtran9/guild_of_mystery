@@ -1,11 +1,18 @@
 // js/ui.js — Responsive Guild Master UI with Fool Sprites, Party Dispatch & Stage Combat
 (() => {
+  // Load or create the game state
+  let state = (typeof loadGame === 'function' ? loadGame() : null);
+  if (!state && typeof newGame === 'function') {
+    state = newGame();
+    if (typeof saveGame === 'function') saveGame(state);
+  }
+
   let activeTab = 'contracts';
   let activeBattleData = null;
   let inspectingAgentId = null;
   let partySelection = [];
 
-  // 1. Character Sprite Mapping (Fool Pathway Seq 9 to 0 under data/assets/characters/)
+  // 1. Character Sprite Mapping (Supports both data/assets/characters/fool/ and data/assets/characters/)
   function getCharacterSprite(pathKey, seqNum) {
     if (pathKey === 'fool' && seqNum >= 0 && seqNum <= 9) {
       return `data/assets/characters/fool/fool_seq${seqNum}.png`;
@@ -33,31 +40,32 @@
     return { icon: "⚡", title: `Seq ${seqNum}` };
   }
 
-  // Renders sprite img with fallback
-  function renderAvatar(hero, extraClass = '') {
+  // Renders sprite img with fallback to emoji
+  function renderAvatar(hero, extraStyle = '') {
     const sprite = getCharacterSprite(hero.path, hero.sequence);
     const badge = getSequenceBadge(hero.path, hero.sequence);
     if (sprite) {
       return `
-        <div class="gm-avatar-wrapper ${extraClass}">
-          <img src="${sprite}" class="gm-sprite-img" alt="${hero.name || badge.title}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <div class="gm-avatar-wrapper" ${extraStyle}>
+          <img src="${sprite}" class="gm-sprite-img" alt="${hero.name || badge.title}" onerror="this.style.display='none';if(this.nextElementSibling)this.nextElementSibling.style.display='flex'">
           <span class="gm-avatar-fallback" style="display:none">${badge.icon}</span>
         </div>
       `;
     }
     return `
-      <div class="gm-avatar-wrapper ${extraClass}">
+      <div class="gm-avatar-wrapper" ${extraStyle}>
         <span class="gm-avatar-fallback">${badge.icon}</span>
       </div>
     `;
   }
 
-  function renderApp(state) {
+  function renderApp(currentState) {
+    if (currentState) state = currentState;
     const root = document.getElementById('app');
-    if (!root) return;
+    if (!root || !state) return;
 
-    const gold = state.resources?.gold ?? 0;
-    const materials = state.resources?.materials ?? 0;
+    const gold = state.funds ?? state.resources?.gold ?? 1000;
+    const materialsCount = state.materials ? Object.values(state.materials).reduce((a,b)=>a+b, 0) : 0;
     const rosterCount = (state.roster || []).length;
     const questsAvailable = (state.quests || []).length;
 
@@ -65,13 +73,13 @@
       <header class="gm-header">
         <div class="gm-header-title">
           <span>Guild of Mystery</span>
-          <span style="color:var(--muted)">v0.3.0</span>
+          <span style="color:var(--gold-bright)">Day ${state.day || 1}</span>
         </div>
         <div class="gm-res-row">
-          <div class="gm-res-item"><span class="gm-res-label">Gold:</span><span class="gm-res-val" style="color:var(--gold-bright)">🪙 ${gold}</span></div>
-          <div class="gm-res-item"><span class="gm-res-label">Materials:</span><span class="gm-res-val">📦 ${materials}</span></div>
+          <div class="gm-res-item"><span class="gm-res-label">Funds:</span><span class="gm-res-val" style="color:var(--gold-bright)">🪙 £${gold}</span></div>
+          <div class="gm-res-item"><span class="gm-res-label">Materials:</span><span class="gm-res-val">📦 ${materialsCount}</span></div>
           <div class="gm-res-item"><span class="gm-res-label">Beyonders:</span><span class="gm-res-val">👥 ${rosterCount}</span></div>
-          <div class="gm-res-item"><span class="gm-res-label">Active Contracts:</span><span class="gm-res-val">📜 ${questsAvailable}</span></div>
+          <div class="gm-res-item"><span class="gm-res-label">Reputation:</span><span class="gm-res-val">⭐ ${state.reputation || 0}</span></div>
         </div>
       </header>
 
@@ -122,7 +130,7 @@
 
     return `
       <div class="gm-section-title">
-        <span>Party Deployment</span>
+        <span>Party Deployment (1–3 Beyonders)</span>
         <small style="color:${partySelection.length > 0 ? 'var(--gold-bright)' : 'var(--muted)'}">
           ${partySelection.length}/3 Selected
         </small>
@@ -131,11 +139,11 @@
       <div class="gm-dispatch-box">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <span style="font-size:12px;color:var(--muted)">Select 1, 2, or 3 Beyonders for the expedition:</span>
-          ${partySelection.length > 0 ? `<button onclick="window.GM.clearParty()" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;text-decoration:underline">Clear</button>` : ''}
+          ${partySelection.length > 0 ? `<button onclick="window.GM.clearParty()" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;text-decoration:underline">Clear Selection</button>` : ''}
         </div>
 
         <div class="gm-party-selector">
-          ${roster.length === 0 ? `<div style="font-size:12px;color:var(--muted);padding:8px">No active Beyonders available in roster.</div>` : ''}
+          ${roster.length === 0 ? `<div style="font-size:12px;color:var(--muted);padding:8px">No active Beyonders in roster. Visit the Guild tab to recruit!</div>` : ''}
           ${roster.map(a => {
             const sel = partySelection.includes(a.id);
             const badge = getSequenceBadge(a.path, a.sequence);
@@ -144,7 +152,7 @@
                 <div style="display:flex;justify-content:center;margin-bottom:4px">
                   ${renderAvatar(a)}
                 </div>
-                <div style="font-size:11px;font-weight:600">${a.name.split(' ')[0]}</div>
+                <div style="font-size:11px;font-weight:600">${(a.name || 'Agent').split(' ')[0]}</div>
                 <small style="color:var(--gold);font-size:10px">${badge.title}</small>
               </div>
             `;
@@ -154,7 +162,7 @@
         ${isSolo ? `
           <div class="gm-dispatch-notice">
             <span>⚡</span>
-            <span><strong>Solo Dispatch Active:</strong> +50% Potion Digestion Bonus upon return!</span>
+            <span><strong>Solo Dispatch Active:</strong> +50% Potion Digestion Bonus upon contract completion!</span>
           </div>
         ` : ''}
       </div>
@@ -168,14 +176,14 @@
             <div class="gm-card-header">
               <div class="gm-avatar-wrapper"><span style="font-size:22px">⚔️</span></div>
               <div class="gm-card-info">
-                <div class="gm-card-title">${q.title || 'Dungeon Contract'}</div>
-                <div class="gm-card-subtitle">Recommended: Seq ${q.recommendedSeq || 9} • Tier ${q.tier || 1}</div>
+                <div class="gm-card-title">${q.name || q.title || 'Dungeon Contract'}</div>
+                <div class="gm-card-subtitle">Difficulty: Seq ${q.difficultySequence ?? 9}</div>
               </div>
             </div>
-            <p style="font-size:12px;color:var(--muted);margin:8px 0">${q.description || 'Venture into the depths to retrieve mystical materials.'}</p>
+            <p style="font-size:12px;color:var(--muted);margin:8px 0">${q.brief || q.story || 'Venture into the depths to retrieve mystical materials.'}</p>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
               <div style="font-size:11px;color:var(--gold)">
-                Reward: 🪙 ${q.rewardGold || 50} • 📦 ${q.rewardMaterials || 10}
+                Reward: 🪙 £${q.rewards?.funds || 50} • Rep +${q.rewards?.reputation || 2}
               </div>
               <button class="gm-btn" ${partySelection.length === 0 ? 'disabled' : ''} onclick="window.GM.startExpedition('${q.id}')">
                 ${partySelection.length === 0 ? 'Select Party' : `Deploy (${partySelection.length})`}
@@ -221,18 +229,18 @@
           <!-- BOTTOM: PARTY SPRITES WITH LIVE HP/MP BARS -->
           <div class="gm-arena-party-bottom">
             ${party.map(hero => {
-              const maxHp = hero.stats?.hp || 100;
+              const maxHp = (hero.stats && hero.stats.hp) ? hero.stats.hp : 100;
               const curHp = Math.max(0, hero.currentHp ?? maxHp);
               const hpPct = Math.round((curHp / maxHp) * 100);
 
-              const maxMp = hero.stats?.mp || 50;
+              const maxMp = (hero.stats && hero.stats.mp) ? hero.stats.mp : (hero.maxSP || 50);
               const curMp = Math.max(0, hero.currentMp ?? maxMp);
               const mpPct = Math.round((curMp / maxMp) * 100);
 
               return `
                 <div class="gm-combat-hero">
                   ${renderAvatar(hero, 'style="width:56px;height:56px"')}
-                  <div class="gm-combat-name">${hero.name.split(' ')[0]}</div>
+                  <div class="gm-combat-name">${(hero.name || 'Hero').split(' ')[0]}</div>
                   <div class="gm-combat-bars">
                     <div class="gm-bar-track">
                       <div class="gm-bar-fill-hp" style="width:${hpPct}%" title="HP: ${curHp}/${maxHp}"></div>
@@ -259,7 +267,11 @@
             `).join('')}
           </div>
           <div style="margin-top:10px;display:flex;justify-content:flex-end">
-            <button class="gm-btn" onclick="window.GM.stepCombat()">Next Round</button>
+            ${battle.isDone ? `
+              <button class="gm-btn" onclick="window.GM.finishExpedition()">Return to Guild</button>
+            ` : `
+              <button class="gm-btn" onclick="window.GM.stepCombat()">Next Round</button>
+            `}
           </div>
         </div>
       </div>
@@ -275,10 +287,10 @@
         <small>${roster.length} Recruited</small>
       </div>
       <div class="gm-cards-grid">
-        ${roster.length === 0 ? `<div class="gm-card" style="color:var(--muted)">No Beyonders recruited yet.</div>` : ''}
+        ${roster.length === 0 ? `<div class="gm-card" style="color:var(--muted)">No Beyonders recruited yet. Go to Guild tab to hire!</div>` : ''}
         ${roster.map(a => {
           const badge = getSequenceBadge(a.path, a.sequence);
-          const maxHp = a.stats?.hp || 100;
+          const maxHp = (a.stats && a.stats.hp) ? a.stats.hp : 100;
           return `
             <div class="gm-card" style="cursor:pointer" onclick="window.GM.inspectAgent('${a.id}')">
               <div class="gm-card-header">
@@ -287,7 +299,7 @@
                   <div class="gm-card-title">${a.name}</div>
                   <div class="gm-card-subtitle">Sequence ${a.sequence} • ${badge.title}</div>
                   <div style="font-size:11px;color:var(--muted);margin-top:3px">
-                    HP: ${maxHp} • Digestion: ${a.digestion || 0}%
+                    HP: ${maxHp} • Digestion: ${Math.round(a.digest || a.digestion || 0)}%
                   </div>
                 </div>
                 <span style="color:var(--line-gold);font-size:18px">›</span>
@@ -317,7 +329,7 @@
                 ${renderAvatar(dummy)}
                 <div class="gm-card-info">
                   <div class="gm-card-title">Sequence ${seq}: ${badge.title}</div>
-                  <div class="gm-card-subtitle" style="color:var(--muted)">Asset: fool_seq${seq}.png</div>
+                  <div class="gm-card-subtitle" style="color:var(--muted)">data/assets/characters/fool/fool_seq${seq}.png</div>
                 </div>
               </div>
             </div>
@@ -327,20 +339,28 @@
     `;
   }
 
-  // --- GUILD TAB ---
+  // --- GUILD TAB (Recruiting & Facilities) ---
   function renderGuildTab(state) {
-    const facilities = state.facilities || [];
+    const pool = state.recruitPool || [];
     return `
-      <div class="gm-section-title">Guild Headquarters</div>
+      <div class="gm-section-title">Recruitment Office</div>
       <div class="gm-cards-grid">
-        <div class="gm-card">
-          <div class="gm-card-title">Tarot Club Sanctuary</div>
-          <p style="font-size:12px;color:var(--muted);margin:6px 0">Gather above the gray fog to exchange mystical items and recipes.</p>
-        </div>
-        <div class="gm-card">
-          <div class="gm-card-title">Alchemy Workshop</div>
-          <p style="font-size:12px;color:var(--muted);margin:6px 0">Brew potions and distill beyonder characteristics.</p>
-        </div>
+        ${pool.length === 0 ? `<div class="gm-card" style="color:var(--muted)">No candidates available right now.</div>` : ''}
+        ${pool.map(c => `
+          <div class="gm-card">
+            <div class="gm-card-header">
+              <div class="gm-avatar-wrapper"><span style="font-size:20px">👤</span></div>
+              <div class="gm-card-info">
+                <div class="gm-card-title">${c.name}</div>
+                <div class="gm-card-subtitle">${c.occupation || 'Civilian'} • Recommended: ${c.recommendedPath || 'fool'}</div>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+              <span style="font-size:11px;color:var(--gold)">Cost: £150</span>
+              <button class="gm-btn" onclick="window.GM.hire('${c.id}')">Hire</button>
+            </div>
+          </div>
+        `).join('')}
       </div>
     `;
   }
@@ -363,14 +383,14 @@
             <div>
               <div style="font-size:16px;font-weight:700;color:var(--bone)">${a.name}</div>
               <div style="color:var(--gold);font-size:12px">Seq ${a.sequence} • ${badge.title}</div>
-              <div style="color:var(--muted);font-size:11px">Digestion: ${a.digestion || 0}%</div>
+              <div style="color:var(--muted);font-size:11px">Digestion: ${Math.round(a.digest || a.digestion || 0)}%</div>
             </div>
           </div>
           <div style="font-size:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;background:#11120e;padding:10px;border-radius:6px;border:1px solid var(--line)">
             <div>HP: <strong>${a.stats?.hp || 100}</strong></div>
-            <div>MP: <strong>${a.stats?.mp || 50}</strong></div>
-            <div>Phys Atk: <strong>${a.stats?.atk || 12}</strong></div>
-            <div>Spirit Atk: <strong>${a.stats?.spirit || 16}</strong></div>
+            <div>MP/SP: <strong>${a.stats?.mp || a.sp || 50}</strong></div>
+            <div>ATK: <strong>${a.stats?.atk || 12}</strong></div>
+            <div>DEF: <strong>${a.stats?.def || 10}</strong></div>
           </div>
           <div style="margin-top:14px;text-align:right">
             <button class="gm-btn" onclick="window.GM.closeInspect()">Close</button>
@@ -384,7 +404,7 @@
   window.GM = {
     setTab(t) {
       activeTab = t;
-      if (window.Engine && window.Engine.state) renderApp(window.Engine.state);
+      renderApp();
     },
     togglePartySelect(id) {
       const idx = partySelection.indexOf(id);
@@ -395,60 +415,103 @@
           partySelection.push(id);
         }
       }
-      if (window.Engine && window.Engine.state) renderApp(window.Engine.state);
+      renderApp();
     },
     clearParty() {
       partySelection = [];
-      if (window.Engine && window.Engine.state) renderApp(window.Engine.state);
+      renderApp();
     },
     inspectAgent(id) {
       inspectingAgentId = id;
-      if (window.Engine && window.Engine.state) renderApp(window.Engine.state);
+      renderApp();
     },
     closeInspect() {
       inspectingAgentId = null;
-      if (window.Engine && window.Engine.state) renderApp(window.Engine.state);
+      renderApp();
+    },
+    hire(id) {
+      if (!state) return;
+      const c = (state.recruitPool || []).find(x => x.id === id);
+      if (!c) return;
+      if ((state.funds || 0) < 150) {
+        alert("Not enough funds (£150 required).");
+        return;
+      }
+      state.funds -= 150;
+      state.recruitPool = state.recruitPool.filter(x => x.id !== id);
+      c.status = 'active';
+      c.path = c.recommendedPath || 'fool';
+      c.sequence = 9;
+      c.digest = 0;
+      c.stats = { hp: 100, mp: 50, atk: 15, def: 10 };
+      state.roster.push(c);
+      if (typeof saveGame === 'function') saveGame(state);
+      renderApp();
     },
     startExpedition(questId) {
-      const state = window.Engine?.state;
       if (!state) return;
+      const q = (state.quests || []).find(x => x.id === questId);
       const party = (state.roster || []).filter(a => partySelection.includes(a.id));
+      if (party.length === 0) return;
+
       activeBattleData = {
-        questId,
+        quest: q,
         party: JSON.parse(JSON.stringify(party)),
-        enemy: { name: "Wraith of the Sewers", hp: 120, maxHp: 120 },
+        enemy: { name: (q && q.name) ? "Guards of " + q.name : "Corrupted Entity", hp: 100 + (q?.difficultySequence ? (10-q.difficultySequence)*30 : 20), maxHp: 100 + (q?.difficultySequence ? (10-q.difficultySequence)*30 : 20) },
+        isDone: false,
         logs: [
-          `Expedition launched with ${party.length} Beyonder(s).`,
-          party.length === 1 ? "Solo bonus triggered (+50% Digestion multiplier)." : "Standard formation assembled."
+          `Expedition launched into ${q?.name || 'the dungeon'} with ${party.length} Beyonder(s).`,
+          party.length === 1 ? "⚡ Solo Dispatch Active: +50% Potion Digestion Bonus applied." : "Coordinated party formation assembled."
         ]
       };
-      renderApp(state);
+      renderApp();
     },
     stepCombat() {
-      if (!activeBattleData || !window.Engine?.state) return;
+      if (!activeBattleData) return;
       const b = activeBattleData;
+      if (b.isDone) return;
+
       // Instant calculation (No animations)
-      const dmgToEnemy = b.party.reduce((sum, hero) => sum + (hero.stats?.atk || 10), 0);
+      const dmgToEnemy = b.party.reduce((sum, hero) => sum + (hero.stats?.atk || 12), 0);
       b.enemy.hp = Math.max(0, b.enemy.hp - dmgToEnemy);
-      b.logs.push(`Party dealt ${dmgToEnemy} damage to ${b.enemy.name}.`);
+      b.logs.push(`Party assaulted the enemy for ${dmgToEnemy} damage!`);
 
       if (b.enemy.hp <= 0) {
-        b.logs.push(`Enemy defeated! Contract complete.`);
-        setTimeout(() => {
-          activeBattleData = null;
-          partySelection = [];
-          renderApp(window.Engine.state);
-        }, 1200);
+        b.isDone = true;
+        const isSolo = b.party.length === 1;
+        const digestGain = isSolo ? 30 : 20;
+        b.logs.push(`Enemy defeated! Contract fulfilled.`);
+        b.logs.push(`Party members digested +${digestGain}% of their current potion!`);
+        
+        // Apply rewards to state
+        if (state) {
+          state.funds = (state.funds || 0) + (b.quest?.rewards?.funds || 60);
+          state.reputation = (state.reputation || 0) + (b.quest?.rewards?.reputation || 2);
+          for (const member of b.party) {
+            const r = state.roster.find(x => x.id === member.id);
+            if (r) r.digest = Math.min(100, (r.digest || 0) + digestGain);
+          }
+          state.quests = (state.quests || []).filter(x => x.id !== b.quest?.id);
+          if (typeof saveGame === 'function') saveGame(state);
+        }
       } else {
         const target = b.party[Math.floor(Math.random() * b.party.length)];
-        const enemyDmg = 15;
+        const enemyDmg = 12;
         target.currentHp = Math.max(0, (target.currentHp ?? target.stats?.hp ?? 100) - enemyDmg);
         b.logs.push(`${b.enemy.name} struck ${target.name} for ${enemyDmg} damage!`);
       }
-      renderApp(window.Engine.state);
+      renderApp();
+    },
+    finishExpedition() {
+      activeBattleData = null;
+      partySelection = [];
+      renderApp();
     }
   };
 
-  // Expose render callback to game engine
-  window.renderUI = renderApp;
+  // Expose both window.GM and window.G9 for full compatibility
+  window.G9 = window.GM;
+
+  // Render on initial load to clear loading screen
+  renderApp();
 })();
