@@ -78,6 +78,21 @@ function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
 }
 
 
+// Game pathway keys sometimes differ from the existing artwork folders.
+const COMBAT_SPRITE_PATHS = new Map([
+  ['fool', 'fool'],
+  ['door', 'door'],
+  ['visionary', 'visionary'],
+  ['sun', 'sun'],
+  ['tyrant', 'tyrant'],
+  ['demoness', 'demoness'],
+  ['hanged_man', 'hangedman'],
+  ['darkness', 'darkness'],
+  ['death', 'death'],
+  ['twilight_giant', 'giant'],
+  ['red_priest', 'redpriest']
+]);
+
 function getCombatSprite(u) {
   const agent = (typeof state !== 'undefined' && state.roster)
     ? (state.roster.find(r => r.id === u.id || r.name === u.name) || u)
@@ -94,7 +109,7 @@ function getCombatSprite(u) {
   }
   if (seq === null || isNaN(seq)) seq = 9;
   const spriteSeq = Math.max(0, Math.min(9, seq === 10 ? 9 : seq));
-  const spritePath = ['door', 'visionary', 'sun', 'tyrant', 'demoness'].includes(path) ? path : 'fool';
+  const spritePath = COMBAT_SPRITE_PATHS.get(path) || 'fool';
 
   return `<img class="combat-sprite-img" src="data/assets/characters/${spritePath}/${spritePath}_seq${spriteSeq}.png" onerror="this.onerror=null;this.src='data/assets/characters/${spritePath}/seq${spriteSeq}.png';this.onerror=()=>{this.style.display='none';const fb=this.parentElement.querySelector('.combat-sprite-fallback');if(fb)fb.style.display='flex';};" alt="Seq ${spriteSeq}"><div class="combat-sprite-fallback" style="display:none">${esc((u.name||'?').slice(0,2).toUpperCase())}</div>`;
 }
