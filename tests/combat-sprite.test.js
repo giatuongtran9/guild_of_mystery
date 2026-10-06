@@ -12,12 +12,16 @@ vm.runInContext(source.slice(0, source.indexOf('function battlefieldImageFor')),
 const render = unit => context.getCombatSprite(unit);
 const imageSource = html => html.match(/src="([^"]+)"/)[1];
 
-for (const pathway of ['door', 'fool', 'visionary', 'sun', 'tyrant']) {
+for (const pathway of ['door', 'fool', 'visionary', 'sun', 'tyrant', 'demoness']) {
   for (let sequence = 0; sequence <= 9; sequence++) {
     const file = imageSource(render({ path: pathway, sequence, name: 'Test' }));
     assert.equal(file, `data/assets/characters/${pathway}/${pathway}_seq${sequence}.png`);
     const bytes = fs.readFileSync(path.join(root, file));
     assert.equal(bytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', `${file} must be a real PNG`);
+    if (pathway === 'demoness') {
+      assert.equal(bytes.readUInt32BE(16), 64, `${file} width`);
+      assert.equal(bytes.readUInt32BE(20), 64, `${file} height`);
+    }
   }
 }
 
@@ -38,8 +42,11 @@ context.state.roster = [{ id: 'tyrant-agent', name: 'Sailor', path: 'tyrant', se
 assert.equal(imageSource(render({ id: 'tyrant-agent', name: 'Sailor' })), 'data/assets/characters/tyrant/tyrant_seq9.png');
 assert.equal(imageSource(render({ id: 'tyrant-agent', name: 'Sailor', sequence: 0 })), 'data/assets/characters/tyrant/tyrant_seq0.png');
 assert.equal(imageSource(render({ path: 'error', sequence: 5 })), 'data/assets/characters/fool/fool_seq5.png');
+context.state.roster = [{ id: 'demoness-agent', name: 'Witch', path: 'demoness', sequence: 7 }];
+assert.equal(imageSource(render({ id: 'demoness-agent', name: 'Witch' })), 'data/assets/characters/demoness/demoness_seq7.png');
+assert.equal(imageSource(render({ id: 'demoness-agent', sequence: 0 })), 'data/assets/characters/demoness/demoness_seq0.png');
 
-for (const pathway of ['door', 'fool', 'visionary', 'sun', 'tyrant']) {
+for (const pathway of ['door', 'fool', 'visionary', 'sun', 'tyrant', 'demoness']) {
   const html = render({ path: pathway, sequence: 4, name: '<Mage>' });
   assert.ok(html.includes('&lt;M'), 'Fallback initials must be HTML escaped');
   const fallback = { style: { display: 'none' } };
@@ -52,4 +59,4 @@ for (const pathway of ['door', 'fool', 'visionary', 'sun', 'tyrant']) {
   assert.equal(fallback.style.display, 'flex');
 }
 
-console.log('Combat sprite checks passed: all Door/Fool/Visionary/Sun/Tyrant assets, roster snapshots, sequence resolution, and image fallback.');
+console.log('Combat sprite checks passed: all Door/Fool/Visionary/Sun/Tyrant/Demoness assets, 64px Demoness dimensions, roster snapshots, sequence resolution, and image fallback.');
