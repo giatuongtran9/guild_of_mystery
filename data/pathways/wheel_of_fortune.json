@@ -5,7 +5,7 @@
   "group": "Life & Fate",
   "archetype": "Caster",
   "material": "Mercury Scale",
-  "mythicalForm": "Silver Snake of Destiny",
+  "mythicalForm": "Snake of Mercury",
   "survival": [
     "Danger Sense [Escape]",
     "Lucky Break [Defense]",
@@ -22,7 +22,7 @@
     "full": "Next failed contest can reroll",
     "special": "Fortune",
     "characteristic": "Caster",
-    "quirkName": "Silver Snake of Destiny",
+    "quirkName": "Snake of Mercury",
     "quirkText": "Survival: Danger Sense [Escape], Lucky Break [Defense], Reset Fate [Heal]"
   },
   "sequences": [
