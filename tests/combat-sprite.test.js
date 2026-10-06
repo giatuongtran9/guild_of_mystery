@@ -19,8 +19,8 @@ for (const pathway of ['door', 'fool', 'visionary', 'sun', 'tyrant', 'demoness']
     const bytes = fs.readFileSync(path.join(root, file));
     assert.equal(bytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', `${file} must be a real PNG`);
     if (pathway === 'demoness') {
-      assert.equal(bytes.readUInt32BE(16), 64, `${file} width`);
-      assert.equal(bytes.readUInt32BE(20), 64, `${file} height`);
+      assert.equal(bytes.readUInt32BE(16), 1254, `${file} width`);
+      assert.equal(bytes.readUInt32BE(20), 1254, `${file} height`);
     }
   }
 }
@@ -59,4 +59,4 @@ for (const pathway of ['door', 'fool', 'visionary', 'sun', 'tyrant', 'demoness']
   assert.equal(fallback.style.display, 'flex');
 }
 
-console.log('Combat sprite checks passed: all Door/Fool/Visionary/Sun/Tyrant/Demoness assets, 64px Demoness dimensions, roster snapshots, sequence resolution, and image fallback.');
+console.log('Combat sprite checks passed: all Door/Fool/Visionary/Sun/Tyrant/Demoness assets, 1254px Demoness originals, roster snapshots, sequence resolution, and image fallback.');
