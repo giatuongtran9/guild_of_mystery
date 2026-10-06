@@ -5,7 +5,7 @@
   "group": "Knowledge & Wisdom",
   "archetype": "Caster",
   "material": "Star Parchment",
-  "mythicalForm": "Starlight Knowledge Serpent",
+  "mythicalForm": "Informational Eye",
   "survival": [
     "Scroll Ward [Defense]",
     "Information Reconstruction [Heal]"
@@ -21,7 +21,7 @@
     "full": "Next spell is empowered",
     "special": "Knowledge",
     "characteristic": "Caster",
-    "quirkName": "Starlight Knowledge Serpent",
+    "quirkName": "Informational Eye",
     "quirkText": "Survival: Scroll Ward [Defense], Information Reconstruction [Heal]"
   },
   "sequences": [
