@@ -13,7 +13,7 @@ const render = unit => context.getCombatSprite(unit);
 const imageSource = html => html.match(/src="([^"]+)"/)[1];
 const designedPathways = [
   ['door', 'door'], ['fool', 'fool'], ['visionary', 'visionary'],
-  ['sun', 'sun'], ['tyrant', 'tyrant'], ['demoness', 'demoness'],
+  ['sun', 'sun'], ['tyrant', 'tyrant'], ['demoness', 'demoness'], ['hermit', 'hermit'],
   ['hanged_man', 'hangedman'], ['darkness', 'darkness'], ['death', 'death'],
   ['twilight_giant', 'giant'], ['red_priest', 'redpriest']
 ];
@@ -82,4 +82,4 @@ for (const pathway of pathwayKeys.filter(key => !designedPathways.some(([designe
     `${pathway} must retain the Fool placeholder until artwork exists`);
 }
 
-console.log('Combat sprite checks passed: all 11 designed pathways and 110 sequence assets, roster snapshots, sequence resolution, and placeholders for pathways without artwork.');
+console.log(`Combat sprite checks passed: all ${designedPathways.length} designed pathways and ${designedPathways.length * 10} sequence assets, roster snapshots, sequence resolution, and placeholders for pathways without artwork.`);
