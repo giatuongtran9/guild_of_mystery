@@ -18,6 +18,7 @@ const designedPathways = [
   ['black_emperor', 'black_emperor'],
   ['abyss', 'abyss'],
   ['chained', 'chained'],
+  ['justiciar', 'justiciar'],
   ['hanged_man', 'hangedman'], ['darkness', 'darkness'], ['death', 'death'],
   ['twilight_giant', 'giant'], ['red_priest', 'redpriest']
 ];
