@@ -21,6 +21,7 @@ const designedPathways = [
   ['justiciar', 'justiciar'],
   ['moon', 'moon'],
   ['mother', 'mother'],
+  ['paragon', 'paragon'],
   ['hanged_man', 'hangedman'], ['darkness', 'darkness'], ['death', 'death'],
   ['twilight_giant', 'giant'], ['red_priest', 'redpriest']
 ];

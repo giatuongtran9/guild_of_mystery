@@ -5,7 +5,7 @@
   "group": "Knowledge & Wisdom",
   "archetype": "Caster",
   "material": "Brass Gear",
-  "mythicalForm": "Mechanical Engine Titan",
+  "mythicalForm": "Civilisation Scroll",
   "survival": [
     "Runic Shield [Defense]",
     "Matter Fortification [Defense]"
@@ -21,7 +21,7 @@
     "full": "Next ability is empowered",
     "special": "Invention",
     "characteristic": "Caster",
-    "quirkName": "Mechanical Engine Titan",
+    "quirkName": "Civilisation Scroll",
     "quirkText": "Survival: Runic Shield [Defense], Matter Fortification [Defense]"
   },
   "sequences": [
