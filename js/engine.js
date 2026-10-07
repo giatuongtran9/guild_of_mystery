@@ -353,6 +353,19 @@ function makeEnemy(seq,r,i,pathHint=null){
  return {id:`enemy_${i}`,name:isHuman?pickR(r,["Angry Suspect","Desperate Thief","Street Tough","Cornered Burglar"]):pickR(r,enemyNames),sequence:seq,path,awakened:!isHuman,occupation:isHuman?pickR(r,["Dockworker","Clerk","Thief","Butcher","Servant"]):null,humanStats:human,resistanceInt:stats.int,hp:stats.hp,maxHp:stats.hp,atk:stats.atk,def:stats.def,int:stats.int,stats:{hp:stats.hp,atk:stats.atk,def:stats.def,int:stats.int},abilities,abilityHistory:abilities,trait,traits:{name:trait,desc:TRAITS[trait].desc},statVariance,speedVariance:statVariance.speed,status:[],statusMeta:{},alive:true,distance:Math.round(5+r()*7),thread:null,weaponId:isHuman?pickR(r,['none','knife','club']):'none',weaponMastery:{},sp:0,maxSP:0,cooldowns:{},resistances:{...(G9D.balance.element_resistance_rules?.path_resistances?.[path]||{})},elementResistances:{}}
 }
 
+// Named encounters opt in to authored profiles. Random contracts and the
+// simulator retain their existing enemy generation and random-number order.
+function makeAuthoredEnemy(spec,r,i){
+ if(!spec||!PATH_KEYS.includes(spec.path)||!Number.isInteger(spec.sequence)||spec.sequence<0||spec.sequence>9)throw new Error('Invalid authored enemy pathway or Sequence');
+ const e=makeEnemy(spec.sequence,r,i,spec.path);
+ if(spec.name)e.name=String(spec.name);
+ if(spec.trait&&TRAITS[spec.trait]){e.trait=spec.trait;e.traits={name:spec.trait,desc:TRAITS[spec.trait].desc};}
+ if(spec.stats){for(const k of ['hp','atk','def','int'])if(!Number.isFinite(spec.stats[k])||spec.stats[k]<=0)throw new Error('Invalid authored enemy stats');e.stats={...spec.stats};e.hp=e.maxHp=spec.stats.hp;e.atk=spec.stats.atk;e.def=spec.stats.def;e.int=e.resistanceInt=spec.stats.int;}
+ e.statVariance={hp:1,atk:1,def:1,int:1,speed:1};e.speedVariance=1;e.basePathSpeed=basePathSpeed(spec.path,spec.sequence);
+ e.weaponId=WEAPONS[spec.weaponId]?spec.weaponId:'none';
+ return e;
+}
+
 function damageMultiplier(attackerSeq, defenderSeq, attackerPath = null, defenderPath = null) {
   const gap = authorityGap(attackerSeq, defenderSeq);
   let mult = 1;
@@ -1199,7 +1212,8 @@ function tickCombatEffectDurations(units){for(const u of units){if((u._taunt||0)
 
 function resolveQuest(members,quest,seed=Date.now(),decisions={}){
  const r=rand(seed),lines=[],consequences=[],allies=members.map(a=>{const es=effectiveStats(a);const ag=cloneE(a); const pm=passiveCombatModifier(ag); ag.resistances={...(G9D.balance.element_resistance_rules?.path_resistances?.[ag.path]||{}),...(pm.resistances||{}),...(ag.resistances||{})}; return {id:a.id,name:a.name,agent:ag,hp:Math.round(es.hp*(pm.hp||1)),maxHp:Math.round(es.hp*(pm.hp||1)),alive:true,inCombat:true,status:[],statusMeta:{},resistances:ag.resistances};});
- const simulationOpponents=Array.isArray(decisions.simulationOpponents)?decisions.simulationOpponents:null; const enemyCount=simulationOpponents?.length || quest.enemyCount|| (allies.length===1?1:(allies.length>=3 && quest.difficultySequence>=7?2:(quest.difficultySequence>=5?2:3))); const enemies=quest.encounter?(simulationOpponents?simulationOpponents.map((spec,i)=>makeEnemy(spec.sequence,r,i,spec.path)):Array.from({length:enemyCount},(_,i)=>makeEnemy(quest.difficultySequence,r,i,quest.requiredPath))):[];
+ const authoredOpponents=Array.isArray(decisions.authoredOpponents)&&decisions.authoredOpponents.length?decisions.authoredOpponents:null;
+ const simulationOpponents=Array.isArray(decisions.simulationOpponents)?decisions.simulationOpponents:null; const enemyCount=simulationOpponents?.length || quest.enemyCount|| (allies.length===1?1:(allies.length>=3 && quest.difficultySequence>=7?2:(quest.difficultySequence>=5?2:3))); const enemies=quest.encounter?(authoredOpponents?authoredOpponents.map((spec,i)=>makeAuthoredEnemy(spec,r,i)):simulationOpponents?simulationOpponents.map((spec,i)=>makeEnemy(spec.sequence,r,i,spec.path)):Array.from({length:enemyCount},(_,i)=>makeEnemy(quest.difficultySequence,r,i,quest.requiredPath))):[];
  for(const e of enemies){try{const epm=passiveCombatModifier(e);if(epm.hp&&epm.hp!==1){e.maxHp=Math.round(e.maxHp*epm.hp);e.hp=e.maxHp;}}catch(err){}}
  const individual=!!decisions.individual; const state={allies,enemies,individual,createdMarionettes:[],battleMarionettes:[],rng:r,weaponUsage:{},combatStatsShown:false,balanceTrace:[],events:[]};
  lines.push({text:`Contract: ${quest.name}`,kind:'system'},{text:quest.story||quest.brief,kind:'story'});

@@ -1,7 +1,7 @@
 // Async GitHub Pages bootstrap. The manifest is the source of truth for Pathway files.
 (() => {
   const app = document.getElementById('app');
-  const scripts = ['js/paths.js','js/v15.js','js/generate.js','js/engine.js','js/state.js','js/ui.js'];
+  const scripts = ['js/paths.js','js/v15.js','js/generate.js','js/engine.js','js/state.js','js/campaign.js','js/ui.js'];
 
   function loading(title, message, progress=0, error='') {
     app.innerHTML = `<div class="loading-screen"><div class="loading-card">

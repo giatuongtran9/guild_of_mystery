@@ -1,0 +1,63 @@
+{
+  "schema": "campaign.chapter.v1",
+  "id": "whispering_district",
+  "title": "The Whispering District",
+  "subtitle": "Chapter I · A first case for your guild",
+  "intro": "People vanish after hearing a bell that the district insists has not rung in thirty years. Archivist Mara Venn asks your new guild to find them before the next midnight.",
+  "npc": { "name": "Mara Venn", "role": "District archivist", "line": "Bring them home. We can argue about what the bell means afterward." },
+  "threat": "The Hushed Choir, an occult society led by Cantor Vale",
+  "targetSequence": 9,
+  "missions": [
+    {
+      "id": "open_doors", "number": 1, "title": "Open the Guild Doors", "kind": "setup",
+      "brief": "Put one prepared Beyonder on the case.",
+      "story": "Mara leaves a missing-person ledger on your desk. Recruit an agent, awaken them to a pathway of your choice, then equip a weapon before accepting her commission. Agents already in your guild count.",
+      "objective": "Have at least one active, awakened agent with a weapon equipped.",
+      "choices": [], "rewards": { "funds": 40, "reputation": 1, "materialPerPath": 0, "digestion": 5 },
+      "successText": "Your agent signs the ledger. Mara marks three disappearances around the shuttered bell house and pays the first part of your commission."
+    },
+    {
+      "id": "follow_whispers", "number": 2, "title": "Follow the Whispers", "kind": "investigation",
+      "brief": "Choose which lead to follow through the district.",
+      "story": "A lamplighter remembers people following a silent procession. Meanwhile, the old bell-house accounts list deliveries to a cellar that should be empty. Both leads can reveal how the Choir operates.",
+      "objective": "Choose a lead and secure a useful clue. This investigation has no combat.",
+      "choices": [
+        { "id": "interviews", "label": "Interview the lamplighter", "description": "Ask residents to reconstruct the procession and its chant.", "benefit": "The counter-chant weakens Vale's attacks by 15% in the final confrontation.", "clue": "counter_chant", "clueTitle": "The Broken Refrain", "outcome": "The lamplighter repeats the chant with one missing note. Mara recognizes a counter-chant that will interrupt Vale's rhythm." },
+        { "id": "ledger", "label": "Trace the bell-house ledger", "description": "Follow the deliveries and locate the Choir's ritual anchor.", "benefit": "Breaking the hidden anchor reduces Vale's health by 15% in the final confrontation.", "clue": "hidden_anchor", "clueTitle": "The Hidden Anchor", "outcome": "The deliveries lead to a clay resonance jar beneath the bell house. Marking its seal reveals the weak point sustaining Vale's ritual." }
+      ],
+      "rewards": { "funds": 100, "reputation": 2, "materialPerPath": 1, "digestion": 12 },
+      "successText": "A symbol in the evidence identifies the Hushed Choir. The missing residents are being held beneath the old bell house, and their captor is a Sleepless called Cantor Vale."
+    },
+    {
+      "id": "seal_and_supply", "number": 3, "title": "Prepare for the Last Bell", "kind": "preparation",
+      "brief": "Turn the evidence into a plan for the confrontation.",
+      "story": "Mara opens the district's emergency stores. There is enough time to prepare either a protective bell seal or a field reserve. Your chosen support is free and applies only to this chapter's boss battle.",
+      "objective": "Choose your support. You may bring one to three agents to the confrontation.",
+      "choices": [
+        { "id": "ward", "label": "Prepare a silencing seal", "description": "Bind the bell's resonance before the fight begins.", "benefit": "Vale's ATK and INT are reduced by another 25% for this chapter battle.", "outcome": "Mara folds wax and copper into a seal. At the bell house, it will absorb the first echoes and leave Vale's attacks weakened." },
+        { "id": "supplies", "label": "Pack a field reserve", "description": "Supply the party with protective gear and a measured restorative.", "benefit": "All deployed agents gain 25% maximum HP and 15% ATK and INT for this chapter battle.", "outcome": "Your agents pack reinforced coats and measured restoratives. The reserve will improve their endurance and damage during the confrontation." }
+      ],
+      "rewards": { "funds": 100, "reputation": 2, "materialPerPath": 0, "digestion": 10 },
+      "successText": "The cellar entrance is found and an escape route is secured. No extra purchase or advancement is required: a rested, equipped Sequence 9 party can attempt the case."
+    },
+    {
+      "id": "last_bell", "number": 4, "title": "Silence the Hushed Choir", "kind": "combat",
+      "brief": "Confront Cantor Vale and free the missing residents.",
+      "story": "Below the bell house, Cantor Vale conducts a procession around a sealed, stolen bell. Its echoes keep the captives moving in circles. Your evidence and preparations weaken the rite before the agents close in.",
+      "objective": "Defeat Cantor Vale, a Sequence 9 Sleepless of the Darkness pathway.",
+      "choices": [],
+      "enemy": { "id": "cantor_vale", "name": "Cantor Vale", "path": "darkness", "sequence": 9, "trait": "Stout Vitality", "stats": { "hp": 500, "atk": 48, "def": 28, "int": 42 }, "weaponId": "none" },
+      "rewards": { "funds": 240, "reputation": 4, "materialPerPath": 1, "digestion": 18 },
+      "successText": "Vale falls and the sealed bell goes silent. The missing residents wake from the procession. Your agents escort them up the cellar steps while Mara takes custody of the bell.",
+      "failureText": "The escape route holds. Mara's district wardens recover every agent, restore their strength and secure the entrance. The case remains open: retry without losing agents, funds, materials or chapter progress."
+    },
+    {
+      "id": "daybreak", "number": 5, "title": "Daybreak in the District", "kind": "epilogue",
+      "brief": "Close the case and collect the guild's commission.",
+      "story": "The residents return home. The bell is sealed in the district archive, and Mara invites your agents to record what they learned. Your guild has its first completed case.",
+      "objective": "File the report and receive the Whispering District case-file badge.",
+      "choices": [], "rewards": { "funds": 180, "reputation": 3, "materialPerPath": 1, "digestion": 25 },
+      "successText": "Case closed: The Whispering District. Your commission, pathway materials and potion digestion prepare the guild for Sequence 8. Normal contracts remain available to finish digestion and earn further supplies."
+    }
+  ]
+}

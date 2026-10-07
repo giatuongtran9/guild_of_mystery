@@ -1,5 +1,17 @@
 Guild of Mystery — v17 JSON Data Layer
 
+Opening campaign: The Whispering District
+  The Campaign tab introduces Sequence 9 play through five ordered missions:
+  recruit/awaken/equip, investigate, prepare, confront Cantor Vale, close the case.
+  Existing guild recruits and equipment count. Investigation clues and preparation
+  change the actual boss encounter. Choose 1–3 active, awakened agents per mission.
+  Chapter battles use rested copies: defeat never kills or injures persistent agents.
+  Saved pending outcomes resume after reload and settle once. Normal contracts and
+  advancement keep their existing risks. Finishing grants a case-file badge and
+  supplies toward Sequence 8; advancement still requires full potion digestion.
+  Story and rewards: data/campaign.json. Runtime: js/campaign.js.
+  Campaign verification: node tests/campaign.test.js.
+
 Run on GitHub Pages:
   Open index.html through a static host such as GitHub Pages.
   The browser bootstrap loads data/pathways/index.json first, then fetches all

@@ -157,7 +157,7 @@
       onProgress({ phase: 'pathways', current: loaded, total: 22, label: `Loading pathways ${loaded}/22`, file: key });
     }));
 
-    const otherNames = ['items', 'enemies', 'contracts', 'formulas', 'balance'];
+    const otherNames = ['items', 'enemies', 'contracts', 'formulas', 'balance', 'campaign'];
     let otherLoaded = 0;
     onProgress({ phase: 'data', current: 0, total: otherNames.length, label: `Loading data 0/${otherNames.length}` });
     const otherEntries = await Promise.all(otherNames.map(async name => {
@@ -167,6 +167,9 @@
       return [name, data];
     }));
     const other = Object.fromEntries(otherEntries);
+    if (other.campaign?.schema !== 'campaign.chapter.v1' || !Array.isArray(other.campaign.missions) || other.campaign.missions.length !== 5) {
+      throw new Error('data/campaign.json must contain a five-mission opening chapter');
+    }
     const pathways = assemblePathways(manifest, pathwayFiles, other.balance);
 
     const enemyData = other.enemies;
@@ -184,7 +187,7 @@
       OCCUPATIONS: enemyData.OCCUPATIONS || enemyData.human_enemy_occupations || []
     };
 
-    return { pathways, items: other.items, enemies: enemyData, contracts: other.contracts, formulas: other.formulas, balance: other.balance, system, characters };
+    return { pathways, items: other.items, enemies: enemyData, contracts: other.contracts, campaign: other.campaign, formulas: other.formulas, balance: other.balance, system, characters };
   }
 
   window.G9DataLoader = { load };
