@@ -5,7 +5,7 @@
   "group": "God Almighty",
   "archetype": "Caster",
   "material": "Ivory Quill",
-  "mythicalForm": "Eye of Knowledge Runic Tower",
+  "mythicalForm": "Spiral Library of Eyes",
   "survival": [
     "Predictive Guard [Defense]",
     "Prophetic Evade [Escape]"
@@ -21,7 +21,7 @@
     "full": "Next ability is empowered",
     "special": "Deduction",
     "characteristic": "Caster",
-    "quirkName": "Eye of Knowledge Runic Tower",
+    "quirkName": "Spiral Library of Eyes",
     "quirkText": "Survival: Predictive Guard [Defense], Prophetic Evade [Escape]"
   },
   "sequences": [

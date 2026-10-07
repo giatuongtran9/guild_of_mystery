@@ -22,6 +22,7 @@ const designedPathways = [
   ['moon', 'moon'],
   ['mother', 'mother'],
   ['paragon', 'paragon'],
+  ['white_tower', 'white_tower'],
   ['hanged_man', 'hangedman'], ['darkness', 'darkness'], ['death', 'death'],
   ['twilight_giant', 'giant'], ['red_priest', 'redpriest']
 ];
