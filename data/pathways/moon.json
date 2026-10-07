@@ -5,7 +5,7 @@
   "group": "Life & Fate",
   "archetype": "Caster",
   "material": "Crimson Moonstone",
-  "mythicalForm": "Crimson Vampire Bat Beast",
+  "mythicalForm": "Phantom Moon Sanguine",
   "survival": [
     "Healing Touch [Heal]",
     "Blood Siphon [Heal]"
@@ -21,7 +21,7 @@
     "full": "Next ability is empowered",
     "special": "Blood Moon",
     "characteristic": "Caster",
-    "quirkName": "Crimson Vampire Bat Beast",
+    "quirkName": "Phantom Moon Sanguine",
     "quirkText": "Survival: Healing Touch [Heal], Blood Siphon [Heal]"
   },
   "sequences": [

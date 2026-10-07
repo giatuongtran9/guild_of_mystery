@@ -92,6 +92,7 @@ const COMBAT_SPRITE_PATHS = new Map([
   ['abyss', 'abyss'],
   ['chained', 'chained'],
   ['justiciar', 'justiciar'],
+  ['moon', 'moon'],
   ['hanged_man', 'hangedman'],
   ['darkness', 'darkness'],
   ['death', 'death'],
