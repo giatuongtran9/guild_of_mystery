@@ -17,6 +17,7 @@ const designedPathways = [
   ['wheel_of_fortune', 'wheel_of_fortune'],
   ['black_emperor', 'black_emperor'],
   ['abyss', 'abyss'],
+  ['chained', 'chained'],
   ['hanged_man', 'hangedman'], ['darkness', 'darkness'], ['death', 'death'],
   ['twilight_giant', 'giant'], ['red_priest', 'redpriest']
 ];

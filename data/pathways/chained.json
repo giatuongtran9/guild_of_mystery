@@ -5,7 +5,7 @@
   "group": "Devil & Chained",
   "archetype": "Physical",
   "material": "Rusted Chain",
-  "mythicalForm": "Bound Shadow Abomination",
+  "mythicalForm": "Bandaged Curse Vessel",
   "survival": [
     "Shackled Endurance [Defense]",
     "Possession Phase [Escape]"
@@ -21,7 +21,7 @@
     "full": "Next ability is empowered",
     "special": "Restraint",
     "characteristic": "Physical",
-    "quirkName": "Bound Shadow Abomination",
+    "quirkName": "Bandaged Curse Vessel",
     "quirkText": "Survival: Shackled Endurance [Defense], Possession Phase [Escape]"
   },
   "sequences": [
