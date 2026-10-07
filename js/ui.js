@@ -88,6 +88,7 @@ const COMBAT_SPRITE_PATHS = new Map([
   ['demoness', 'demoness'],
   ['hermit', 'hermit'],
   ['wheel_of_fortune', 'wheel_of_fortune'],
+  ['black_emperor', 'black_emperor'],
   ['hanged_man', 'hangedman'],
   ['darkness', 'darkness'],
   ['death', 'death'],

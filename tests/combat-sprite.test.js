@@ -15,6 +15,7 @@ const designedPathways = [
   ['door', 'door'], ['fool', 'fool'], ['visionary', 'visionary'],
   ['sun', 'sun'], ['tyrant', 'tyrant'], ['demoness', 'demoness'], ['hermit', 'hermit'],
   ['wheel_of_fortune', 'wheel_of_fortune'],
+  ['black_emperor', 'black_emperor'],
   ['hanged_man', 'hangedman'], ['darkness', 'darkness'], ['death', 'death'],
   ['twilight_giant', 'giant'], ['red_priest', 'redpriest']
 ];
