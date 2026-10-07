@@ -5,7 +5,7 @@
   "group": "Life & Fate",
   "archetype": "Physical",
   "material": "Life Seed",
-  "mythicalForm": "Primordial Tree of Life Avatar",
+  "mythicalForm": "Primordial Life Mass",
   "survival": [
     "Earthy Vitality [Heal]",
     "Life Bloom [Heal]"
@@ -21,7 +21,7 @@
     "full": "Next ability is empowered",
     "special": "Vitality",
     "characteristic": "Physical",
-    "quirkName": "Primordial Tree of Life Avatar",
+    "quirkName": "Primordial Life Mass",
     "quirkText": "Survival: Earthy Vitality [Heal], Life Bloom [Heal]"
   },
   "sequences": [
