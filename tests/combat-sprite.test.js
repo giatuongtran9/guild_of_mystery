@@ -23,6 +23,7 @@ const designedPathways = [
   ['mother', 'mother'],
   ['paragon', 'paragon'],
   ['white_tower', 'white_tower'],
+  ['error', 'error'],
   ['hanged_man', 'hangedman'], ['darkness', 'darkness'], ['death', 'death'],
   ['twilight_giant', 'giant'], ['red_priest', 'redpriest']
 ];
@@ -60,7 +61,7 @@ assert.equal(imageSource(render({ id: 'sun-agent', name: 'Bard', sequence: 0 }))
 context.state.roster = [{ id: 'tyrant-agent', name: 'Sailor', path: 'tyrant', sequence: 9 }];
 assert.equal(imageSource(render({ id: 'tyrant-agent', name: 'Sailor' })), 'data/assets/characters/tyrant/tyrant_seq9.png');
 assert.equal(imageSource(render({ id: 'tyrant-agent', name: 'Sailor', sequence: 0 })), 'data/assets/characters/tyrant/tyrant_seq0.png');
-assert.equal(imageSource(render({ path: 'error', sequence: 5 })), 'data/assets/characters/fool/fool_seq5.png');
+assert.equal(imageSource(render({ path: 'unknown_pathway', sequence: 5 })), 'data/assets/characters/fool/fool_seq5.png');
 context.state.roster = [{ id: 'demoness-agent', name: 'Witch', path: 'demoness', sequence: 7 }];
 assert.equal(imageSource(render({ id: 'demoness-agent', name: 'Witch' })), 'data/assets/characters/demoness/demoness_seq7.png');
 assert.equal(imageSource(render({ id: 'demoness-agent', sequence: 0 })), 'data/assets/characters/demoness/demoness_seq0.png');
