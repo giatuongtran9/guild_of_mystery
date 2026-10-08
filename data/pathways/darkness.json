@@ -51,9 +51,9 @@
             "amount": 10
           },
           {
-            "type": "resistance",
-            "element": "fear",
-            "amount": 25
+            "type": "status_resistance",
+            "status": "fear",
+            "amount": 0.25
           }
         ]
       }

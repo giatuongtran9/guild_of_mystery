@@ -50,8 +50,8 @@
           {
             "type": "resistance",
             "values": {
-              "water": 0.1,
-              "lightning": 0.1
+              "water": 10,
+              "lightning": 10
             }
           }
         ]

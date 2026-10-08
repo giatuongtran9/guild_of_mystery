@@ -48,9 +48,9 @@
             "amount": 0.1
           },
           {
-            "type": "resistance",
-            "element": "curse",
-            "amount": 25
+            "type": "status_resistance",
+            "status": "curse",
+            "amount": 0.25
           }
         ]
       }
@@ -105,7 +105,8 @@
           {
             "type": "shield",
             "maxHpRatio": 0.2,
-            "fullHp": false
+            "fullHp": false,
+            "incomingCategory": "magic"
           }
         ]
       }
@@ -237,7 +238,8 @@
             "type": "reflect",
             "mode": "share",
             "share": 0.5,
-            "duration": "next_turn"
+            "duration": "next_turn",
+            "incomingCategory": "magic"
           }
         ]
       }

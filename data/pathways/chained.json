@@ -50,8 +50,8 @@
           {
             "type": "resistance",
             "values": {
-              "physical": 0.15,
-              "slashing": 0.15
+              "physical": 15,
+              "slashing": 15
             }
           }
         ]

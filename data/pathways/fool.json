@@ -296,13 +296,10 @@
         "effects": [
           {
             "type": "revive",
-            "self": false,
-            "hpRatio": 1
-          },
-          {
-            "type": "revive",
-            "self": false,
-            "hpRatio": 0.25
+            "self": true,
+            "hpRatio": 0.25,
+            "consumeAllSP": true,
+            "exhaustionDuration": 1
           }
         ]
       }

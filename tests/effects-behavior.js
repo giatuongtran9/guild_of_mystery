@@ -42,7 +42,9 @@ function realCast(pathKey, seq, id, { mod, prep } = {}) {
   const spec = JSON.parse(JSON.stringify(g.activeSpecs(w.a).find(s => s.effectId === id)));
   spec.costSP = 0; spec.cooldown = 0; if (mod) mod(spec);
   const before = w.ub.hp, beforeA = w.ua.hp; w.a.sp = 99999;
-  g.applyStructuredAbility(w.a, w.ua, w.ub, w.st, [], R5, spec);
+  // These paired probes isolate damage effects. Use an explicit hit roll now
+  // that damaging skills share the ordinary accuracy and target-dodge rules.
+  g.applyStructuredAbility(w.a, w.ua, w.ub, w.st, [], () => 0.99, spec);
   return { dmg: before - w.ub.hp, selfHeal: w.ua.hp - beforeA, ...w };
 }
 

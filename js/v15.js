@@ -43,7 +43,8 @@ function v15Damage(kind, { agent, actor, target, abilityMult = 1, weaponBonus = 
   if (actor && actor._defPenBonus) defPen += actor._defPenBonus;
   if (kind==='pure_caster_ability'||String(damageSpec?.scaling||'').toUpperCase()==='INT') { const sp=passiveCombatModifier(agent).spellPen; if (sp) defPen += sp; }
   const ATK=(st.atk||0)+(agent._stolenAtk||0), INT=st.int||0;
-  const seqMult=damageMultiplier(agent.sequence,target.sequence,agent.path,target.path);
+  const targetAgent=target.agent||target;
+  const seqMult=damageMultiplier(agent.sequence,targetAgent.sequence,agent.path,targetAgent.path);
   const spec=damageSpec||{};
   const tpm=passiveCombatModifier(target.agent||target);
   const formula=spec.formula||kind;
@@ -57,15 +58,15 @@ function v15Damage(kind, { agent, actor, target, abilityMult = 1, weaponBonus = 
   const defFactor = Number(hybridCfg.def_armor_mitigation?.factor ?? 0.5);
 
   if(formula==='basic_physical_attack') raw=(ATK*mod.atk+weaponBonus)*strikeMult*seqMult;
-  else if(components.length){ const primary=String(spec.scaling||'ATK').toUpperCase(); const primaryTerm=primary==='INT'?INT*mod.int:ATK*mod.atk; raw=primaryTerm*abilityMult*seqMult+components.reduce((sum,c)=>sum+(c.stat==='ATK'?ATK*mod.atk:(c.stat==='DEF'?(st.def||0):(c.stat==='HP'?(st.hp||0):INT*mod.int)))*Number(c.multiplier||0),0)*abilityMult*seqMult; bypass=physCfg.base_def_bypass; }
+  else if(components.length){ const primary=String(spec.scaling||'ATK').toUpperCase(); const primaryTerm=primary==='INT'?INT*mod.int:ATK*mod.atk; raw=(primaryTerm*abilityMult+components.reduce((sum,c)=>sum+(c.stat==='ATK'?ATK*mod.atk:(c.stat==='DEF'?(st.def||0):(c.stat==='HP'?(st.hp||0):INT*mod.int)))*Number(c.multiplier||0),0))*seqMult; bypass=physCfg.base_def_bypass; }
   else if(formula==='empowered_hybrid_physical') { raw=(ATK*mod.atk*physCfg.atk_mult+INT*physCfg.int_mult*mod.int)*abilityMult*seqMult; bypass=physCfg.base_def_bypass; }
   else if(formula==='empowered_hybrid_agility') { raw=(ATK*mod.atk*agiCfg.atk_mult+INT*agiCfg.int_mult*mod.int)*abilityMult*seqMult; bypass=agiCfg.base_def_bypass; }
   else { raw=INT*abilityMult*mod.int*seqMult; bypass=casterBypass; }
-  raw*=(actor?._formBoost||1)*(agent._outgoingMultiplier||1)*((actor&&actor!==agent)?(actor._outgoingMultiplier||1):1);
+  raw*=(actor?._formBoost||1)*(actor?._outgoingMultiplier??agent._outgoingMultiplier??1)*(agent._teamDamageMultiplier??1);
   if(actor?._weaknessBonus) raw*=1+actor._weaknessBonus;
   if(trueDamage||psychicTrue||spec.type==='true') bypass=1;
   bypass=Math.min(1,bypass+defPen);
-  if(spec.type==='true') {
+  if(trueDamage||psychicTrue||spec.type==='true') {
     const finalTrue=Math.max(1,Math.round(raw));
     if(trace){ trace.raw=raw; trace.resistance=0; trace.afterResistance=raw; trace.defense=0; trace.defenseReduction=0; trace.finalBeforeEffects=finalTrue; trace.final=finalTrue; trace.isTrue=true; }
     return finalTrue;
@@ -82,27 +83,33 @@ function v15Damage(kind, { agent, actor, target, abilityMult = 1, weaponBonus = 
   return final;
 }
 function elementResistance(target,element){
-  const base=Number(target.resistances?.[element]??0);
+  const key=canonicalResistanceElement(element),map=target.resistances||combatResistances(target.agent||target);
+  const base=Number(canonicalResistanceMap(map)[key]??0);
   const max=G9D.balance.element_resistance_rules?.max_positive_resistance??90;
   const min=G9D.balance.element_resistance_rules?.min_resistance??-100;
   return Math.max(min,Math.min(max,base));
 }
 function applyPathResistances(unit,path){
-  const defaults=G9D.balance.element_resistance_rules?.path_resistances?.[path]||{};
-  unit.resistances={...(unit.resistances||{}),...defaults};
+  unit.resistances=combatResistances({...(unit.agent||unit),path});
   return unit.resistances;
 }
-function tryRevive(t, lines, state) {
-  if (t.alive || !t.agent) return;
-  const spec = unlockedAbilities(t.agent).find(x => (x.effects||[]).some(e => e.type==='revive'));
-  if (!spec || t._revived) return;
+function tryRevive(t, lines=[], state) {
+  if (!t || t.alive || t._revived || !(t.maxHp > 0)) return false;
+  const ag = getCombatAgent(t);
+  // Automatic survival is distinct from active fatal-protection effects. In
+  // particular, Snake of Mercury does not add a second Reset Fate charge.
+  const spec = unlockedAbilities(ag).find(x => x.type==='passive' && (x.effects||[]).some(e => e.type==='revive' && e.self));
+  if (!spec) return false;
   const revRules = G9D?.formulas?.revive_rules || {};
   const defaultHpRatio = Number(revRules.default_hp_ratio ?? 0.25);
   const spFloor = Number(revRules.sp_floor ?? 20);
   const spRatio = Number(revRules.sp_retention_ratio ?? 0.5);
-  const rev = (spec.effects||[]).find(e => e.type==='revive' && e.self) || (spec.effects||[]).find(e => e.type==='revive');
-  t._revived = true; t.alive = true; t.hp = Math.max(1, Math.round(t.maxHp * Number(rev?.hpRatio || defaultHpRatio)));
-  if (t.agent) t.agent.sp = Math.max(spFloor, Math.round((t.agent.sp || 0) * spRatio));
+  const rev = (spec.effects||[]).find(e => e.type==='revive' && e.self);
+  t._revived = true; t.alive = true; t.inCombat = true;
+  // Resurrection is the explicit exception to no_heal's living-unit guard.
+  t.hp = Math.min(t.maxHp,Math.max(1,Math.round(t.maxHp*Number(rev.hpRatio??defaultHpRatio))));
+  ag.sp = rev.consumeAllSP ? 0 : Math.max(spFloor,Math.round((ag.sp||0)*spRatio));
+  if(Number(rev.exhaustionDuration)>0)addStatus(t,'spiritual_exhaustion',Number(rev.exhaustionDuration),spec.id);
   let msg = rev?.reviveText
     ? rev.reviveText.replace('{name}', t.name).replace('{hp}', t.hp)
     : `${t.name} is revived by ${spec.text.split(' — ')[0]} with ${t.hp} HP.`;
@@ -122,13 +129,15 @@ function tryRevive(t, lines, state) {
       text: msg
     });
   }
+  return true;
 }
-// Mythical Creature Form: Seq 4+, once per battle, 50 SP; +30% Max HP shield, +20% all damage,
-// and every turn each enemy has a 20% chance to lose its turn. Abilities remain castable.
+// Mythical Creature Form awakens once per battle; numeric rules come from data.
+// Each living enemy receives its own mental-pollution roll on awakening.
 function tryMythicalForm(agent, actor, state, lines, r) {
   const unit = actor || agent;
   const ag = agent || unit?.agent || unit;
-  if (!unit || !ag || unit._formUsed) return;
+  if (!unit || !ag || !unit.alive || unit._formUsed) return;
+  lines=lines||[];
 
   const spCost = Number(MYTHIC?.sp_cost ?? 0);
   const unlockedSeq = Number(MYTHIC?.unlocked_at_sequence ?? 4);
@@ -147,8 +156,7 @@ function tryMythicalForm(agent, actor, state, lines, r) {
   unit._formUsed = true;
   unit._inForm = true;
   unit._formBoost = Math.max(unit._formBoost || 1, 1 + damageBonus);
-  const sh = Math.round(unit.maxHp * shieldRatio);
-  unit.shield = Math.max(unit.shield || 0, sh);
+  const sh=grantShield(unit,Math.round(unit.maxHp*shieldRatio));
   const formName = (typeof pathOf === 'function' ? pathOf(ag.path)?.mythicalForm : null) || 'a mythical creature';
   const bonusPct = Math.round(damageBonus * 100);
   const desc = `MYTHICAL FORM: ${unit.name} awakens ${formName} (+${sh} HP shield, +${bonusPct}% damage).`;
@@ -165,7 +173,7 @@ function tryMythicalForm(agent, actor, state, lines, r) {
       actorTeam: teamOf(unit, state),
       text: desc
     });
-    emitCombatEvent(state, {
+    if(sh>0)emitCombatEvent(state, {
       round: state.currentRound || 1,
       type: 'shield',
       actorId: unit.id,
@@ -180,9 +188,10 @@ function tryMythicalForm(agent, actor, state, lines, r) {
     });
   }
 
-  if (r && r() < pollutionChance) {
+  const roll=r||state?.rng;
+  if (roll && state) {
     for (const f of foesOf(unit, state)) {
-      if (f.alive) {
+      if (f.alive && roll() < pollutionChance && !statusImmune(f,'stunned')) {
         addStatus(f, 'stunned', 1, unit.name);
         const stunTxt = `${f.name} is overwhelmed by mental pollution and loses a turn.`;
         lines.push({ text: stunTxt, kind: 'status' });

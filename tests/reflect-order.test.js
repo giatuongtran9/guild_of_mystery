@@ -41,7 +41,7 @@ for (let sd = 1; sd <= 200; sd++) {
     for (let j = i + 1; j < ev.length; j++) {
       const x = ev[j];
       if (x.type === 'cast' || x.type === 'round_start') break;
-      if (x.type === 'damage' && x.actorId === ev[i].actorId) { expected++; break; }
+      if (x.type === 'damage' && !x.isDot && x.actorId === ev[i].actorId) { expected++; break; }
     }
   }
   const merged = rows.filter(r => r.type === 'turn' && r.costSP !== undefined && r.damages && r.damages.length > 0).length;

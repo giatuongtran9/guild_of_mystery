@@ -218,8 +218,8 @@
           {
             "type": "resistance",
             "values": {
-              "physical": 0.2,
-              "blunt": 0.2
+              "physical": 20,
+              "blunt": 20
             }
           }
         ]

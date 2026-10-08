@@ -49,8 +49,8 @@
           {
             "type": "resistance",
             "values": {
-              "piercing": 0.1,
-              "corrosion": 0.1
+              "piercing": 10,
+              "corrosion": 10
             }
           }
         ]
@@ -149,7 +149,8 @@
           {
             "type": "damage_taken",
             "amount": -0.2,
-            "duration": "next_turn"
+            "duration": "next_turn",
+            "incomingCategory": "physical"
           }
         ]
       }

@@ -50,8 +50,8 @@
           {
             "type": "resistance",
             "values": {
-              "rot": 0.1,
-              "cold": 0.1
+              "rot": 10,
+              "cold": 10
             }
           }
         ]

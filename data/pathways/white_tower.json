@@ -100,7 +100,8 @@
         "effects": [
           {
             "type": "damage_taken",
-            "amount": -0.2
+            "amount": -0.2,
+            "incomingCategory": "magic"
           }
         ]
       }
@@ -237,7 +238,8 @@
           {
             "type": "shield",
             "maxHpRatio": 0.3,
-            "fullHp": false
+            "fullHp": false,
+            "incomingCategory": "magic"
           }
         ]
       }

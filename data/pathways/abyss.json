@@ -99,8 +99,8 @@
           {
             "type": "resistance",
             "values": {
-              "physical": 0.15,
-              "fire": 0.15
+              "physical": 15,
+              "fire": 15
             }
           }
         ]

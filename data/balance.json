@@ -848,7 +848,10 @@
     },
     "aliases": {
       "crimson": "blood",
-      "slashing": "physical"
+      "slashing": "physical",
+      "blunt": "physical",
+      "cold": "frost",
+      "rot": "corrosion"
     }
   },
   "system": {

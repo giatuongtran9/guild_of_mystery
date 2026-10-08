@@ -50,8 +50,8 @@
           {
             "type": "resistance",
             "values": {
-              "poison": 0.15,
-              "blunt": 0.15
+              "poison": 15,
+              "blunt": 15
             }
           }
         ]
@@ -210,7 +210,8 @@
             "type": "reflect",
             "mode": "share",
             "share": 0.3,
-            "duration": "next_turn"
+            "duration": "next_turn",
+            "incomingCategory": "physical"
           }
         ]
       }
