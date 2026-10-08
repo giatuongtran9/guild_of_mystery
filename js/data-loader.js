@@ -1,4 +1,4 @@
-// GitHub Pages data bootstrap. The manifest is the only directory index.
+// Authored JSON is bundled for GitHub Pages; the release manifest stays fresh.
 (() => {
   'use strict';
 
@@ -8,7 +8,7 @@
 
   const withCacheBust = url => `${url}${url.includes('?') ? '&' : '?'}${cacheBust()}`;
 
-  async function fetchJson(url, label) {
+  async function fetchJson(url, label, cache = 'no-cache') {
     let lastError = null;
     for (let attempt = 1; attempt <= RETRIES; attempt++) {
       const controller = new AbortController();
@@ -16,7 +16,7 @@
       try {
         const requestUrl = attempt === 1 ? url : withCacheBust(url);
         const response = await fetch(requestUrl, {
-          cache: 'no-store',
+          cache,
           signal: controller.signal,
           headers: { Accept: 'application/json' }
         });
@@ -34,8 +34,6 @@
     throw new Error(`${label}: ${lastError?.message || 'failed to load'}`);
   }
 
-  const keyFromName = name => name.replace(/\.json$/i, '');
-
   function validateManifest(manifest) {
     if (!manifest || manifest.schema !== 'pathways.index.v1') throw new Error('data/pathways/index.json has an invalid schema');
     if (!Array.isArray(manifest.order) || manifest.order.length !== 22) throw new Error('data/pathways/index.json must list exactly 22 pathways');
@@ -43,10 +41,48 @@
     if (!manifest.counters || typeof manifest.counters !== 'object') throw new Error('data/pathways/index.json is missing counters');
     const keys = new Set(manifest.order);
     for (const key of manifest.order) {
+      if (typeof key !== 'string' || !/^[a-z][a-z0-9_]*$/.test(key) || ['constructor', 'prototype'].includes(key)) throw new Error('Invalid pathway key in manifest');
       if (!Object.prototype.hasOwnProperty.call(manifest.counters, key)) throw new Error(`Counter missing for pathway ${key}`);
       if (!keys.has(manifest.counters[key])) throw new Error(`Counter target ${manifest.counters[key]} is not a listed pathway`);
     }
     if (Object.keys(manifest.counters).length !== 22) throw new Error('Pathway counters must contain all 22 keys');
+  }
+
+  function validateRuntimeManifest(manifest) {
+    if (!manifest || manifest.schema !== 'guild.runtime-manifest.v1') throw new Error('Runtime manifest has an invalid schema');
+    if (typeof manifest.version !== 'string' || !/^[a-f0-9]{16}$/.test(manifest.version) || manifest.bundle !== `data/runtime/data.${manifest.version}.json`) throw new Error('Runtime manifest has an invalid versioned bundle path');
+    const scripts = ['paths', 'v15', 'generate', 'engine', 'state', 'campaign', 'ui'];
+    if (!manifest.scriptVersions || typeof manifest.scriptVersions !== 'object' || Object.keys(manifest.scriptVersions).length !== scripts.length || scripts.some(name => typeof manifest.scriptVersions[`js/${name}.js`] !== 'string' || !/^[a-f0-9]{16}$/.test(manifest.scriptVersions[`js/${name}.js`]))) throw new Error('Runtime manifest has invalid script versions');
+    if (manifest.serviceWorkerVersion !== undefined && !/^[a-f0-9]{16}$/.test(manifest.serviceWorkerVersion)) throw new Error('Runtime manifest has an invalid service worker version');
+  }
+
+  function validateBundle(bundle) {
+    if (!bundle || bundle.schema !== 'guild.runtime-data.v1') throw new Error('Runtime data bundle has an invalid schema');
+    validateManifest(bundle.manifest);
+    if (!bundle.pathwayFiles || Object.keys(bundle.pathwayFiles).length !== 22) throw new Error('Runtime data bundle must contain all 22 pathways');
+    for (const key of bundle.manifest.order) validatePathway(bundle.pathwayFiles[key], key);
+    for (const name of ['items', 'enemies', 'contracts', 'formulas', 'balance', 'campaign']) {
+      if (!bundle.other?.[name] || typeof bundle.other[name] !== 'object') throw new Error(`Runtime data bundle is missing ${name}`);
+    }
+    if (bundle.other.campaign.schema !== 'campaign.chapter.v1' || !Array.isArray(bundle.other.campaign.missions) || bundle.other.campaign.missions.length !== 5) throw new Error('data/campaign.json must contain a five-mission opening chapter');
+    if (bundle.runtimeAssets !== undefined && (bundle.runtimeAssets?.schemaVersion !== 1 || !/^[a-f0-9]{16}$/.test(bundle.runtimeAssets.version) || !bundle.runtimeAssets.entries || typeof bundle.runtimeAssets.entries !== 'object')) throw new Error('Runtime portrait manifest has an invalid schema');
+    return bundle;
+  }
+
+  async function loadBundle(url, base) {
+    let cache;
+    try {
+      cache = await window.caches?.open(`guild-of-mystery:data-v1:${new URL(base).pathname}`);
+      const cached = await cache?.match(url);
+      if (cached) {
+        try { return validateBundle(await cached.json()); }
+        catch { await cache.delete(url); }
+      }
+    } catch { cache = undefined; }
+    const bundle = validateBundle(await fetchJson(url, 'Runtime data bundle', 'force-cache'));
+    try { await cache?.put(url, new Response(JSON.stringify(bundle), { headers: { 'Content-Type': 'application/json' } })); }
+    catch { /* Storage restrictions cannot prevent startup. */ }
+    return bundle;
   }
 
   function validatePathway(pathway, expectedKey) {
@@ -142,34 +178,12 @@
     const base = new URL('./', document.baseURI).href;
     const url = rel => new URL(rel, base).href;
 
-    onProgress({ phase: 'manifest', current: 0, total: 1, label: 'Loading pathway manifest' });
-    const manifest = await fetchJson(url('data/pathways/index.json'), 'data/pathways/index.json');
-    validateManifest(manifest);
-
-    const pathwayFiles = {};
-    let loaded = 0;
-    onProgress({ phase: 'pathways', current: 0, total: 22, label: 'Loading pathways 0/22' });
-    await Promise.all(manifest.order.map(async key => {
-      const file = await fetchJson(url(`data/pathways/${key}.json`), `data/pathways/${key}.json`);
-      validatePathway(file, key);
-      pathwayFiles[key] = file;
-      loaded += 1;
-      onProgress({ phase: 'pathways', current: loaded, total: 22, label: `Loading pathways ${loaded}/22`, file: key });
-    }));
-
-    const otherNames = ['items', 'enemies', 'contracts', 'formulas', 'balance', 'campaign'];
-    let otherLoaded = 0;
-    onProgress({ phase: 'data', current: 0, total: otherNames.length, label: `Loading data 0/${otherNames.length}` });
-    const otherEntries = await Promise.all(otherNames.map(async name => {
-      const data = await fetchJson(url(`data/${name}.json`), `data/${name}.json`);
-      otherLoaded += 1;
-      onProgress({ phase: 'data', current: otherLoaded, total: otherNames.length, label: `Loading data ${otherLoaded}/${otherNames.length}`, file: name });
-      return [name, data];
-    }));
-    const other = Object.fromEntries(otherEntries);
-    if (other.campaign?.schema !== 'campaign.chapter.v1' || !Array.isArray(other.campaign.missions) || other.campaign.missions.length !== 5) {
-      throw new Error('data/campaign.json must contain a five-mission opening chapter');
-    }
+    onProgress({ phase: 'manifest', current: 0, total: 1, label: 'Checking the current data release' });
+    const runtimeManifest = await fetchJson(url('data/runtime/manifest.json'), 'data/runtime/manifest.json', 'no-cache');
+    validateRuntimeManifest(runtimeManifest);
+    onProgress({ phase: 'data', current: 0, total: 1, label: 'Loading the guild data' });
+    const { manifest, pathwayFiles, other, runtimeAssets } = await loadBundle(url(runtimeManifest.bundle), base);
+    onProgress({ phase: 'data', current: 1, total: 1, label: 'Guild data ready' });
     const pathways = assemblePathways(manifest, pathwayFiles, other.balance);
 
     const enemyData = other.enemies;
@@ -187,7 +201,7 @@
       OCCUPATIONS: enemyData.OCCUPATIONS || enemyData.human_enemy_occupations || []
     };
 
-    return { pathways, items: other.items, enemies: enemyData, contracts: other.contracts, campaign: other.campaign, formulas: other.formulas, balance: other.balance, system, characters };
+    return { pathways, items: other.items, enemies: enemyData, contracts: other.contracts, campaign: other.campaign, formulas: other.formulas, balance: other.balance, system, characters, runtimeAssets, runtimeManifest };
   }
 
   window.G9DataLoader = { load };
