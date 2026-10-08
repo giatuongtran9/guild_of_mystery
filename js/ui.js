@@ -136,11 +136,14 @@ function getCombatSprite(u, options = {}) {
 
   const original = `${assetBase}${spritePath}/${spritePath}_seq${spriteSeq}.png`;
   const legacy = `${assetBase}${spritePath}/seq${spriteSeq}.png`;
-  const variant = options.variant === 'dossier' ? 'dossier' : 'portrait';
+  const variant = ['portrait','dossier'].includes(options.variant) ? options.variant : 'full';
   const size = variant === 'dossier' ? 384 : 192;
   const assets = typeof G9_DATA !== 'undefined' ? G9_DATA.runtimeAssets?.entries : null;
   const art = assets?.[`data/assets/characters/${spritePath}/${spritePath}_seq${spriteSeq}.png`]?.[variant];
-  const valid = art && art.width === size && art.height === size && new RegExp(`^data/assets/runtime/characters/${spritePath}/${spritePath}_seq${spriteSeq}\\.${size}\\.[a-f0-9]{16}\\.(png|webp)$`).test(art.src);
+  const canonical = `data/assets/characters/${spritePath}/${spritePath}_seq${spriteSeq}.png`;
+  const valid = art && (variant === 'full'
+    ? Number.isInteger(art.width) && art.width > 0 && Number.isInteger(art.height) && art.height > 0 && typeof art.src === 'string' && art.src.startsWith(canonical + '?v=') && /^[a-f0-9]{16}$/.test(art.src.slice(canonical.length + 3))
+    : art.width === size && art.height === size && new RegExp(`^data/assets/runtime/characters/${spritePath}/${spritePath}_seq${spriteSeq}\\.${size}\\.[a-f0-9]{16}\\.(png|webp)$`).test(art.src));
   const src = valid ? art.src : original;
   const loading = options.loading === 'eager' ? 'eager' : 'lazy';
   const priority = loading === 'eager' && options.priority === 'high' ? ' fetchpriority="high"' : '';
@@ -148,7 +151,7 @@ function getCombatSprite(u, options = {}) {
   const quoted = value => "'" + String(value).replace(/[\\'<>&"\r\n\u2028\u2029]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')) + "'";
   const legacyError = `this.onerror=()=>{${hide}};this.src=${quoted(legacy)};`;
   const onerror = valid ? `this.onerror=()=>{${legacyError}};this.src=${quoted(original)};` : legacyError;
-  return `<img class="combat-sprite-img" src="${esc(src)}" width="${size}" height="${size}" loading="${loading}" decoding="async"${priority} onerror="${onerror}" alt="Seq ${spriteSeq}"><div class="combat-sprite-fallback" style="display:none">${esc((u.name||'?').slice(0,2).toUpperCase())}</div>`;
+  return `<img class="combat-sprite-img" src="${esc(src)}" width="${valid ? art.width : size}" height="${valid ? art.height : size}" loading="${loading}" decoding="async"${priority} onerror="${onerror}" alt="Seq ${spriteSeq}"><div class="combat-sprite-fallback" style="display:none">${esc((u.name||'?').slice(0,2).toUpperCase())}</div>`;
 }
 function battlefieldImageFor(quest = {}, isSim = false) {
   const config = typeof G9D !== 'undefined' ? G9D.contracts.battlefields || {} : {};
@@ -490,6 +493,7 @@ if (typeof document !== 'undefined') (() => {
   const combatReady=()=>activeRoster().filter(a=>a.awakened&&a.sequence<=9);
   let chapterAgentIds=[], chapterChoice=null, chapterSelectionMission=null, chapterSelectionInitialized=false;
   let dossierSkillType='active', dossierSkillSequence=null, dossierReturnFocus=null;
+  let portraitViewer=null;
   campaignEnsure(state);
   tab=campaignStatus(state).complete?'hall':'campaign';
   function chapterCommit(fn){
@@ -505,6 +509,7 @@ if (typeof document !== 'undefined') (() => {
   function commit(fn){const draft=clone(state);fn(draft);state=draft;saveGame(draft);render();}
   function toast(msg){notice=msg;render();setTimeout(()=>{if(notice===msg){notice='';render()}},2400)}
   function render(){
+    if(portraitViewer)closePortrait();
     clearTimeout(tickerTimer); tickerTimer = null;
     const pagePosition = { x: window.scrollX, y: window.scrollY };
     const scrollPositions = Array.from(app.querySelectorAll('.quest-modal, .battle-ticker-viewport')).map(el => ({
@@ -528,6 +533,67 @@ if (typeof document !== 'undefined') (() => {
     window.scrollTo(pagePosition.x, pagePosition.y);
     if (typeof prioritizeVisiblePartyPortraits === 'function') prioritizeVisiblePartyPortraits();
     scheduleTicker();
+  }
+  function closePortrait(){
+    if(!portraitViewer)return;
+    const viewer=portraitViewer;portraitViewer=null;
+    window.removeEventListener('resize',viewer.resize);
+    viewer.dialog.remove();app.inert=viewer.inert;document.body.style.overflow=viewer.overflow;
+    if(viewer.opener.isConnected)viewer.opener.focus({preventScroll:true});
+  }
+  function openPortrait(opener){
+    if(portraitViewer||!opener?.querySelector)return;
+    const source=opener.querySelector('img');if(!source)return;
+    const url=new URL(source.currentSrc||source.src,document.baseURI),base=new URL('./',document.baseURI);
+    const relative=url.pathname.startsWith(base.pathname)?url.pathname.slice(base.pathname.length):'';
+    if(url.origin!==base.origin||!/^data\/assets\/characters\/[a-z][a-z0-9_]*\/[a-z][a-z0-9_]*_seq[0-9]\.png$/.test(relative)||url.hash||url.search&&!/^\?v=[a-f0-9]{16}$/.test(url.search))return;
+    const dialog=document.createElement('section');dialog.className='portrait-viewer';
+    dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-label','Full-resolution character portrait');
+    dialog.innerHTML=`<div class="portrait-viewer-dialog"><div class="portrait-viewer-toolbar"><button type="button" aria-label="Close portrait" onclick="window.G9.closePortrait()">Close</button><button type="button" aria-label="Fit image">Fit</button><button type="button" aria-label="Actual size">100%</button><button type="button" aria-label="Zoom out">−</button><output class="portrait-viewer-percent"></output><button type="button" aria-label="Zoom in">+</button><input type="range" aria-label="Zoom" max="200" step="1"></div><p class="portrait-viewer-error" role="status" hidden>The original image could not be loaded.</p><div class="portrait-viewer-canvas" tabindex="0" aria-label="Drag to move; pinch to zoom"><img class="portrait-viewer-image" src="${esc(url.href)}" width="${source.width}" height="${source.height}" decoding="async" draggable="false" alt="${esc(source.alt)}"></div></div>`;
+    document.body.append(dialog);
+    const canvas=dialog.querySelector('.portrait-viewer-canvas'),image=dialog.querySelector('img'),range=dialog.querySelector('input'),output=dialog.querySelector('output');
+    const viewer={dialog,opener,inert:app.inert,overflow:document.body.style.overflow,scale:1,min:0.01,width:Number(source.getAttribute('width'))||1,height:Number(source.getAttribute('height'))||1};
+    portraitViewer=viewer;app.inert=true;document.body.style.overflow='hidden';
+    const zoom=(scale,point)=>{
+      if(!Number.isFinite(scale))return;
+      const box=canvas.getBoundingClientRect(),x=point?point.x-box.left:canvas.clientWidth/2,y=point?point.y-box.top:canvas.clientHeight/2;
+      const worldX=(canvas.scrollLeft+x-image.offsetLeft)/viewer.scale,worldY=(canvas.scrollTop+y-image.offsetTop)/viewer.scale;
+      viewer.scale=Math.min(2,Math.max(viewer.min,scale));
+      image.style.width=`${viewer.width*viewer.scale}px`;image.style.height=`${viewer.height*viewer.scale}px`;
+      canvas.scrollLeft=worldX*viewer.scale+image.offsetLeft-x;canvas.scrollTop=worldY*viewer.scale+image.offsetTop-y;
+      range.value=String(viewer.scale*100);output.textContent=`${Math.round(viewer.scale*100)}%`;
+    };
+    viewer.zoom=zoom;
+    viewer.resize=()=>{
+      const fitting=Math.abs(viewer.scale-viewer.min)<0.001;
+      viewer.min=Math.min(1,(canvas.clientWidth||1)/viewer.width,(canvas.clientHeight||1)/viewer.height);
+      range.min=String(viewer.min*100);zoom(fitting?viewer.min:viewer.scale);
+    };
+    viewer.resize();zoom(viewer.min);
+    image.onload=()=>{viewer.width=image.naturalWidth;viewer.height=image.naturalHeight;viewer.resize();};
+    image.onerror=()=>{dialog.querySelector('.portrait-viewer-error').hidden=false;};
+    dialog.querySelector('[aria-label="Fit image"]').onclick=()=>zoom(viewer.min);
+    dialog.querySelector('[aria-label="Actual size"]').onclick=()=>zoom(1);
+    dialog.querySelector('[aria-label="Zoom out"]').onclick=()=>zoom(viewer.scale-0.1);
+    dialog.querySelector('[aria-label="Zoom in"]').onclick=()=>zoom(viewer.scale+0.1);
+    range.oninput=()=>zoom(Number(range.value)/100);
+    const pointers=new Map();let pinch=null;
+    const distance=()=>{const [a,b]=Array.from(pointers.values());return Math.hypot(a.x-b.x,a.y-b.y);};
+    canvas.addEventListener('pointerdown',event=>{
+      event.preventDefault();canvas.focus({preventScroll:true});pointers.set(event.pointerId,{x:event.clientX,y:event.clientY});canvas.setPointerCapture?.(event.pointerId);
+      if(pointers.size===2)pinch={distance:distance(),scale:viewer.scale};
+    });
+    canvas.addEventListener('pointermove',event=>{
+      const previous=pointers.get(event.pointerId);if(!previous)return;
+      pointers.set(event.pointerId,{x:event.clientX,y:event.clientY});
+      if(pointers.size===2&&pinch?.distance){const [a,b]=Array.from(pointers.values());zoom(pinch.scale*distance()/pinch.distance,{x:(a.x+b.x)/2,y:(a.y+b.y)/2});}
+      else if(pointers.size===1){canvas.scrollLeft+=previous.x-event.clientX;canvas.scrollTop+=previous.y-event.clientY;}
+    });
+    const release=event=>{pointers.delete(event.pointerId);pinch=null;};
+    canvas.addEventListener('pointerup',release);canvas.addEventListener('pointercancel',release);
+    canvas.addEventListener('wheel',event=>{if(event.ctrlKey){event.preventDefault();zoom(viewer.scale*(event.deltaY>0?0.9:1.1),{x:event.clientX,y:event.clientY});}},{passive:false});
+    window.addEventListener('resize',viewer.resize);
+    dialog.querySelector('button').focus({preventScroll:true});
   }
   function scheduleTicker() {
     const playing = run || (tab === 'simulator' ? simResult : null);
@@ -664,7 +730,7 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
     const skillRank=typeof dossierSkillSequence==='undefined'?null:dossierSkillSequence;
     const skill=skills.find(x=>x.sequence===skillRank)||skills[0];
     const next=a.awakened&&a.sequence>0?canTrain(state,a):null,weapon=weaponFor(a);
-    const portrait=a.awakened&&typeof getCombatSprite==='function'?getCombatSprite(a,{variant:'dossier',loading:'eager',priority:'auto'}):`<span class="dossier-initial" aria-hidden="true">${esc(a.name.slice(0,1))}</span>`;
+    const portrait=a.awakened&&typeof getCombatSprite==='function'?`<button type="button" class="dossier-portrait-zoom" aria-label="Enlarge character portrait" onclick="window.G9.openPortrait(this)">${getCombatSprite(a,{variant:'full',loading:'eager',priority:'auto'})}<span class="dossier-portrait-hint">Enlarge</span></button>`:`<span class="dossier-initial" aria-hidden="true">${esc(a.name.slice(0,1))}</span>`;
     const pathButtons=PATH_KEYS.map(p=>`<button class="path-choice ${a.recommendedPath===p?'recommended':''}" onclick="window.G9.choosePath(${actionId},'${p}')"><b>${esc(pathName(p))}</b><span>${esc(pathOf(p).role)}</span>${a.recommendedPath===p?'<small>Recommended</small>':''}</button>`).join('');
     const title=x=>(x.text||x.name).split(/\s[—–]\s/)[0];
     const tabMarkup=type=>{
@@ -721,6 +787,7 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
     </div></div>`;
   }
   window.G9={
+    openPortrait,closePortrait,portraitZoom:percent=>portraitViewer?.zoom(Number(percent)/100),
     chapterAgent:id=>{
       const i=chapterAgentIds.indexOf(id);
       if(i>=0)chapterAgentIds.splice(i,1);
@@ -816,14 +883,13 @@ addMarionettes(d,res);d.funds+=res.rewards.funds;d.reputation+=res.rewards.reput
   window.addEventListener('scroll',prioritizeVisiblePartyPortraits,{capture:true,passive:true});
   window.addEventListener('resize',prioritizeVisiblePartyPortraits);
   document.addEventListener('keydown',event=>{
-    if(!selected)return;
-    const dialog=app.querySelector('.character-dossier');if(!dialog)return;
-    if(event.key==='Escape'){event.preventDefault();window.G9.closeDossier();return;}
-    if(event.target?.getAttribute('role')==='tab'&&['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){
+    const dialog=portraitViewer?.dialog||(selected&&app.querySelector('.character-dossier'));if(!dialog)return;
+    if(event.key==='Escape'){event.preventDefault();portraitViewer?closePortrait():window.G9.closeDossier();return;}
+    if(!portraitViewer&&event.target?.getAttribute('role')==='tab'&&['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){
       event.preventDefault();window.G9.dossierSkillTab(event.key==='Home'?'active':event.key==='End'?'passive':dossierSkillType==='active'?'passive':'active');return;
     }
     if(event.key==='Tab'){
-      const controls=Array.from(dialog.querySelectorAll('button,select,summary,[tabindex="0"]')).filter(el=>!el.disabled&&el.getAttribute('tabindex')!=='-1'&&el.getClientRects().length);
+      const controls=Array.from(dialog.querySelectorAll('button,input,select,summary,[tabindex="0"]')).filter(el=>!el.disabled&&el.getAttribute('tabindex')!=='-1'&&el.getClientRects().length);
       const first=controls[0],last=controls[controls.length-1];
       if(first&&event.shiftKey&&(document.activeElement===first||!controls.includes(document.activeElement))){event.preventDefault();last.focus();}
       else if(first&&!event.shiftKey&&(document.activeElement===last||!dialog.contains(document.activeElement))){event.preventDefault();first.focus();}

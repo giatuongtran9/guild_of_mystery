@@ -37,7 +37,7 @@ test('compact dialog has a labeled identity portrait and preserved digestion pro
   const html = ui(agent());
   assert(html.includes('role="dialog"') && html.includes('aria-modal="true"'));
   assert(html.includes('aria-labelledby="dossier-title"'));
-  assert(html.includes('data-sprite-variant="dossier"'));
+  assert(html.includes('data-sprite-variant="full"'));
   assert(html.includes('Mara Vale') && html.includes('63/100'));
 });
 test('Active and Passive tabs expose exactly one selected skill panel', () => {
