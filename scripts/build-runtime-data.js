@@ -18,6 +18,15 @@ function compactRuntimeAssets(assets) {
       if (!image || image.width !== size || image.height !== size || typeof image.src !== 'string' || !image.src.startsWith(`${stem}.${size}.`) || !/^[a-f0-9]{16}\.(?:webp|png)$/.test(image.src.slice(stem.length + String(size).length + 2))) throw new Error('Invalid versioned runtime portrait');
       return [name, { src: image.src, width: image.width, height: image.height }];
     }));
+    if (entry.full !== undefined) {
+      const image = entry.full, original = entry.source;
+      if (!original || original.src !== source || !/^[a-f0-9]{64}$/.test(original.sha256 || '')
+        || !Number.isSafeInteger(original.bytes) || original.bytes <= 0
+        || !Number.isSafeInteger(original.width) || original.width <= 0 || !Number.isSafeInteger(original.height) || original.height <= 0
+        || image?.src !== `${source}?v=${original.sha256.slice(0, 16)}` || image.width !== original.width || image.height !== original.height
+        || image.bytes !== original.bytes || image.sha256 !== original.sha256) throw new Error('Invalid full-resolution original portrait');
+      versions.full = { src: image.src, width: image.width, height: image.height };
+    }
     return [source, versions];
   }));
   return { schemaVersion: assets.schemaVersion, version: assets.version, entries };

@@ -12,7 +12,7 @@ const portrait='data/assets/runtime/characters/fool/fool_seq9.192.0123456789abcd
 const dossier='data/assets/runtime/characters/fool/fool_seq9.384.0123456789abcdef.png';
 context.G9_DATA.runtimeAssets.entries[sourcePath]={portrait:{src:portrait,width:192,height:192},dossier:{src:dossier,width:384,height:384}};
 const unit={path:'fool',sequence:9,name:'<Reader>'};
-const render=options=>context.getCombatSprite(unit,options);
+const render=options=>context.getCombatSprite(unit,{variant:'portrait',...options});
 check('small UI uses the generated versioned runtime portrait',()=>assert(render().includes('src="'+portrait+'"')));
 check('dossier uses its separate mid-size portrait',()=>assert(render({variant:'dossier'}).includes('src="'+dossier+'"')));
 check('runtime portraits have intrinsic dimensions',()=>assert(render().includes('width="192" height="192"')));

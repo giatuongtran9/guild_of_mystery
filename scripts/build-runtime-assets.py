@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build lossless runtime portraits without touching source artwork.
+"""Build runtime portraits and versioned full-resolution original references.
 
 Requires Pillow with WebP support. Run: python3 scripts/build-runtime-assets.py
 Existing content-addressed outputs are retained for cached deployed manifests.
@@ -94,6 +94,8 @@ def build_assets(repo_root):
             image = original.convert('RGBA')
         entry = {'source': {'src': source_src, 'width': image.width, 'height': image.height,
                             'bytes': len(source_data), 'sha256': sha256(source_data)}}
+        # Refer to original bytes directly so full-resolution art loses no detail.
+        entry['full'] = {**entry['source'], 'src': f"{source_src}?v={entry['source']['sha256'][:16]}"}
         for variant, side in SIZES.items():
             png, webp = encode_variants(square_portrait(image, side))
             extension, data = min([('png', png), ('webp', webp)], key=lambda pair: len(pair[1]))

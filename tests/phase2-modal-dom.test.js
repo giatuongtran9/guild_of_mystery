@@ -31,7 +31,7 @@ async function test(label, fn){try{await fn();passed++;console.log(`PASS ${label
     const {dom,w,a}=await fixture();try{
       w.G9.dossier(a.id);const dialog=w.document.querySelector('[role="dialog"]');assert(dialog);
       assert.equal(dialog.getAttribute('aria-labelledby'),'dossier-title');assert.equal(w.document.activeElement.id,'dossier-title');
-      assert.equal(dialog.querySelector('.dossier-portrait img').getAttribute('width'),'384');
+      assert.equal(Number(dialog.querySelector('.dossier-portrait img').getAttribute('width')),w.G9_DATA.runtimeAssets.entries['data/assets/characters/white_tower/white_tower_seq5.png'].full.width);
       assert.equal(dialog.querySelector('.dossier-portrait img').getAttribute('decoding'),'async');
     }finally{dom.window.close();}
   });

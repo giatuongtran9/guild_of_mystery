@@ -12,6 +12,7 @@ self.addEventListener('fetch', event => {
   if (url.origin !== scope.origin || !url.pathname.startsWith(scope.pathname)) return;
   const path = url.pathname.slice(scope.pathname.length);
   const immutable = /^data\/assets\/runtime\/characters\/[a-z_]+\/[a-z_]+_(?:seq[0-9]|mythical)\.(192|384)\.[a-f0-9]{16}\.(webp|png)$/.test(path)
+    || /^data\/assets\/characters\/[a-z][a-z0-9_]*\/[a-z][a-z0-9_]*_(?:seq[0-9]|mythical)\.png$/.test(path) && /^\?v=[a-f0-9]{16}$/.test(url.search)
     || /^data\/runtime\/data\.[a-f0-9]{16}\.json$/.test(path)
     || (/^js\/(data-loader|boot|paths|v15|generate|engine|state|campaign|ui)\.js$/.test(path)
       || /^css\/(?:[a-z0-9_-]+\/)*[a-z0-9_-]+\.css$/.test(path)) && /^[a-f0-9]{16}$/.test(url.searchParams.get('v') || '');
