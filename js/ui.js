@@ -104,7 +104,18 @@ const COMBAT_SPRITE_PATHS = new Map([
   ['red_priest', 'redpriest']
 ]);
 
-function getCombatSprite(u) {
+function prioritizeVisiblePartyPortraits() {
+  if (typeof document === 'undefined' || typeof window === 'undefined') return;
+  for (const image of document.querySelectorAll('.gm-arena-unit.ally .combat-sprite-img, .campaign-agent .combat-sprite-img')) {
+    const box = image.getBoundingClientRect();
+    if (box.width > 0 && box.height > 0 && box.bottom > 0 && box.right > 0 && box.top < window.innerHeight && box.left < window.innerWidth) {
+      image.loading = 'eager';
+      image.fetchPriority = 'high';
+    }
+  }
+}
+
+function getCombatSprite(u, options = {}) {
   const agent = (typeof state !== 'undefined' && state.roster)
     ? (state.roster.find(r => r.id === u.id || r.name === u.name) || u)
     : u;
@@ -123,7 +134,21 @@ function getCombatSprite(u) {
   const spritePath = COMBAT_SPRITE_PATHS.get(path) || 'fool';
   const assetBase = typeof window !== 'undefined' && window.G9_CHARACTER_ASSET_BASE || 'data/assets/characters/';
 
-  return `<img class="combat-sprite-img" src="${esc(assetBase)}${spritePath}/${spritePath}_seq${spriteSeq}.png" onerror="this.onerror=null;this.src='${esc(assetBase)}${spritePath}/seq${spriteSeq}.png';this.onerror=()=>{this.style.display='none';const fb=this.parentElement.querySelector('.combat-sprite-fallback');if(fb)fb.style.display='flex';};" alt="Seq ${spriteSeq}"><div class="combat-sprite-fallback" style="display:none">${esc((u.name||'?').slice(0,2).toUpperCase())}</div>`;
+  const original = `${assetBase}${spritePath}/${spritePath}_seq${spriteSeq}.png`;
+  const legacy = `${assetBase}${spritePath}/seq${spriteSeq}.png`;
+  const variant = options.variant === 'dossier' ? 'dossier' : 'portrait';
+  const size = variant === 'dossier' ? 384 : 192;
+  const assets = typeof G9_DATA !== 'undefined' ? G9_DATA.runtimeAssets?.entries : null;
+  const art = assets?.[`data/assets/characters/${spritePath}/${spritePath}_seq${spriteSeq}.png`]?.[variant];
+  const valid = art && art.width === size && art.height === size && new RegExp(`^data/assets/runtime/characters/${spritePath}/${spritePath}_seq${spriteSeq}\\.${size}\\.[a-f0-9]{16}\\.(png|webp)$`).test(art.src);
+  const src = valid ? art.src : original;
+  const loading = options.loading === 'eager' ? 'eager' : 'lazy';
+  const priority = loading === 'eager' && options.priority === 'high' ? ' fetchpriority="high"' : '';
+  const hide = "this.onerror=null;this.style.display='none';const fb=this.parentElement.querySelector('.combat-sprite-fallback');if(fb)fb.style.display='flex';";
+  const quoted = value => "'" + String(value).replace(/[\\'<>&"\r\n\u2028\u2029]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')) + "'";
+  const legacyError = `this.onerror=()=>{${hide}};this.src=${quoted(legacy)};`;
+  const onerror = valid ? `this.onerror=()=>{${legacyError}};this.src=${quoted(original)};` : legacyError;
+  return `<img class="combat-sprite-img" src="${esc(src)}" width="${size}" height="${size}" loading="${loading}" decoding="async"${priority} onerror="${onerror}" alt="Seq ${spriteSeq}"><div class="combat-sprite-fallback" style="display:none">${esc((u.name||'?').slice(0,2).toUpperCase())}</div>`;
 }
 function battlefieldImageFor(quest = {}, isSim = false) {
   const config = typeof G9D !== 'undefined' ? G9D.contracts.battlefields || {} : {};
@@ -141,7 +166,7 @@ function battlefieldImageFor(quest = {}, isSim = false) {
 }
 
 function renderHpStrip(hpMap, allies, enemies, battlefieldImage = '') {
-  function combatEntity(u, team) {
+  function combatEntity(u, team, index) {
     const data = (u.id && hpMap[u.id]) || (u.name && hpMap[u.name]) || { curHp: u.hp || u.maxHp, maxHp: u.maxHp, curShield: 0, curMp: u.mp || 100, maxMp: u.maxMp || 100 };
     const curHp = Math.max(0, data.curHp !== undefined ? data.curHp : (u.hp || u.maxHp || 100));
     const maxHp = Math.max(1, data.maxHp || u.maxHp || 100);
@@ -164,7 +189,7 @@ function renderHpStrip(hpMap, allies, enemies, battlefieldImage = '') {
 
     const sprite = (team === 'ally' || u.campaignEnemy) ? getCombatSprite(u) : `<div class="combat-enemy-avatar"><span class="enemy-skull">💀</span></div>`;
 
-    return `<div class="gm-arena-unit ${team} ${dead ? 'dead' : ''}">
+    return `<div class="gm-arena-unit ${team} ${dead ? 'dead' : ''}" data-unit-index="${index}">
       <div class="gm-unit-sprite-anchor">
         <div class="gm-unit-shadow"></div>
         <div class="gm-unit-sprite">${sprite}</div>
@@ -178,7 +203,7 @@ function renderHpStrip(hpMap, allies, enemies, battlefieldImage = '') {
         <div class="gm-float-gauge hp">
           <div class="gm-float-track">
             <div class="gm-float-fill hp" style="width:${hpPct}%"></div>
-            ${shieldPct > 0 ? `<div class="gm-float-fill shield" style="width:${shieldPct}%"></div>` : ''}
+            <div class="gm-float-fill shield" style="width:${shieldPct}%;${shieldPct > 0 ? '' : 'display:none'}"></div>
           </div>
           <span class="gm-float-num">${abbrNum(curHp)}/${abbrNum(maxHp)}</span>
         </div>
@@ -203,7 +228,7 @@ function renderHpStrip(hpMap, allies, enemies, battlefieldImage = '') {
     <div class="gm-stage-playfield">
       <!-- Enemy formation (opposite / back row) -->
       <div class="gm-rank-row gm-rank-enemies">
-        ${(enemies || []).map(e => combatEntity(e, 'enemy')).join('')}
+        ${(enemies || []).map((e, i) => combatEntity(e, 'enemy', i)).join('')}
       </div>
 
       <!-- Mid-room distance spacer -->
@@ -211,7 +236,7 @@ function renderHpStrip(hpMap, allies, enemies, battlefieldImage = '') {
 
       <!-- Ally Beyonders party (foreground / bottom row) -->
       <div class="gm-rank-row gm-rank-allies">
-        ${(allies || []).map(a => combatEntity(a, 'ally')).join('')}
+        ${(allies || []).map((a, i) => combatEntity(a, 'ally', i)).join('')}
       </div>
     </div>
   </div>`;
@@ -369,16 +394,16 @@ function renderBattleLogComponent({
   // Keep earlier turns in place so incoming events cannot collapse the text being read.
   const contentHtml = visible.map(r => renderTurnRowHtml(r, showDetails)).join('');
 
-  return `<div class="battle-log-wrap" role="log" aria-live="polite">
+  return `<div class="battle-log-wrap" role="log" aria-live="polite" data-shown-count="${visible.length}" data-details="${!!showDetails}">
     <div class="battle-toolbar">
       <div class="speed-controls">
-        <button type="button" class="${speed===1?'active':''}" onclick="window.G9.setTickerSpeed(1)">1x</button>
-        <button type="button" class="${speed===2?'active':''}" onclick="window.G9.setTickerSpeed(2)">2x</button>
-        <button type="button" class="${speed===4?'active':''}" onclick="window.G9.setTickerSpeed(4)">4x</button>
-        ${!isDone ? `<button type="button" onclick="window.G9.skipTicker(${isSim})">Skip</button>` : ''}
+        <button type="button" data-speed="1" class="${speed===1?'active':''}" onclick="window.G9.setTickerSpeed(1)">1x</button>
+        <button type="button" data-speed="2" class="${speed===2?'active':''}" onclick="window.G9.setTickerSpeed(2)">2x</button>
+        <button type="button" data-speed="4" class="${speed===4?'active':''}" onclick="window.G9.setTickerSpeed(4)">4x</button>
+        <button type="button" data-skip ${isDone ? 'hidden' : ''} onclick="window.G9.skipTicker(${isSim})">Skip</button>
       </div>
       <div>
-        <button type="button" class="${showDetails?'active':''}" onclick="${isSim ? 'window.G9.toggleSimDetails()' : 'window.G9.toggleDetails()'}">
+        <button type="button" data-details class="${showDetails?'active':''}" onclick="${isSim ? 'window.G9.toggleSimDetails()' : 'window.G9.toggleDetails()'}">
           ${showDetails ? 'Hide Details' : 'Show Details'}
         </button>
       </div>
@@ -388,11 +413,68 @@ function renderBattleLogComponent({
       ${contentHtml}
       ${!isDone ? '<div class="typing" style="padding:6px 8px;font-style:italic;color:var(--muted)">Battling…</div>' : ''}
     </div>
-    ${isDone && summaryText ? `<div class="b-result-box ${summaryText.includes('defeated') || summaryText.includes('Team A') ? 'victory' : 'failure'}">
+    <div class="b-result-box ${summaryText.includes('defeated') || summaryText.includes('Team A') ? 'victory' : 'failure'}" ${isDone && summaryText ? '' : 'hidden'}>
       <h4>Encounter Summary</h4>
       <p>${esc(summaryText)}</p>
-    </div>` : ''}
+    </div>
   </div>`;
+}
+
+function updateBattleLogComponent(wrap, props) {
+  const visible = props.flattenedRows.slice(0, props.shownCount);
+  const hpMap = calculateCurrentHp(props.allies, props.enemies, visible);
+  const viewport = wrap.querySelector('.battle-ticker-viewport');
+  const follow = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <= 35;
+  const top = viewport.scrollTop, left = viewport.scrollLeft;
+  for (const [team, units] of [['ally', props.allies], ['enemy', props.enemies]]) {
+    for (const node of wrap.querySelectorAll(`.gm-arena-unit.${team}`)) {
+      const u = units[Number(node.dataset.unitIndex)];
+      if (!u) continue;
+      const data = hpMap[u.id] || hpMap[u.name] || u;
+      const hp = Math.max(0, data.curHp ?? u.hp ?? u.maxHp ?? 100);
+      const maxHp = Math.max(1, data.maxHp || u.maxHp || 100);
+      const shieldPct = Math.min(100, Math.round((data.curShield || 0) / maxHp * 100));
+      node.classList.toggle('dead', hp <= 0);
+      node.querySelector('.gm-float-fill.hp').style.width = `${Math.min(100, Math.round(hp / maxHp * 100))}%`;
+      node.querySelector('.gm-float-gauge.hp .gm-float-num').textContent = `${abbrNum(hp)}/${abbrNum(maxHp)}`;
+      const shield = node.querySelector('.gm-float-fill.shield');
+      shield.style.width = `${shieldPct}%`; shield.style.display = shieldPct ? '' : 'none';
+      const mpGauge = node.querySelector('.gm-float-gauge.mp');
+      if (mpGauge) {
+        const mp = Math.max(0, data.curMp ?? (u.mp || 80)), maxMp = Math.max(1, data.maxMp || u.maxMp || 100);
+        mpGauge.querySelector('.gm-float-fill.mp').style.width = `${Math.min(100, Math.round(mp / maxMp * 100))}%`;
+        mpGauge.querySelector('.gm-float-num').textContent = `${mp} MP`;
+      }
+    }
+  }
+  const previousCount = Number(wrap.dataset.shownCount) || 0;
+  const detailsChanged = wrap.dataset.details !== String(!!props.showDetails);
+  const typing = viewport.querySelector('.typing');
+  if (detailsChanged || visible.length < previousCount) {
+    viewport.innerHTML = visible.map(row => renderTurnRowHtml(row, props.showDetails)).join('');
+  } else {
+    if (typing) typing.remove();
+    viewport.insertAdjacentHTML('beforeend', visible.slice(previousCount).map(row => renderTurnRowHtml(row, props.showDetails)).join(''));
+  }
+  if (!props.isDone && typing) viewport.append(typing);
+  wrap.dataset.shownCount = visible.length;
+  wrap.dataset.details = !!props.showDetails;
+  for (const button of wrap.querySelectorAll('[data-speed]')) button.classList.toggle('active', Number(button.dataset.speed) === props.speed);
+  wrap.querySelector('[data-skip]').hidden = props.isDone;
+  const details = wrap.querySelector('button[data-details]');
+  details.classList.toggle('active', !!props.showDetails);
+  details.textContent = props.showDetails ? 'Hide Details' : 'Show Details';
+  const summary = wrap.querySelector('.b-result-box');
+  summary.hidden = !props.isDone || !props.summaryText;
+  summary.querySelector('p').textContent = props.summaryText;
+  const backdrop = wrap.querySelector('.gm-dungeon-backdrop');
+  const image = backdrop.querySelector('img');
+  if (!props.battlefieldImage) image?.remove();
+  else if (!image || image.getAttribute('src') !== props.battlefieldImage) {
+    backdrop.innerHTML = `<img class="gm-battlefield-image" src="${esc(props.battlefieldImage)}" alt="" onerror="this.hidden=true">`;
+  }
+  viewport.scrollTop = follow ? viewport.scrollHeight : top;
+  viewport.scrollLeft = left;
 }
 
 // ===== Browser UI =====
@@ -407,6 +489,7 @@ if (typeof document !== 'undefined') (() => {
   const activeRoster=()=>state.roster.filter(a=>a.status==='active');
   const combatReady=()=>activeRoster().filter(a=>a.awakened&&a.sequence<=9);
   let chapterAgentIds=[], chapterChoice=null, chapterSelectionMission=null, chapterSelectionInitialized=false;
+  let dossierSkillType='active', dossierSkillSequence=null, dossierReturnFocus=null;
   campaignEnsure(state);
   tab=campaignStatus(state).complete?'hall':'campaign';
   function chapterCommit(fn){
@@ -422,6 +505,7 @@ if (typeof document !== 'undefined') (() => {
   function commit(fn){const draft=clone(state);fn(draft);state=draft;saveGame(draft);render();}
   function toast(msg){notice=msg;render();setTimeout(()=>{if(notice===msg){notice='';render()}},2400)}
   function render(){
+    clearTimeout(tickerTimer); tickerTimer = null;
     const pagePosition = { x: window.scrollX, y: window.scrollY };
     const scrollPositions = Array.from(app.querySelectorAll('.quest-modal, .battle-ticker-viewport')).map(el => ({
       selector: el.id ? `#${el.id}` : '.quest-modal',
@@ -442,16 +526,43 @@ if (typeof document !== 'undefined') (() => {
       el.scrollLeft = position.left;
     }
     window.scrollTo(pagePosition.x, pagePosition.y);
+    if (typeof prioritizeVisiblePartyPortraits === 'function') prioritizeVisiblePartyPortraits();
+    scheduleTicker();
+  }
+  function scheduleTicker() {
     const playing = run || (tab === 'simulator' ? simResult : null);
     if (playing && playing.currentTurn < playing.turnRows.length && !tickerTimer) {
       const delay = tickerSpeed === 4 ? 100 : (tickerSpeed === 2 ? 250 : 500);
-      tickerTimer = setTimeout(() => {
+      const timer = setTimeout(() => {
+        if (tickerTimer !== timer) return;
         tickerTimer = null;
         const current = run || (tab === 'simulator' ? simResult : null);
-        if (current === playing) playing.currentTurn++;
-        render();
+        if (current !== playing) return;
+        playing.currentTurn++;
+        refreshBattle();
       }, delay);
+      tickerTimer = timer;
     }
+  }
+  function refreshBattle() {
+    const playing = run || (tab === 'simulator' ? simResult : null);
+    const isSim = !run;
+    const viewport = app.querySelector(isSim ? '#sim-viewport' : '#battle-viewport');
+    if (!playing || !viewport) { render(); return; }
+    const summary = isSim ? playing.summaryText : summarizeBattleEvents(playing.result.events || [], playing.result.battleSnapshot).summaryText;
+    const isDone = playing.currentTurn >= playing.turnRows.length;
+    updateBattleLogComponent(viewport.closest('.battle-log-wrap'), {
+      allies: isSim ? playing.teamA : playing.initialAllies,
+      enemies: isSim ? playing.teamB : playing.initialEnemies,
+      flattenedRows: playing.turnRows, shownCount: playing.currentTurn, isDone,
+      showDetails: isSim ? simBattleDetails : showBattleDetails, speed: tickerSpeed,
+      summaryText: playing.isCampaign ? summary.replace(/Casualties/g, 'Agents recovered') : summary,
+      battlefieldImage: battlefieldImageFor(isSim ? {} : playing.quest, isSim)
+    });
+    const completion = app.querySelector('.battle-completion');
+    if (!isSim && completion) completion.hidden = !isDone;
+    if (typeof prioritizeVisiblePartyPortraits === 'function') prioritizeVisiblePartyPortraits();
+    scheduleTicker();
   }
 
   function campaignRewardMarkup(rewards){
@@ -536,17 +647,46 @@ function inventory(){const entries=Object.entries(state.materials);return `<sect
 }
 function statPair(label,final,base){return `<span>${label} <b>${final}</b> <small>(${base})</small></span>`;}
 
-function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id==='none'||w.id===a.weaponId||(state.weapons[w.id]||0)>0).map(w=>`<option value="${w.id}" ${a.weaponId===w.id?'selected':''}>${esc(w.name)} (+${w.atk} ATK) · ${state.weapons[w.id]||0} available</option>`).join('');return `<label class="equipment-select"><span>Equip Weapon</span><select onchange="window.G9.setWeapon('${a.id}',this.value)">${options}</select></label>`}
+function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id==='none'||w.id===a.weaponId||(state.weapons[w.id]||0)>0).map(w=>`<option value="${w.id}" ${a.weaponId===w.id?'selected':''}>${esc(w.name)} (+${w.atk} ATK) · ${state.weapons[w.id]||0} available</option>`).join('');return `<label class="equipment-select"><span>Equip Weapon</span><select onchange="window.G9.setWeapon(${esc(JSON.stringify(a.id))},this.value)">${options}</select></label>`}
   function dossier(){
     const a=state.roster.find(x=>x.id===selected); if(!a)return '';
-    const tier=tierFor(a.path,a.sequence);
-    const eff=a.awakened?combatDisplayStats(a):a.stats;
+    const actionId=esc(JSON.stringify(a.id));
+    const tier=tierFor(a.path,a.sequence),eff=a.awakened?combatDisplayStats(a):a.stats;
+    const cr=a.awakened?combatRates({...a,stats:effectiveStats(a)}):null;
     const intro=a.introduction||`An ordinary ${a.occupation||'person'} whose life has begun to intersect with the hidden world.`;
-    const pathButtons=PATH_KEYS.map(p=>`<button class="path-choice ${a.recommendedPath===p?'recommended':''}" onclick="window.G9.choosePath('${a.id}','${p}')"><b>${esc(pathName(p))}</b><span>${esc(pathOf(p).role)}</span>${a.recommendedPath===p?'<small>Recommended</small>':''}</button>`).join('');
-    const abilities=(a.abilityHistory&&a.abilityHistory.length?a.abilityHistory:((a.abilities||[]).map((x,i)=>({sequence:a.sequence+i,name:tierFor(a.path,a.sequence+i).name,ability:x.text||x.ability,type:x.type,effectId:x.effectId,damage:x.damage,effects:x.effects,effects:x.effects}))))
-      .slice().sort((x,y)=>y.sequence-x.sequence).map(x=>`<div><b>Sequence ${x.sequence} — ${esc(x.name)}</b><span class="tag">${esc(x.type||'passive').toUpperCase()}</span><p>${esc(x.ability||'')}</p><small>${x.damage?`${Math.round((x.damage.multiplier||0)*100)}% ${esc(x.damage.scaling||'INT')} ${esc(x.damage.type==='elemental'?(x.damage.element||'Elemental'):x.damage.type||'damage')}${x.damage.type==='true'?' · TRUE DAMAGE':''}`:'Non-damaging / passive effect'}${x.effects?.length?` · ${esc(x.effects.map(e=>e.type+(e.status?`:${e.status}`:'')).join(', '))}`:''}</small></div>`).join('');
-    const next=a.awakened&&a.sequence>0?canTrain(state,a):null;
-    return `<div class="overlay" onclick="window.G9.closeDossier()"><div class="modal" onclick="event.stopPropagation()"><button class="close" onclick="window.G9.closeDossier()">×</button><div class="eyebrow">CHARACTER DOSSIER</div><h2>${esc(a.name)}</h2><p>${esc(a.occupation||'Ordinary person')} · ${a.awakened?esc(pathName(a.path))+' · Sequence '+a.sequence+' · '+esc(tier.name):'Unawakened'}</p><div class="intro"><h3>Introduction</h3><p>${esc(intro)}</p></div><div class="big-stats">${[['HP',eff.hp],['ATK',eff.atk],['DEF',eff.def],['INT',eff.int]].map(x=>`<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div>${statusBar('Madness',a.madness)}${statusBar('Corruption',a.corruption)}${statusBar('Injuries',a.injuries)}${a.awakened?`<div class="combat-rates"><b>Combat Rates</b>${(()=>{const cr=combatRates({...a,stats:effectiveStats(a)});return `<span>Crit ${Math.round(cr.crit*100)}%</span><span>Crit Damage +${Math.round(cr.critDamage*100)}%</span><span>Dodge ${Math.round(cr.dodge*100)}%</span><span>Counter ${Math.round(cr.counter*100)}%</span><span>Speed ${cr.speed.toFixed(1)} · AV ${cr.av.toFixed(1)}</span><span>Archetype ${archetypeOf(a.path)}</span><span>Max SP ${maxSPFor(a)}</span><span>Element Resistance: ${Object.entries(cr.resistances||{}).map(([k,v])=>`${esc(k)} ${v>0?'+':''}${Math.round(v)}%`).join(' · ')||'None'}</span>${cr.passives&&cr.passives.length?`<span>Passives: ${cr.passives.map(esc).join(' · ')}</span>`:''}`;})()}<span>Weapon Mastery: Gun ${weaponMasteryValue(a,'gun')} · Melee ${weaponMasteryValue(a,'weapon')} · Bare Hand ${weaponMasteryValue(a,'unarmed')}</span></div>${statusBar('Digesting',a.digest)}<div class="special-meter"><b>${esc(specialStatFor(a.path,a.sequence,a).name)} ${Math.round(specialStatFor(a.path,a.sequence,a).value)}/100</b><small>Gain: ${esc(specialStatFor(a.path,a.sequence,a).gain)} · Spend: ${esc(specialStatFor(a.path,a.sequence,a).spend)}</small></div>`:`<h3>Awakening — Sequence 9</h3><p>This character is an ordinary human. Sequence 9 begins their supernatural pathway; it is not an ordinary-human tier. Choose the Pathway whose nature best fits their characteristics.</p><div class="path-grid">${pathButtons}</div>`}<h3>Equipment</h3><div class="equipment-card"><b>${esc(weaponFor(a).name)}</b><span>Weapon ATK: +${weaponFor(a).atk}</span><span>Current ATK: <strong>${combatDisplayStats(a).atk}</strong> <small>(${a.stats.atk})</small></span><span>${weaponFor(a).kind==='gun'?`Gun Accuracy: ${Math.round((1-weaponStats(a).masteryMiss)*100)}% · Gun Mastery Lv.${weaponStats(a).mastery}`:`${weaponFor(a).kind==='unarmed'?'Bare Hand':'Melee'} Mastery Lv.${weaponStats(a).mastery}`}</span><span>Mastery is permanently attached to this character; changing weapons does not reset it.</span>${weaponFor(a).bleed?`<span>Bleed: ${Math.round(weaponFor(a).bleed*100)}% if target survives</span>`:''}${equipmentPicker(a)}</div><h3>Sequence abilities</h3><div class="ability-list">${abilities||'<p class="muted">No Beyonder abilities yet. Awaken to Sequence 9.</p>'}</div>${next?`<h3>Advancement</h3><p>Next: <b>Sequence ${a.sequence-1} — ${esc(next.next.name)}</b>. Digesting: ${Math.round(a.digest||0)}%.</p><div class="requirement-box"><b>Requirements</b><span>Digesting: ${next.ready?'Complete':'Not complete'}</span><span>${esc(next.mat)}: ${state.materials[next.mat]||0}/${next.materialCost}</span><span>Funds: £${state.funds.toLocaleString()}/£${next.fundsCost}</span></div><button class="primary full" onclick="window.G9.advance('${a.id}')">Review Advancement</button>`:''}${a.awakened&&a.sequence===0?'<p class="gold-note">Sequence 0 — Deity. No further advancement.</p>':''}<h3>Combat Trait</h3><p><b>${esc(a.trait||'Stout Vitality')}</b> — ${esc((TRAITS[a.trait||'Stout Vitality']||TRAITS['Stout Vitality']).desc)}</p><p class="muted">Each stat has an individual variance roll of ±10% at awakening. Variance is shown below and remains fixed for this character.</p><h3>History</h3>${(a.history||[]).slice().reverse().map(h=>`<p class="history"><small>Day ${h.day}</small> ${esc(h.text)}</p>`).join('')}</div></div>`;
+    const history=a.abilityHistory||[];
+    const abilities=a.awakened?pathOf(a.path).sequences.filter(t=>t.sequence>=a.sequence).flatMap(t=>(t.abilities||[]).map(spec=>{
+      const learned=history.find(x=>x.sequence===t.sequence&&(!x.effectId||x.effectId===spec.effectId));
+      return {sequence:t.sequence,name:t.name,...spec,text:learned?.ability||spec.text};
+    })).sort((x,y)=>x.sequence-y.sequence):[];
+    const skillType=typeof dossierSkillType==='undefined'?'active':dossierSkillType;
+    const skills=abilities.filter(x=>x.type===skillType);
+    const skillRank=typeof dossierSkillSequence==='undefined'?null:dossierSkillSequence;
+    const skill=skills.find(x=>x.sequence===skillRank)||skills[0];
+    const next=a.awakened&&a.sequence>0?canTrain(state,a):null,weapon=weaponFor(a);
+    const portrait=a.awakened&&typeof getCombatSprite==='function'?getCombatSprite(a,{variant:'dossier',loading:'eager',priority:'auto'}):`<span class="dossier-initial" aria-hidden="true">${esc(a.name.slice(0,1))}</span>`;
+    const pathButtons=PATH_KEYS.map(p=>`<button class="path-choice ${a.recommendedPath===p?'recommended':''}" onclick="window.G9.choosePath(${actionId},'${p}')"><b>${esc(pathName(p))}</b><span>${esc(pathOf(p).role)}</span>${a.recommendedPath===p?'<small>Recommended</small>':''}</button>`).join('');
+    const title=x=>(x.text||x.name).split(/\s[—–]\s/)[0];
+    const tabMarkup=type=>{
+      const first=abilities.find(x=>x.type===type),active=type===skillType;
+      return `<button type="button" role="tab" id="dossier-tab-${type}" aria-controls="dossier-skill-panel" aria-selected="${active}" tabindex="${active?'0':'-1'}" class="${active?'active':''}" onclick="window.G9.dossierSkillTab('${type}')"><b>${type==='active'?'Active Skill':'Passive Skill'}</b><span>${esc(active&&skill?title(skill):first?title(first):'None unlocked')}</span></button>`;
+    };
+    return `<div class="overlay dossier-overlay" onclick="window.G9.closeDossier()"><article class="modal character-dossier" role="dialog" aria-modal="true" aria-labelledby="dossier-title" onclick="event.stopPropagation()">
+      <button type="button" class="close" aria-label="Close character dossier" onclick="window.G9.closeDossier()">×</button>
+      <div class="eyebrow">CHARACTER DOSSIER</div><h2 id="dossier-title" tabindex="-1">${esc(a.name)}</h2>
+      <div class="dossier-identity"><div class="dossier-portrait">${portrait}</div><div class="dossier-progression"><p class="dossier-path">${a.awakened?esc(pathName(a.path)):'Ordinary person'}</p><p class="dossier-rank">${a.awakened?`Sequence ${a.sequence} — ${esc(tier.name)}`:'Unawakened'}</p><p class="muted">${esc(a.occupation||'Ordinary person')}</p>${a.awakened?statusBar('Digesting',a.digest):'<p class="muted">Choose a Pathway to begin.</p>'}</div></div>
+      <section class="dossier-equipment" aria-label="Equipment"><div class="dossier-equipment-slot" title="${esc(weapon.name)}"><span aria-hidden="true">${weapon.kind==='gun'?'⌁':weapon.kind==='unarmed'?'◇':'†'}</span><small>Weapon</small></div><div class="dossier-equipment-copy"><b>${esc(weapon.name)}</b><small>Weapon ATK: +${weapon.atk} · ${weapon.kind==='gun'?'Gun':weapon.kind==='unarmed'?'Bare Hand':'Melee'} Mastery Lv.${weaponStats(a).mastery}</small>${equipmentPicker(a)}</div></section>
+      <div class="dossier-skill-tabs" role="tablist" aria-label="Sequence abilities">${tabMarkup('active')}${tabMarkup('passive')}</div>
+      <div class="big-stats dossier-stats">${[['HP',eff.hp],['SP',Math.round(a.sp??maxSPFor(a))],['ATK',eff.atk],['DEF',eff.def],['INT',eff.int],['Speed',cr?cr.speed.toFixed(1):eff.spd||'—']].map(x=>`<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div>
+      <section class="dossier-skill-panel" id="dossier-skill-panel" role="tabpanel" tabindex="0" aria-labelledby="dossier-tab-${skillType}">${skill?`<label class="dossier-rank-picker">Unlocked ${skillType} ability<select onchange="window.G9.dossierSkillSequence(Number(this.value))">${skills.map(x=>`<option value="${x.sequence}" ${x===skill?'selected':''}>Sequence ${x.sequence} — ${esc(x.name)} · ${esc(title(x))}</option>`).join('')}</select></label><h3>Sequence ${skill.sequence} — ${esc(skill.name)}</h3><p>${esc(skill.text)}</p><small>${skill.type==='active'?`SP ${skill.costSP||0} · Cooldown ${skill.cooldown||0} turns`:'Always active'}${skill.damage?` · ${Math.round((skill.damage.multiplier||0)*100)}% ${esc(skill.damage.scaling||'INT')} ${esc(skill.damage.type==='elemental'?(skill.damage.element||'Elemental'):skill.damage.type||'damage')}${skill.damage.type==='true'?' · TRUE DAMAGE':''}`:''}</small>`:`<p class="muted">No ${skillType} abilities yet.${a.awakened?'':' Awaken to Sequence 9.'}</p>`}</section>
+      ${!a.awakened?`<details class="dossier-details" open><summary>Awakening — Sequence 9</summary><p>This character is an ordinary human. Sequence 9 begins their supernatural pathway; it is not an ordinary-human tier. Choose the Pathway whose nature best fits their characteristics.</p><div class="path-grid">${pathButtons}</div></details>`:''}
+      <details class="dossier-details"><summary>Condition & combat details</summary>${statusBar('Madness',a.madness)}${statusBar('Corruption',a.corruption)}${statusBar('Injuries',a.injuries)}${a.injuries>0?'<p class="muted">Injuries reduce effective HP and other stats by up to 30% until treated.</p>':''}${a.madness>=50?'<p class="warning">Madness above 50 causes action loss; at 100 the character becomes a corrupted monster and is permanently lost.</p>':''}${cr?`<div class="combat-rates"><span>Crit ${Math.round(cr.crit*100)}%</span><span>Crit Damage +${Math.round(cr.critDamage*100)}%</span><span>Dodge ${Math.round(cr.dodge*100)}%</span><span>Counter ${Math.round(cr.counter*100)}%</span><span>Speed ${cr.speed.toFixed(1)} · AV ${cr.av.toFixed(1)}</span><span>Archetype ${archetypeOf(a.path)}</span><span>Max SP ${maxSPFor(a)}</span><span>Element Resistance: ${Object.entries(cr.resistances||{}).map(([k,v])=>`${esc(k)} ${v>0?'+':''}${Math.round(v)}%`).join(' · ')||'None'}</span>${cr.passives?.length?`<span>Passives: ${cr.passives.map(esc).join(' · ')}</span>`:''}</div><div class="special-meter"><b>${esc(specialStatFor(a.path,a.sequence,a).name)} ${Math.round(specialStatFor(a.path,a.sequence,a).value)}/100</b><small>Gain: ${esc(specialStatFor(a.path,a.sequence,a).gain)} · Spend: ${esc(specialStatFor(a.path,a.sequence,a).spend)}</small></div>`:''}<p class="muted">Weapon Mastery: Gun ${weaponMasteryValue(a,'gun')} · Melee ${weaponMasteryValue(a,'weapon')} · Bare Hand ${weaponMasteryValue(a,'unarmed')}. Mastery is permanently attached to this character; changing weapons does not reset it.</p>${weapon.kind==='gun'?`<p class="muted">Gun Accuracy: ${Math.round((1-weaponStats(a).masteryMiss)*100)}%</p>`:''}${weapon.bleed?`<p class="muted">Bleed: ${Math.round(weapon.bleed*100)}% if target survives</p>`:''}<p class="muted">Current ATK: ${eff.atk} (base ${a.stats.atk})</p>${a.status==='active'&&a.injuries>0?`<button type="button" onclick="window.G9.heal(${actionId})">Treat injuries</button>`:''}</details>
+      ${next?`<details class="dossier-details"><summary>Advancement</summary><p>Next: <b>Sequence ${a.sequence-1} — ${esc(next.next.name)}</b>. Digesting: ${Math.round(a.digest||0)}%.</p><div class="requirement-box"><b>Requirements</b><span>Digesting: ${next.ready?'Complete':'Not complete'}</span><span>${esc(next.mat)}: ${state.materials[next.mat]||0}/${next.materialCost}</span><span>Funds: £${state.funds.toLocaleString()}/£${next.fundsCost}</span></div><button type="button" class="primary full" onclick="window.G9.advance(${actionId})">Review Advancement</button></details>`:''}
+      ${a.awakened&&a.sequence===0?'<p class="gold-note">Sequence 0 — Deity. No further advancement.</p>':''}
+      ${a.unitType==='marionette'?`<p class="dossier-restriction"><b>Owner:</b> ${esc(state.roster.find(x=>x.id===a.ownerId)?.name||a.ownerId||'Unknown')}<br>${esc((a.permanentTraits||['Marionette','Cannot advance','Permanent death']).join(' · '))}</p>`:''}
+      <details class="dossier-details"><summary>Biography & history</summary><h3>Introduction</h3><p>${esc(intro)}</p><h3>Combat Trait</h3><p><b>${esc(a.trait||'Stout Vitality')}</b> — ${esc((TRAITS[a.trait||'Stout Vitality']||TRAITS['Stout Vitality']).desc)}</p>${a.awakened?`<h3>Individual Variance</h3><p class="muted">Each stat has an individual variance roll of ±10% at awakening. It remains fixed for this character.</p><div class="variance-box">${['hp','atk','def','int','speed'].map(key=>`<span>${key==='speed'?'Speed':key.toUpperCase()} ×${(a.statVariance?.[key]||1).toFixed(2)}</span>`).join('')}</div>`:''}<h3>History</h3>${(a.history||[]).slice().reverse().map(h=>`<p class="history"><small>Day ${h.day}</small> ${esc(h.text)}</p>`).join('')}</details>
+      <div class="dossier-footer"><button type="button" onclick="window.G9.closeDossier()">Close</button></div>
+    </article></div>`;
   }
   function assignmentModal(){const q=planning;const ready=combatReady();const saved=state.teams[q.id]||[];return `<div class="overlay"><div class="modal"><button class="close" onclick="window.G9.cancelPlan()">×</button><div class="eyebrow">CONTRACT ASSIGNMENT</div><h2>${esc(q.name)}</h2><p>${esc(q.story||q.brief)}</p><p><b>Threat:</b> Sequence ${q.difficultySequence} · <b>Reward:</b> £${q.rewards.funds}</p><div class="dispatch-header"><h3>Assign Party (1–3 Beyonders) <span class="dispatch-count">${window.G9.selectedIds.length}/3 Selected</span></h3>${window.G9.selectedIds.length === 1 ? '<div class="solo-bonus-badge">⚡ <b>Solo Dispatch Active:</b> +50% Potion Digestion Bonus upon completion!</div>' : ''}</div><div class="assign-list">${ready.length?ready.map(a=>`<button type="button" class="assign-row ${window.G9.selectedIds.includes(a.id)?'selected':''}" onclick="window.G9.toggleAssign('${a.id}')"><span class="assign-check">${window.G9.selectedIds.includes(a.id)?'✓':'○'}</span><span><b>${esc(a.name)}</b> · ${esc(pathName(a.path))} Seq ${a.sequence}<small>Digest ${a.digest||0}% · HP ${a.stats.hp} · Weapon: ${esc(weaponFor(a).name)}</small></span><select onclick="event.stopPropagation()" onchange="window.G9.setWeapon('${a.id}',this.value)">${Object.values(WEAPONS).filter(w=>w.id==='none'||w.id===a.weaponId||(state.weapons[w.id]||0)>0).map(w=>`<option value="${w.id}" ${a.weaponId===w.id?'selected':''}>${esc(w.name)} (${state.weapons[w.id]||0})</option>`).join('')}</select></button>`).join(''):'<p class="muted">No awakened characters are available. Recruit and awaken someone first.</p>'}</div><div class="assign-actions"><button onclick="window.G9.saveTeam()">Save Selected Team</button><button onclick="window.G9.clearSelection()">Clear</button></div><button class="primary full" onclick="window.G9.launch()">Begin Contract</button></div></div>`}
   function runModal(){
@@ -574,8 +714,10 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
       ${wanted?`<div class="wanted-meta"><span><b>Known Path:</b> ${esc(q.knownPath||'Unknown')}</span><span><b>Threat:</b> ${esc(q.threat||'★★★☆☆')}</span><span><b>Last Seen:</b> ${esc(q.lastSeen||'Unknown')}</span></div><blockquote>${esc(q.story||q.brief)}</blockquote><h4>Objective</h4><p class="wanted-code">${esc(q.objectiveText||'Capture or kill the target')}</p><h4>Reward</h4><p class="wanted-code">£${q.rewards?.funds||0}<br>+ ${q.rewards?.reputation||0} Reputation</p>`:''}
       ${run.isCampaign?'<p class="campaign-protection">Cantor Vale · Sequence 9 Sleepless. Your chapter preparations are active; your agents are protected.</p>':''}
       ${logHtml}
-      ${run.isCampaign&&isDone?`<p>${esc(run.result.lines.at(-1)?.text||'')}</p>${run.result.success?campaignRewardMarkup(CAMPAIGN.missions[3].rewards):''}`:''}
-      ${isDone?`<div class="result ${run.result.success?'success':'failure'}">${run.isCampaign?(run.result.success?'RESIDENTS RESCUED':'AGENTS RECOVERED · RETRY AVAILABLE'):run.result.success?(wanted?'TARGET ELIMINATED':'CONTRACT FULFILLED'):(wanted?'HUNT FAILED':'CONTRACT FAILED')}</div><button class="primary full" onclick="window.G9.closeQuest()">${run.isCampaign?(run.result.success?'Record victory & continue':'Return and retry'):'Return to Guild'}</button>`:''}
+      <div class="battle-completion" ${isDone ? '' : 'hidden'}>
+      ${run.isCampaign?`<p>${esc(run.result.lines.at(-1)?.text||'')}</p>${run.result.success?campaignRewardMarkup(CAMPAIGN.missions[3].rewards):''}`:''}
+      <div class="result ${run.result.success?'success':'failure'}">${run.isCampaign?(run.result.success?'RESIDENTS RESCUED':'AGENTS RECOVERED · RETRY AVAILABLE'):run.result.success?(wanted?'TARGET ELIMINATED':'CONTRACT FULFILLED'):(wanted?'HUNT FAILED':'CONTRACT FAILED')}</div><button class="primary full" onclick="window.G9.closeQuest()">${run.isCampaign?(run.result.success?'Record victory & continue':'Return and retry'):'Return to Guild'}</button>
+      </div>
     </div></div>`;
   }
   window.G9={
@@ -603,15 +745,15 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
       tickerSpeed = [1, 2, 4].includes(Number(spd)) ? Number(spd) : 1;
       clearTimeout(tickerTimer);
       tickerTimer = null;
-      render();
+      refreshBattle();
     },
     toggleDetails: () => {
       showBattleDetails = !showBattleDetails;
-      render();
+      refreshBattle();
     },
     toggleSimDetails: () => {
       simBattleDetails = !simBattleDetails;
-      render();
+      refreshBattle();
     },
     tab:t=>{tab=t;render()},previewPath:path=>{if(PATH_KEYS.includes(path)){previewPath=path;render()}},simMode:m=>{simMode=m;render()},simSet:(team,i,key,value)=>{const arr=team==='A'?simA:simB;if(arr[i])arr[i][key]=value;render()},clearSimulation:()=>{simResult=null;render()},runSimulation:()=>{const seed=Date.now()%2147483647;const count=simMode==='1v1'?1:2;const mk=(x,i)=>{const a=makeAgent(Math.random,{sequence:x.sequence,path:x.path,trait:'Stout Vitality'});a.id=`sim_${i}_${x.path}_${x.sequence}`;a.name=`${pathOf(x.path).name} Seq ${x.sequence}`;a.awakened=true;a.path=x.path;a.sequence=x.sequence;a.recommendedPath=x.path;a.injuries=0;a.weaponId='none';a.weaponMastery={};a.sp=maxSPFor(a);restatAgent(a);return a;};const members=simA.slice(0,count).map((x,i)=>mk(x,i));const opponents=simB.slice(0,count).map((x,i)=>({path:x.path,sequence:x.sequence}));const q={id:'sim',name:`${simMode} Battle`,brief:'Battle Simulator',story:'A controlled simulation. No guild resources are changed.',objective:'combat',difficultySequence:Math.min(...opponents.map(x=>x.sequence)),encounter:true,mundane:false,rewards:{funds:0,reputation:0,materials:{}},enemyCount:count,requiredPath:opponents[0].path};const res=resolveQuest(members,q,seed,{individual:count===1,simulationOpponents:opponents});const snap=res.battleSnapshot||{allies:[],enemies:[]};const simTurns = flattenTurnRows(groupEventsToRows(res.events||[]));
     const simSummary = summarizeBattleEvents(res.events||[], snap);
@@ -635,7 +777,10 @@ teamB: opponents.map((o, i) => ({
   alive: snap.enemies[i] ? snap.enemies[i].alive : true,
   hp: snap.enemies[i] ? snap.enemies[i].hp : 100,
   maxHp: snap.enemies[i] ? snap.enemies[i].maxHp : 100
-})),balanceTrace:snap.balanceTrace||[]};render()},fastTicker:()=>{if(!run)return;run.currentTurn=Math.min(run.turnRows.length,run.currentTurn+5);render();},skipTicker:(isSim=false)=>{const playing=isSim?simResult:run;if(!playing)return;playing.currentTurn=playing.turnRows.length;clearTimeout(tickerTimer);tickerTimer=null;render();},dossier:id=>{selected=id;render()},closeDossier:()=>{selected=null;render()},recruitInfo:id=>{const a=state.recruitPool.find(x=>x.id===id);if(a){toast(`${a.name}: ${a.occupation}. Recommended ${pathName(a.recommendedPath)}.`)}},
+})),balanceTrace:snap.balanceTrace||[]};render()},fastTicker:()=>{if(!run)return;run.currentTurn=Math.min(run.turnRows.length,run.currentTurn+5);refreshBattle();},skipTicker:(isSim=false)=>{const playing=isSim?simResult:run;if(!playing)return;playing.currentTurn=playing.turnRows.length;clearTimeout(tickerTimer);tickerTimer=null;refreshBattle();},dossier:id=>{dossierReturnFocus={id:document.activeElement?.id,action:document.activeElement?.getAttribute('onclick')};selected=id;dossierSkillType='active';dossierSkillSequence=null;render();document.getElementById('dossier-title')?.focus()},
+    closeDossier:()=>{selected=null;render();const previous=dossierReturnFocus;const opener=previous?.id?document.getElementById(previous.id):previous?.action?Array.from(app.querySelectorAll('[onclick]')).find(el=>el.getAttribute('onclick')===previous.action):null;(opener||app.querySelector('.tabs [aria-current="page"]'))?.focus();dossierReturnFocus=null},
+    dossierSkillTab:type=>{if(!selected||!['active','passive'].includes(type))return;dossierSkillType=type;dossierSkillSequence=null;render();document.getElementById(`dossier-tab-${type}`)?.focus()},
+    dossierSkillSequence:sequence=>{if(!selected||!Number.isInteger(sequence)||sequence<0||sequence>9)return;dossierSkillSequence=sequence;render();app.querySelector('.dossier-rank-picker select')?.focus()},recruitInfo:id=>{const a=state.recruitPool.find(x=>x.id===id);if(a){toast(`${a.name}: ${a.occupation}. Recommended ${pathName(a.recommendedPath)}.`)}},
     hire:id=>{if(chapterBlocked())return;const a=state.recruitPool.find(x=>x.id===id);if(!a)return;if(state.funds<150)return toast('Not enough funds.');commit(d=>{d.funds-=150;d.recruitPool=d.recruitPool.filter(x=>x.id!==id);a.history=[{day:d.day,text:`Hired from the Recruitment Office as an ordinary ${a.occupation.toLowerCase()}.`}];d.roster.push(clone(a));chronicle(d,`${a.name} joins the guild as an ordinary ${a.occupation.toLowerCase()}.`);if(!d.recruitPool.length){d.recruitPool=makeRecruitPool(4,Date.now(),d.reputation);d.recruitRefreshDay=d.day+7}})},
     refreshRecruit:()=>{if(chapterBlocked())return;if(state.day<state.recruitRefreshDay)return toast(`The office is not ready to refresh for ${state.recruitRefreshDay-state.day} more day(s).`);commit(d=>{d.recruitPool=makeRecruitPool(4,Date.now(),d.reputation);d.recruitRefreshDay=d.day+7;chronicle(d,'The Recruitment Office refreshes its candidates.')})},
     choosePath:(id,path)=>{if(chapterBlocked())return;const a=state.roster.find(x=>x.id===id);if(!a||a.awakened||!PATH_KEYS.includes(path))return;const cost=1;if((state.materials[pathOf(path).material]||0)<cost)return toast(`You need 1 ${pathOf(path).material} to awaken.`);commit(d=>{const x=d.roster.find(y=>y.id===id);x.path=path;x.sequence=9;x.awakened=true;x.digest=0;x.stats=awakenStats(x,path);x.baseStats={...x.stats};x.maxSP=maxSPFor(x);x.sp=x.maxSP;x.cooldowns={};x.basePathSpeed=basePathSpeed(path);x.humanStats=x.humanStats||{...x.stats};const aw=tierFor(path,9), awA=aw.abilities?.[0]||{};x.abilities=[awA];x.abilityHistory=[{sequence:9,name:aw.name,ability:awA.text||aw.abilityText||aw.ability,type:awA.type||aw.type,effectId:awA.effectId||aw.effectId,damage:awA.damage||null,effects:awA.effects||[],effects:awA.effects||[]}];noteAgent(x,d.day,`Drank the ${pathName(path)} Sequence 9 potion and awakened as Sequence 9 ${tierFor(path,9).name}.`);chronicle(d,`${x.name} awakens as Sequence 9 ${pathName(path)}.`);d.materials[pathOf(path).material]-=cost;d.day+=1;if(d.quests.every(q=>!q.encounter))d.quests.push(makeQuest(()=>.5,9,10,Math.max(5,d.reputation),[path]));})},
@@ -668,6 +813,22 @@ if(run.isSolo && res.success){
 addMarionettes(d,res);d.funds+=res.rewards.funds;d.reputation+=res.rewards.reputation;for(const[k,v]of Object.entries(res.rewards.materials||{}))d.materials[k]=(d.materials[k]||0)+v;d.quests=d.quests.filter(x=>x.id!==q.id);d.wanted=d.wanted||[];d.wanted=d.wanted.filter(x=>x.id!==q.id);d.day+=res.dayCost||1;chronicle(d,res.success?`${q.name}: contract fulfilled.`:`${q.name}: contract failed.`);if(d.recruitRefreshDay<=d.day){d.recruitPool=makeRecruitPool(4,Date.now(),d.reputation);d.recruitRefreshDay=d.day+7;}const target=questCountForReputation(d.reputation);if(!d.wanted.length&&d.reputation>=15){const w=makeWantedQuest(d.reputation,()=>.99,d.roster.filter(a=>a.awakened).map(a=>a.path));d.wanted.push(w);}if(d.quests.length<target){d.quests.push(...makeQuestBoard(target-d.quests.length,Date.now(),d.reputation,d.roster.filter(a=>a.awakened).map(a=>a.path)));}if(d.roster.some(a=>a.awakened)&&d.quests.every(q=>!q.encounter))d.quests[0]=makeQuest(()=>.5,9,10,Math.max(5,d.reputation),d.roster.filter(a=>a.awakened).map(a=>a.path));});run=null;tab='hall';render()},
     buyMaterial:(path)=>{if(chapterBlocked())return;const p=pathOf(path);if(!p)return;if(state.funds<180)return toast('Buying a Pathway material requires £180.');commit(d=>{d.funds-=180;d.materials[p.material]=(d.materials[p.material]||0)+1;chronicle(d,`Purchased 1 ${p.material}.`);});},reset:()=>{if(confirm('Erase the current guild and begin again?')){clearSave();state=newGame();state.recruitRefreshDay=8;window.G9.selectedIds=[];run=null;planning=null;selected=null;chapterSelectionMission=null;clearTimeout(tickerTimer);tickerTimer=null;tab='campaign';saveGame(state);render()}}
   };
+  window.addEventListener('scroll',prioritizeVisiblePartyPortraits,{capture:true,passive:true});
+  window.addEventListener('resize',prioritizeVisiblePartyPortraits);
+  document.addEventListener('keydown',event=>{
+    if(!selected)return;
+    const dialog=app.querySelector('.character-dossier');if(!dialog)return;
+    if(event.key==='Escape'){event.preventDefault();window.G9.closeDossier();return;}
+    if(event.target?.getAttribute('role')==='tab'&&['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){
+      event.preventDefault();window.G9.dossierSkillTab(event.key==='Home'?'active':event.key==='End'?'passive':dossierSkillType==='active'?'passive':'active');return;
+    }
+    if(event.key==='Tab'){
+      const controls=Array.from(dialog.querySelectorAll('button,select,summary,[tabindex="0"]')).filter(el=>!el.disabled&&el.getAttribute('tabindex')!=='-1'&&el.getClientRects().length);
+      const first=controls[0],last=controls[controls.length-1];
+      if(first&&event.shiftKey&&(document.activeElement===first||!controls.includes(document.activeElement))){event.preventDefault();last.focus();}
+      else if(first&&!event.shiftKey&&(document.activeElement===last||!dialog.contains(document.activeElement))){event.preventDefault();first.focus();}
+    }
+  });
   window.G9.selectedIds=[];
   if(!state.schema){state=newGame();state.recruitRefreshDay=8;saveGame(state)}
   if(!state.recruitRefreshDay)state.recruitRefreshDay=state.day+7;
