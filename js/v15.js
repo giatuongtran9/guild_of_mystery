@@ -34,12 +34,12 @@ const V15_FORMULAS = V15_DATA.damage_formulas;
 const MYTHIC = V15_DATA.mythical_creature_form_rules;
 function v15Mods(agent, actor) {
   const pm = passiveCombatModifier(agent), sm = statusCombatModifier(actor), deb = actor?._debuffs || {};
-  return { atk: pm.atk * sm.atk * (deb.atk || 1), int: pm.int * sm.int * (deb.int || 1) };
+  return { atk: pm.atk * sm.atk * (deb.atk || 1), int: pm.int * sm.int * (deb.int || 1), defPen: pm.defPen };
 }
 // Returns final damage after DEF mitigation (Defender_DEF * 0.5, reduced by the formula's bypass).
 function v15Damage(kind, { agent, actor, target, abilityMult = 1, weaponBonus = 0, strikeMult = 1, defPen = 0, trueDamage = false, psychicTrue = false, damageSpec = null, trace = null }) {
   const st=agent.stats, mod=v15Mods(agent,actor);
-  if (mod.defPen) defPen += mod.defPen;
+  if (kind !== 'basic_physical_attack' && mod.defPen) defPen += mod.defPen;
   if (actor && actor._defPenBonus) defPen += actor._defPenBonus;
   if (kind==='pure_caster_ability'||String(damageSpec?.scaling||'').toUpperCase()==='INT') { const sp=passiveCombatModifier(agent).spellPen; if (sp) defPen += sp; }
   const ATK=(st.atk||0)+(agent._stolenAtk||0), INT=st.int||0;

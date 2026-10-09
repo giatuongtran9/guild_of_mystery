@@ -98,8 +98,8 @@ T.vulnerability_vs_corrupted = () => cast([{ type: 'vulnerability_vs_corrupted',
 T.damage_taken = () => {
   const act = cast([{ type: 'damage_taken', amount: -.2 }]).ua._damageTakenMultiplier === .8;
   const base = mk('sun', 5, 3), vs = mk('door', 5, 4);
-  const pm = g.passiveCombatModifier(mk('sun', 2, 3)).damageTaken; // Sun 2 passive: -30%
-  return act && pm < 1;
+  const pm = g.passiveCombatModifier(mk('sun', 2, 3)); // Sun 2: Dark/Shadow only
+  return act && pm.damageTaken === 1 && pm.damageTakenByCategory.dark === .7 && pm.damageTakenByCategory.shadow === .7;
 };
 T.outgoing_damage = () => cast([{ type: 'outgoing_damage', amount: -.2 }]).ua._outgoingMultiplier === .8;
 T.counter = () => { const r = cast([{ type: 'counter', amount: .2 }]); return r.a._counterBonus === .2 && r.ua._counterBonus === .2; };

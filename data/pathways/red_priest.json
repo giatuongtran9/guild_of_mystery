@@ -155,6 +155,11 @@
         "effects": [
           {
             "type": "stat_modifier",
+            "stat": "hp",
+            "amount": 0.15
+          },
+          {
+            "type": "stat_modifier",
             "stat": "def",
             "amount": 0.15
           }
@@ -210,6 +215,12 @@
           {
             "type": "buff",
             "stat": "atk",
+            "amount": 0.25,
+            "duration": 2
+          },
+          {
+            "type": "buff",
+            "stat": "speed",
             "amount": 0.25,
             "duration": 2
           }

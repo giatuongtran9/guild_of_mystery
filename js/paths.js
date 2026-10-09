@@ -66,7 +66,7 @@ function normalizeAbilities(){
   for(const [path,p] of Object.entries(PATHS)) for(const t of p.sequences){
     t.abilityText=t.abilityText||t.ability; t.type=t.type||'passive'; t.effectId=t.effectId||`${path}_${t.sequence}`;
     t.abilities=(t.abilities||[]).map(a=>({
-      type:a.type||'passive', effectId:a.id||a.effectId||t.effectId, text:a.text||t.abilityText,
+      type:a.type||'passive', effectId:a.id||a.effectId||t.effectId, name:a.name||String(a.text||t.abilityText).split(/\s(?:—|--)\s/)[0], text:a.text||t.abilityText,
       costSP:Number(a.costSP||0), cooldown:Number(a.cooldown||0), tag:a.tag||null,
       damage:a.damage||null, effects:Array.isArray(a.effects)?a.effects:[]
     }));

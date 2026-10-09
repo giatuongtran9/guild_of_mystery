@@ -12,9 +12,10 @@ function test(name, fn) {
 const tier = (key, rank) => g.tierFor(key, rank);
 const spec = (key, rank) => tier(key, rank).abilities[0];
 const describe = (key, rank) => g.abilityDescription(spec(key, rank), key, rank);
-test('all 220 abilities have generated current descriptions', () => {
+test('218 abilities are generated and two entire Error rules stay deferred', () => {
   for (const key of g.PATH_KEYS) for (let rank = 9; rank >= 0; rank--) {
     const text = describe(key, rank);
+    if(g.isPhase3DeferredAbility(spec(key,rank),key)){assert.equal(text,spec(key,rank).text);continue;}
     assert.equal(typeof text, 'string');
     assert(text.length > 10 && !/undefined|NaN/.test(text), `${key} ${rank}: ${text}`);
     assert.equal(spec(key, rank).text, text);
@@ -62,5 +63,6 @@ test('UI uses live rules rather than saved learned descriptions', () => {
   assert(!ui.includes('text:learned?.ability||spec.text'), 'old saves override the shipped ability rules');
   assert(!ui.includes('Math.round((skill.damage.multiplier||0)*100)'), 'dossier repeats misleading pure-stat coefficient');
 });
+test('mixed elemental casts disclose the four-school resistance average',()=>{const text=describe('door',8);for(const school of ['Fire','Water','Lightning','Frost'])assert(text.includes(school),text);assert(text.includes('average'),text);});
 console.log(`Phase 3 descriptions: ${pass} passed, ${fail} failed`);
 if (fail) process.exitCode = 1;

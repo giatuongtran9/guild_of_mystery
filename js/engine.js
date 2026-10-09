@@ -348,7 +348,7 @@ const COMBAT_TRANSIENT_FIELDS=['_buffs','_debuffs','_speedDebuff','_threadSpeedD
  '_threadDodgeDebuff','_threadHitDebuff','_threadLockDodge','_threadStiffened','_threadAttempts',
  '_spCostMultiplier','_spCostDuration','_cooldownPenalty','_cooldownDuration','_dodgeBonus',
  '_counterBonus','_hitChanceDebuff','_hitChanceDebuffDuration','_skillMisfireChance','_skillMisfireDuration',
- '_outgoingMultiplier','_vulnerability','_damageTakenMultiplier','_damageTakenByCategory','_shieldIncomingCategory','_defPenBonus','_nextAttackMiss',
+ '_lifestealBonus','_outgoingMultiplier','_vulnerability','_damageTakenMultiplier','_damageTakenByCategory','_shieldIncomingCategory','_defPenBonus','_nextAttackMiss',
  '_nextCritFail','_nextDamageBonus','_damageStatBonus','_lowHpBonus','_abilityCritDamageBonus',
  '_healDamageRatio','_lastAbility','_hpRatio','_partyPassiveEffects','_teamDamageMultiplier',
  '_revivePending','_revived','_formUsed','_inForm','_formBoost','_reflect','_fx','_taunt',
@@ -492,7 +492,7 @@ function settleFatalDamage(unit,state,lines=[],source=null){
  return {dead:!unit.alive,revived};
 }
 function resolveIncoming(attacker,defender,dmg,state,lines=[],r,opt={}){if(!lines)lines=[];
- const incoming=Math.max(0,Math.round(dmg)),res={incoming,absorbed:0,hpLoss:0,negated:false,reflected:0,dead:false,revived:false};
+ const incoming=Math.max(0,Math.round(dmg*Number(defender?._vulnerability||1))),res={incoming,absorbed:0,hpLoss:0,negated:false,reflected:0,dead:false,revived:false};
  if(!defender||!defender.alive||incoming<=0)return res;
  if(hasStatus(defender,'untargetable')){res.negated=true;lines.push({text:`${defender.name} is untargetable and avoids damage.`,kind:'status'});return res;}
  const dmgType=canonicalResistanceElement(opt.trueDamage?'true':opt.damageType||'physical');
@@ -506,6 +506,7 @@ function resolveIncoming(attacker,defender,dmg,state,lines=[],r,opt={}){if(!line
   const mult=opt.execute?1:incomingMultiplier(defender,dmgType);
   if(mult!==1&&rem>0){const reduced=Math.max(0,Math.round(rem*mult));if(reduced!==rem)lines.push({text:`${defender.name}'s damage ${mult<1?'reduction':'vulnerability'} changes ${rem} damage to ${reduced}.`,kind:'status'});rem=reduced;}
   res.hpLoss=Math.min(Math.max(0,defender.hp),rem);defender.hp=Math.max(0,defender.hp-rem);
+  recordThreadDamage(defender,res.hpLoss,state,lines);
   Object.assign(res,settleFatalDamage(defender,state,lines,attacker));
   if(defender.hp>0&&(defender.agent||(defender.path&&defender.sequence!=null))){const wasInHit=state?._mythicalFromHit;if(state)state._mythicalFromHit=!opt.indirect;try{tryMythicalForm(defender.agent||defender,defender,state,lines,r);}finally{if(state)state._mythicalFromHit=wasInHit;}}
  }
@@ -543,7 +544,7 @@ function addFx(u,cat,key,val,dur){
 function removeFxCat(u,cat){u._fx=(u._fx||[]).filter(f=>f.cat!==cat);recomputeFx(u);}
 function recomputeFx(u){
  const far=(cur,v)=>(cur===undefined||Math.abs(v-1)>Math.abs(cur-1))?v:cur;
- const buffs={},debuffs={},damageTakenByCategory={};let speed,outg,vuln,dtm,dodge=0,counter=0,defpen=0;
+ const buffs={},debuffs={},damageTakenByCategory={};let speed,outg,vuln,dtm,dodge=0,counter=0,defpen=0,lifesteal=0;
  for(const f of u._fx||[]){
   if(f.cat==='buff')buffs[f.key]=Math.max(buffs[f.key]||1,f.val);
   else if(f.cat==='debuff')debuffs[f.key]=Math.min(debuffs[f.key]||1,f.val);
@@ -554,10 +555,11 @@ function recomputeFx(u){
   else if(f.cat==='dodge')dodge=Math.max(dodge,f.val);
   else if(f.cat==='counter')counter=Math.max(counter,f.val);
   else if(f.cat==='defpen')defpen=Math.max(defpen,f.val);
+  else if(f.cat==='lifesteal')lifesteal=Math.max(lifesteal,f.val);
  }
  u._buffs=Object.keys(buffs).length?buffs:undefined;u._debuffs=Object.keys(debuffs).length?debuffs:undefined;
  u._damageTakenByCategory=Object.keys(damageTakenByCategory).length?damageTakenByCategory:undefined;
- u._speedDebuff=speed;u._outgoingMultiplier=outg;u._vulnerability=vuln;u._damageTakenMultiplier=dtm;u._dodgeBonus=dodge;u._counterBonus=counter;u._defPenBonus=defpen;
+ u._speedDebuff=speed;u._outgoingMultiplier=outg;u._vulnerability=vuln;u._damageTakenMultiplier=dtm;u._dodgeBonus=dodge;u._counterBonus=counter;u._defPenBonus=defpen;u._lifestealBonus=lifesteal;
  syncUnitToAgent(u);
 }
 function tickFx(u){
@@ -566,13 +568,16 @@ function tickFx(u){
 }
 function hasStatus(target,status){return !!target?.status?.includes(status);}
 const SELF_STATUSES=['evade','untargetable','guarded','inspired','possession_phase'];
+const CLEANSE_STATUSES=['burn','bleed','poison','curse','silenced','confused','sleep','stunned','frozen','freeze','bound'];
+const TRANSFER_STATUSES=[...CLEANSE_STATUSES,'dreambound','controlled','root','no_heal','no_shield'];
+const DOT_RULES=[['burn',.07,'fire'],['poison',.05,'poison'],['curse',.03,'dark'],['decay',.025,'dark'],['bleed',.03,'physical']];
+const THREAD_RULES=Object.freeze({required:5,initialSpeedLoss:.15,dodgeLoss:.10,hitLoss:.10,advancedSpeedLoss:.35,bindingChance:.30,marionetteStats:.55,damageThreshold:.30});
 function statusImmune(t,s){try{return (passiveCombatModifier(t?.agent||t).immunities||[]).includes(s);}catch(e){return false;}}
 function addStatus(target,status,duration=1,source="unknown",extraMeta={}){if(statusImmune(target,status))return;target.status=target.status||[];target.statusMeta=target.statusMeta||{};if(!target.status.includes(status))target.status.push(status);target.statusMeta[status]={duration:Math.max(1,Number(duration)||1),source,_grace:target._acting===true,...(extraMeta||{})};}
 function removeStatus(target,status){if(!target?.status)return;target.status=target.status.filter(x=>x!==status);if(target.statusMeta)delete target.statusMeta[status];}
 function processStatuses(unit,add=()=>{},state=null,decrement=true){
  if(!unit.alive)return;unit.status=unit.status||[];unit.statusMeta=unit.statusMeta||{};
- const dots=[['burn',.07,'fire'],['poison',.05,'poison'],['curse',.03,'dark'],['decay',.025,'dark'],['bleed',.03,'physical']];
- for(const [status,ratio,damageType] of dots){
+ for(const [status,ratio,damageType] of DOT_RULES){
   if(!unit.alive)break;
   if(!hasStatus(unit,status))continue;
   if(!hasStatus(unit,'untargetable')){
@@ -682,7 +687,7 @@ function applySpiritThread(agent,enemy,actor,state,lines=[],r){if(!lines)lines=[
    emitCombatEvent(state, {round:state?.currentRound||1,type:'status',actorId:agent.id,actorName:agent.name,actorTeam:teamOf(agent,state),targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),text:resistMsg});
    changeMeter(agent,'fool',5); if (agent._threadAttempts > 0) agent._threadAttempts--; return false;
  }
- enemy.thread={ownerId:agent.id,progress:0,required:5};
+ enemy.thread={ownerId:agent.id,progress:0,required:THREAD_RULES.required};
  agent.threadTargets=[...(agent.threadTargets||[]),enemy.id];agent.activeThreads=agent.threadTargets.length;changeMeter(agent,'fool',-12);
  addStatus(enemy,'threaded',enemy.thread.required,'Spirit Body Thread');
  const graspMsg = `${actor.name} grasps the invisible Spirit Body Thread attached to ${enemy.name}.`;
@@ -692,12 +697,12 @@ function applySpiritThread(agent,enemy,actor,state,lines=[],r){if(!lines)lines=[
 }
 function joinMarionette(state,owner,target,lines=[]){if(!lines)lines=[];
   // Battle-only Marionette: 55% of the dead unit's stats, fights for the thread owner's side, never saved to the roster.
-  const pct=.55,ownerAllied=state.allies.some(x=>x.id===owner.id),rng=state.rng||Math.random;
+  const pct=THREAD_RULES.marionetteStats,ownerAllied=state.allies.some(x=>x.id===owner.id),rng=state.rng||Math.random;
   const src=target.agent?{hp:target.maxHp,atk:target.agent.stats.atk,def:target.agent.stats.def,int:target.agent.stats.int}:{hp:target.maxHp,atk:target.atk,def:target.def,int:target.int};
   const st={hp:Math.max(1,Math.round(src.hp*pct)),atk:Math.max(1,Math.round(src.atk*pct)),def:Math.max(1,Math.round(src.def*pct)),int:Math.max(1,Math.round(src.int*pct))};
   const seq=target.agent?target.agent.sequence:target.sequence,path=target.agent?target.agent.path:target.path;
   const name=`${target.name} — Marionette`,id=`mar_${target.id}`;
-  const ag={...cloneE(getCombatAgent(target)),id,name,path,sequence:seq,awakened:true,
+  const ag={...cloneE(getCombatAgent(target)),id,name,path,sequence:seq,awakened:!!path&&getCombatAgent(target).awakened!==false,
     unitType:'marionette',ownerId:owner.id,stats:{...st},baseStats:{...st},injuries:0,madness:0,
     weaponId:'none',weaponMastery:{},cooldowns:{},threadTargets:[],activeThreads:0,
     status:[],statusMeta:{},thread:null,_threadAttempts:0};
@@ -709,6 +714,29 @@ function joinMarionette(state,owner,target,lines=[]){if(!lines)lines=[];
   lines.push({text:`${name} rises under ${owner.name||'its owner'}'s control (55% stats) and joins the fight.`,kind:'quirk'});
   emitCombatEvent(state,{round:state?.currentRound||1,type:'system',text:`${name} joins ${owner.name||'the owner'}'s side as a Marionette.`});
 }
+// Damage is measured after shields/reduction and shared by all hits in one actor turn.
+function applyThreadStage(target){
+ const stage=target.thread?.progress||0;
+ target._threadSpeedDebuff=stage>=3?THREAD_RULES.advancedSpeedLoss:stage>=1?THREAD_RULES.initialSpeedLoss:0;
+ target._threadDodgeDebuff=stage>=2?-THREAD_RULES.dodgeLoss:0;
+ target._threadHitDebuff=stage>=2?THREAD_RULES.hitLoss:0;
+ target._threadLockDodge=stage>=3;target._threadStiffened=false;
+ syncUnitToAgent(target);
+}
+function recordThreadDamage(target,hpLoss,state,lines=[]){
+ const t=target.thread;if(!t||hpLoss<=0)return;
+ const turn=state?.currentTurn??state?.currentRound??0;
+ if(t.damageTurn!==turn){t.damageTurn=turn;t.hpLossThisTurn=0;t.severedThisTurn=false;}
+ t.hpLossThisTurn+=hpLoss;
+ if(!t.severedThisTurn&&t.hpLossThisTurn>target.maxHp*THREAD_RULES.damageThreshold){
+  t.severedThisTurn=true;
+  if(t.progress<=0)return;
+  t.progress--;applyThreadStage(target);
+  const text=`${target.name} loses one Spirit Thread stack after losing more than ${THREAD_RULES.damageThreshold*100}% Max HP in this turn.`;
+  lines.push({text,kind:'status'});
+  emitCombatEvent(state,{type:'thread',subtype:'damage_interrupt',targetId:target.id,targetName:target.name,targetTeam:teamOf(target,state),progress:t.progress,text});
+ }
+}
 function processSpiritThreads(state,lines=[]){if(!lines)lines=[];const allUnits=[...state.allies,...state.enemies];for(const ally of allUnits.filter(x=>x.alive&&isThreadBeyonder(x.agent||x))){const agent=ally.agent||ally;const targets=state.allies.includes(ally)?state.enemies:state.allies;for(const enemy of targets.filter(x=>x.thread?.ownerId===agent.id)){const t=enemy.thread;if(!enemy.alive){releaseThread(agent,enemy);lines.push({text:`The thread ends because ${enemy.name} is dead; the slot is freed.`,kind:"system"});continue;}if(!ally.alive||hasThreadCC(ally)||hasStatus(enemy,'untargetable')||hasStatus(enemy,'banished')){
         releaseThread(agent,enemy);
         const interruptMsg = `The thread on ${enemy.name} is interrupted and its progress resets.`;
@@ -717,17 +745,17 @@ function processSpiritThreads(state,lines=[]){if(!lines)lines=[];const allUnits=
         if(agent._threadAttempts>0)agent._threadAttempts--;
         continue;
       }
-      t.progress++;
+      t.progress++;applyThreadStage(enemy);
       let debuffMsg = '';
       if(t.progress===1){
-        enemy._threadSpeedDebuff=0.15;
+        enemy._threadSpeedDebuff=THREAD_RULES.initialSpeedLoss;
         debuffMsg = `${enemy.name} suffers -15% Speed from tightening Spirit Threads.`;
       }else if(t.progress===2){
-        enemy._threadDodgeDebuff=-0.10;
-        enemy._threadHitDebuff=0.10;
+        enemy._threadDodgeDebuff=-THREAD_RULES.dodgeLoss;
+        enemy._threadHitDebuff=THREAD_RULES.hitLoss;
         debuffMsg = `${enemy.name} suffers -10% Dodge and +10% Miss chance from tightening Spirit Threads.`;
       }else if(t.progress===3){
-        enemy._threadSpeedDebuff=0.35;
+        enemy._threadSpeedDebuff=THREAD_RULES.advancedSpeedLoss;
         enemy._threadLockDodge=true;
         debuffMsg = `${enemy.name} suffers -35% Speed and cannot dodge from tightening Spirit Threads.`;
       }else if(t.progress===4){
@@ -934,7 +962,7 @@ function attackOnce(agent,actor,enemy,state,lines=[],r,mult=1){if(!lines)lines=[
    cooldown: 0
  });
  const tk=resolveIncoming(actor,enemy,dmg,state,lines,r,{damageType:'physical'});const dealt=tk.hpLoss+tk.absorbed;
- const totalLifeSteal=Math.max(0,pm.lifesteal+Number(traitData(agent).lifesteal||0)); if(actor.alive&&!hasStatus(actor,'no_heal')&&totalLifeSteal>0&&dealt>0){const heal=recoverHP(actor,Math.round(dealt*totalLifeSteal));if(heal>0){lines.push({text:`${actor.name} recovers ${heal} HP from Lifesteal.`,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'heal',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:actor.id,targetName:actor.name,targetTeam:teamOf(actor,state),amount:heal,hpAfter:actor.hp,maxHp:actor.maxHp});}}
+ const totalLifeSteal=Math.max(0,pm.lifesteal+Number(actor._lifestealBonus||0)+Number(traitData(agent).lifesteal||0)); if(actor.alive&&!hasStatus(actor,'no_heal')&&totalLifeSteal>0&&dealt>0){const heal=recoverHP(actor,Math.round(dealt*totalLifeSteal));if(heal>0){lines.push({text:`${actor.name} recovers ${heal} HP from Lifesteal.`,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'heal',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:actor.id,targetName:actor.name,targetTeam:teamOf(actor,state),amount:heal,hpAfter:actor.hp,maxHp:actor.maxHp});}}
  if(weapon.id!=='none') state.weaponUsage[weapon.id]=(state.weaponUsage[weapon.id]||0)+1;
  const displayedAtk=Math.round(agent.stats.atk+(weapon.atk||0)); lines.push({text:`${actor.name} attacks with ${weapon.name==='Bare Hands'?'bare hands':weapon.name} (ATK ${displayedAtk}); ${enemy.name} suffers ${dmg}${critical?' critical':''} damage.`,kind:'normal'});
  emitCombatEvent(state, {
@@ -1041,7 +1069,7 @@ function startRoundCombatResources(units,lines){
 }
 function activeSpecs(agent){return unlockedAbilities(agent).filter(x=>x.type==='active').map(x=>cloneE(x));}
 function effectiveAbilityCost(agent,spec){return Math.max(0,Math.round(Number(spec.costSP||0)*(1+Number(agent._spCostMultiplier||0))));}
-function abilityReady(agent,spec){ensureCombatResource(agent);return (agent.sp||0)>=effectiveAbilityCost(agent,spec)&&!(agent.cooldowns?.[spec.effectId]>0)&&!hasStatus({status:agent.status||[]},'silenced');}
+function abilityReady(agent,spec){ensureCombatResource(agent);return (agent.sp||0)>=effectiveAbilityCost(agent,spec)&&!(agent.cooldowns?.[spec.effectId]>0)&&!hasStatus({status:agent.status||[]},'silenced')&&!(hasStatus(agent,'root')&&spec.tag==='Escape');}
 function abilityAvailable(agent,effectId){return unlockedAbilities(agent).some(x=>x.effectId===effectId||x.id===effectId);}
 function chooseStructuredAbility(agent,actor,enemy,state){
  if(hasStatus(actor,'silenced')||hasStatus(agent,'silenced'))return null;
@@ -1061,7 +1089,7 @@ function chooseStructuredAbility(agent,actor,enemy,state){
   if(only(['heal','cleanse']))return hpRatio<.85||(actor.status||[]).length>0;
   if(only(['status','status_chance','silence','skip','banish']))return effects.some(e=>e.type==='targeting'?false:e.type==='status'||e.type==='status_chance'?!(SELF_STATUSES.includes(e.status)?hasStatus(actor,e.status):hasStatus(enemy,e.status)||statusImmune(enemy,e.status)):e.type==='silence'?!hasStatus(enemy,'silenced'):true);
   return true;};
- let specs=activeSpecs(agent).filter(x=>x.effectId!=='thread_binding'&&!isAutomaticRevival(x)&&abilityReady(agent,x)&&useful(x))
+ let specs=activeSpecs(agent).filter(x=>x.effectId!=='thread_binding'&&!isAutomaticRevival(x)&&abilityReady(agent,x)&&!(hasStatus(actor,'root')&&x.tag==='Escape')&&useful(x))
   .sort((a,b)=>(ranks.get(a.effectId||a.id)??Infinity)-(ranks.get(b.effectId||b.id)??Infinity));
   // Teammate will not cast an ability to banish an enemy currently having a thread attached
   if (enemy && enemy.thread) {
@@ -1172,6 +1200,7 @@ function getCopiedEnemyAbility(actor, enemy, state) {
 }
 function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lines)lines=[];
  const castSpec=cloneE(spec),castId=castSpec.effectId||castSpec.id;
+ if(hasStatus(actor,'root')&&castSpec.tag==='Escape')return false;
  const castName=(castSpec.text||castSpec.name||castId).split(/\s(?:—|--)\s/)[0];
  spec=castSpec;
  let copiedName=null;
@@ -1224,14 +1253,14 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
  for(const e of effects){
   const tgs=e.type==='buff'||e.type==='heal'||e.type==='cleanse'||e.type==='shield'||e.type==='revive'?supportTargets:targets;
   if(e.type==='strip_buffs'||e.type==='nullify_buffs')for(const t of targets){removeFxCat(t,'buff');t.buffs=[];removeStatus(t,'guarded');removeStatus(t,'evade');if((t.shield||0)>0){lines.push({text:`${t.name}'s barrier (${t.shield} HP shield) is stripped away!`,kind:'status'});t.shield=0;}}
-  else if(e.type==='cleanse'){for(const t of tgs){const removed=[];for(const st of [...(t.status||[])])if(['burn','bleed','poison','curse','silenced','confused','sleep','stunned','frozen','freeze','bound'].includes(st)){removeStatus(t,st);removed.push(st);}if(removed.length)lines.push({text:`${t.name} cleanses: ${removed.join(', ')}.`,kind:'status'});}}
+  else if(e.type==='cleanse'){for(const t of tgs){const removed=[];for(const st of [...(t.status||[])])if(CLEANSE_STATUSES.includes(st)){removeStatus(t,st);removed.push(st);}if(removed.length)lines.push({text:`${t.name} cleanses: ${removed.join(', ')}.`,kind:'status'});}}
   else if(e.type==='shield')for(const t of tgs){const amount=e.fullHp?t.maxHp:Math.round(t.maxHp*Number(e.maxHpRatio||0)),granted=grantShield(t,amount,e.incomingCategory);if(granted<=0)continue;lines.push({text:`${t.name} gains ${granted} HP of ${e.incomingCategory?e.incomingCategory+' ':''}shield.`,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'shield',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),amount:granted,shieldAfter:t.shield});}
   else if(e.type==='heal')for(const t of tgs){const amount=Math.round(t.maxHp*Number(e.maxHpRatio||0)+(e.scaling==='INT'?agent.stats.int*Number(e.multiplier||0):0));if(amount>0){const restored=recoverHP(t,amount);if(restored>0){lines.push({text:`${t.name} recovers ${restored} HP (${t.hp}/${t.maxHp}).`,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'heal',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),amount:restored,hpAfter:t.hp,maxHp:t.maxHp});}}}
   else if(e.type==='buff')for(const t of tgs){const d=fxDuration(e,'buff'),m=1+Number(e.amount||0);if(e.stat==='all'){for(const k of ['atk','def','int'])addFx(t,'buff',k,m,d);}else addFx(t,'buff',e.stat,m,d);emitCombatEvent(state,{round:state?.currentRound||1,type:'status',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`${t.name} gains +${Math.round((m-1)*100)}% ${e.stat.toUpperCase()} ${durationText(d)}`});}
   else if(e.type==='debuff')for(const t of targets){const d=fxDuration(e,'debuff'),m=1-Number(e.amount||0);if(e.stat==='speed')addFx(t,'speed_debuff','speed',m,d);else if(e.stat==='outgoing')addFx(t,'outgoing','outgoing',m,d);else addFx(t,'debuff',e.stat,m,d);emitCombatEvent(state,{round:state?.currentRound||1,type:'status',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`${t.name} suffers -${Math.round((1-m)*100)}% ${e.stat.toUpperCase()} ${durationText(d)}`});}
-  else if(e.type==='status'){const selfSt=SELF_STATUSES.includes(e.status);for(const t of (selfSt?[actor]:targets))if(t.alive){const mental=['sleep','silenced','confused','charmed','stunned','bound','dreambound','controlled','fear','illusion'].includes(e.status);const resist=(mental&&!selfSt)?Number(combatRates(t.agent||t).resistance||0):0;if((e.chance==null||r()<Number(e.chance))&&r()>=resist&&r()>=(selfSt?0:statusResistChance(t,e.status))){if(e.status==='sleep')t._sleepAppliedThisAction=true;if(e.status==='banished'){const skipTurns=Math.max(1,Number(e.duration||1));t._skipTurns=skipTurns;addStatus(t,'untargetable',skipTurns,actor.name);addStatus(t,'banished',skipTurns,actor.name);lines.push({text:`${t.name} is banished into a spatial fold for ${skipTurns} turn${skipTurns===1?'':'s'}.`,kind:'status'});checkThreadInterruptOnTarget(t,state,lines);}else { addStatus(t,e.status,Number(e.duration||1),actor.name,e.status==='evade'&&e.dodgeRate!==undefined?{dodgeRate:Number(e.dodgeRate)}:{}); if(e.status==='untargetable')checkThreadInterruptOnTarget(t,state,lines); }emitCombatEvent(state,{round:state?.currentRound||1,type:'status',subtype:e.status==='freeze'?'freeze':undefined,isFreeze:e.status==='freeze',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`${t.name} is afflicted with ${e.status} (${e.duration||1} turn${Number(e.duration||1)===1?'':'s'})`});}}}
+  else if(e.type==='status'){const selfSt=SELF_STATUSES.includes(e.status);for(const t of (selfSt?[actor]:targets))if(t.alive){const mental=['sleep','silenced','confused','charmed','stunned','bound','dreambound','controlled','fear','illusion'].includes(e.status);const resist=(mental&&!selfSt&&!e.ignoreResistance)?Number(combatRates(t.agent||t).resistance||0):0;if((e.chance==null||r()<Number(e.chance))&&r()>=resist&&r()>=(selfSt||e.ignoreResistance?0:statusResistChance(t,e.status))){if(e.status==='sleep')t._sleepAppliedThisAction=true;if(e.status==='banished'){const skipTurns=Math.max(1,Number(e.duration||1));t._skipTurns=skipTurns;addStatus(t,'untargetable',skipTurns,actor.name);addStatus(t,'banished',skipTurns,actor.name);lines.push({text:`${t.name} is banished into a spatial fold for ${skipTurns} turn${skipTurns===1?'':'s'}.`,kind:'status'});checkThreadInterruptOnTarget(t,state,lines);}else { addStatus(t,e.status,Number(e.duration||1),actor.name,e.status==='evade'&&e.dodgeRate!==undefined?{dodgeRate:Number(e.dodgeRate)}:{}); if(e.status==='untargetable')checkThreadInterruptOnTarget(t,state,lines); }emitCombatEvent(state,{round:state?.currentRound||1,type:'status',subtype:e.status==='freeze'?'freeze':undefined,isFreeze:e.status==='freeze',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`${t.name} is afflicted with ${e.status} (${e.duration||1} turn${Number(e.duration||1)===1?'':'s'})`});}}}
   else if(e.type==='status_pool'){for(const t of targets)if(t.alive){const pool=e.statuses||[];if(pool.length&&(e.chance==null||r()<Number(e.chance))){const st=pickR(r,pool);addStatus(t,st,Number(e.duration||1),actor.name);}}}
-  else if(e.type==='status_chance'){for(const t of targets)if(t.alive){const mental=['sleep','silenced','confused','charmed','stunned','bound','dreambound','controlled','fear','illusion'].includes(e.status);const resist=mental?Number(combatRates(t.agent||t).resistance||0):0;if(r()<Number(e.chance||0)*(1-resist)*(1-statusResistChance(t,e.status)))addStatus(t,e.status,Number(e.duration||1),actor.name);}}
+  else if(e.type==='status_chance'){for(const t of targets)if(t.alive){const mental=['sleep','silenced','confused','charmed','stunned','bound','dreambound','controlled','fear','illusion'].includes(e.status);const resist=mental&&!e.ignoreResistance?Number(combatRates(t.agent||t).resistance||0):0;if(r()<Number(e.chance||0)*(1-resist)*(1-(e.ignoreResistance?0:statusResistChance(t,e.status))))addStatus(t,e.status,Number(e.duration||1),actor.name);}}
   else if(e.type==='skill_misfire'){for(const t of targets){t._skillMisfireChance=Math.max(t._skillMisfireChance||0,Number(e.chance||.3));setCombatDuration(t,'_skillMisfireDuration',Math.max(t._skillMisfireDuration||0,Number(e.duration||2)));lines.push({text:`${t.name} is afflicted by skill misfire (${Math.round(Number(e.chance||.3)*100)}% chance).`,kind:'status'});}}
   else if(e.type==='mind_control'){const ally=foesOf(actor,state).find(x=>x!==enemy&&x.alive);if(ally){const dmg=Math.max(1,Math.round((enemy.atk||enemy.agent?.stats?.atk||10)*Number(e.damageMultiplier||1.5)));lines.push({text:`${enemy.name} turns its own power against ${ally.name} for ${dmg} damage.`,kind:'quirk'});resolveIncoming(enemy,ally,dmg,state,lines,r);}addStatus(enemy,'stunned',1,actor.name);}
   else if(e.type==='reflect'){{const d=fxDuration(e,'reflect');actor._reflect={mode:e.mode==='stat'?'stat':'share',stat:String(e.stat||'INT').toUpperCase(),multiplier:Number(e.multiplier||0),share:Number(e.share||0),element:e.element||'physical',incomingCategory:e.incomingCategory||null,negate:!!e.negate,untilTurn:d==='next_turn',rounds:d==='next_turn'?0:Number(d),_grace:!!actor._acting};lines.push({text:`${actor.name} is wrapped in a reflecting ward${e.negate?' that negates incoming damage':''} ${durationText(d)}.`,kind:'status'});}}
@@ -1254,15 +1283,15 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
   else if(e.type==='sp_drain')for(const t of targets){const a=getCombatAgent(t);a.sp=Math.max(0,(a.sp||0)-Number(e.amount||0));t.sp=a.sp;}
   else if(e.type==='sp_cost_increase')for(const t of targets){t._spCostMultiplier=Math.max(t._spCostMultiplier||0,Number(e.amount||0));setCombatDuration(t,'_spCostDuration',Number(e.duration||1));}
   else if(e.type==='cooldown_increase')for(const t of targets){t._cooldownPenalty=Math.max(t._cooldownPenalty||0,Number(e.amount||0));setCombatDuration(t,'_cooldownDuration',Number(e.duration||1));}
-  else if(e.type==='steal_stat')for(const t of targets){const stat=e.stat,amount=Number(e.amount||0);if(stat==='hp'){const hp=Math.min(Math.max(0,t.hp-1),Math.round(t.maxHp*amount));t.hp-=hp;const restored=recoverHP(actor,hp);emitCombatEvent(state,{round:state?.currentRound||1,type:'damage',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),amount:hp,damageType:'physical',hpAfter:t.hp,maxHp:t.maxHp});if(restored>0)emitCombatEvent(state,{round:state?.currentRound||1,type:'heal',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:actor.id,targetName:actor.name,targetTeam:teamOf(actor,state),amount:restored,hpAfter:actor.hp,maxHp:actor.maxHp});}else if(['atk','def','int'].includes(stat)){const d=fxDuration(e,'steal_stat');addFx(t,'debuff',stat,1-amount,d);addFx(actor,'buff',stat,1+amount,d);const baseStat=(t.agent?.stats?.[stat]||t[stat]||0);const curStat=Math.max(0,Math.round(baseStat*(1-amount)));emitCombatEvent(state,{round:state?.currentRound||1,type:'status',subtype:'steal_stat',stat:stat.toUpperCase(),curVal:curStat,maxVal:baseStat,actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`Steals ${Math.round(amount*100)}% ${stat.toUpperCase()} from ${t.name} ${durationText(d)}`});}}
+  else if(e.type==='steal_stat')for(const t of targets){const stat=e.stat,amount=Number(e.amount||0);if(stat==='hp'){const hp=Math.min(Math.max(0,t.hp-1),Math.round(t.maxHp*amount));t.hp-=hp;recordThreadDamage(t,hp,state,lines);const restored=recoverHP(actor,hp);emitCombatEvent(state,{round:state?.currentRound||1,type:'damage',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),amount:hp,damageType:'physical',hpAfter:t.hp,maxHp:t.maxHp});if(restored>0)emitCombatEvent(state,{round:state?.currentRound||1,type:'heal',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:actor.id,targetName:actor.name,targetTeam:teamOf(actor,state),amount:restored,hpAfter:actor.hp,maxHp:actor.maxHp});}else if(['atk','def','int'].includes(stat)){const d=fxDuration(e,'steal_stat');addFx(t,'debuff',stat,1-amount,d);addFx(actor,'buff',stat,1+amount,d);const baseStat=(t.agent?.stats?.[stat]||t[stat]||0);const curStat=Math.max(0,Math.round(baseStat*(1-amount)));emitCombatEvent(state,{round:state?.currentRound||1,type:'status',subtype:'steal_stat',stat:stat.toUpperCase(),curVal:curStat,maxVal:baseStat,actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`Steals ${Math.round(amount*100)}% ${stat.toUpperCase()} from ${t.name} ${durationText(d)}`});}}
   else if(e.type==='revive'){if(e.self)agent._revivePending=true;else{const dead=allies.find(x=>!x.alive);if(dead){dead.alive=true;dead.inCombat=true;dead.hp=Math.round(dead.maxHp*Number(e.hpRatio||.25));}}}
-  else if(e.type==='transfer_debuffs'){const NEG=['burn','bleed','poison','curse','silenced','confused','sleep','stunned','frozen','freeze','bound','dreambound','controlled','root','no_heal','no_shield'];const team=(state.allies||[]).includes(actor)?state.allies:state.enemies;const moved=[],statuses=new Set();
+  else if(e.type==='transfer_debuffs'){const NEG=TRANSFER_STATUSES;const team=(state.allies||[]).includes(actor)?state.allies:state.enemies;const moved=[],statuses=new Set();
    for(const al of team){if(!al.alive)continue;const keep=[];for(const f of al._fx||[]){if(f.cat==='debuff'||f.cat==='speed_debuff')moved.push(f);else keep.push(f);}al._fx=keep;recomputeFx(al);for(const st of [...(al.status||[])])if(NEG.includes(st)){statuses.add(st);removeStatus(al,st);}}
    for(const t of targets){for(const f of moved)addFx(t,f.cat,f.key,f.val,f.turn?'next_turn':f.rounds);for(const st of statuses)addStatus(t,st,1,actor.name);}}
   else if(e.type==='targeting'||e.type==='damage_rule'||e.type==='crit_bonus'||e.type==='damage_taken'||e.type==='damageTaken'||e.type==='outgoing_damage'||e.type==='damage_stat_bonus'||e.type==='low_hp_bonus'||e.type==='next_damage_bonus'||e.type==='heal_damage_ratio'||e.type==='dodge'||e.type==='crit'||e.type==='critDamage'||e.type==='initiative'||e.type==='counter'||e.type==='lifesteal'||e.type==='hitChance'||e.type==='resistance'||e.type==='defPen'||e.type==='defense_penetration'||e.type==='execute'||e.type==='vulnerability'||e.type==='vulnerability_if_buffed'||e.type==='vulnerability_vs_corrupted'||e.type==='next_attack_miss'||e.type==='next_crit_fail'||e.type==='extra_turn'||e.type==='cooldown_increase'||e.type==='knockback'||e.type==='movement_block'||e.type==='no_heal'||e.type==='no_shield'||e.type==='form'||e.type==='copy_highest'||e.type==='transfer_debuffs'||e.type==='free_strike'||e.type==='revive'||e.type==='skill_misfire'||e.type==='reset_state'||e.type==='debuff_hit'){
     // These are handled below or persisted as a combat state effect.
     if(e.type==='extra_turn')actor._extraTurns=(actor._extraTurns||0)+Number(e.amount||1);
-    if(e.type==='reset_state'){actor.hp=Math.max(1,Math.min(actor.maxHp,actor.hp));removeFxCat(actor,'buff');agent.cooldowns={};lines.push({text:`${actor.name} resets their current combat state.`,kind:'quirk'});}
+    if(e.type==='reset_state'){actor.hp=Math.max(1,Math.min(actor.maxHp,actor.hp));removeFxCat(actor,'buff');agent.cooldowns={[castId]:agent.cooldowns[castId]};lines.push({text:`${actor.name} resets their current combat state.`,kind:'quirk'});}
     if(e.type==='next_attack_miss')for(const t of targets)t._nextAttackMiss=Number(e.chance||1);
     if(e.type==='next_crit_fail')for(const t of targets)t._nextCritFail=Number(e.chance||1);
     if(e.type==='knockback')for(const t of targets)t.distance=Math.min(60,(t.distance||5)+Number(e.amount||1)*3);
@@ -1270,10 +1299,11 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
     if(e.type==='no_heal')for(const t of targets)addStatus(t,'no_heal',Number(e.duration||1),actor.name);if(e.type==='no_shield')for(const t of targets)addStatus(t,'no_shield',Number(e.duration||1),actor.name);
     if(e.type==='vulnerability')for(const t of targets)addFx(t,'vuln','vuln',1+Number(e.amount||0),fxDuration(e,'vulnerability'));
     if(e.type==='vulnerability_if_buffed')for(const t of targets)if(Object.keys(t._buffs||{}).length)addFx(t,'vuln','vuln',1+Number(e.amount||0),fxDuration(e,'vulnerability'));
-    if(e.type==='vulnerability_vs_corrupted')for(const t of targets)if((t.corruption||0)>0||t.trait==='Madness Prone'||hasStatus(t,'corruption'))addFx(t,'vuln','vuln',1+Number(e.amount||0),fxDuration(e,'vulnerability'));
+    if(e.type==='vulnerability_vs_corrupted')for(const t of targets)if((getCombatAgent(t).corruption||t.corruption||0)>0||getCombatAgent(t).trait==='Madness Prone'||hasStatus(t,'corruption'))addFx(t,'vuln','vuln',1+Number(e.amount||0),fxDuration(e,'vulnerability'));
     if(e.type==='damage_taken'||e.type==='damageTaken')addFx(actor,'dtm',e.incomingCategory||'dtm',1+Number(e.amount||0),fxDuration(e,'damage_taken'));
     if(e.type==='outgoing_damage')addFx(actor,'outgoing','outgoing',1+Number(e.amount||0),fxDuration(e,'outgoing_damage'));
     if(e.type==='damage_stat_bonus')agent._damageStatBonus=(agent._damageStatBonus||1)+Number(e.amount||0);
+    if(e.type==='lifesteal'&&e.duration!==undefined)addFx(actor,'lifesteal','lifesteal',Number(e.ratio??e.amount??0),fxDuration(e,'lifesteal'));
     if(e.type==='counter')addFx(actor,'counter','counter',Number(e.amount||0),fxDuration(e,'counter'));
     if(e.type==='defense_penetration'&&!((spec.damage?.multiplier||spec.scale||0)>0)&&!abilityEffects(spec).some(z=>z.type==='damage_component'))addFx(actor,'defpen','defpen',Number(e.amount||0),fxDuration(e,'defense_penetration'));
     if(e.type==='dodge')addFx(actor,'dodge','dodge',Number(e.amount||0),fxDuration(e,'dodge'));
@@ -1301,8 +1331,6 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
    if(agent._nextDamageBonus){const f=1+agent._nextDamageBonus;mult*=f;effectContributions.push({type:'next_damage_bonus',amount:agent._nextDamageBonus,multiplier:f});agent._nextDamageBonus=0;}
    const trace={round:state.currentRound||0,attacker:actor.name,target:t.name,ability:hitName,abilityId:spec.id||spec.effectId,stat:effectiveDamageSpec?.scaling||spec.stat||'INT',abilityMultiplier:baseAbilityMultiplier,effectiveMultiplier:mult,effectContributions,damageType};
    let dmg=v15Damage(effectiveDamageSpec?.formula||spec.formula||(spec.stat==='ATK'?'empowered_hybrid_physical':'pure_caster_ability'),{agent,actor,target:t,abilityMult:mult,defPen:defPen(spec,effects),trueDamage,psychicTrue,damageSpec:{...(effectiveDamageSpec||{}),type:effectiveDamageSpec?.type||'physical',element:effectiveDamageSpec?.element||'physical'},trace});
-   const vuln=t._vulnerability||1;
-   if(vuln!==1){dmg=Math.round(dmg*vuln);trace.effectContributions.push({type:'vulnerability',multiplier:vuln});}
    const ex=effects.find(e=>e.type==='execute');
    const executing=!!(ex&&t.hp/t.maxHp<Number(ex.threshold||0));
    if(executing){dmg=Math.max(dmg,t.hp+(t.shield||0));trace.effectContributions.push({type:'execute',instantKill:true});}
@@ -1328,12 +1356,12 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
    if(matchesIncomingCategory('physical',trueDamage||psychicTrue?'true':damageType)&&t.alive&&actor.alive&&!tk.revived&&!tk.negated&&finalDamage>0)maybeCounter(t,actor,state,lines,r);
  }}
  const healRatio=effects.filter(e=>e.type==='heal_damage_ratio').reduce((n,e)=>n+Number(e.amount||0),0); if(healRatio>0&&didDamage)recoverHP(actor,Math.round(totalDamage*healRatio));
- const abilityLifeSteal=effects.filter(e=>e.type==='lifesteal').reduce((n,e)=>n+Number(e.ratio||e.amount||0),0)+Number(traitData(agent).lifesteal||0); if(abilityLifeSteal>0&&didDamage)recoverHP(actor,Math.round(totalDamage*abilityLifeSteal));
+ const abilityLifeSteal=effects.filter(e=>e.type==='lifesteal'&&e.duration===undefined).reduce((n,e)=>n+Number(e.ratio||e.amount||0),0)+Number(actor._lifestealBonus||0)+Number(traitData(agent).lifesteal||0); if(abilityLifeSteal>0&&didDamage)recoverHP(actor,Math.round(totalDamage*abilityLifeSteal));
  agent._lowHpBonus=0;agent._abilityCritDamageBonus=0;for(const t of (targets||[]))delete t._sleepAppliedThisAction;
  for(const u of new Set([actor,...supportTargets,...targets]))syncUnitToAgent(u);
  return true;
 }
-function syncUnitToAgent(u){if(u&&u.agent&&u.agent!==u){for(const k of ['_buffs','_speedDebuff','_threadSpeedDebuff','_threadDodgeDebuff','_threadHitDebuff','_threadLockDodge','_spCostMultiplier','_cooldownPenalty','_dodgeBonus','_counterBonus'])u.agent[k]=u[k];}}
+function syncUnitToAgent(u){if(u&&u.agent&&u.agent!==u){for(const k of ['_buffs','_speedDebuff','_threadSpeedDebuff','_threadDodgeDebuff','_threadHitDebuff','_threadLockDodge','_spCostMultiplier','_cooldownPenalty','_dodgeBonus','_counterBonus','_lifestealBonus'])u.agent[k]=u[k];}}
 function defPen(spec,effects){return effects.filter(e=>e.type==='defPen'||e.type==='defense_penetration').reduce((n,e)=>n+Number(e.amount||0),0);}
 function powerEffect(a,actor,enemy,state,lines=[],r){if(!lines)lines=[];
   ensureCombatResource(a); a._hpRatio=actor.hp/Math.max(1,actor.maxHp); tryMythicalForm(a,actor,state,lines,r);
@@ -1428,7 +1456,7 @@ function resolveQuest(members,quest,seed=Date.now(),decisions={}){
    applyPassiveAuras([...allies,...enemies],state);
    const order=[...allies.filter(x=>x.alive),...enemies.filter(x=>x.alive)].sort(initiativeOrder);
    const actors=order;
-   for(const c of actors){try{if(!c.alive||c.inCombat===false)continue;c._acting = true;beginTurn(c);processStatuses(c,t=>lines.push({text:t,kind:'status'}),state,false);c._actedThisRound = true;if(!c.alive)continue;
+   for(const c of actors){try{if(!c.alive||c.inCombat===false)continue;state.currentTurn=(state.currentTurn||0)+1;c._acting = true;beginTurn(c);processStatuses(c,t=>lines.push({text:t,kind:'status'}),state,false);c._actedThisRound = true;if(!c.alive)continue;
        if(c._skipTurns>0||hasStatus(c,'banished')){if(c._skipTurns>0)c._skipTurns--;lines.push({text:`${c.name} is banished in a spatial fold and cannot act.`,kind:'status'});if(!c._skipTurns||c._skipTurns<=0){removeStatus(c,'banished');removeStatus(c,'untargetable');}continue;}
        if((c.agent.madness||0)>=50&&r()<.18){lines.push({text:`${c.name} loses the action to mounting Madness.`,kind:'status'});continue;}if(actionDisabled(c)){
       lines.push({text:`${c.name} loses the action to Crowd Control.`,kind:'status'});
@@ -1443,7 +1471,7 @@ function resolveQuest(members,quest,seed=Date.now(),decisions={}){
       });
       continue;
     }
-       if(c.thread&&c.thread.progress>=4&&r()<0.30){addStatus(c,'bound',1,'Spirit Body Thread');}if(hasStatus(c,'fear')&&r()<.35){lines.push({text:`${c.name} loses this action to a status effect.`,kind:'status'});continue;}
+       if(c.thread&&c.thread.progress>=4&&r()<THREAD_RULES.bindingChance){addStatus(c,'bound',1,'Spirit Body Thread');}if(hasStatus(c,'fear')&&r()<.35){lines.push({text:`${c.name} loses this action to a status effect.`,kind:'status'});continue;}
        const isConfused=hasStatus(c,'confused')&&r()<0.50;if(isConfused)lines.push({text:`${c.name} is Confused and targets an ally!`,kind:'status'});
        const targetPool=(isConfused?sameSideOf(c,state):foesOf(c,state)).filter(x=>x.alive&&x.inCombat!==false);
        if(!targetPool.length)continue;
@@ -1468,3 +1496,134 @@ a.injuries=Math.min(100,(a.injuries||0)+(u.alive?Math.max(0,Math.round((u.maxHp-
  const rewards=cloneE(quest.rewards);if(!success){rewards.funds=Math.round(rewards.funds*.35);rewards.reputation=0;}
  return {lines,events:state.events||[],success,consequences,marionettes:[],marionettesCreated:(state.battleMarionettes||[]).filter(m=>m.side==='ally').length,enemyMarionettesCreated:(state.battleMarionettes||[]).filter(m=>m.side==='enemy').length,weaponUsage:state.weaponUsage,rewards,dayCost:1,battleSnapshot};
 }
+
+// Mechanical descriptions use normalized effects and the same defaults as combat.
+function isPhase3DeferredAbility(spec,path){return ['logic_distortion','parasitic_contagion'].includes(spec.effectId||spec.id);}
+function ruleNumber(value){return String(Number(Number(value).toFixed(4)));}
+function rulePercent(value){return `${ruleNumber(Number(value)*100)}%`;}
+function ruleLabel(value){return String(value).replace(/_/g,' ').replace(/^./,s=>s.toUpperCase());}
+function ruleDuration(value){return value==='next_turn'?'until your next turn':`for ${ruleNumber(value)} turn${Number(value)===1?'':'s'}`;}
+function abilityDamageText(spec){
+ const effects=abilityEffects(spec),damage=spec.damage;
+ if(isPhase3DeferredAbility(spec))return damage?`${Math.round(damage.multiplier*100)}% ${damage.scaling} · ${damage.element||damage.type}`:'Non-damaging / passive effect';
+ if(!damage||!(damage.multiplier>0))return '';
+ const formula=G9D.formulas.hybrid_coefficients||{},components=effects.filter(e=>e.type==='damage_component');
+ let basis;
+ if(components.length)basis=[`${rulePercent(damage.multiplier)} ${damage.scaling}`,...components.map(e=>`${rulePercent(e.multiplier)} ${e.stat}`)].join(' + ');
+ else if(['empowered_hybrid_physical','empowered_hybrid_agility'].includes(damage.formula)){
+  const cfg=formula[damage.formula];basis=`${rulePercent(damage.multiplier)} × (${rulePercent(cfg.atk_mult)} ATK + ${rulePercent(cfg.int_mult)} INT)`;
+ }else basis=`${rulePercent(damage.multiplier)} INT`;
+ const truePsychic=effects.some(e=>e.type==='damage_rule'&&e.rule==='psychic_true');
+ const trueDamage=damage.type==='true'||effects.some(e=>e.type==='damage_rule'&&e.rule==='true');
+ const element=truePsychic?'True Psychic':trueDamage?'True':ruleLabel(canonicalResistanceElement(damage.element||damage.type));
+ const bypass=components.length||damage.formula==='empowered_hybrid_physical'?formula.empowered_hybrid_physical.base_def_bypass:damage.formula==='empowered_hybrid_agility'?formula.empowered_hybrid_agility.base_def_bypass:formula.pure_caster_ability.base_def_bypass;
+ const mixed=damage.type==='elemental'&&!damage.element?'; resistance uses the average of Fire, Water, Lightning and Frost':'';
+ return `${basis} ${element} damage${trueDamage||truePsychic?' (ignores DEF and elemental resistance)':` (${rulePercent(bypass)} base DEF bypass)`}${mixed}`;
+}
+function abilityDescription(spec,path,sequence){
+ if(isPhase3DeferredAbility(spec,path))return spec.text||'';
+ const effects=abilityEffects(spec),passive=spec.type==='passive';
+ const name=spec.name||String(spec.text||spec.effectId||'Ability').split(/\s(?:—|--)\s/)[0];
+ const parts=[],damaging=!!abilityDamageText(spec),duration=e=>ruleDuration(fxDuration(e,e.type));
+ const targetMode=effects.find(e=>e.type==='targeting')?.mode;
+ if(targetMode==='all_enemies')parts.push('Targets all enemies');
+ if(targetMode==='all_allies')parts.push('Supports all living allies');
+ if((spec.effectId||spec.id)==='thread_binding'){
+  parts.push('Attempts Spirit Body Threads on one enemy; resistance can prevent attachment');
+  parts.push(`Progresses one stage each round: ${rulePercent(THREAD_RULES.initialSpeedLoss)} Speed loss; then ${ruleNumber(THREAD_RULES.dodgeLoss*100)}-point Dodge and ${ruleNumber(THREAD_RULES.hitLoss*100)}-point accuracy loss; then ${rulePercent(THREAD_RULES.advancedSpeedLoss)} total Speed loss and no Dodge; stage 4 adds a ${rulePercent(THREAD_RULES.bindingChance)} binding chance`);
+  parts.push(`At stage ${THREAD_RULES.required}, the target dies and joins your side as a battle-only marionette with ${rulePercent(THREAD_RULES.marionetteStats)} of its stats`);
+  parts.push(`When the threaded target loses more than ${rulePercent(THREAD_RULES.damageThreshold)} of its Max HP in one combatant turn, remove one stack, at most once per turn; shield absorption does not count`);
+ }else{
+  if(damaging)parts.push(`Deals ${abilityDamageText(spec)}`);
+  for(const e of effects){
+   const n=Number(e.amount||0),pct=rulePercent(n),stat=String(e.stat||'').toUpperCase(),d=duration(e);
+   switch(e.type){
+    case 'targeting':case 'damage_rule':case 'damage_component':break;
+    case 'stat_modifier':if(passive)parts.push(`+${pct} ${stat==='HP'?'Max HP':stat}`);break;
+    case 'buff':parts.push(`+${pct} ${stat==='ALL'?'ATK/DEF/INT':stat} ${d}`);break;
+    case 'debuff':parts.push(`Enemy ${stat} −${pct}${passive?' while you are alive':` ${d}`}`);break;
+    case 'shield':parts.push(`Grants a ${rulePercent(e.fullHp?1:e.maxHpRatio||0)} Max HP ${e.incomingCategory?`${e.incomingCategory} `:''}shield; lasts until depleted or dispelled`);break;
+    case 'heal':parts.push(`Immediately restores ${[e.maxHpRatio?`${rulePercent(e.maxHpRatio)} Max HP`:null,e.scaling==='INT'&&e.multiplier?`${rulePercent(e.multiplier)} INT`:null].filter(Boolean).join(' + ')} HP, capped at Max HP`);break;
+    case 'cleanse':parts.push(`Removes ${CLEANSE_STATUSES.map(ruleLabel).join(', ')}`);break;
+    case 'strip_buffs':case 'nullify_buffs':parts.push('Removes current stat buffs, Guarded, Evade and shields');break;
+    case 'damage_taken':case 'damageTaken':parts.push(`${n<0?'Reduces':'Increases'} incoming ${e.incomingCategory||'all'} damage by ${rulePercent(Math.abs(n))}${passive?'':` ${d}`}${n<0?' after shields':''}`);break;
+    case 'outgoing_damage':if(!passive)parts.push(`${n<0?'Reduces':'Increases'} your outgoing damage by ${rulePercent(Math.abs(n))} ${d}`);break;
+    case 'reflect':{
+     const incoming=e.incomingCategory||'direct';
+     let reflected=e.mode==='stat'?`${rulePercent(e.multiplier)} ${e.stat} ${ruleLabel(e.element||'physical')} damage`:`${rulePercent(e.share)} of incoming damage`;
+     if(e.mode==='stat'&&e.stat==='ATK'){const cfg=G9D.formulas.hybrid_coefficients.empowered_hybrid_physical;reflected=`${rulePercent(e.multiplier)} × (${rulePercent(cfg.atk_mult)} ATK + ${rulePercent(cfg.int_mult)} INT) ${ruleLabel(e.element||'physical')} damage`;}
+     parts.push(`${e.negate?`Negates incoming ${incoming} hits and reflects`:`Reflects`} ${reflected} to the attacker ${d}; periodic damage does not trigger reflection`);break;
+    }
+    case 'resistance':if(passive){const values=canonicalResistanceMap(e.values||(e.element?{[e.element]:e.amount}:{}));parts.push(Object.entries(values).map(([key,value])=>`+${ruleNumber(value)}% ${ruleLabel(key)} direct-damage resistance`).join(', '));}break;
+    case 'status_resistance':if(passive)parts.push(`+${pct} ${ruleLabel(e.status)} application resistance`);break;
+    case 'immunity':if(passive)parts.push(`Immune to ${ruleLabel(e.status)}`);break;
+    case 'initiative':if(passive)parts.push(`+${ruleNumber(n)}% Initiative`);break;
+    case 'hitChance':if(passive)parts.push(`+${ruleNumber(n*100)} percentage points accuracy`);break;
+    case 'crit':parts.push(`+${ruleNumber(n*100)} percentage points critical chance${passive?'':' on this cast'}`);break;
+    case 'critDamage':parts.push(`+${ruleNumber(n*100)} percentage points critical damage${passive?'':' on this cast'}`);break;
+    case 'crit_bonus':if(!passive)parts.push(`+${ruleNumber(n*100)} percentage points critical damage on this cast`);break;
+    case 'defPen':case 'defense_penetration':parts.push(`+${pct} DEF bypass${passive?'':damaging?' on this cast':` ${d}`}`);break;
+    case 'spell_penetration':if(passive)parts.push(`+${pct} DEF bypass for INT-scaled and caster-formula damage`);break;
+    case 'dodge':parts.push(`+${ruleNumber(n*100)} percentage points Dodge${passive?'':` ${d}`}`);break;
+    case 'lifesteal':parts.push(`Restores ${rulePercent(e.ratio??n)} of damage dealt${passive?' by basic strikes':e.duration!==undefined?` by basic strikes and damaging skills ${d}`:' by this cast'}`);break;
+    case 'heal_damage_ratio':parts.push(`Restores ${pct} of this cast's damage dealt`);break;
+    case 'execute':if(damaging)parts.push(`Executes targets already below ${rulePercent(e.threshold)} Max HP`);break;
+    case 'vulnerability':parts.push(`Target takes +${pct} incoming damage ${d}`);break;
+    case 'vulnerability_if_buffed':parts.push(`If the target has a stat buff, it takes +${pct} incoming damage ${d}`);break;
+    case 'vulnerability_vs_corrupted':parts.push(`A target with corruption or the Madness Prone trait takes +${pct} incoming damage ${d}`);break;
+    case 'steal_stat':parts.push(e.stat==='hp'?`Removes up to ${pct} enemy Max HP and restores the amount removed to you; cannot kill by this siphon`:`Lowers target ${stat} by ${pct} and raises your own ${stat} by ${pct} ${ruleDuration(fxDuration(e,'steal_stat'))}`);break;
+    case 'sp_drain':parts.push(`Immediately drains up to ${ruleNumber(n)} target SP`);break;
+    case 'sp_siphon':parts.push(`Immediately steals up to ${ruleNumber(n)} SP per target, capped at your maximum SP`);break;
+    case 'sp_cost_increase':parts.push(`Increases target skill SP costs by ${pct} for ${e.duration||1} turns`);break;
+    case 'cooldown_increase':parts.push(`Adds ${ruleNumber(n)} turn to newly assigned target skill cooldowns for ${e.duration||1} turns`);break;
+    case 'skill_misfire':parts.push(`Target skills have a ${rulePercent(e.chance||.3)} misfire chance for ${e.duration||2} turns; SP and cooldown are still spent`);break;
+    case 'next_attack_miss':parts.push(`Forces the target's next damaging action to miss with ${rulePercent(e.chance||1)} chance`);break;
+    case 'next_crit_fail':parts.push('Prevents critical hits on the target\u2019s next damaging action');break;
+    case 'next_damage_bonus':parts.push(`Stores +${pct} damage for your next landed damaging-skill hit`);break;
+    case 'low_hp_bonus':parts.push(`This cast deals +${pct} damage while below 50% Max HP`);break;
+    case 'extra_turn':parts.push(`Grants ${e.amount||1} extra action${Number(e.amount||1)===1?'':'s'} if you and the current enemy survive`);break;
+    case 'movement_block':parts.push(`Applies Root for ${e.duration||1} turns, blocking Escape-tagged skills`);break;
+    case 'knockback':parts.push(`Moves the target ${ruleNumber(n*3)} distance farther away`);break;
+    case 'no_heal':parts.push(`Blocks target living-unit healing for ${e.duration||1} turns; resurrection remains possible`);break;
+    case 'no_shield':parts.push(`Blocks new target shields for ${e.duration||1} turns`);break;
+    case 'taunt':parts.push(`Redirects enemy target selection to you ${d}, unless taunt-immune`);break;
+    case 'mind_control':parts.push(`Forces a ${rulePercent(e.damageMultiplier||1.5)} target ATK strike against an enemy teammate, if present; stuns the target for 1 turn`);break;
+    case 'reset_state':parts.push('Removes your stat buffs and resets your other current cooldowns; this skill keeps its cooldown and HP stays unchanged');break;
+    case 'copy_ability':parts.push('Replays a non-copy active enemy ability witnessed earlier in this battle, with its targets and effects; spends this ability\u2019s SP cost and cooldown');break;
+    case 'transfer_debuffs':parts.push(`Moves your team's stat/Speed debuffs and ${TRANSFER_STATUSES.map(ruleLabel).join(', ')} to the target; transferred statuses last 1 turn`);break;
+    case 'revive':if(passive)parts.push(`Automatically revives once per battle at ${rulePercent(e.hpRatio||.25)} Max HP${e.consumeAllSP?', consuming remaining SP':''}${e.exhaustionDuration?`; marks Spiritual Exhaustion for ${e.exhaustionDuration} turn (no additional action restriction)`:''}`);break;
+    case 'status_pool':parts.push(`${rulePercent(e.chance??1)} chance to apply one of ${e.statuses.map(ruleLabel).join(', ')} for ${e.duration||1} turns`);break;
+    case 'debuff_hit':parts.push(`Lowers target accuracy by ${ruleNumber(n*100)} percentage points for ${e.duration||1} turns`);break;
+    case 'status':case 'status_chance':{
+     const st=e.status,turns=e.duration||1,chance=e.type==='status_chance'?e.chance:e.chance??1;
+     let meaning=ruleLabel(st);
+     if(['stunned','frozen','freeze','sleep','bound','polymorphed'].includes(st))meaning+=` (blocks actions${st==='sleep'?'; wakes on a later hit':''})`;
+     if(st==='evade')meaning=e.dodgeRate!==undefined&&e.dodgeRate<1?`+${ruleNumber(e.dodgeRate*100)} percentage points Dodge`:'evades direct damaging attack attempts';
+     if(st==='untargetable')meaning='avoids targeting and incoming damage';
+     if(st==='possession_phase')meaning='negates direct physical damage';
+     if(st==='banished')meaning='leaves targeting and cannot act';
+     const dot=DOT_RULES.find(x=>x[0]===st);if(dot)meaning+=` (${rulePercent(dot[1])} Max HP ${ruleLabel(dot[2])} damage before each affected turn)`;
+     parts.push(`${rulePercent(chance)} chance: ${meaning} for ${turns} turn${Number(turns)===1?'':'s'}${!SELF_STATUSES.includes(st)?e.ignoreResistance?'; ignores numeric status resistance, but not immunity':'; subject to status resistance and immunity':''}`);break;
+    }
+    default:throw new Error(`Missing description rule for effect ${e.type}`);
+   }
+  }
+ }
+ if(damaging)parts.push('Damage and hostile effects use accuracy and Dodge; critical, authority and defense modifiers still apply');
+ if(!parts.length)parts.push('No additional combat effect');
+ return `${name} — ${parts.join('; ')}. ${passive?'Passive.':`${ruleNumber(spec.costSP||0)} SP · Cooldown ${ruleNumber(spec.cooldown||0)} turn${Number(spec.cooldown||0)===1?'':'s'}.`}`;
+}
+
+// Generate once at bootstrap; later casts clone specs and never mutate definitions.
+function refreshAbilityDescriptions(){
+ for(const [path,p] of Object.entries(PATHS))for(const tier of p.sequences){
+  for(const spec of tier.abilities||[]){
+   if(isPhase3DeferredAbility(spec,path))continue;
+   spec.text=abilityDescription(spec,path,tier.sequence);
+  }
+  tier.ability=tier.abilityText=tier.abilities[0]?.text||tier.abilityText;
+  const entry=G9D.pathways.definitions[p.name]?.abilities?.find(x=>x.sequence===tier.sequence);
+  if(entry&&!isPhase3DeferredAbility(tier.abilities[0],path))entry.description=tier.abilityText;
+ }
+}
+refreshAbilityDescriptions();

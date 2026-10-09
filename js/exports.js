@@ -2,3 +2,5 @@ if (typeof module !== 'undefined' && module.exports) { module.exports = { CAMPAI
 
 if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { makeCombatUnit, getCombatAgent, effectiveAbilityCost, attackHit, consumeAttackMiss, consumeCritFailure, combatResistances, canonicalResistanceElement, tickUnitStatuses, tryRevive, tryMythicalForm, maybeCounter });
 if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { recoverHP, canGainShield, setCombatDuration, settleFatalDamage });
+
+if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { abilityDescription, abilityDamageText, isPhase3DeferredAbility, applyPartyPassiveEffects, initiativeScore, unitInitiative });

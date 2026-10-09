@@ -124,6 +124,11 @@
             "amount": 0.2,
             "stat": "speed",
             "duration": 2
+          },
+          {
+            "type": "debuff_hit",
+            "amount": 0.2,
+            "duration": 2
           }
         ]
       }

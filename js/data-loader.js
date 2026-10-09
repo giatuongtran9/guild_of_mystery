@@ -111,7 +111,7 @@
       elements: a.damageType && !['physical', 'elemental', 'true'].includes(a.damageType) ? [a.damageType] : []
     } : null;
     return {
-      type: a.kind || 'passive', id: a.id, effectId: a.id, text: a.description || '',
+      type: a.kind || 'passive', id: a.id, effectId: a.id, name: a.name, text: a.description || '',
       costSP: Number(a.spCost) || 0, cooldown: a.cooldown ?? 0, tag: a.tag ?? null,
       damage, effects
     };
