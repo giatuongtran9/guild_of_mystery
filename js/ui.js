@@ -189,12 +189,13 @@ function battlefieldImageFor(quest = {}, isSim = false) {
 }
 
 function battleResourceMarkup(data) {
-  const meter = data.meter;
-  return `${meter ? `<span class="gm-charge ${meter.value >= meter.max ? 'ready' : ''}">${esc(meter.name)} ${abbrNum(meter.value)}/${abbrNum(meter.max)}</span>` : ''}
-    ${data.threadSlots ? `<span>Slots ${esc(data.threadSlots.used)}/${esc(data.threadSlots.max)}</span>` : ''}
-    ${data.threadProgress ? `<span>Binding ${esc(data.threadProgress.value)}/${esc(data.threadProgress.max)}</span>` : ''}
-    ${data.path === 'door' && data.sequence <= 6 && data.recordCount !== undefined ? `<span>Records ${esc(data.recordCount)}/${esc(data.recordCapacity ?? (data.sequence <= 5 ? 4 : 1))}</span>` : ''}
-    ${(data.statuses || []).map(status => `<span class="gm-status">${esc(status.name)}${status.turns > 0 ? ` · ${esc(status.turns)} turn${status.turns === 1 ? '' : 's'}` : ''}</span>`).join('')}`;
+  const m = data.meter;
+  if (!m) return '';
+  const pct = Math.min(100, Math.round(m.value / Math.max(1, m.max) * 100));
+  return `<div class="gm-float-gauge meter ${m.value >= m.max ? 'ready' : ''}">
+    <div class="gm-float-track"><div class="gm-float-fill meter" style="width:${pct}%"></div></div>
+    <span class="gm-float-num">${abbrNum(m.value)}/${abbrNum(m.max)}</span>
+  </div>`;
 }
 
 function renderCombatEntity(u, team, index, hpMap) {
@@ -210,14 +211,6 @@ function renderCombatEntity(u, team, index, hpMap) {
     const maxMp = Math.max(1, data.maxSP ?? u.maxSP ?? 1);
     const mpPct = Math.min(100, Math.round((curMp / maxMp) * 100));
 
-    let seqDisplay = '';
-    if (u.sequence !== undefined && u.sequence !== null) {
-      seqDisplay = `Seq ${u.sequence}`;
-    } else {
-      const match = String(u.name || '').match(/Seq(?:uence)?\s*(\d+)/i);
-      if (match) seqDisplay = `Seq ${match[1]}`;
-    }
-
     const sprite = (team === 'ally' || u.path || u.campaignEnemy || data.inForm) ? getCombatSprite({ ...u, ...data }, { variant: 'battle' }) : `<div class="combat-enemy-avatar"><span class="enemy-skull">💀</span></div>`;
 
     return `<div class="gm-arena-unit ${team} ${dead ? 'dead' : ''} ${data.inForm ? 'mythical' : ''}" data-unit-index="${index}" data-unit-id="${esc(u.id || u.name)}" data-form-art="${!!data.inForm}">
@@ -227,8 +220,7 @@ function renderCombatEntity(u, team, index, hpMap) {
       </div>
       <div class="gm-unit-info">
         <div class="gm-unit-name-label" title="${esc(u.name)}">
-          <span class="unit-name">${esc(u.name)}</span>
-          ${seqDisplay ? `<span class="unit-seq-badge">${seqDisplay}</span>` : ''}
+          <span class="unit-name">${esc(String(u.name || '').replace(/\s*Seq(?:uence)?\s*\d+/i, ''))}</span>
         </div>
         <!-- Floating HP Bar -->
         <div class="gm-float-gauge hp">
@@ -243,7 +235,7 @@ function renderCombatEntity(u, team, index, hpMap) {
           <div class="gm-float-track">
             <div class="gm-float-fill mp" style="width:${mpPct}%"></div>
           </div>
-          <span class="gm-float-num">${abbrNum(curMp)}/${abbrNum(maxMp)} SP</span>
+          <span class="gm-float-num">${abbrNum(curMp)}/${abbrNum(maxMp)}</span>
         </div>
         <div class="gm-unit-resources">${battleResourceMarkup(data)}</div>
       </div>
@@ -509,7 +501,7 @@ function updateBattleLogComponent(wrap, props) {
       if (mpGauge) {
         const mp = Math.max(0, data.sp ?? u.sp ?? 0), maxMp = Math.max(1, data.maxSP ?? u.maxSP ?? 1);
         mpGauge.querySelector('.gm-float-fill.mp').style.width = `${Math.min(100, Math.round(mp / maxMp * 100))}%`;
-        mpGauge.querySelector('.gm-float-num').textContent = `${abbrNum(mp)}/${abbrNum(maxMp)} SP`;
+        mpGauge.querySelector('.gm-float-num').textContent = `${abbrNum(mp)}/${abbrNum(maxMp)}`;
       }
       const resources = node.querySelector('.gm-unit-resources'), markup = battleResourceMarkup(data);
       if (resources.innerHTML !== markup) resources.innerHTML = markup;
