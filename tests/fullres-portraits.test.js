@@ -31,7 +31,7 @@ async function fixture() {
   Object.defineProperty(w.HTMLElement.prototype,'clientHeight',{configurable:true,get(){return this.classList.contains('portrait-viewer-canvas')?580:844;}});
   const save=g.newGame(),a=g.makeAgent(()=>.5,{path:'white_tower',sequence:5,trait:'Stout Vitality'});a.id='fullres';a.name='Alden Voss';a.weaponId='knife';g.restatAgent(a);save.roster=[a];
   w.localStorage.setItem('guild-rpg-browser-v9',JSON.stringify(save));
-  w.eval(['paths','v15','generate','engine','state','campaign','ui'].map(n=>fs.readFileSync(path.join(root,`js/${n}.js`),'utf8')).join('\n'));
+  w.eval(['paths','v15','generate','signatures','mythical','engine','state','campaign','ui'].map(n=>fs.readFileSync(path.join(root,`js/${n}.js`),'utf8')).join('\n'));
   w.G9.tab('hall');w.G9.dossier(a.id);
   const opener=w.document.querySelector('.dossier-portrait-zoom');
   return {dom,w,opener,key,read:()=>w.localStorage.getItem('guild-rpg-browser-v9')};

@@ -6,7 +6,6 @@ const path = require('node:path');
 const {JSDOM} = require('jsdom');
 const g = require('../js/node-loader');
 const root = path.resolve(__dirname, '..');
-const deferred = new Set(['error:logic_distortion', 'error:parasitic_contagion']);
 const saveKey = 'guild-rpg-browser-v9';
 let passed = 0, failed = 0;
 
@@ -38,7 +37,7 @@ async function fixture(agents = [agent()], saved = null) {
   state.roster = agents;
   state.funds = 10000;
   w.localStorage.setItem(saveKey, saved || JSON.stringify(state));
-  w.eval(['paths','v15','generate','engine','state','campaign','ui'].map(n => fs.readFileSync(path.join(root, `js/${n}.js`), 'utf8')).join('\n'));
+  w.eval(['paths','v15','generate','signatures','mythical','engine','state','campaign','ui'].map(n => fs.readFileSync(path.join(root, `js/${n}.js`), 'utf8')).join('\n'));
   // Inspect the same lexical definitions used by the UI, without replacing its renderer.
   w.eval(`window.G9_PHASE3 = {
     tier: tierFor,
@@ -66,7 +65,7 @@ async function test(label, fn) {
 }
 
 (async () => {
-  await test('all 220 browser ranks match Node metadata; 218 generated descriptions have parity', async () => {
+  await test('all 220 browser ranks and generated descriptions match Node metadata', async () => {
     assert.equal(typeof g.abilityDescription, 'function', 'Shared generated description API is required');
     assert.equal(typeof g.abilityDamageText, 'function', 'Shared generated damage API is required');
     const {dom, w} = await fixture();
@@ -77,10 +76,6 @@ async function test(label, fn) {
         const nodeSpec = nodeTier.abilities[0], browserSpec = browserTier.abilities[0];
         assert.deepEqual(JSON.parse(JSON.stringify(browserSpec)), JSON.parse(JSON.stringify(nodeSpec)), `${key} Seq${rank} runtime parity`);
         count++;
-        if (deferred.has(`${key}:${nodeSpec.effectId}`)) {
-          console.log(`DEFERRED ${key} Seq${rank} ${nodeSpec.effectId}: shipped prose/mechanics preserved; generated parity excluded`);
-          continue;
-        }
         const expected = g.abilityDescription(nodeSpec, key, rank);
         assert.equal(w.G9_PHASE3.describe(browserSpec, key, rank), expected, `${key} Seq${rank} browser generator`);
         assert.equal(browserSpec.text, expected, `${key} Seq${rank} live description`);
@@ -89,7 +84,7 @@ async function test(label, fn) {
         generated++;
       }
       assert.equal(count, 220);
-      assert.equal(generated, 218);
+      assert.equal(generated, 220);
     } finally { dom.window.close(); }
   });
 
@@ -175,14 +170,23 @@ async function test(label, fn) {
           const rank = Number(row.querySelector('.preview-seq').textContent.replace('SEQ ', ''));
           const tier = w.G9_PHASE3.tier(key, rank), spec = tier.abilities[0];
           assert.equal(row.querySelector('p').textContent, spec.text, `${key} Seq${rank} preview`);
-          if (!deferred.has(`${key}:${spec.effectId}`)) {
-            assert.equal(row.querySelector('.multiplier').textContent, w.G9_PHASE3.damage(spec), `${key} Seq${rank} summary`);
-          }
+          assert.equal(row.querySelector('.multiplier').textContent, w.G9_PHASE3.damage(spec), `${key} Seq${rank} summary`);
           checked++;
         }
       }
       assert.equal(checked, 220);
     } finally { dom.window.close(); }
+  });
+
+  await test('mandatory copied skills display the stored skill cost instead of a wrapper cost', async () => {
+    for (const key of ['door', 'white_tower']) {
+      const a = agent(key, 6), {dom, w} = await fixture([a]);
+      try {
+        w.G9.dossier(a.id);
+        selectRank(w, 'active', 6);
+        assert(panel(w).querySelector('small').textContent.includes('Stored skill SP and cooldown'), key);
+      } finally { dom.window.close(); }
+    }
   });
 
   await test('live generated names are escaped in dossier tabs, rank options and preview', async () => {

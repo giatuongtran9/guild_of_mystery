@@ -16,13 +16,17 @@
     "name": "Records",
     "key": "records",
     "max": 100,
-    "gain": "Witnessing abilities and investigations",
-    "spend": "Recording and portal effects",
-    "full": "Next recording is empowered",
+    "gain": "Witnessing eligible active abilities",
+    "spend": "Replay one stored ability",
+    "full": "Replay at full strength from Sequence 6; retain the current record capacity",
     "special": "Spatial Charge",
     "characteristic": "Spirit / Space",
     "quirkName": "Spatial Authority",
-    "quirkText": "Combat-only spatial control."
+    "quirkText": "Combat-only spatial control.",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -125,7 +129,7 @@
         "label": "Active",
         "spCost": 35,
         "cooldown": 2,
-        "description": "Combat Record — Records 1 enemy skill executed in combat and replays it immediately at 100% scaling.",
+        "description": "Combat Record — Witness and store eligible abilities from Sequence 6. Spend 100 charge to replay one stored skill at full strength, paying its normal SP cost.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -133,7 +137,10 @@
         "tag": null,
         "effects": [
           {
-            "type": "copy_ability"
+            "type": "signature",
+            "rule": "door_record",
+            "chargeCost": 100,
+            "multiplier": 1
           }
         ]
       }

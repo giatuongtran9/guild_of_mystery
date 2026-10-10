@@ -16,13 +16,17 @@
     "name": "Invention",
     "key": "invention",
     "max": 100,
-    "gain": "Combat actions",
-    "spend": "Pathway abilities",
-    "full": "Next ability is empowered",
+    "gain": "Building and using a device",
+    "spend": "Alchemical Fire from Sequence 6",
+    "full": "Deploy or renew one temporary Barrier or Shot device",
     "special": "Invention",
     "characteristic": "Caster",
     "quirkName": "Civilisation Scroll",
-    "quirkText": "Survival: Runic Shield [Defense], Matter Fortification [Defense]"
+    "quirkText": "Survival: Runic Shield [Defense], Matter Fortification [Defense]",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -120,7 +124,17 @@
         "scale": 1.6,
         "damageType": "fire",
         "formula": "pure_caster_ability",
-        "tag": null
+        "tag": null,
+        "effects": [
+          {
+            "type": "signature",
+            "rule": "paragon_device",
+            "chargeCost": 100,
+            "amount": 0.5,
+            "duration": 3,
+            "slots": 1
+          }
+        ]
       }
     },
     {

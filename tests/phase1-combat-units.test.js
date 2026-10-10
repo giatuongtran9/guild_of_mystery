@@ -410,12 +410,16 @@ test('two real Fool quests restore a per-battle thread budget and convert only i
 });
 
 test('a real round-15 pending thread normalizes its decremented lock before saving', () => {
-  const a = agent('fool', 5, 'F');a.trait = 'Ironclad';
+  const a = agent('fool', 0, 'F');a.trait = 'Ironclad';
   a.stats = a.baseStats = { hp: 1e7, atk: 1, def: 1, int: 1 };
-  const result = g.resolveQuest([a], quest(5), 3, { individual: true,
-    authoredOpponents: [{ name: 'foe', path: 'sun', sequence: 5, stats: clone(a.stats), sp: 0 }] });
+  // Delay attachment until the final round instead of depending on a particular
+  // historical sequence of resisted rolls. Full charge gives an equal-rank
+  // Sequence 0 target zero attachment resistance without skipping stages.
+  a.cooldowns.thread_binding=15;g.setMeterValue(a,'fool',100);
+  const result = g.resolveQuest([a], quest(0), 3, { individual: true,
+    authoredOpponents: [{ name: 'foe', path: 'paragon', sequence: 0, stats: clone(a.stats), sp: 0 }] });
   const bindings = result.events.filter(e => e.actorName === 'F' && e.ability === 'Thread Binding');
-  assert(bindings.some(e => e.round >= 13), 'fixture must leave a thread pending when the real battle times out');
+  assert.deepStrictEqual(bindings.map(e=>e.round),[15],'fixture attaches exactly when the real battle times out');
   const saved = result.consequences.find(c => c.type === 'syncAgent').agent;
   const spec = g.activeSpecs(saved).find(s => s.effectId === 'thread_binding');
   assert.strictEqual(saved.cooldowns.thread_binding, spec.cooldown + 1,

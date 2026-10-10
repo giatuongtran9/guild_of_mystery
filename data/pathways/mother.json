@@ -16,13 +16,17 @@
     "name": "Vitality",
     "key": "vitality",
     "max": 100,
-    "gain": "Combat actions",
-    "spend": "Pathway abilities",
-    "full": "Next ability is empowered",
+    "gain": "Actual healing of a living ally",
+    "spend": "Life Seed",
+    "full": "Nurture one seed into regeneration",
     "special": "Vitality",
     "characteristic": "Physical",
     "quirkName": "Primordial Life Mass",
-    "quirkText": "Survival: Earthy Vitality [Heal], Life Bloom [Heal]"
+    "quirkText": "Survival: Earthy Vitality [Heal], Life Bloom [Heal]",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -119,8 +123,12 @@
         "tag": null,
         "effects": [
           {
-            "type": "heal_damage_ratio",
-            "amount": 0.1
+            "type": "signature",
+            "rule": "mother_seed",
+            "chargeCost": 100,
+            "amount": 0.08,
+            "duration": 3,
+            "slots": 1
           }
         ]
       }

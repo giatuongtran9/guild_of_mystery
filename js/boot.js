@@ -1,7 +1,7 @@
 // Preload together, then execute in order so a failed module stops startup.
 (() => {
   const app = document.getElementById('app');
-  const scripts = ['js/paths.js','js/v15.js','js/generate.js','js/engine.js','js/state.js','js/campaign.js','js/ui.js'];
+  const scripts = ['js/paths.js','js/v15.js','js/generate.js','js/signatures.js','js/mythical.js','js/engine.js','js/state.js','js/campaign.js','js/ui.js'];
   const escapeText = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 
   function loading(title, message, progress=0, error='') {

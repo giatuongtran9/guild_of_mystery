@@ -16,13 +16,17 @@
     "name": "Deduction",
     "key": "deduction",
     "max": 100,
-    "gain": "Combat actions",
-    "spend": "Pathway abilities",
-    "full": "Next ability is empowered",
+    "gain": "Repeated observation and analysis of an active ability",
+    "spend": "Spell Imitation from Sequence 6",
+    "full": "Reproduce one analyzed ability at full strength; no record book",
     "special": "Deduction",
     "characteristic": "Caster",
     "quirkName": "Spiral Library of Eyes",
-    "quirkText": "Survival: Predictive Guard [Defense], Prophetic Evade [Escape]"
+    "quirkText": "Survival: Predictive Guard [Defense], Prophetic Evade [Escape]",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -62,13 +66,13 @@
       "sequence": 8,
       "name": "Student of Ratiocination",
       "ability": {
-        "id": "spell_imitation",
-        "name": "Spell Imitation",
+        "id": "analysis_weakness",
+        "name": "Analysis Weakness",
         "kind": "active",
         "label": "Active",
         "spCost": 15,
         "cooldown": 1,
-        "description": "Spell Imitation — Records and reproduces 1 enemy skill executed in combat at 100% scaling.",
+        "description": "Analysis Weakness — Strike a structural weakness. Repeated observation develops Deduction.",
         "stat": "INT",
         "scale": 1.3,
         "damageType": "physical",
@@ -76,7 +80,9 @@
         "tag": null,
         "effects": [
           {
-            "type": "copy_ability"
+            "type": "defense_penetration",
+            "amount": 0.3,
+            "duration": 2
           }
         ]
       }
@@ -110,13 +116,13 @@
       "sequence": 6,
       "name": "Polymath",
       "ability": {
-        "id": "analysis_weakness",
-        "name": "Analysis Weakness",
+        "id": "spell_imitation",
+        "name": "Spell Imitation",
         "kind": "active",
         "label": "Active",
         "spCost": 30,
         "cooldown": 2,
-        "description": "Analysis Weakness — Analyzes target armor; user strikes bypass 30% DEF for 2 rounds.",
+        "description": "Spell Imitation — Analyze a repeatedly witnessed ability. At full Deduction, reproduce it at full strength while paying its normal SP cost.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -124,9 +130,11 @@
         "tag": null,
         "effects": [
           {
-            "type": "defense_penetration",
-            "amount": 0.3,
-            "duration": 2
+            "type": "signature",
+            "rule": "tower_imitation",
+            "chargeCost": 100,
+            "observations": 2,
+            "multiplier": 1
           }
         ]
       }

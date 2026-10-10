@@ -17,13 +17,17 @@
     "name": "Thread Control",
     "key": "threadControl",
     "max": 100,
-    "gain": "Maintaining Spirit Body Threads",
-    "spend": "Starting and completing threads",
-    "full": "Next thread gains resistance penetration",
+    "gain": "Thread progression",
+    "spend": "The next valid Thread Binding attempt",
+    "full": "Reduce attachment resistance by 20 percentage points; no minimum resistance",
     "special": "Thread Control",
     "characteristic": "Spirit / Control",
     "quirkName": "Spirit Body Threads",
-    "quirkText": "Combat-only control through deception, threads, miracles and reality manipulation."
+    "quirkText": "Combat-only control through deception, threads, miracles and reality manipulation.",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -148,7 +152,7 @@
         "label": "Active Control",
         "spCost": 45,
         "cooldown": 5,
-        "description": "Thread Binding — Accumulates 1 stack/turn (+20% control). 5 stacks = INSTANT DEATH & Marionette Conversion. Damage >=12% HP severs 1 stack.",
+        "description": "Thread Binding — Five stages convert the victim into a combat-only marionette. More than 30% Max HP lost within one combatant turn removes one stage. At 100 charge, reduce attachment resistance by 20 percentage points with no minimum resistance.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -156,9 +160,12 @@
         "tag": null,
         "effects": [
           {
-            "type": "execute",
-            "threshold": 0.25,
-            "multiplier": 1.5
+            "type": "signature",
+            "rule": "thread_binding",
+            "chargeCost": 100,
+            "resistancePenetration": 0.2,
+            "resistanceFloor": 0,
+            "damageBreakThreshold": 0.3
           }
         ],
         "threadStages": [

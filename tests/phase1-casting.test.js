@@ -20,28 +20,19 @@ function agent(g, path, sequence, id) {
   return a;
 }
 
-function unit(a) {
-  return {
-    id: a.id, name: a.name, agent: a,
-    hp: a.stats.hp, maxHp: a.stats.hp, atk: a.stats.atk,
-    def: a.stats.def, int: a.stats.int,
-    sp: a.sp, maxSP: a.maxSP,
-    alive: true, inCombat: true, distance: 5,
-    status: [], statusMeta: {}, resistances: {}
-  };
-}
+function unit(g, a) { return g.makeCombatUnit(a, { hp: a.stats.hp, maxHp: a.stats.hp }); }
 
 function world(g, path = 'door', sequence = 6, enemyPath = 'sun') {
   const a = agent(g, path, sequence, 'caster');
   const b = agent(g, enemyPath, sequence, 'enemy');
   const c = agent(g, enemyPath, sequence, 'second_enemy');
   const d = agent(g, 'sun', sequence, 'teammate');
-  const actor = unit(a), enemy = unit(b), second = unit(c), teammate = unit(d);
+  const actor = unit(g, a), enemy = unit(g, b), second = unit(g, c), teammate = unit(g, d);
   const state = {
     allies: [actor, teammate], enemies: [enemy, second],
     balanceTrace: [], weaponUsage: {}, events: [], currentRound: 1
   };
-  return { a, b, c, d, actor, enemy, second, teammate, state, lines: [] };
+  return { a: actor.agent, b: enemy.agent, c: second.agent, d: teammate.agent, actor, enemy, second, teammate, state, lines: [] };
 }
 
 function skill(g, a, id) {
@@ -56,13 +47,21 @@ function cast(g, w, id, rng = () => 0.99) {
   );
 }
 
-function witness(g, w, path, sequence, id) {
+function witness(g, w, path, sequence, id, extraEffects = []) {
   const source = agent(g, path, sequence, 'source');
-  const spec = skill(g, source, id);
+  const spec = JSON.parse(JSON.stringify(skill(g, source, id)));
+  spec.effects.push(...extraEffects);
+  w.enemy.path = path;
+  w.enemy.sequence = sequence;
+  const entry = { spec, sourceId: w.enemy.id, sequence, round: w.state.currentRound };
   w.state._abilityHistoryByUnit = {
-    [w.enemy.id]: [{ spec, round: w.state.currentRound }]
+    [w.enemy.id]: [entry, JSON.parse(JSON.stringify(entry))]
   };
+  if (w.a.path === 'door') w.a._signatureRecords = [JSON.parse(JSON.stringify(entry))];
+  g.setMeterValue(w.a, w.a.path, 100);
 }
+
+const copiedCasts = events => events.filter(e => e.type === 'cast' && /^(record|imitation):/.test(e.abilityId || ''));
 
 const cases = [];
 const test = (name, fn) => cases.push({ name, fn });
@@ -86,14 +85,14 @@ for (const [path, copyId] of [
     cast(g, w, copyId);
     assert.equal(w.actor._reflect?.share, 0.5, 'copied reflection must be applied');
     assert.equal(w.enemy._reflect, undefined, 'support ward belongs to copier');
-    assert.equal(w.lines.filter(x => /reproduces \[/.test(x.text)).length, 1);
+    assert.equal(copiedCasts(w.state.events).length, 1);
   });
 
   test(`${path}: copied healing support heals and cleanses copier only`, () => {
     const g = loadGame(), w = world(g, path, 6);
     w.actor.hp = w.actor.maxHp / 2;
     g.addStatus(w.actor, 'burn', 2, 'enemy');
-    witness(g, w, 'sun', 7, 'purification_halo');
+    witness(g, w, 'darkness', 7, 'peaceful_rest');
     cast(g, w, copyId);
     assert.equal(w.actor.hp, 62000);
     assert.equal(g.hasStatus(w.actor, 'burn'), false);
@@ -101,17 +100,13 @@ for (const [path, copyId] of [
     assert.equal(w.teammate.hp, 100000);
   });
 
-  // No current active spell declares all_allies. Exercise the supported target
-  // schema with real normalized healing and buff effects, changing only scope.
+  // Exercise party scope using real normalized healing and buff effects.
   test(`${path}: copied party healing and cleansing preserve all_allies scope`, () => {
     const g = loadGame(), w = world(g, path, 6);
     w.actor.hp = w.teammate.hp = 50000;
     g.addStatus(w.actor, 'burn', 2, 'enemy');
     g.addStatus(w.teammate, 'burn', 2, 'enemy');
-    witness(g, w, 'sun', 7, 'purification_halo');
-    w.state._abilityHistoryByUnit[w.enemy.id][0].spec.effects.push({
-      type: 'targeting', mode: 'all_allies'
-    });
+    witness(g, w, 'darkness', 7, 'peaceful_rest', [{ type: 'targeting', mode: 'all_allies' }]);
     cast(g, w, copyId);
     assert.equal(w.actor.hp, 62000);
     assert.equal(w.teammate.hp, 62000);
@@ -121,10 +116,7 @@ for (const [path, copyId] of [
 
   test(`${path}: copied party shield and buff preserve all_allies scope`, () => {
     const g = loadGame(), w = world(g, path, 4);
-    witness(g, w, 'twilight_giant', 4, 'dawn_guardian_barrier');
-    w.state._abilityHistoryByUnit[w.enemy.id][0].spec.effects.push({
-      type: 'targeting', mode: 'all_allies'
-    });
+    witness(g, w, 'twilight_giant', 4, 'dawn_guardian_barrier', [{ type: 'targeting', mode: 'all_allies' }]);
     cast(g, w, copyId);
     assert.equal(w.actor.shield, 20000);
     assert.equal(w.teammate.shield, 20000);
@@ -136,11 +128,11 @@ for (const [path, copyId] of [
     const g = loadGame(), before = JSON.stringify(g.PATHS);
     const first = world(g, path, 2, 'hermit');
     witness(g, first, 'hermit', 2, 'scroll_gate');
-    cast(g, first, copyId);
+    assert.equal(cast(g, first, copyId), true);
     assert.ok(JSON.stringify(g.PATHS) === before, 'first replay must not modify definitions');
     const second = world(g, path, 2, 'sun');
     witness(g, second, 'sun', 8, 'holy_flash');
-    cast(g, second, copyId);
+    assert.equal(cast(g, second, copyId), true);
     assert.ok(JSON.stringify(g.PATHS) === before, 'new actor must receive pristine definitions');
     assert.equal(second.actor._reflect, undefined, 'previous copied ward must not leak');
     assert.equal(second.actor._outgoingMultiplier, undefined);
@@ -157,20 +149,26 @@ for (const [path, copyId] of [
     let copies = 0;
     for (const seed of [7, 11]) {
       const result = g.resolveQuest([a], quest, seed);
-      copies += result.lines.filter(x => /reproduces \[/.test(x.text)).length;
+      copies += copiedCasts(result.events).length;
       assert.ok(JSON.stringify(g.PATHS) === before, `encounter seed ${seed} mutated content`);
     }
     assert.ok(copies > 0, 'fixture must actually cast the copying ability');
   });
 
-  test(`${path}: replay charges wrapper SP and cooldown, not copied spell cost`, () => {
+  test(`${path}: full-strength replay charges source SP and cooldown on its owned record`, () => {
     const g = loadGame(), w = world(g, path, 1, 'door');
-    const spec = skill(g, w.a, copyId), startSP = w.a.sp;
+    const startSP = w.a.sp;
     witness(g, w, 'door', 1, 'star_gate_tear');
-    cast(g, w, copyId);
-    assert.equal(w.a.sp, startSP - spec.costSP);
-    assert.equal(w.a.cooldowns[copyId], spec.cooldown + 1);
+    const source = w.state._abilityHistoryByUnit[w.enemy.id][0].spec;
+    assert.equal(cast(g, w, copyId), true);
+    const replay = copiedCasts(w.state.events)[0];
+    assert.ok(replay, 'the record or imitation must actually cast');
+    assert.equal(w.a.sp, startSP - source.costSP);
+    assert.equal(replay.costSP, source.costSP);
+    assert.equal(w.a.cooldowns[replay.abilityId], source.cooldown + 1);
+    assert.equal(w.a.cooldowns[copyId], undefined);
     assert.equal(w.a.cooldowns.star_gate_tear, undefined);
+    assert.equal(g.getMeterValue(w.a, path), 0);
   });
 }
 
@@ -197,6 +195,8 @@ test('actual Parasitic Contagion drains the target caster resource', () => {
   const g = loadGame(), w = world(g, 'error', 4);
   w.b.sp = w.enemy.sp = 100;
   cast(g, w, 'parasitic_contagion');
+  assert.equal(w.b.sp, 100, 'attachment does not drain before the host acts');
+  g.signatureTurnStart(w.enemy, w.state, w.lines, () => .99);
   assert.equal(w.b.sp, 80, 'agent SP is the castable resource');
   assert.equal(w.enemy.sp, 80, 'combat display SP must agree');
 });

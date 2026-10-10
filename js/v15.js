@@ -46,6 +46,8 @@ function v15Damage(kind, { agent, actor, target, abilityMult = 1, weaponBonus = 
   const targetAgent=target.agent||target;
   const seqMult=damageMultiplier(agent.sequence,targetAgent.sequence,agent.path,targetAgent.path);
   const spec=damageSpec||{};
+  const authority=kind!=='basic_physical_attack'&&typeof mythicalDamageOptions==='function'?mythicalDamageOptions(actor,target,spec):{};
+  defPen+=Number(authority.defPen||0);
   const tpm=passiveCombatModifier(target.agent||target);
   const formula=spec.formula||kind;
   let raw=0,bypass=0;
@@ -74,7 +76,7 @@ function v15Damage(kind, { agent, actor, target, abilityMult = 1, weaponBonus = 
   const aliasMap=(G9D.balance.element_resistance_rules||{}).aliases||{};
   const rawElements=spec.elements?.length?spec.elements:((spec.type==='elemental'&&(!spec.element||spec.element==='physical'))?['fire','water','lightning','frost']:[spec.element||'physical']);
   const elements=rawElements.map(x=>{x=String(x).toLowerCase();return aliasMap[x]||x;});
-  const resist=elements.reduce((sum,el)=>sum+elementResistance(target,el),0)/Math.max(1,elements.length);
+  const resist=elements.reduce((sum,el)=>sum+elementResistance(target,el),0)/Math.max(1,elements.length)*Number(authority.resistanceMultiplier??1);
   const resisted=raw*(1-resist/100);
   const def=(target.agent?.stats?.def||target.def||10)*(tpm.def||1)*(statusCombatModifier(target).def||1)*(target._debuffs?.def||1);
   const defenseReduction=def*(1-bypass)*defFactor;
@@ -144,11 +146,11 @@ function tryMythicalForm(agent, actor, state, lines, r) {
   const hpThreshold = Number(MYTHIC?.hp_threshold ?? 0.50);
   const shieldRatio = Number(MYTHIC?.shield_ratio ?? 0.30);
   const damageBonus = Number(MYTHIC?.damage_bonus ?? 0.20);
-  const pollutionChance = Number(MYTHIC?.mental_pollution_chance ?? 0.20);
+  const pollutionChance = Number(MYTHIC?.mental_pollution_chance ?? 0.70);
 
   if (spCost > 0 && Number(ag.sp || 0) < spCost) return;
 
-  const unlocked = Number(ag.sequence) <= unlockedSeq;
+  const unlocked = Number.isInteger(ag.sequence) && ag.sequence >= 0 && ag.sequence <= unlockedSeq;
   const hpRatio = unit.hp / Math.max(1, unit.maxHp);
   if (!unlocked || hpRatio > hpThreshold) return;
 
@@ -188,10 +190,12 @@ function tryMythicalForm(agent, actor, state, lines, r) {
     });
   }
 
+  if (typeof mythicalAwaken === 'function') mythicalAwaken(unit,state,lines,r||state?.rng);
+
   const roll=r||state?.rng;
   if (roll && state) {
     for (const f of foesOf(unit, state)) {
-      if (f.alive && roll() < pollutionChance && !statusImmune(f,'stunned')) {
+      if (f.alive && Number.isInteger(f.sequence) && f.sequence >= 5 && f.sequence <= 9 && !statusImmune(f,'stunned') && roll() < pollutionChance) {
         addStatus(f, 'stunned', 1, unit.name);
         const stunTxt = `${f.name} is overwhelmed by mental pollution and loses a turn.`;
         lines.push({ text: stunTxt, kind: 'status' });

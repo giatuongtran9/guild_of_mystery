@@ -16,13 +16,18 @@
     "name": "Theft",
     "key": "theft",
     "max": 100,
-    "gain": "Stealing and deception",
-    "spend": "Theft and parasitism",
-    "full": "Next theft is empowered",
+    "gain": "Successful theft and deception",
+    "spend": "Steal an observed ability from Sequence 6",
+    "full": "Deny its owner one turn and retain one paid use",
     "special": "Glitch",
     "characteristic": "Spirit / Theft",
     "quirkName": "Error Authority",
-    "quirkText": "Combat-only theft and turn manipulation."
+    "quirkText": "Combat-only theft and turn manipulation.",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100,
+    "gainCondition": "successful_theft_deception"
   },
   "sequences": [
     {
@@ -35,7 +40,7 @@
         "label": "Active",
         "spCost": 15,
         "cooldown": 2,
-        "description": "Combat Theft — Steals 10% ATK and 10% DEF from enemy for 2 rounds.",
+        "description": "Combat Theft — Steals 15% ATK and 15% DEF from enemy for 2 rounds.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -45,13 +50,13 @@
           {
             "type": "steal_stat",
             "stat": "atk",
-            "amount": 0.1,
+            "amount": 0.15,
             "duration": 2
           },
           {
             "type": "steal_stat",
             "stat": "def",
-            "amount": 0.1,
+            "amount": 0.15,
             "duration": 2
           }
         ]
@@ -115,7 +120,7 @@
         "label": "Active",
         "spCost": 35,
         "cooldown": 2,
-        "description": "Rust Siphon — Corrodes armor dealing 140% INT Corrosion DMG and stealing 20% enemy ATK for 2 rounds.",
+        "description": "Rust Siphon — Deal Corrosion damage. At 100 charge, steal one observed ability, deny its owner access for one turn, and retain one paid use.",
         "stat": "INT",
         "scale": 1.4,
         "damageType": "corrosion",
@@ -123,10 +128,11 @@
         "tag": null,
         "effects": [
           {
-            "type": "steal_stat",
-            "stat": "atk",
-            "amount": 0.2,
-            "duration": 2
+            "type": "signature",
+            "rule": "error_theft",
+            "chargeCost": 100,
+            "duration": 1,
+            "uses": 1
           }
         ]
       }
@@ -141,7 +147,7 @@
         "label": "Active",
         "spCost": 45,
         "cooldown": 3,
-        "description": "Logic Distortion — Forces target enemy to cast their primary skill on their own team for 150% DMG.",
+        "description": "Logic Distortion — A resistible mark redirects the target's next paid damaging ability to its own side once within two turns; the ability retains its normal SP cost and cooldown.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -149,8 +155,11 @@
         "tag": null,
         "effects": [
           {
-            "type": "mind_control",
-            "damageMultiplier": 1.5
+            "type": "signature",
+            "rule": "error_distortion",
+            "chargeCost": 0,
+            "duration": 2,
+            "uses": 1
           }
         ]
       }
@@ -165,7 +174,7 @@
         "label": "Active",
         "spCost": 50,
         "cooldown": 3,
-        "description": "Parasitic Contagion — Parasitizes target, draining 20 SP/turn for 2 rounds while restoring 10% Max HP to user.",
+        "description": "Parasitic Contagion — Establish one parasite host for two turns, drain SP and recover health while the host remains alive.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -173,12 +182,12 @@
         "tag": null,
         "effects": [
           {
-            "type": "heal",
+            "type": "signature",
+            "rule": "error_parasite",
+            "chargeCost": 100,
+            "duration": 2,
+            "amount": 20,
             "maxHpRatio": 0.1
-          },
-          {
-            "type": "sp_drain",
-            "amount": 20.0
           }
         ]
       }

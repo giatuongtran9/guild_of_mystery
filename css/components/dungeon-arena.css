@@ -55,6 +55,10 @@
 .gm-rank-enemies {
   padding-top: 10px;
   min-height: 105px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  justify-content: flex-start;
+  scroll-snap-type: x proximity;
 }
 
 .gm-arena-midline {
@@ -85,7 +89,9 @@
   text-align: center;
   position: relative;
   transition: transform 0.2s ease, opacity 0.2s ease;
-  width: 96px;
+  flex: 0 0 132px;
+  width: 132px;
+  scroll-snap-align: center;
 }
 
 .gm-arena-unit.dead {
@@ -200,18 +206,18 @@
 }
 
 .unit-name {
-  font-size: 0.72rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #e5edf5;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 82px;
+  max-width: 110px;
   text-shadow: 0 1px 3px rgba(0,0,0,0.9);
 }
 
 .unit-seq-badge {
-  font-size: 0.62rem;
+  font-size: 0.75rem;
   padding: 1px 4px;
   background: rgba(180, 145, 90, 0.25);
   color: #dfcaa2;
@@ -222,14 +228,14 @@
 }
 
 .gm-float-gauge {
-  width: 76px;
-  margin-top: 2px;
+  width: 100%;
+  margin-top: 5px;
   position: relative;
 }
 
 .gm-float-track {
   width: 100%;
-  height: 5px;
+  height: 7px;
   background: rgba(10, 14, 20, 0.85);
   border-radius: 3px;
   overflow: hidden;
@@ -265,27 +271,94 @@
 }
 
 .gm-float-num {
-  font-size: 0.58rem;
-  color: #a4b3c6;
+  font-size: 0.8rem;
+  color: #d7e0e9;
   font-family: monospace;
   letter-spacing: -0.2px;
   display: block;
   text-shadow: 0 1px 2px rgba(0,0,0,0.9);
-  margin-top: 1px;
+  margin-top: 3px;
+}
+
+.gm-unit-resources {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font: 0.8rem system-ui, sans-serif;
+  color: #e8dac1;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+}
+
+.gm-charge.ready {
+  color: #ffe0a1;
+  font-weight: 700;
+}
+
+.gm-status {
+  color: #eab2b2;
+}
+
+.gm-arena-unit.mythical .gm-unit-name-label {
+  border-bottom: 1px solid #c9aa71;
+}
+
+.gm-rank-enemies::before,
+.gm-rank-enemies::after {
+  content: "";
+  margin: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gm-float-fill,
+  .gm-arena-unit {
+    transition: none;
+  }
 }
 
 @media(max-width:560px) {
+  .gm-dungeon-arena {
+    min-height: 0;
+  }
+
   .gm-stage-playfield {
     padding: 12px 10px;
+    min-height: 0;
+  }
+
+  .gm-arena-unit,
+  .gm-arena-unit.ally {
+    flex: 0 0 min(300px, 100%);
+    width: min(300px, 100%);
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .gm-unit-sprite-anchor {
+    flex: 0 0 auto;
+    margin-bottom: 0;
+  }
+
+  .gm-unit-info {
+    flex: 1;
+    min-width: 0;
   }
 
   .gm-rank-allies {
     gap: 16px;
     padding-bottom: 12px;
+    min-height: 0;
+  }
+
+  .gm-rank-enemies {
+    gap: 16px;
+    min-height: 0;
   }
 
   .gm-rank-allies::before,
-  .gm-rank-allies::after {
+  .gm-rank-allies::after,
+  .gm-rank-enemies::before,
+  .gm-rank-enemies::after {
     display: none;
   }
 }

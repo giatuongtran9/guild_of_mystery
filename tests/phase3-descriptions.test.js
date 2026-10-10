@@ -12,15 +12,30 @@ function test(name, fn) {
 const tier = (key, rank) => g.tierFor(key, rank);
 const spec = (key, rank) => tier(key, rank).abilities[0];
 const describe = (key, rank) => g.abilityDescription(spec(key, rank), key, rank);
-test('218 abilities are generated and two entire Error rules stay deferred', () => {
+test('all 220 abilities have generated implemented descriptions', () => {
   for (const key of g.PATH_KEYS) for (let rank = 9; rank >= 0; rank--) {
     const text = describe(key, rank);
-    if(g.isPhase3DeferredAbility(spec(key,rank),key)){assert.equal(text,spec(key,rank).text);continue;}
+    assert.equal(g.isPhase3DeferredAbility(spec(key,rank),key),false,`${key} ${rank} remains deferred`);
     assert.equal(typeof text, 'string');
     assert(text.length > 10 && !/undefined|NaN/.test(text), `${key} ${rank}: ${text}`);
     assert.equal(spec(key, rank).text, text);
     assert.equal(tier(key, rank).abilityText, text);
     assert.equal(tier(key, rank).ability, text);
+  }
+});
+test('implemented parasite tooltip follows its drain and duration data',()=>{
+  const original=spec('error',4),changed=structuredClone(original),effect=changed.effects.find(e=>e.rule==='error_parasite');
+  const text=describe('error',4);assert(text.includes('20 SP')&&text.includes('2 turns'),text);
+  effect.amount=17;effect.duration=3;
+  const changedText=g.abilityDescription(changed,'error',4);
+  assert(changedText.includes('17 SP')&&changedText.includes('3 turns'),changedText);
+  assert.notEqual(changedText,text,'authored parasite numbers must change the generated rules');
+});
+test('mandatory replay descriptions disclose source payment without advertising wrapper costs',()=>{
+  for(const key of ['door','white_tower']) {
+    const original=spec(key,6),text=describe(key,6);
+    assert(text.includes('original SP cost and cooldown'),text);
+    assert(!text.includes(`${original.costSP} SP`),`${key} still advertises a wrapper cost that the cast never pays: ${text}`);
   }
 });
 test('changing authored prose cannot change effect rules', () => {

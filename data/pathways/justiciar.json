@@ -16,13 +16,17 @@
     "name": "Law",
     "key": "law",
     "max": 100,
-    "gain": "Enforcing order and punishment",
-    "spend": "Prohibitions and verdicts",
-    "full": "Next prohibition is empowered",
+    "gain": "Violations of your prohibition",
+    "spend": "Interdiction Zone",
+    "full": "Cancel and punish one forbidden action",
     "special": "Authority",
     "characteristic": "Body / Law",
     "quirkName": "Absolute Law",
-    "quirkText": "Combat-only prohibition, barriers and judgment."
+    "quirkText": "Combat-only prohibition, barriers and judgment.",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -109,7 +113,7 @@
         "label": "Active",
         "spCost": 35,
         "cooldown": 3,
-        "description": "Interdiction Zone — Prohibits movement skills (`[Escape]`) for 2 rounds.",
+        "description": "Interdiction Zone — Set a prohibition. Full Law charge cancels and punishes one forbidden action.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -117,8 +121,11 @@
         "tag": null,
         "effects": [
           {
-            "type": "movement_block",
-            "duration": 2
+            "type": "signature",
+            "rule": "justiciar_prohibition",
+            "chargeCost": 100,
+            "duration": 2,
+            "amount": 0.5
           }
         ]
       }

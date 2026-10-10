@@ -38,7 +38,7 @@ async function fixture(sim = false) {
   state.roster = [agent];
   state.quests = [{ id: 'test-contract', name: 'The Chapel Below', encounter: true, objective: 'combat', difficultySequence: 9, rewards: { funds: 0, reputation: 0, materials: {} }, tags: ['occult'] }];
   w.localStorage.setItem('guild-rpg-browser-v9', JSON.stringify(state));
-  w.eval(['paths', 'v15', 'generate', 'engine', 'state', 'campaign', 'ui'].map(name => fs.readFileSync(path.join(root, `js/${name}.js`), 'utf8')).join('\n'));
+  w.eval(['paths', 'v15', 'generate', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'].map(name => fs.readFileSync(path.join(root, `js/${name}.js`), 'utf8')).join('\n'));
   const allyId = sim ? 'sim_0_fool_9' : agent.id;
   w.groupEventsToRows = () => [{ round: 1, initiative: 'Test order', rows: [
     { type: 'turn', actorId: 'enemy_0', actorName: 'Enemy', actorTeam: 'enemy', ability: 'Strike', costSP: 10,

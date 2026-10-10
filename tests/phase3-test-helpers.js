@@ -265,6 +265,14 @@ function exercisePassive(key, rank, team = 'allies') {
           const probes = { water: ['tyrant', 8], lightning: ['tyrant', 6], frost: ['demoness', 4], decay: ['twilight_giant', 2],
             poison: ['demoness', 7], piercing: ['paragon', 8], corrosion: ['error', 6], fire: ['paragon', 6] };
           ok(!!probes[el], `a shipped active probes ${el} resistance`);
+          if(el==='corrosion') {
+            // Rust Siphon requires its actual Sequence 6 theft prerequisites.
+            const attacker=record('error',6,'corrosion caster'),witness=record('fool',8,'witness');
+            for(const side of ['allies','enemies'])w.state[side]=w.state[side].map(unit=>unit===w.v?attacker:unit===w.ally?witness:unit);
+            w.v=attacker;w.b=attacker.agent;
+            ok(g.applyStructuredAbility(witness.agent,witness,attacker,w.state,[],()=>.99,liveSpec('fool',8)),'Corrosion caster witnesses a real eligible source');
+            g.setMeterValue(attacker.agent,'error',100);
+          }
           cast(w, w.v, w.u, liveSpec(...probes[el]));
         }
       }

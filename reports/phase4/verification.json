@@ -1,0 +1,802 @@
+{
+  "status": "PASS",
+  "baseline": "0734c07",
+  "nodeVersion": "v24.19.0",
+  "suites": 42,
+  "passed": 42,
+  "failed": 0,
+  "sourceHashes": {
+    "js/engine.js": "ee3ce952204ba8236a8954fd4ee70a727c82dbc581ad48118ae711172172b151",
+    "js/ui.js": "94f6a35cd7688692be9a6ca77524aeb4da36ebc0b7184ca00050d416f6f17051",
+    "js/paths.js": "257cf4f003450e9346cc988c36a1ef0c025d272d4a1ef3267ab403ef4e615b6d",
+    "js/v15.js": "f2491511aa10949955b6f842ce69512250cdfc7acd995ce0438335af663696e9",
+    "js/node-loader.js": "aaa0e469d1114fa07b60cc994976fda161b1c0e6ca21b997dff9a48fa8e0c750",
+    "js/data-loader.js": "e18faf8a6ffb0fe4c2f328b12a43aadb452c2cf677ef5f14ce9e7bdd66b41cda",
+    "js/exports.js": "5ce202cf755ed424b6fdbe7f6149f85526310f7d2d67d13d42d0b316c60286dd",
+    "js/signatures.js": "acdee2674228a463979eb924514e72788a26219d8920bab151a599130f8797d9",
+    "js/mythical.js": "2aa76697672bbbee56aaf986902dd8e2c0aa97092115589e8f5a91b3f864a840",
+    "js/state.js": "2043aef4079efae2cfde0d7515760b9c18ae76c69faea0917073d0517252eb2c",
+    "tests/battle-log.test.js": "fab7795bc67deff29d4692e155da45e3586d3ca77842d1b658260218f9e0e4f7",
+    "tests/battle-ui.test.js": "61a2bb649096b7482febbf259ad4fa22d48c569c4278dd739514cb21bf25d281",
+    "tests/campaign.test.js": "1dee754c94308be2d1148f433947a4e25ff5e98bc86e923c06094865a0eabc04",
+    "tests/combat-sprite.test.js": "6c150c9c4d6adb0dd71770a1b5a3c234502cc80febdc6418b6bc3df15d9493c3",
+    "tests/fullres-cache-data.test.js": "2f05a073196483e0978ca9f475566f1eb040eebf2f2803ecfacad675f88ce9de",
+    "tests/fullres-layout.test.js": "d37f26a0d7fdfaa1a592e30fe1aabac8e166dff42839b3e8be271da718a40bdb",
+    "tests/fullres-portraits.test.js": "e66c477c38b5ff283aa40c7bed115010afdc3404f8ae4ebc40009ce9f6049523",
+    "tests/mythical-order.test.js": "0924ed7dce14020c36a1224ad1591efa66717f8c5167683b61f18cb6ae510efb",
+    "tests/phase1-ai.test.js": "8c7e5588b3120b93be8cc1ec924f87922c8ad7b55eeffdada76ff92ce13645ad",
+    "tests/phase1-casting.test.js": "e87ac09c0f68ab43015b54e857d022d03f2772fb96099434758c4cdd785c22fd",
+    "tests/phase1-combat-units.test.js": "d37115c898b0590e57a91836507c8426cf6a1c39cd8cf19e754cc51fcf0ddf71",
+    "tests/phase1-damage-pipeline.test.js": "74f6fb22864f1dfdc23d835e2b0eff15c7f03fce3d894bb85001c8b3c543f397",
+    "tests/phase1-lifecycle.test.js": "f5d615062f60c0f902b1eb3930eb9c4076f70503734fa6fff43efd5f16886273",
+    "tests/phase1-progression-resistance.test.js": "9e6b62853940783efba19b15b33aa37385f574d2ad7e636b7fdfe140135706de",
+    "tests/phase2-battle.test.js": "4dd1980f22b9aae59c9fee9807fb0f445277340ce31aa93bc832bea050f61613",
+    "tests/phase2-boot.test.js": "ac2c8745a5911ebdeb6866ee11470d753ccd569193f98900955082f0d496cb1f",
+    "tests/phase2-cache.test.js": "f98e109d0f350963807b6a9941b1843c2996584e4899f2f94987acc1e04ad226",
+    "tests/phase2-modal-dom.test.js": "af3a8f672561db9344c6d98ef220f07135a3395ff0c9e3fc662f664b4b059ca4",
+    "tests/phase2-modal.test.js": "a4bc6a791b0f3acf0480840d7de5b0e73a2361ddb4e559624ff4e0b4665f249b",
+    "tests/phase2-portraits.test.js": "b43c5b10e43413b5bdb9c4afbf190abea54dc1906d6a0258a0152d69cf1d42a8",
+    "tests/phase2-runtime-data.test.js": "3574a0ea4e2e7b363c1c937b61318581fee801335fcd92bc99cd3a0d172b3a6c",
+    "tests/phase2-startup.test.js": "dbcc305149cd9770626d4d812a8589379d66a6ea783a7e5b9e037cbc09fe039c",
+    "tests/phase3-actual-casts.test.js": "d5a63ac4a7b8ba15412bd8160ce5c70ca4d625ec83c2803a9723ea394b0092b8",
+    "tests/phase3-description-dom.test.js": "10fa35d2fd42c9f301680a1264e8b48306d1b1272367ea40b59705aa46d41b79",
+    "tests/phase3-descriptions.test.js": "e56b9e3a3215e1af2741ebd3d8623a3e889b49ef2cbaa4111c08c4e2cfcb45c7",
+    "tests/phase3-existing-rules.test.js": "b1bfbf2b33cdc42d71d80a5ce21f0d29ce03cd80fcd4472575f0503772d3646a",
+    "tests/phase3-thread-damage.test.js": "a1e4c19781e5f8a978817b42e4c834690ca06b12c7e2d96571bdf22b99996dda",
+    "tests/phase4-balance.test.js": "7c510c0c0618e0fc6ba2d8ea5c3aecb3ba71fbfd846cc70bb4abc8759ad8884d",
+    "tests/phase4-core.test.js": "1b4123ca0a2c75328b84dc0417b66bdab802583d70540599046d54cb835eee1a",
+    "tests/phase4-data.test.js": "79f7c254b5debc2ec74b84e06c651493a37c1d2d9d3bd8991cf93ab9c2798e5b",
+    "tests/phase4-mythical.test.js": "acf5fdd2cba4ea71a39fe8a32f9dab3e0592b8c37d11e429105a975cb09dd5f1",
+    "tests/phase4-saves.test.js": "6ddd73558d9d712a1a1a3c65485f3b3e51d94a4e858357cbbcf25bd32d9b7df0",
+    "tests/phase4-side-parity.test.js": "9e3f04e79287c1d7563a2e488f0c41263a7363df3de9525f8c5a79917e3f7222",
+    "tests/phase4-signatures.test.js": "319827686a2d6f909d5201f0c92f1c969150f5d3bd4410cae61d16aafecddab6",
+    "tests/phase4-ui.test.js": "a20f9599356c483e681c5c6146483396aae58a36fbe935d5bcc60ce8e5ac2694",
+    "tests/reflect-order.test.js": "be7167e620417acb85ed541bb9ebdba18c73b388022a5ace52e7123d636d3791",
+    "tests/effects-behavior.js": "9655b2a9bf4d523dfbb49df677aa37ff207bf8ef6c791341f0285208aed2e08f",
+    "tests/generic-effects.js": "b7927d7ec7f5aae2d2ca8dd07e7c45bd0347ef213d2f8c877930ce59ca83e081",
+    "tests/thread-marionette.js": "7d5c005196f299cd22476f77ea57c142216378cd4aebd2ea7faeab94684e15e1",
+    "tests/node-loader.js": "e1f51d99477e568d9a4ddba2aeb652261c5b53bcc4a38d49a8e85310f3274645",
+    "tests/fullres-assets.test.py": "d304813bc31008000d518e22c822bf6f518cc0fc70656f0b0e7557f62c26934a",
+    "tests/phase2-runtime-assets.test.py": "f3559b3b9cfa3662ee5e6322095e814b23496f5a92deff4911f099ab79b375fb"
+  },
+  "supplementalSourceHashes": {
+    "index.html": "cdc62cbfa2b852b6bbcce60536357d73ffecc13754413b5c3791b9b1424f150d",
+    "js/boot.js": "14b8d2d71a342fc3d819414b57d2062b0f918452d61da494bc1aa45812ff34d6",
+    "css/components/battle-log.css": "c9db197fda82341af160a8409dcc85bc6ba9e99ccfa2812543a5d234c359d3c7",
+    "css/components/dungeon-arena.css": "c1d39f05da14363a52a1834535f2d36ad94c6423a29bfa0da3f5c45ffb6e34e6",
+    "data/runtime/manifest.json": "fcdd6f781b61ace0c0b2b982688a538be1eea54debdb10a7ac197ad203749804",
+    "data/runtime/data.a4bce07f00bb30e3.json": "a4bce07f00bb30e3c32d435bf8c466726647c7efa146804a58aec30ac74325dc",
+    "data/balance.json": "1a618055c3152b8d3c4b91844a49e08176585f4ed28594d114e14ac4827e5982",
+    "data/formulas.json": "021cf114e983022a8b487bdb2a18ae09125613fed6b92725bb2ecdb520e74ec9",
+    "data/pathways/abyss.json": "cb4b5c15b464dce828911965ddf785f27c8b67291294a02486da6458f108b975",
+    "data/pathways/black_emperor.json": "e52d79cb1fc688b2a03b9ec0fa58c64019954243c3eadf326ca7d94a15306a13",
+    "data/pathways/chained.json": "62efc2247e802e23f967663c4fa023fb569b9dbba722266319ff7ffe4ce16bbc",
+    "data/pathways/darkness.json": "e1da6fc4420f508bfc06c45c68e6af1fd0d61df586b15cee0653d33d1315bc0b",
+    "data/pathways/death.json": "903d394ac050203c194af0d29b18009d4e24a6e489ea5d0b1596a15eed585d99",
+    "data/pathways/demoness.json": "e949788aab4c4f6e2ca9844923c1ed67a97c0d3c6aea6cb66a2c39b3f7fc12be",
+    "data/pathways/door.json": "3dc6fbc2fddc97144c58d34fdcaac19d14348e1a2e64ca9d745e7eb2dd7263b7",
+    "data/pathways/error.json": "f5586c2cecfe0c7ad2d5764d8d59cee1a3a400f28771edf63e6f0ff274721e31",
+    "data/pathways/fool.json": "c758f30671050e55492b65e50bf05c4593c85dca738a771370b53adcced35d0e",
+    "data/pathways/hanged_man.json": "0254959b5ae005b18d323f0457d7b8190801b903381fde286b4d1b00c9e61dde",
+    "data/pathways/hermit.json": "623b58504c6ffea8b931960dcf76c8388b41c104740842ca63f77e70eb8d4742",
+    "data/pathways/index.json": "fc550176477c504da4bdee55e096a7825bed0252a4eda919af7906be95845f00",
+    "data/pathways/justiciar.json": "f45b582fc5de1be6dae6ec5fae32fbcb8c887f4aefb4d078a46a860640c56f3e",
+    "data/pathways/moon.json": "39ca224e1ffaee7a4d9bd4c5741396d22731f94827ba247525972b521b0e33a9",
+    "data/pathways/mother.json": "828acc6060771dff6daa8476e0126a01077a200599b65fda06df063605676914",
+    "data/pathways/paragon.json": "c42500e927dc6e165d489677a665ef9e190ea1c07404fdaa3beaca0ca47a4f64",
+    "data/pathways/red_priest.json": "58cfc2a6859c8dfe0abdbb043f029e6edc205e42752cc06e0bfcfe342963d90d",
+    "data/pathways/sun.json": "6bc590005f0b144f03a822abcbe511f03a574aa4a6e243ebe67360098f0c3949",
+    "data/pathways/twilight_giant.json": "4a0ad2aed24bc5ff6d674177461014ca498588bff61612f1455ec97f24121ed9",
+    "data/pathways/tyrant.json": "8ceb3b050fb7e127ef3ddc23b5cf51afb2e430f22efd013a8195402ef7e8c27e",
+    "data/pathways/visionary.json": "b9d7d8f1f1ad727d1475084475f05ea9fda16ec5e7b2aa0333eed4cec59db5ff",
+    "data/pathways/wheel_of_fortune.json": "bd8ef9d12df8d574c1ee3388c4a00b62bfe2cebc34d2e11a30a40e2f084151ac",
+    "data/pathways/white_tower.json": "da7b7d9c980fbc6f71421107809de2c2b196872da161dfe212eccf7dd8399052"
+  },
+  "changedDuringRun": [],
+  "checks": [
+    {
+      "file": "tests/battle-log.test.js",
+      "command": [
+        "node",
+        "tests/battle-log.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.299,
+      "result_lines": [
+        "Checking that every cast with damage produces exactly one merged row...",
+        "\u2713 Verified 19 cast-with-damage actions each produced exactly one merged row",
+        "Checking structured round and action continuity...",
+        "\u2713 Structured events intact (196 total events across 11 rounds, 29 actions)",
+        "All Battle Log unit tests passed successfully!"
+      ]
+    },
+    {
+      "file": "tests/battle-ui.test.js",
+      "command": [
+        "node",
+        "tests/battle-ui.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 5.995,
+      "result_lines": [
+        "Battle UI checks passed: image selection/fallback, top toolbar, speeds/skip, and scroll preservation in both views."
+      ]
+    },
+    {
+      "file": "tests/campaign.test.js",
+      "command": [
+        "node",
+        "tests/campaign.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 3.201,
+      "result_lines": [
+        "PASS full chapter grants the case file, progression supplies and no premature next chapter",
+        "PASS authored enemy hook leaves normal contract random generation and death rules unchanged",
+        "Prepared solo Sequence 9 fixture: fool 20/20; door 19/20; error 17/20; visionary 20/20; sun 20/20; tyrant 20/20; white_tower 20/20; hanged_man 20/20; darkness 20/20; death 20/20; twilight_giant 20/20; red_priest 20/20; demoness 20/20; hermit 20/20; paragon 20/20; wheel_of_fortune 20/20; mother 20/20; moon 17/20; abyss 20/20; chained 20/20; black_emperor 17/20; justiciar 20/20",
+        "PASS every pathway can attempt and finish the opening boss with a Sequence 9 starter",
+        "11 campaign checks passed."
+      ]
+    },
+    {
+      "file": "tests/combat-sprite.test.js",
+      "command": [
+        "node",
+        "tests/combat-sprite.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.593,
+      "result_lines": [
+        "Combat sprite checks passed: all 22 designed pathways and 220 sequence assets, roster snapshots, sequence resolution, and placeholders for pathways without artwork."
+      ]
+    },
+    {
+      "file": "tests/fullres-cache-data.test.js",
+      "command": [
+        "node",
+        "tests/fullres-cache-data.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.635,
+      "result_lines": [
+        "PASS POST requests for full artwork bypass caching",
+        "PASS a failed full-art HTTP response is not cached",
+        "PASS openFail does not prevent full artwork from loading",
+        "PASS putFail does not prevent full artwork from loading",
+        "35 passed, 0 failed"
+      ]
+    },
+    {
+      "file": "tests/fullres-layout.test.js",
+      "command": [
+        "node",
+        "tests/fullres-layout.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 6.46,
+      "result_lines": [
+        "PASS dossier layout at 1440px",
+        "PASS campaign layout at 1440px",
+        "PASS battle layout at 1440px",
+        "",
+        "12 passed, 0 failed"
+      ]
+    },
+    {
+      "file": "tests/fullres-portraits.test.js",
+      "command": [
+        "node",
+        "tests/fullres-portraits.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 6.809,
+      "result_lines": [
+        "PASS arbitrary external or scripted images cannot open a full-resolution viewer",
+        "PASS loaded image dimensions preserve actual aspect ratio and resize still fits the whole figure",
+        "PASS image errors are readable and closing removes resize listeners without altering existing scroll lock",
+        "PASS range input and Ctrl-wheel zoom while ordinary wheel leaves scale unchanged",
+        "Full-resolution portraits: 13 passed, 0 failed."
+      ]
+    },
+    {
+      "file": "tests/mythical-order.test.js",
+      "command": [
+        "node",
+        "tests/mythical-order.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 6.995,
+      "result_lines": [
+        "PASS mythical-order (360 in-hit awakenings checked, each under the right attacker's row)"
+      ]
+    },
+    {
+      "file": "tests/phase1-ai.test.js",
+      "command": [
+        "node",
+        "tests/phase1-ai.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.922,
+      "result_lines": [
+        "PASS silence blocks advanced casts without changing the available definitions",
+        "Real-cast evidence: {\"firstCasts\":{\"door\":{\"Conceptual Unseal & Seal\":12},\"chained\":{\"Madness Curse\":12}},\"advancedCounts\":{\"door\":36,\"chained\":36}}",
+        "PASS real battles prepare the signature and repeatedly use advanced control afterward",
+        "PASS Chained builds charge from zero and can release its curse after the real cooldown",
+        "Phase 1 AI: 33 passed, 0 failed."
+      ]
+    },
+    {
+      "file": "tests/phase1-casting.test.js",
+      "command": [
+        "node",
+        "tests/phase1-casting.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 3.753,
+      "result_lines": [
+        "PASS living no-heal also prohibits HP-theft recovery",
+        "PASS HP theft restores only HP actually removed from a nearly defeated target",
+        "PASS no-shield prohibits an active shield",
+        "PASS no-heal alone does not prohibit a shield",
+        "39 passed; 0 failed; 39 casting regressions"
+      ]
+    },
+    {
+      "file": "tests/phase1-combat-units.test.js",
+      "command": [
+        "node",
+        "tests/phase1-combat-units.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 3.15,
+      "result_lines": [
+        "PASS justiciar Seq 9: authored side swaps preserve combat outcomes and definitions",
+        "PASS justiciar Seq 5: authored side swaps preserve combat outcomes and definitions",
+        "PASS justiciar Seq 0: authored side swaps preserve combat outcomes and definitions",
+        "",
+        "158 passed, 0 failed"
+      ]
+    },
+    {
+      "file": "tests/phase1-damage-pipeline.test.js",
+      "command": [
+        "node",
+        "tests/phase1-damage-pipeline.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.263,
+      "result_lines": [
+        "PASS a mirrored timed outgoing modifier affects the damage once",
+        "PASS a timed modifier and contract damage factor each affect the damage once",
+        "PASS a transformed actor fallback basic attack gains its form bonus once",
+        "",
+        "8 passed, 0 failed"
+      ]
+    },
+    {
+      "file": "tests/phase1-lifecycle.test.js",
+      "command": [
+        "node",
+        "tests/phase1-lifecycle.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.65,
+      "result_lines": [
+        "PASS Mother physical-share reflect rejects elemental hits and expires at holder next turn",
+        "PASS a fatal reflected hit reports resolved HP loss and the final target HP",
+        "PASS Freeze and frozen both disable exactly their stated victim action count",
+        "PASS JSON-duration numeric debuffs expire on victim actions rather than global round ticks",
+        "Lifecycle semantic regressions: 57 passed; 0 failed"
+      ]
+    },
+    {
+      "file": "tests/phase1-progression-resistance.test.js",
+      "command": [
+        "node",
+        "tests/phase1-progression-resistance.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.434,
+      "result_lines": [
+        "PASS injuries scale real INT ability damage by the displayed effective-stat penalty",
+        "PASS injuries scale real hybrid ATK/INT ability damage and defender DEF consistently",
+        "PASS combat and consequence settlement preserve uninjured stats/baseStats instead of compounding penalties",
+        "",
+        "31 passed, 0 failed"
+      ]
+    },
+    {
+      "file": "tests/phase2-battle.test.js",
+      "command": [
+        "node",
+        "tests/phase2-battle.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 10.821,
+      "result_lines": [
+        "PASS simulator skip preserves nodes and stops playback",
+        "PASS leaving simulator clears its timer and old callback cannot advance a new view",
+        "PASS clearing a simulation cancels the timer",
+        "PASS finished quest can settle normally after in-place playback",
+        "Phase 2 battle DOM: 20 passed, 0 failed."
+      ]
+    },
+    {
+      "file": "tests/phase2-boot.test.js",
+      "command": [
+        "node",
+        "tests/phase2-boot.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.169,
+      "result_lines": [
+        "PASS data errors render as escaped text and do not load engine modules",
+        "PASS an engine download failure retains the readable retry/error screen",
+        "PASS module execution errors retain a readable failure and stop later game modules",
+        "PASS a failed script download never queues the later UI to overwrite the error screen",
+        "Boot regressions: 8 passed; 0 failed."
+      ]
+    },
+    {
+      "file": "tests/phase2-cache.test.js",
+      "command": [
+        "node",
+        "tests/phase2-cache.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.309,
+      "result_lines": [
+        "PASS failed HTTP responses are not made durable",
+        "PASS unavailable cache keeps live fetching functional",
+        "PASS quota failure does not lose a successful response",
+        "PASS activation claims current clients without caching documents",
+        "20 passed, 0 failed"
+      ]
+    },
+    {
+      "file": "tests/phase2-modal-dom.test.js",
+      "command": [
+        "node",
+        "tests/phase2-modal-dom.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 4.45,
+      "result_lines": [
+        "PASS Tab and Shift+Tab stay inside the dialog and ignore collapsed controls",
+        "PASS equipment and injury treatment still run the original mutations and preserve progression",
+        "PASS saved IDs containing quotes cannot inject JavaScript into modal actions",
+        "",
+        "Phase 2 modal DOM: 6 passed, 0 failed."
+      ]
+    },
+    {
+      "file": "tests/phase2-modal.test.js",
+      "command": [
+        "node",
+        "tests/phase2-modal.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 2.43,
+      "result_lines": [
+        "PASS marionettes show owner and restrictions without an advancement action",
+        "PASS Sequence 0 preserves deity message and all inherited ranks remain accessible",
+        "PASS all 220 ranks render with no undefined values, raw markup injection or lost abilities",
+        "",
+        "Phase 2 modal: 10 passed, 0 failed."
+      ]
+    },
+    {
+      "file": "tests/phase2-portraits.test.js",
+      "command": [
+        "node",
+        "tests/phase2-portraits.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.151,
+      "result_lines": [
+        "PASS invalid runtime URL is rejected: data/assets/runtime/characters/fool/a.webp",
+        "PASS missing runtime metadata keeps the original art fallback",
+        "PASS only visible party portraits are promoted",
+        "PASS offscreen and hidden portraits remain lazy",
+        "18 passed, 0 failed"
+      ]
+    },
+    {
+      "file": "tests/phase2-runtime-data.test.js",
+      "command": [
+        "node",
+        "tests/phase2-runtime-data.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.301,
+      "result_lines": [
+        "PASS runtime data build: deterministic versioning, 29-file/220-rank parity, immutable originals, stale-build check, script/SW versions, portrait manifest inclusion."
+      ]
+    },
+    {
+      "file": "tests/phase2-startup.test.js",
+      "command": [
+        "node",
+        "tests/phase2-startup.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.711,
+      "result_lines": [
+        "PASS invalid bundled campaign retains the existing five-mission validation",
+        "PASS all 220 abilities and six shared datasets preserve authored content",
+        "PASS transient HTTP errors retry and retain the loading error label",
+        "PASS network errors remain a readable bootstrap failure after three attempts",
+        "Startup loader regressions: 27 passed; 0 failed."
+      ]
+    },
+    {
+      "file": "tests/phase3-actual-casts.test.js",
+      "command": [
+        "node",
+        "tests/phase3-actual-casts.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 1.39,
+      "result_lines": [
+        "PASS justiciar/3 strict_prohibition: 28 assertions, 2/2 teams",
+        "PASS justiciar/2 executioner_stance: 40 assertions, 2/2 teams",
+        "PASS justiciar/1 decree_of_abolition: 40 assertions, 2/2 teams",
+        "PASS justiciar/0 absolute_prohibition: 34 assertions, 2/2 teams",
+        "Actual casts: 220/220 blocking abilities passed; no deferred diagnostics; 9322 quantitative assertions."
+      ]
+    },
+    {
+      "file": "tests/phase3-description-dom.test.js",
+      "command": [
+        "node",
+        "tests/phase3-description-dom.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 28.137,
+      "result_lines": [
+        "PASS mandatory copied skills display the stored skill cost instead of a wrapper cost",
+        "PASS live generated names are escaped in dossier tabs, rank options and preview",
+        "PASS normal contract launch starts the HP bar at actual passive-enhanced battle maximum",
+        "",
+        "Phase 3 description DOM: 9 passed, 0 failed."
+      ]
+    },
+    {
+      "file": "tests/phase3-descriptions.test.js",
+      "command": [
+        "node",
+        "tests/phase3-descriptions.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.215,
+      "result_lines": [
+        "PASS component damage discloses independent coefficients",
+        "PASS generated text is pure and never changes runtime definitions",
+        "PASS UI uses live rules rather than saved learned descriptions",
+        "PASS mixed elemental casts disclose the four-school resistance average",
+        "Phase 3 descriptions: 12 passed, 0 failed"
+      ]
+    },
+    {
+      "file": "tests/phase3-existing-rules.test.js",
+      "command": [
+        "node",
+        "tests/phase3-existing-rules.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.234,
+      "result_lines": [
+        "PASS Executioner Stance grants temporary bypass without an unadvertised attack",
+        "PASS solar reduction protects Dark and Shadow without reducing unrelated damage",
+        "PASS corruption bonuses read the victim backing record",
+        "PASS two-round rewind preserves prior cooldowns and its advertised cooldown",
+        "Phase 3 existing rules: 13 passed, 0 failed"
+      ]
+    },
+    {
+      "file": "tests/phase3-thread-damage.test.js",
+      "command": [
+        "node",
+        "tests/phase3-thread-damage.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.168,
+      "result_lines": [
+        "PASS reflected HP loss counts for the threaded attacker",
+        "PASS one stack may be lost again on a later turn without resetting ownership",
+        "PASS battle entry never imports thread-damage tracking from an earlier encounter",
+        "PASS a human marionette preserves the victim non-Beyonder identity",
+        "Phase 3 thread damage: 14 passed, 0 failed"
+      ]
+    },
+    {
+      "file": "tests/phase4-balance.test.js",
+      "command": [
+        "node",
+        "tests/phase4-balance.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 24.802,
+      "result_lines": [
+        "PASS wheel_of_fortune uses its paid abilities to meet the unchanged Sequence 5 balance floor",
+        "PASS black_emperor uses its paid abilities to meet the unchanged Sequence 5 balance floor",
+        "PASS Error theft retains the existing prepared solo campaign success threshold",
+        "",
+        "10 passed, 0 failed"
+      ]
+    },
+    {
+      "file": "tests/phase4-core.test.js",
+      "command": [
+        "node",
+        "tests/phase4-core.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.328,
+      "result_lines": [
+        "PASS an awakening caused by a nested mythical cleave keeps the original action context",
+        "PASS reaction recovery is retained and resource snapshots close an action before turn-start recovery",
+        "PASS battle summaries count HP damage by team and exclude revived casualties",
+        "PASS a live stalemate at the round cap reports timeout without completing the contract",
+        "Phase 4 core: 17 passed, 0 failed"
+      ]
+    },
+    {
+      "file": "tests/phase4-data.test.js",
+      "command": [
+        "node",
+        "tests/phase4-data.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.168,
+      "result_lines": [
+        "PASS White Tower imitation starts at Polymath and is distinct from Door records",
+        "PASS Death summons a unit and Moon tame beasts before becoming Sanguine",
+        "PASS Demoness charge cannot overwrite saved harmful corruption",
+        "PASS signature configs use finite numbers and retain all 220 rank identities",
+        "Phase 4 signature data: 9 passed, 0 failed"
+      ]
+    },
+    {
+      "file": "tests/phase4-mythical.test.js",
+      "command": [
+        "node",
+        "tests/phase4-mythical.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.357,
+      "result_lines": [
+        "PASS enemy: Justiciar's court blocks paid signature medicine, seeds and guardian shields",
+        "PASS enemy: Black Emperor steals paid signature medicine, seeds and guardian shields",
+        "PASS enemy: Justiciar blocks Blood Siphon's active healing while its damage remains",
+        "PASS enemy: Black Emperor steals Blood Siphon's active healing while retaining its offensive target",
+        "Mythical authority tests: 88 passed, 0 failed"
+      ]
+    },
+    {
+      "file": "tests/phase4-saves.test.js",
+      "command": [
+        "node",
+        "tests/phase4-saves.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.213,
+      "result_lines": [
+        "Phase 4 save migration: passed"
+      ]
+    },
+    {
+      "file": "tests/phase4-side-parity.test.js",
+      "command": [
+        "node",
+        "tests/phase4-side-parity.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.238,
+      "result_lines": [
+        "PASS authored opponents preserve canonical combat IDs when display names match",
+        "PASS equal-name and equal-initiative lethal duels preserve their winner when teams swap",
+        "Side parity regressions: 2 passed, 0 failed"
+      ]
+    },
+    {
+      "file": "tests/phase4-signatures.test.js",
+      "command": [
+        "node",
+        "tests/phase4-signatures.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.344,
+      "result_lines": [
+        "PASS Desire records the SP actually paid when the cast changes its own cost penalty",
+        "PASS A pure self-parasite cast is rejected before payment and preserves a previous host",
+        "PASS abyss: charged signature damage respects a paid forced miss",
+        "PASS darkness: charged signature damage respects a paid forced miss",
+        "Signature regressions: 45 passed; 0 failed."
+      ]
+    },
+    {
+      "file": "tests/phase4-ui.test.js",
+      "command": [
+        "node",
+        "tests/phase4-ui.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 5.58,
+      "result_lines": [
+        "PASS resource labels remain escaped against markup injection",
+        "PASS malformed resource counters cannot become injected image markup",
+        "PASS resource IDs that match object prototypes remain ordinary owned records",
+        "PASS phone resource text and playback buttons have readable size",
+        "Phase 4 UI: 21 passed, 0 failed."
+      ]
+    },
+    {
+      "file": "tests/reflect-order.test.js",
+      "command": [
+        "node",
+        "tests/reflect-order.test.js"
+      ],
+      "exit_code": 0,
+      "seconds": 5.744,
+      "result_lines": [
+        "PASS reflect-order (89 reflects, each inside the row of the attack it answered)"
+      ]
+    },
+    {
+      "file": "tests/effects-behavior.js",
+      "command": [
+        "node",
+        "tests/effects-behavior.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.296,
+      "result_lines": [
+        "",
+        "effects-behavior: 147 passed, 0 failed"
+      ]
+    },
+    {
+      "file": "tests/generic-effects.js",
+      "command": [
+        "node",
+        "tests/generic-effects.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.151,
+      "result_lines": [
+        "PASS generic effect audit: 53 effect types; all are referenced by the engine."
+      ]
+    },
+    {
+      "file": "tests/thread-marionette.js",
+      "command": [
+        "node",
+        "tests/thread-marionette.js"
+      ],
+      "exit_code": 0,
+      "seconds": 2.133,
+      "result_lines": [
+        "(29 battle marionettes across 60 fights)",
+        "PASS thread-marionette"
+      ]
+    },
+    {
+      "file": "tests/node-loader.js",
+      "command": [
+        "node",
+        "tests/node-loader.js"
+      ],
+      "exit_code": 0,
+      "seconds": 0.208,
+      "result_lines": [
+        "PASS pathway manifest/file parity",
+        "PASS node loader assembled 22 pathways from manifest"
+      ]
+    },
+    {
+      "file": "tests/fullres-assets.test.py",
+      "command": [
+        "python3",
+        "tests/fullres-assets.test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 1.192,
+      "result_lines": [
+        "",
+        "----------------------------------------------------------------------",
+        "Ran 2 tests in 0.995s",
+        "",
+        "OK"
+      ]
+    },
+    {
+      "file": "tests/phase2-runtime-assets.test.py",
+      "command": [
+        "python3",
+        "tests/phase2-runtime-assets.test.py"
+      ],
+      "exit_code": 0,
+      "seconds": 16.112,
+      "result_lines": [
+        "",
+        "----------------------------------------------------------------------",
+        "Ran 15 tests in 15.897s",
+        "",
+        "OK"
+      ]
+    }
+  ],
+  "supplemental": {
+    "balance": {
+      "command": "node tests/balance.js",
+      "passed": 152,
+      "failed": 0,
+      "assertionsUnchanged": true,
+      "openingWinsPercent": 84.2,
+      "deathsPerQuest": 0.35,
+      "seq9SpreadPoints": 67.3,
+      "seq5SpreadPoints": 70
+    },
+    "pairedBattles": {
+      "command": "node tests/phase4-balance.js --phase=after --seeds=1",
+      "completeBattles": 45540,
+      "teamObservations": 91080,
+      "csvRows": 1980,
+      "fixtureMismatches": 0,
+      "swappedFinalStateMismatches": 0,
+      "report": "after-neutral.md"
+    },
+    "browserPreview": {
+      "command": "NODE_PATH=/path/to/node_modules CHROMIUM_PATH=/usr/bin/chromium node reports/phase4/browser-qa.js",
+      "viewports": [
+        "390x844",
+        "1366x900"
+      ],
+      "status": "pass",
+      "report": "browser-qa-results.json",
+      "controlledUiFixture": true
+    },
+    "static": {
+      "javascriptFiles": 58,
+      "jsonFiles": 39,
+      "status": "pass"
+    },
+    "runtimeBuild": {
+      "command": "node scripts/build-runtime-data.js --check",
+      "status": "pass",
+      "bundle": "data/runtime/data.a4bce07f00bb30e3.json"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "status": "pass"
+    },
+    "typecheck": "Not applicable: plain JavaScript; no configured TypeScript task.",
+    "lint": "No configured lint task; syntax and diff checks used.",
+    "security": "Reviewed copy isolation, bounded reactions, save compatibility, escaped combat markup, prototype-shaped IDs and validated image URLs. No blocking findings."
+  },
+  "coverage": {
+    "metrics": {
+      "changedFunctions": 243,
+      "calledFunctions": 231,
+      "mappedFunctions": 243,
+      "namedFunctions": 117,
+      "anonymousFunctions": 126,
+      "calledNamedFunctions": 117,
+      "calledAnonymousFunctions": 114,
+      "coveredNonWhitespaceUTF16Units": 161657,
+      "nonWhitespaceUTF16Units": 178202,
+      "sourceRangePercent": 90.72
+    },
+    "method": "Mapped V8 execution ranges of changed/new functions; not conventional statement or branch coverage.",
+    "report": "coverage.md"
+  },
+  "timingNote": "Balance and all-rank battles completed before the final tooltip-only clarification and removal of an unused helper; neither change affects combat outcomes. Functional/source-range checks ran again after those changes.",
+  "remainingRisk": [
+    "Frequent neutral draws under the existing 15-round cap.",
+    "Low-rank Abyss dominance in the small-seed neutral sample.",
+    "Same-path fixtures do not establish mixed-party support balance."
+  ],
+  "deployment": "Local phase commit only; not pushed or deployed."
+}

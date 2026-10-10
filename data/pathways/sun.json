@@ -16,13 +16,17 @@
     "name": "Radiance",
     "key": "radiance",
     "max": 100,
-    "gain": "Healing, cleansing and defeating corruption",
-    "spend": "Holy attacks and major cleanses",
-    "full": "Next holy attack also cleanses",
+    "gain": "Actual purification and Holy damage",
+    "spend": "Purification Halo",
+    "full": "An extra purification removes hostile protection",
     "special": "Radiance",
     "characteristic": "Hybrid / Holy",
     "quirkName": "Radiance",
-    "quirkText": "Combat-only purification, healing and holy damage."
+    "quirkText": "Combat-only purification, healing and holy damage.",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -110,6 +114,12 @@
           {
             "type": "cleanse",
             "duration": 0
+          },
+          {
+            "type": "signature",
+            "rule": "sun_purify",
+            "chargeCost": 100,
+            "amount": 1
           }
         ]
       }

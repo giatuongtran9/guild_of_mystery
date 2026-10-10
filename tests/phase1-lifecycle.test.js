@@ -297,11 +297,11 @@ test('standalone DoT API ticks and decrements duration exactly once', () => {
 });
 
 for (const side of ['ally', 'enemy']) {
-  for (const source of ['direct', 'basic', 'ability', 'counter', 'reflect', 'dot', 'mind_control']) {
+  for (const source of ['direct', 'basic', 'ability', 'counter', 'reflect', 'dot', 'distorted_ability']) {
     test(`${side} Wheel revival automatically handles lethal ${source} damage once`, () => {
       const a = agent('wheel_of_fortune', 5, 'reviver');
       const v = unit(a, side); v.hp = 1; v._formUsed = true;
-      const other = unit(agent(source === 'mind_control' ? 'error' : 'door', 5, 'opponent'));
+      const other = unit(agent(source === 'distorted_ability' ? 'error' : 'door', 5, 'opponent'));
       const state = { allies: side === 'ally' ? [v] : [other],
         enemies: side === 'ally' ? [other] : [v], rng: R, currentRound: 1,
         events: [], balanceTrace: [], weaponUsage: {} };
@@ -323,14 +323,17 @@ for (const side of ['ally', 'enemy']) {
         g.addStatus(v, 'poison', 1, other.name);
         g.processStatuses(v, () => {}, state, false);
       }
-      if (source === 'mind_control') {
+      if (source === 'distorted_ability') {
         const controller = unit(agent('error', 5, 'controller'));
         const puppet = unit(agent('door', 5, 'puppet'));
         if (side === 'ally') { state.enemies = [controller]; state.allies.push(puppet); }
         else { state.allies = [controller]; state.enemies.push(puppet); }
         puppet.agent.stats.atk = 1000; puppet.atk = 1000;
-        g.applyStructuredAbility(controller.agent, controller, puppet, state, [], R,
-          structuredClone(g.tierFor('error', 5).abilities[0]));
+        assert(g.applyStructuredAbility(controller.agent, controller, puppet, state, [], R,
+          structuredClone(g.tierFor('error', 5).abilities[0])));
+        assert.strictEqual(v.hp,1,'distortion cannot create an immediate extra attack');
+        assert(g.applyStructuredAbility(puppet.agent,puppet,controller,state,[],R,
+          structuredClone(g.tierFor('door',8).abilities[0])),'the next paid ability is redirected to the reviver');
       }
       assert(v.alive, 'automatic revival must restore the victim on either side');
       assert.strictEqual(v.hp, 350, 'Reset Fate restores the stated 35% Max HP');
@@ -405,13 +408,15 @@ test('an existing larger barrier preserves mythical awakening without claiming n
   assert(w.state.events.some(e=>e.subtype==='mythical_form'));
   assert(!w.state.events.some(e=>e.type==='shield'), 'unchanged shielding is not a new HP grant');
 });
-test('mythical pollution rolls independently for each living enemy', () => {
-  const w = fixture('justiciar', 4); w.u.hp = 500;
-  const second = unit(agent('door', 4, 'second')); w.state.enemies.push(second);
-  let calls = 0; const values = [.1, .9];
+test('mythical pollution rolls independently at 70% only for living Sequence 5–9 enemies', () => {
+  const w = fixture('justiciar', 4,'door',5); w.u.hp = 500;
+  const second = unit(agent('door', 9, 'second')),high=unit(agent('door',4,'immune-rank'));
+  w.state.enemies.push(second,high);
+  let calls = 0; const values = [.69, .70];
   g.tryMythicalForm(w.a, w.u, w.state, [], () => values[calls++] ?? .99);
-  assert.strictEqual(calls, 2, 'one independent 20% roll per living enemy');
+  assert.strictEqual(calls, 2, 'one independent 70% roll per eligible enemy only');
   assert(g.hasStatus(w.v, 'stunned')); assert(!g.hasStatus(second, 'stunned'));
+  assert(!g.hasStatus(high,'stunned'),'Sequence 4 is outside the approved pollution target range');
 });
 
 test('Paper Figurine shield-first reduction and reflect last until holder next turn', () => {

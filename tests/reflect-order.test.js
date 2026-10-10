@@ -41,15 +41,15 @@ for (let sd = 1; sd <= 200; sd++) {
     for (let j = i + 1; j < ev.length; j++) {
       const x = ev[j];
       if (x.type === 'cast' || x.type === 'round_start') break;
-      if (x.type === 'damage' && !x.isDot && x.actorId === ev[i].actorId) { expected++; break; }
+      if (x.type === 'damage' && !x.isDot && !x.isReflect && !x.isSignature && x.subtype !== 'mythical_authority' && x.actorId === ev[i].actorId) { expected++; break; }
     }
   }
-  const merged = rows.filter(r => r.type === 'turn' && r.costSP !== undefined && r.damages && r.damages.length > 0).length;
+  const merged = rows.filter(r => r.type === 'turn' && r.costSP !== undefined && (r.damages || []).some(d => !d.isDot && !d.isReflect && !d.isSignature && d.subtype !== 'mythical_authority')).length;
   assert.strictEqual(merged, expected, `seed ${sd}: merged rows ${merged} != casts with damage ${expected}`);
   ev.forEach((e, i) => {
     if (!e.isReflect) return;
-    let hit = null; // the attack it answered: first non-reflect damage after it, aimed at the reflecting unit
-    for (let j = i + 1; j < ev.length; j++) { if (ev[j].type === 'round_start') break; if (ev[j].type === 'damage' && !ev[j].isReflect) { hit = ev[j]; break; } }
+    let hit = null; // The causing attack connects the reflecting unit and its attacker, excluding nested reactions.
+    for (let j = i + 1; j < ev.length; j++) { if (ev[j].type === 'round_start') break; if (ev[j].type === 'damage' && !ev[j].isReflect && !ev[j].isSignature && ev[j].subtype !== 'mythical_authority' && ev[j].actorId === e.targetId && ev[j].targetId === e.actorId) { hit = ev[j]; break; } }
     if (!hit || hit.actorId !== e.targetId) return;
     reflects++;
     const row = rows.find(r => r.type === 'turn' && (r.reflects || []).includes(e));

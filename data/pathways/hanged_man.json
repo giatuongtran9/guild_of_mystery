@@ -16,13 +16,17 @@
     "name": "Depravity",
     "key": "depravity",
     "max": 100,
-    "gain": "Combat actions",
-    "spend": "Pathway abilities",
-    "full": "Next ability is empowered",
+    "gain": "Grazing a genuinely defeated Beyonder soul",
+    "spend": "Soul Drain",
+    "full": "One paid use of a grazed ability",
     "special": "Depravity",
     "characteristic": "Physical",
     "quirkName": "Flesh & Blood Shadow Abomination",
-    "quirkText": "Survival: Blood Supplication [Heal], Flesh Healing [Heal]"
+    "quirkText": "Survival: Blood Supplication [Heal], Flesh Healing [Heal]",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -144,6 +148,13 @@
           {
             "type": "sp_drain",
             "amount": 15.0
+          },
+          {
+            "type": "signature",
+            "rule": "hanged_graze",
+            "chargeCost": 100,
+            "slots": 1,
+            "multiplier": 1
           }
         ]
       }

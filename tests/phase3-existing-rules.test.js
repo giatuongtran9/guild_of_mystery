@@ -77,14 +77,17 @@ test('Misfortune Aura applies its published 20-point accuracy loss for two turns
  g.tickCombatEffectDurations([w.v]);assert.equal(w.v._hitChanceDebuff,.2);
  g.tickCombatEffectDurations([w.v]);assert.equal(w.v._hitChanceDebuff||0,0);
 });
-test('Interdiction blocks an Escape-tagged cast without spending SP',()=>{
- const w=world('justiciar',6,'demoness');assert(cast(w,'justiciar',6));
- const spec=g.tierFor('demoness',6).abilities[0];assert.equal(spec.tag,'Escape');
- const before=w.b.sp;
- assert.equal(g.applyStructuredAbility(w.b,w.v,w.u,w.state,[],R,spec),false);
- assert.equal(w.b.sp,before);
- g.tickUnitStatuses(w.v);g.tickUnitStatuses(w.v);
- assert(g.applyStructuredAbility(w.b,w.v,w.u,w.state,[],R,spec),'Escape becomes available after Root expires');
+test('Interdiction cancels paid healing and expires after two target turns',()=>{
+ const w=world('justiciar',6,'moon');assert(cast(w,'justiciar',6));
+ const spec=g.tierFor('hanged_man',7).abilities[0];w.v.hp=Math.round(w.v.maxHp*.5);
+ const before=w.b.sp,hp=w.v.hp;
+ assert.equal(g.applyStructuredAbility(w.b,w.v,w.u,w.state,[],R,spec),true,'a paid, cancelled action is still recorded as a cast');
+ assert.equal(w.b.sp,before-spec.costSP,'violating cast pays its ordinary cost');
+ assert(w.v.hp<=hp,'prohibited recovery cannot add HP');
+ assert.equal(w.v._signatureProhibition.turns,2);
+ g.signatureTurnEnd(w.v,w.state,[],R);assert.equal(w.v._signatureProhibition.turns,1);
+ g.signatureTurnEnd(w.v,w.state,[],R);assert(!w.v._signatureProhibition);
+ assert(g.applyStructuredAbility(w.b,w.v,w.u,w.state,[],R,spec),'healing becomes available after the court expires');
 });
 test('Executioner Stance grants temporary bypass without an unadvertised attack',()=>{
  const w=world('justiciar',2),before=w.v.hp;assert(cast(w,'justiciar',2));
@@ -104,10 +107,13 @@ test('corruption bonuses read the victim backing record',()=>{
  const w=world('sun',5);w.b.corruption=10;assert(cast(w,'sun',5));
  assert.equal(w.v._vulnerability,1.4);
 });
-test('a current-state reset cannot erase its own advertised cooldown',()=>{
+test('two-round rewind preserves prior cooldowns and its advertised cooldown',()=>{
  const w=world('wheel_of_fortune',2);w.a.cooldowns.old_spell=3;
+ w.u.hp=7000;g.signatureTurnEnd(w.u,w.state,[],R);
+ w.state.currentRound=3;w.u.hp=2000;
  assert(cast(w,'wheel_of_fortune',2));
- assert.equal(w.a.cooldowns.old_spell,undefined);
+ assert.equal(w.u.hp,7000,'HP comes from the actual two-round-old snapshot');
+ assert.equal(w.a.cooldowns.old_spell,3,'the rewind does not refresh a previous spell');
  assert.equal(w.a.cooldowns.reincarnation_loop,5);
 });
 console.log(`Phase 3 existing rules: ${pass} passed, ${fail} failed`);

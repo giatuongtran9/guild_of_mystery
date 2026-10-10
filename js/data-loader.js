@@ -51,7 +51,7 @@
   function validateRuntimeManifest(manifest) {
     if (!manifest || manifest.schema !== 'guild.runtime-manifest.v1') throw new Error('Runtime manifest has an invalid schema');
     if (typeof manifest.version !== 'string' || !/^[a-f0-9]{16}$/.test(manifest.version) || manifest.bundle !== `data/runtime/data.${manifest.version}.json`) throw new Error('Runtime manifest has an invalid versioned bundle path');
-    const scripts = ['paths', 'v15', 'generate', 'engine', 'state', 'campaign', 'ui'];
+    const scripts = ['paths', 'v15', 'generate', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'];
     if (!manifest.scriptVersions || typeof manifest.scriptVersions !== 'object' || Object.keys(manifest.scriptVersions).length !== scripts.length || scripts.some(name => typeof manifest.scriptVersions[`js/${name}.js`] !== 'string' || !/^[a-f0-9]{16}$/.test(manifest.scriptVersions[`js/${name}.js`]))) throw new Error('Runtime manifest has invalid script versions');
     if (manifest.serviceWorkerVersion !== undefined && !/^[a-f0-9]{16}$/.test(manifest.serviceWorkerVersion)) throw new Error('Runtime manifest has an invalid service worker version');
   }

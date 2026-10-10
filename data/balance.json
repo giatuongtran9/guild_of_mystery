@@ -455,7 +455,7 @@
   "combat_balance": {
     "enemyDamage": 1.9,
     "enemyDamageIndividual": 1.0,
-    "enemyDamageParty": 1.5
+    "enemyDamageParty": 1.3
   },
   "archetype_stat_progression": {
     "Physical": {

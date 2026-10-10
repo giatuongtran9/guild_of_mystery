@@ -422,15 +422,16 @@
 
 .speed-controls {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
 }
 
 .speed-controls button,
 .battle-toolbar button {
   min-width: 40px;
-  min-height: 40px;
+  min-height: 44px;
   padding: 6px 12px;
-  font-size: 12px;
+  font-size: 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -440,6 +441,15 @@
   background: var(--gold);
   color: #17130c;
   font-weight: bold;
+}
+
+.battle-toolbar button:disabled {
+  opacity: .5;
+  cursor: default;
+}
+
+.b-outcome.shield {
+  color: #8ccaf5;
 }
 
 .b-result-box {

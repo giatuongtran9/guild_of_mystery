@@ -16,13 +16,17 @@
     "name": "Wrath",
     "key": "wrath",
     "max": 100,
-    "gain": "Damage, intimidation and aggression",
-    "spend": "Storm and Horror effects",
-    "full": "Next storm gains major AoE",
+    "gain": "Water and Lightning attacks",
+    "spend": "Lightning Bolt against a Soaked enemy",
+    "full": "Consume Soaked and chain Lightning to one other enemy",
     "special": "Wrath",
     "characteristic": "Body / Storm",
     "quirkName": "Storm Authority",
-    "quirkText": "Combat-only storm and battlefield control."
+    "quirkText": "Combat-only storm and battlefield control.",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -134,6 +138,12 @@
             "type": "damage_component",
             "stat": "INT",
             "multiplier": 0.3
+          },
+          {
+            "type": "signature",
+            "rule": "tyrant_lightning",
+            "chargeCost": 100,
+            "amount": 0.5
           }
         ]
       }
@@ -159,6 +169,12 @@
             "type": "debuff",
             "amount": 0.2,
             "stat": "speed",
+            "duration": 2
+          },
+          {
+            "type": "signature",
+            "rule": "tyrant_soaked",
+            "chargeCost": 100,
             "duration": 2
           }
         ]

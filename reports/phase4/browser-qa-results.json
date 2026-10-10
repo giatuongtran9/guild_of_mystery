@@ -1,0 +1,29 @@
+{
+  "controlledUiFixture": true,
+  "evidence": [
+    {
+      "viewport": "mobile",
+      "unitStable": true,
+      "imageStable": true,
+      "image": "data/assets/runtime/characters/fool/fool_mythical.192.66240b067c313b49.webp",
+      "resourceText": "\n      \n        \n        FO\n      \n      \n        \n          Fool\n          Seq 2\n        \n        \n        \n          \n            \n          \n          15.2K/33.8K\n        \n        \n          \n          10.1K Shield\n        \n        \n          \n            \n          \n          22/1,375 SP\n        \n        Thread Control 100/100\n    Slots 1/2\n    \n    \n    \n      \n    ",
+      "resourcesVisible": true,
+      "fontSize": 12.8,
+      "buttonHeight": 44,
+      "viewportFits": true,
+      "browserErrors": []
+    },
+    {
+      "viewport": "desktop",
+      "unitStable": true,
+      "imageStable": true,
+      "image": "data/assets/runtime/characters/fool/fool_mythical.192.66240b067c313b49.webp",
+      "resourceText": "\n      \n        \n        FO\n      \n      \n        \n          Fool\n          Seq 2\n        \n        \n        \n          \n            \n          \n          15.2K/33.8K\n        \n        \n          \n          10.1K Shield\n        \n        \n          \n            \n          \n          22/1,375 SP\n        \n        Thread Control 100/100\n    Slots 1/2\n    \n    \n    \n      \n    ",
+      "resourcesVisible": true,
+      "fontSize": 12.8,
+      "buttonHeight": 44,
+      "viewportFits": true,
+      "browserErrors": []
+    }
+  ]
+}

@@ -1,5 +1,4 @@
-// Phase 1 AI regressions: use relevant advanced skills without changing authored
-// costs, cooldowns, coefficients, meters, or the existing role-priority policy.
+// Real AI regressions: ready advanced abilities remain useful alongside signatures.
 const assert = require('assert');
 const g = require('../js/node-loader.js');
 let passed = 0, failed = 0;
@@ -45,13 +44,13 @@ function lock(w, predicate) {
   for (const spec of g.activeSpecs(w.a)) if (predicate(spec)) w.a.cooldowns[idOf(spec)] = 99;
 }
 
-for (const [path, seq, expected] of [
-  ['door', 0, 'conceptual_unseal_seal'],
-  ['chained', 0, 'god_of_chains'],
-  ['darkness', 2, 'serenity_realm']
-]) test(`${path} Sequence ${seq} uses advanced ready enemy control`, () => {
+for (const [path, seq, expected] of [['door', 0, 'conceptual_unseal_seal']]) test(`${path} Sequence ${seq} uses advanced ready enemy control`, () => {
   const w = fixture(path, seq);
   assert.strictEqual(idOf(choose(w)), expected);
+});
+for(const [path,seq,signature,advanced] of [['chained',0,'madness_curse','god_of_chains'],['darkness',2,'dream_slumber','serenity_realm']])test(`${path} prepares its signature and still uses advanced control when preparation is unavailable`,()=>{
+  const w=fixture(path,seq);assert.strictEqual(idOf(choose(w)),signature);
+  w.a.cooldowns[signature]=99;assert.strictEqual(idOf(choose(w)),advanced);
 });
 
 test('self evasion is not chosen as offensive crowd control', () => {
@@ -134,7 +133,9 @@ test('no-heal preserves mixed healing and enemy SP drain', () => {
   assert.strictEqual(idOf(choose(w)), 'parasitic_contagion');
   const hp = w.actor.hp, sp = w.b.sp;
   g.powerEffect(w.a, w.actor, w.enemy, w.state, [], () => 0.99);
-  assert(w.b.sp < sp, 'the cast retains its useful SP drain');
+  assert.strictEqual(w.b.sp,sp,'parasitism drains on the host turn, rather than on attachment');
+  g.signatureTurnStart(w.enemy,w.state,[],()=>.99);
+  assert.strictEqual(w.b.sp,sp-20,'the attached parasite retains its useful SP drain on the host turn');
   assert.strictEqual(w.actor.hp, hp);
 });
 
@@ -166,21 +167,27 @@ test('a pure silence is not recast onto a target already silenced', () => {
   assert.notStrictEqual(idOf(choose(w)), 'desire_control');
 });
 
-for (const path of ['door', 'white_tower']) test(`${path} copy is held until an enemy skill has been witnessed`, () => {
-  const w = fixture(path, path === 'door' ? 6 : 8);
-  lock(w, s => !g.abilityEffects(s).some(e => e.type === 'copy_ability'));
+for (const path of ['door', 'white_tower']) test(`${path} copy is held until witnessed, analyzed and fully charged`, () => {
+  const w = fixture(path,6),rule=path==='door'?'door_record':'tower_imitation';
+  lock(w, s => !g.abilityEffects(s).some(e => e.rule===rule));
   assert.strictEqual(choose(w), null);
-  const witnessed = g.activeSpecs(w.b).find(s => !g.abilityEffects(s).some(e => e.type === 'copy_ability'));
+  const witnessed = g.activeSpecs(w.b).find(s => !g.abilityEffects(s).some(e => ['copy_ability','signature'].includes(e.type)));
   assert(witnessed, 'fixture must provide a real enemy skill');
-  w.state._abilityHistoryByUnit = { [w.enemy.id]: [{ spec: witnessed, round: 1 }] };
-  assert(g.abilityEffects(choose(w)).some(e => e.type === 'copy_ability'));
+  assert(g.applyStructuredAbility(w.b,w.enemy,w.actor,w.state,[],()=>.99,witnessed));
+  assert.strictEqual(choose(w),null,'observation alone cannot spend an incomplete charge');
+  g.setMeterValue(w.a,path,100);
+  if(path==='white_tower'){
+    assert.strictEqual(choose(w),null,'one observation cannot satisfy Polymath analysis');
+    assert(g.applyStructuredAbility(w.b,w.enemy,w.actor,w.state,[],()=>.99,witnessed));
+  }
+  assert(g.abilityEffects(choose(w)).some(e => e.rule===rule));
 });
 
 test('witnessing only another copy spell does not unlock a recursive copy cast', () => {
-  const w = fixture('white_tower', 8);
-  lock(w, s => !g.abilityEffects(s).some(e => e.type === 'copy_ability'));
-  const enemyCopy = g.activeSpecs(agent('white_tower', 8, 'copying-opponent'))[0];
-  w.state._abilityHistoryByUnit = { [w.enemy.id]: [{ spec: enemyCopy, round: 1 }] };
+  const w = fixture('white_tower', 6);
+  lock(w, s => !g.abilityEffects(s).some(e => e.rule==='tower_imitation'));g.setMeterValue(w.a,'white_tower',100);
+  const enemyCopy = g.activeSpecs(agent('white_tower', 6, 'copying-opponent')).find(s=>g.abilityEffects(s).some(e=>e.rule==='tower_imitation'));
+  w.state._abilityHistoryByUnit = { [w.enemy.id]: [{ spec: enemyCopy, round: 1,sequence:6 },{spec:enemyCopy,round:2,sequence:6}] };
   assert.strictEqual(choose(w), null);
 });
 
@@ -229,7 +236,7 @@ test('silence blocks advanced casts without changing the available definitions',
   assert.strictEqual(JSON.stringify(g.PATHS.door), before);
 });
 
-test('real battles open with advanced control rather than the oldest self stance', () => {
+test('real battles prepare the signature and repeatedly use advanced control afterward', () => {
   const firstCasts = {}, advancedCounts = {};
   for (const [path, expected] of [['door', 'Conceptual Unseal & Seal'], ['chained', 'God of Chains']]) {
     firstCasts[path] = {}; advancedCounts[path] = 0;
@@ -252,8 +259,21 @@ test('real battles open with advanced control rather than the oldest self stance
   }
   console.log('Real-cast evidence:', JSON.stringify({ firstCasts, advancedCounts }));
   assert.deepStrictEqual(firstCasts.door, { 'Conceptual Unseal & Seal': 12 });
-  assert.deepStrictEqual(firstCasts.chained, { 'God of Chains': 12 });
+  assert.deepStrictEqual(firstCasts.chained, { 'Madness Curse': 12 });
   assert(advancedCounts.door >= 12 && advancedCounts.chained >= 12);
+});
+test('Chained builds charge from zero and can release its curse after the real cooldown',()=>{
+  const a=agent('chained',8,'curse-owner');a.stats=a.baseStats={hp:1e6,atk:1,def:1,int:1};g.setMeterValue(a,'chained',0);
+  const spec=g.tierFor('chained',8).abilities[0],rule=spec.effects.find(e=>e.rule==='chained_release');
+  const q={id:'curse-cycle',name:'Curse cycle',story:'',objective:'combat',encounter:true,difficultySequence:9,enemyCount:1,rewards:{funds:0,reputation:0,materials:{}}};
+  const result=g.resolveQuest([a],q,3,{individual:true,authoredOpponents:[{name:'durable-foe',path:'fool',sequence:9,stats:{hp:1e8,atk:1,def:1,int:1},sp:0}]});
+  const casts=result.events.filter(e=>e.actorId===a.id&&e.ability==='Madness Curse'),release=result.events.find(e=>e.actorId===a.id&&e.isSignature&&e.type==='damage');
+  assert(release,'the contained curse must still exist when the signature is ready to release');
+  assert.strictEqual(casts[0].round,1,'containment starts through a real zero-charge cast');
+  assert(release.round>=casts[0].round+spec.cooldown+1,'release must respect the ability cooldown and cast grace');
+  assert(casts.some(e=>e.round===release.round),'release occurs as part of the actual eligible ability cast');
+  assert.strictEqual(release.hpLoss,Math.round(a.stats.hp*rule.amount),'release deals the configured Max HP damage');
+  assert(result.events.some(e=>e.actorId===a.id&&e.subtype==='signature'&&e.round===release.round&&e.text.includes('100 Restraint')),'charge is really spent at release');
 });
 
 console.log(`Phase 1 AI: ${passed} passed, ${failed} failed.`);

@@ -4,3 +4,6 @@ if (typeof module !== 'undefined' && module.exports) Object.assign(module.export
 if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { recoverHP, canGainShield, setCombatDuration, settleFatalDamage });
 
 if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { abilityDescription, abilityDamageText, isPhase3DeferredAbility, applyPartyPassiveEffects, initiativeScore, unitInitiative });
+
+if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { signatureUseful, signatureSupportTypes, signatureCastCost, signatureTryAction, signatureReady, signaturePrepareCast, applySignatureEffect, signatureAfterCast, signatureAfterDamage, signatureTurnStart, signatureTurnEnd, signatureFinalDeath, signatureActionFinished, signatureBorrowedAbilities, signatureDescription, signatureRetryContest, signatureCreateCompanion, signatureCaptureSoul, combatResourceSnapshot, emitCombatResources });
+if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { MYTHICAL_AUTHORITIES, mythicalAwaken, mythicalTurnStart, mythicalTurnEnd, mythicalBeforeDamage, mythicalAfterDamage, mythicalBeforeFatal, mythicalFinalDeath, mythicalBeforeCast, mythicalAfterCast, mythicalTryAction, mythicalDamageOptions, mythicalDescription });

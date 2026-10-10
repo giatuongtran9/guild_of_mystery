@@ -36,12 +36,12 @@
     "hp_threshold": 0.5,
     "shield_ratio": 0.3,
     "damage_bonus": 0.2,
-    "mental_pollution_chance": 0.2,
+    "mental_pollution_chance": 0.7,
     "trigger": "Automatic: triggers the moment current HP <= hp_threshold * Max HP, on any unit's turn (including incoming damage and damage-over-time), not only on the character's own turn.",
     "stance_buffs": {
       "hp_shield": "+30% Max HP Shield",
       "damage_bonus": "+20% All Damage",
-      "mental_pollution_aura": "On transformation, 20% chance each enemy loses its next turn."
+      "mental_pollution_aura": "On transformation, 70% chance each enemy at Sequence 5–9 loses its next turn."
     },
     "casting_rule": "FULL ABILITY CASTING PERMITTED WHILE TRANSFORMED. Mythical Form acts as an active stance buff and does not disable skills."
   },
@@ -67,6 +67,7 @@
       "base_rate": 0.05,
       "int_scaling_num": 0.22,
       "int_scaling_denom": 150,
+      "int_advantage_coefficient": 0.1,
       "close_quarters_mastery_factor": 0.015,
       "max_rate": 1
     },

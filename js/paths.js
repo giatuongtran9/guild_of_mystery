@@ -48,8 +48,6 @@ function getMeterValue(agent,path){const cfg=PATH_METERS[path]||PATH_METERS.fool
 function setMeterValue(agent,path,v){const cfg=PATH_METERS[path]||PATH_METERS.fool;agent[cfg.key]=Math.max(0,Math.min(cfg.max,Number(v)||0));}
 function changeMeter(agent,path,delta){const cfg=PATH_METERS[path]||PATH_METERS.fool;const v=Math.max(0,Math.min(cfg.max,getMeterValue(agent,path)+delta));setMeterValue(agent,path,v);return v;}
 function specialStatFor(path,sequence,agent={}){
-  if(path==='door')return {name:'Records',value:agent.recorded?.length||0,max:sequence<=5?4:1,gain:'Recording enemy abilities',spend:'Recorded powers'};
-  if(path==='fool')return {name:'Thread Control',value:agent.activeThreads??0,max:threadSlots(sequence),gain:'Thread control',spend:'Marionettes and threads'};
   const meter=PATH_METERS[path]; if(meter)return {name:meter.name,value:getMeterValue(agent,path),max:meter.max,gain:meter.gain,spend:meter.spend,full:meter.full};
   return {name:'Special',value:0,max:100,gain:'',spend:''};
 }

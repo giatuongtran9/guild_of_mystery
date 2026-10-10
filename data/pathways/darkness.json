@@ -16,13 +16,17 @@
     "name": "Night",
     "key": "night",
     "max": 100,
-    "gain": "Fighting in darkness and sleep effects",
-    "spend": "Night and concealment",
-    "full": "Next night effect is empowered",
+    "gain": "Inflicting sleep and entering dreams",
+    "spend": "Dream Slumber against a sleeping target",
+    "full": "Enter the dream and deal psychic damage without waking the target",
     "special": "Night",
     "characteristic": "Spirit / Darkness",
     "quirkName": "Night Authority",
-    "quirkText": "Combat-only sleep, concealment and survival."
+    "quirkText": "Combat-only sleep, concealment and survival.",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -68,9 +72,9 @@
         "label": "Active",
         "spCost": 20,
         "cooldown": 3,
-        "description": "Midnight Requiem — Deals 120% INT Psychic DMG and inflicts 1-round forced Sleep status.",
+        "description": "Midnight Requiem — Deals 180% INT Psychic DMG and inflicts 1-round forced Sleep status.",
         "stat": "INT",
-        "scale": 1.2,
+        "scale": 1.8,
         "damageType": "psychic",
         "formula": "pure_caster_ability",
         "tag": null,
@@ -122,7 +126,7 @@
         "name": "Dream Slumber",
         "kind": "active",
         "label": "Active",
-        "spCost": 35,
+        "spCost": 25,
         "cooldown": 3,
         "description": "Dream Slumber — Puts enemy to sleep for 1 round or lowers target Speed by 30%.",
         "stat": "INT",
@@ -141,7 +145,14 @@
             "type": "status",
             "status": "sleep",
             "chance": 1,
-            "duration": 1
+            "duration": 2
+          },
+          {
+            "type": "signature",
+            "rule": "darkness_nightmare",
+            "chargeCost": 100,
+            "amount": 2,
+            "duration": 2
           }
         ]
       }

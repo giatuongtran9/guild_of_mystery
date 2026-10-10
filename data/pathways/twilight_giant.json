@@ -16,13 +16,17 @@
     "name": "Resolve",
     "key": "resolve",
     "max": 100,
-    "gain": "Taking damage or protecting allies",
-    "spend": "Holy and decay techniques",
-    "full": "Next holy strike is empowered",
+    "gain": "Shielding and protecting allies",
+    "spend": "Guardian Stance",
+    "full": "Protect an ally and counter a direct attack",
     "special": "Resolve",
     "characteristic": "Body / Martial",
     "quirkName": "Martial Authority",
-    "quirkText": "Combat-only weapon mastery and physical durability."
+    "quirkText": "Combat-only weapon mastery and physical durability.",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -158,6 +162,13 @@
           },
           {
             "type": "taunt",
+            "duration": 2
+          },
+          {
+            "type": "signature",
+            "rule": "giant_guardian",
+            "chargeCost": 100,
+            "amount": 0.2,
             "duration": 2
           }
         ]

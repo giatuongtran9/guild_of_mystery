@@ -16,13 +16,17 @@
     "name": "Desire",
     "key": "desire",
     "max": 100,
-    "gain": "Combat actions",
-    "spend": "Pathway abilities",
-    "full": "Next ability is empowered",
+    "gain": "A marked enemy spending SP from Sequence 5",
+    "spend": "Desire Ignition",
+    "full": "Detonate accumulated desire pressure",
     "special": "Desire",
     "characteristic": "Agility",
     "quirkName": "Horned Hellfire Archdemon",
-    "quirkText": "Survival: Devil's Skin [Defense], Corrupted Flesh [Heal]"
+    "quirkText": "Survival: Devil's Skin [Defense], Corrupted Flesh [Heal]",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -146,6 +150,13 @@
             "maxHpRatio": 0.15,
             "scaling": "INT",
             "multiplier": 0
+          },
+          {
+            "type": "signature",
+            "rule": "abyss_desire",
+            "chargeCost": 100,
+            "amount": 0.5,
+            "duration": 2
           }
         ]
       }

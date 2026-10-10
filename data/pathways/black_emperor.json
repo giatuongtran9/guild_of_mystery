@@ -16,13 +16,17 @@
     "name": "Authority",
     "key": "authority",
     "max": 100,
-    "gain": "Exploiting rules and loopholes",
-    "spend": "Bribery and distortion",
-    "full": "Next distortion is empowered",
+    "gain": "Successful bribery and loophole exploitation",
+    "spend": "Bribe Weakening",
+    "full": "Redirect one eligible enemy benefit",
     "special": "Disorder",
     "characteristic": "Body / Concept",
     "quirkName": "Disorder Authority",
-    "quirkText": "Combat-only distortion, shields and rule abolition."
+    "quirkText": "Combat-only distortion, shields and rule abolition.",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -103,6 +107,13 @@
             "amount": 0.2,
             "stat": "atk",
             "duration": 2
+          },
+          {
+            "type": "signature",
+            "rule": "emperor_redirect",
+            "chargeCost": 100,
+            "duration": 2,
+            "uses": 1
           }
         ]
       }
@@ -140,11 +151,11 @@
         "name": "Order Distortion",
         "kind": "active",
         "label": "Active",
-        "spCost": 45,
+        "spCost": 20,
         "cooldown": 3,
-        "description": "Order Distortion — Distorts rules, forcing enemy to miss next strike and take 150% ATK DMG.",
+        "description": "Order Distortion — Distorts rules, forcing enemy to miss next strike and take 230% ATK DMG.",
         "stat": "ATK",
-        "scale": 1.5,
+        "scale": 2.3,
         "damageType": "physical",
         "formula": "empowered_hybrid_agility",
         "tag": null,

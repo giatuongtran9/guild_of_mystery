@@ -16,13 +16,17 @@
     "name": "Insight",
     "key": "insight",
     "max": 100,
-    "gain": "Investigation and mental control",
-    "spend": "Hypnosis, dreams and authorship",
-    "full": "Next mental effect gains penetration",
+    "gain": "Reading enemy intent and applying mental control",
+    "spend": "Battle Hypnosis",
+    "full": "Command one enemy action",
     "special": "Insight",
     "characteristic": "Spirit / Mental",
     "quirkName": "Mental Authority",
-    "quirkText": "Combat-only mental control and protection."
+    "quirkText": "Combat-only mental control and protection.",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -125,8 +129,9 @@
         "tag": null,
         "effects": [
           {
-            "type": "status",
-            "status": "stunned",
+            "type": "signature",
+            "rule": "visionary_hypnosis",
+            "chargeCost": 100,
             "duration": 1
           }
         ]

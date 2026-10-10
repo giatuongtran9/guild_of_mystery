@@ -3,7 +3,7 @@ const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({ '&':'&amp;','<':'&lt;','>':'
 function flattenTurnRows(groupedRounds) {
   const flattened = [];
   for (const gr of groupedRounds) {
-    flattened.push({ isRoundHeader: true, round: gr.round, initiative: gr.initiative });
+    flattened.push({ isRoundHeader: true, round: gr.round, initiative: gr.initiative, resources: gr.resources });
     for (const row of gr.rows) {
       flattened.push(row);
     }
@@ -12,14 +12,14 @@ function flattenTurnRows(groupedRounds) {
 }
 
 function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
-  const hpMap = {};
+  const hpMap = Object.create(null);
   for (const a of (initialAllies || [])) {
-    const entry = { ...a, curHp: a.maxHp, maxHp: a.maxHp, curShield: 0 };
+    const entry = { ...a, curHp: a.hp ?? a.maxHp, maxHp: a.maxHp, curShield: a.shield ?? 0 };
     if (a.id) hpMap[a.id] = entry;
     if (a.name) hpMap[a.name] = entry;
   }
   for (const e of (initialEnemies || [])) {
-    const entry = { ...e, curHp: e.maxHp, maxHp: e.maxHp, curShield: 0 };
+    const entry = { ...e, curHp: e.hp ?? e.maxHp, maxHp: e.maxHp, curShield: e.shield ?? 0 };
     if (e.id) hpMap[e.id] = entry;
     if (e.name) hpMap[e.name] = entry;
   }
@@ -33,8 +33,8 @@ function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
         }
       }
     }
-    if (row.damages || row.reflects) {
-      for (const d of [...(row.damages || []), ...(row.reflects || [])]) {
+    if (row.damages || row.reflects || row.reactions) {
+      for (const d of [...(row.damages || []), ...(row.reflects || []), ...(row.reactions || [])]) {
         const target = hpMap[d.targetId] || hpMap[d.targetName];
         if (target) {
           if (d.absorbed) {
@@ -44,7 +44,7 @@ function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
             target.curShield = d.shieldAfter;
           }
           if (d.hpAfter !== undefined) target.curHp = d.hpAfter;
-          else target.curHp = Math.max(0, target.curHp - (d.amount || 0));
+          else target.curHp = Math.max(0, target.curHp - (d.hpLoss ?? Math.max(0, (d.amount || 0) - (d.absorbed || 0))));
         }
       }
     }
@@ -72,6 +72,14 @@ function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
     if (row.type === 'death' && (row.targetId || row.targetName)) {
       const target = hpMap[row.targetId] || hpMap[row.targetName];
       if (target) { target.curHp = 0; target.curShield = 0; }
+    }
+    for (const resource of row.resources || []) {
+      const target = hpMap[resource.id] || hpMap[resource.name] || {};
+      Object.assign(target, resource);
+      if (resource.hp !== undefined) target.curHp = resource.hp;
+      if (resource.shield !== undefined) target.curShield = resource.shield;
+      if (resource.id) hpMap[resource.id] = target;
+      if (resource.name) hpMap[resource.name] = target;
     }
   }
   return hpMap;
@@ -134,16 +142,18 @@ function getCombatSprite(u, options = {}) {
   const spritePath = COMBAT_SPRITE_PATHS.get(path) || 'fool';
   const assetBase = typeof window !== 'undefined' && window.G9_CHARACTER_ASSET_BASE || 'data/assets/characters/';
 
-  const original = `${assetBase}${spritePath}/${spritePath}_seq${spriteSeq}.png`;
-  const legacy = `${assetBase}${spritePath}/seq${spriteSeq}.png`;
-  const variant = ['portrait','dossier'].includes(options.variant) ? options.variant : 'full';
+  const inForm = !!(u.inForm || u._inForm);
+  const stem = inForm ? `${spritePath}_mythical` : `${spritePath}_seq${spriteSeq}`;
+  const original = `${assetBase}${spritePath}/${stem}.png`;
+  const legacy = inForm ? original : `${assetBase}${spritePath}/seq${spriteSeq}.png`;
+  const variant = ['portrait','dossier'].includes(options.variant) ? options.variant : inForm ? 'portrait' : 'full';
   const size = variant === 'dossier' ? 384 : 192;
   const assets = typeof G9_DATA !== 'undefined' ? G9_DATA.runtimeAssets?.entries : null;
-  const art = assets?.[`data/assets/characters/${spritePath}/${spritePath}_seq${spriteSeq}.png`]?.[variant];
-  const canonical = `data/assets/characters/${spritePath}/${spritePath}_seq${spriteSeq}.png`;
+  const art = assets?.[`data/assets/characters/${spritePath}/${stem}.png`]?.[variant];
+  const canonical = `data/assets/characters/${spritePath}/${stem}.png`;
   const valid = art && (variant === 'full'
     ? Number.isInteger(art.width) && art.width > 0 && Number.isInteger(art.height) && art.height > 0 && typeof art.src === 'string' && art.src.startsWith(canonical + '?v=') && /^[a-f0-9]{16}$/.test(art.src.slice(canonical.length + 3))
-    : art.width === size && art.height === size && new RegExp(`^data/assets/runtime/characters/${spritePath}/${spritePath}_seq${spriteSeq}\\.${size}\\.[a-f0-9]{16}\\.(png|webp)$`).test(art.src));
+    : art.width === size && art.height === size && new RegExp(`^data/assets/runtime/characters/${spritePath}/${stem}\\.${size}\\.[a-f0-9]{16}\\.(png|webp)$`).test(art.src));
   const src = valid ? art.src : original;
   const loading = options.loading === 'eager' ? 'eager' : 'lazy';
   const priority = loading === 'eager' && options.priority === 'high' ? ' fetchpriority="high"' : '';
@@ -151,7 +161,7 @@ function getCombatSprite(u, options = {}) {
   const quoted = value => "'" + String(value).replace(/[\\'<>&"\r\n\u2028\u2029]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')) + "'";
   const legacyError = `this.onerror=()=>{${hide}};this.src=${quoted(legacy)};`;
   const onerror = valid ? `this.onerror=()=>{${legacyError}};this.src=${quoted(original)};` : legacyError;
-  return `<img class="combat-sprite-img" src="${esc(src)}" width="${valid ? art.width : size}" height="${valid ? art.height : size}" loading="${loading}" decoding="async"${priority} onerror="${onerror}" alt="Seq ${spriteSeq}"><div class="combat-sprite-fallback" style="display:none">${esc((u.name||'?').slice(0,2).toUpperCase())}</div>`;
+  return `<img class="combat-sprite-img" src="${esc(src)}" width="${valid ? art.width : size}" height="${valid ? art.height : size}" loading="${loading}" decoding="async"${priority} onerror="${onerror}" alt="${inForm ? 'Mythical Form' : `Seq ${spriteSeq}`}"><div class="combat-sprite-fallback" style="display:none">${esc((u.name||'?').slice(0,2).toUpperCase())}</div>`;
 }
 function battlefieldImageFor(quest = {}, isSim = false) {
   const config = typeof G9D !== 'undefined' ? G9D.contracts.battlefields || {} : {};
@@ -168,18 +178,26 @@ function battlefieldImageFor(quest = {}, isSim = false) {
   return image(config.defaultImage);
 }
 
-function renderHpStrip(hpMap, allies, enemies, battlefieldImage = '') {
-  function combatEntity(u, team, index) {
-    const data = (u.id && hpMap[u.id]) || (u.name && hpMap[u.name]) || { curHp: u.hp || u.maxHp, maxHp: u.maxHp, curShield: 0, curMp: u.mp || 100, maxMp: u.maxMp || 100 };
-    const curHp = Math.max(0, data.curHp !== undefined ? data.curHp : (u.hp || u.maxHp || 100));
+function battleResourceMarkup(data) {
+  const meter = data.meter;
+  return `${meter ? `<span class="gm-charge ${meter.value >= meter.max ? 'ready' : ''}">${esc(meter.name)} ${abbrNum(meter.value)}/${abbrNum(meter.max)}</span>` : ''}
+    ${data.threadSlots ? `<span>Slots ${esc(data.threadSlots.used)}/${esc(data.threadSlots.max)}</span>` : ''}
+    ${data.threadProgress ? `<span>Binding ${esc(data.threadProgress.value)}/${esc(data.threadProgress.max)}</span>` : ''}
+    ${data.path === 'door' && data.sequence <= 6 && data.recordCount !== undefined ? `<span>Records ${esc(data.recordCount)}/${esc(data.recordCapacity ?? (data.sequence <= 5 ? 4 : 1))}</span>` : ''}
+    ${(data.statuses || []).map(status => `<span class="gm-status">${esc(status.name)}${status.turns > 0 ? ` · ${esc(status.turns)} turn${status.turns === 1 ? '' : 's'}` : ''}</span>`).join('')}`;
+}
+
+function renderCombatEntity(u, team, index, hpMap) {
+    const data = (u.id && hpMap[u.id]) || (u.name && hpMap[u.name]) || u;
+    const curHp = Math.max(0, data.curHp ?? u.hp ?? u.maxHp ?? 100);
     const maxHp = Math.max(1, data.maxHp || u.maxHp || 100);
     const shield = Math.max(0, data.curShield || 0);
     const hpPct = Math.min(100, Math.round((curHp / maxHp) * 100));
     const shieldPct = Math.min(100, Math.round((shield / maxHp) * 100));
-    const dead = curHp <= 0;
+    const dead = curHp <= 0 || data.alive === false || data.inCombat === false;
 
-    const curMp = Math.max(0, data.curMp !== undefined ? data.curMp : (u.mp || 80));
-    const maxMp = Math.max(1, data.maxMp || u.maxMp || 100);
+    const curMp = Math.max(0, data.sp ?? u.sp ?? 0);
+    const maxMp = Math.max(1, data.maxSP ?? u.maxSP ?? 1);
     const mpPct = Math.min(100, Math.round((curMp / maxMp) * 100));
 
     let seqDisplay = '';
@@ -190,9 +208,9 @@ function renderHpStrip(hpMap, allies, enemies, battlefieldImage = '') {
       if (match) seqDisplay = `Seq ${match[1]}`;
     }
 
-    const sprite = (team === 'ally' || u.campaignEnemy) ? getCombatSprite(u) : `<div class="combat-enemy-avatar"><span class="enemy-skull">💀</span></div>`;
+    const sprite = (team === 'ally' || u.path || u.campaignEnemy || data.inForm) ? getCombatSprite({ ...u, ...data }) : `<div class="combat-enemy-avatar"><span class="enemy-skull">💀</span></div>`;
 
-    return `<div class="gm-arena-unit ${team} ${dead ? 'dead' : ''}" data-unit-index="${index}">
+    return `<div class="gm-arena-unit ${team} ${dead ? 'dead' : ''} ${data.inForm ? 'mythical' : ''}" data-unit-index="${index}" data-unit-id="${esc(u.id || u.name)}" data-form-art="${!!data.inForm}">
       <div class="gm-unit-sprite-anchor">
         <div class="gm-unit-shadow"></div>
         <div class="gm-unit-sprite">${sprite}</div>
@@ -206,22 +224,25 @@ function renderHpStrip(hpMap, allies, enemies, battlefieldImage = '') {
         <div class="gm-float-gauge hp">
           <div class="gm-float-track">
             <div class="gm-float-fill hp" style="width:${hpPct}%"></div>
-            <div class="gm-float-fill shield" style="width:${shieldPct}%;${shieldPct > 0 ? '' : 'display:none'}"></div>
           </div>
           <span class="gm-float-num">${abbrNum(curHp)}/${abbrNum(maxHp)}</span>
         </div>
-        ${team === 'ally' ? `
-        <!-- Floating MP Bar -->
+        <div class="gm-float-gauge shield">
+          <div class="gm-float-track"><div class="gm-float-fill shield" style="width:${shieldPct}%;${shieldPct > 0 ? '' : 'display:none'}"></div></div>
+          <span class="gm-float-num">${abbrNum(shield)} Shield</span>
+        </div>
         <div class="gm-float-gauge mp">
           <div class="gm-float-track">
             <div class="gm-float-fill mp" style="width:${mpPct}%"></div>
           </div>
-          <span class="gm-float-num">${curMp} MP</span>
-        </div>` : ''}
+          <span class="gm-float-num">${abbrNum(curMp)}/${abbrNum(maxMp)} SP</span>
+        </div>
+        <div class="gm-unit-resources">${battleResourceMarkup(data)}</div>
       </div>
     </div>`;
-  }
+}
 
+function renderHpStrip(hpMap, allies, enemies, battlefieldImage = '') {
   return `<div class="gm-dungeon-arena" aria-label="Guild Master Dungeon Arena">
     <div class="gm-dungeon-backdrop" aria-hidden="true">
       ${battlefieldImage ? `<img class="gm-battlefield-image" src="${esc(battlefieldImage)}" alt="" onerror="this.hidden=true">` : ''}
@@ -231,7 +252,7 @@ function renderHpStrip(hpMap, allies, enemies, battlefieldImage = '') {
     <div class="gm-stage-playfield">
       <!-- Enemy formation (opposite / back row) -->
       <div class="gm-rank-row gm-rank-enemies">
-        ${(enemies || []).map((e, i) => combatEntity(e, 'enemy', i)).join('')}
+        ${(enemies || []).map((e, i) => renderCombatEntity(e, 'enemy', i, hpMap)).join('')}
       </div>
 
       <!-- Mid-room distance spacer -->
@@ -239,7 +260,7 @@ function renderHpStrip(hpMap, allies, enemies, battlefieldImage = '') {
 
       <!-- Ally Beyonders party (foreground / bottom row) -->
       <div class="gm-rank-row gm-rank-allies">
-        ${(allies || []).map((a, i) => combatEntity(a, 'ally', i)).join('')}
+        ${(allies || []).map((a, i) => renderCombatEntity(a, 'ally', i, hpMap)).join('')}
       </div>
     </div>
   </div>`;
@@ -306,9 +327,11 @@ function renderTurnRowHtml(row, showDetails) {
 
   // Merged action row (tree style)
   const actorClass = row.actorTeam || 'ally';
-  const damagesHtml = (row.damages || []).map(d => {
-    const targetClass = d.targetTeam || (actorClass === 'ally' ? 'enemy' : 'ally');
-    const exact = Number(d.amount || 0).toLocaleString();
+  const damagesHtml = [...(row.damages || []), ...(row.reflects || []), ...(row.reactions || [])].map(d => {
+    const isReaction = (row.reactions || []).includes(d);
+    const targetClass = d.targetTeam || ((d.actorTeam || actorClass) === 'ally' ? 'enemy' : 'ally');
+    const hpLoss = d.hpLoss ?? Math.max(0, (d.amount || 0) - (d.absorbed || 0));
+    const exact = Number(hpLoss).toLocaleString();
     const badges = [
       d.critical ? '<span class="b-badge crit" title="Critical Hit">💥 CRIT</span>' : '',
       d.trueDamage ? '<span class="b-badge true-dmg" title="True Damage">⚡ TRUE</span>' : '',
@@ -320,9 +343,11 @@ function renderTurnRowHtml(row, showDetails) {
     const hpDetail = (showDetails && d.hpAfter !== undefined && d.maxHp) ? ` (HP ${abbrNum(d.hpAfter)}/${abbrNum(d.maxHp)})` : '';
     return `<div class="b-sub-outcome">
       <span class="b-tree-branch">↳</span>
+      ${isReaction ? `<span class="b-badge">Reaction · ${esc(d.actorName || 'Unit')}</span>` : ''}
       <span class="b-arrow">→</span>
       <span class="b-target ${targetClass}">${esc(d.targetName || 'Target')}</span>
-      <span class="b-outcome damage" title="Exact: ${exact}">−${abbrNum(d.amount)} <small>${esc(d.damageType || 'dmg')}</small>${hpDetail}</span>
+      <span class="b-outcome damage" title="HP loss: ${exact}">−${abbrNum(hpLoss)} HP <small>${esc(d.damageType || 'dmg')}</small>${hpDetail}</span>
+      ${d.absorbed ? `<span class="b-outcome shield">−${abbrNum(d.absorbed)} Shield</span>` : ''}
       ${badges}
     </div>`;
   }).join('');
@@ -330,6 +355,9 @@ function renderTurnRowHtml(row, showDetails) {
   const healsHtml = (row.heals || []).map(h => {
     return `<div class="b-sub-outcome">
       <span class="b-tree-branch">↳</span>
+      ${h.actorId && h.actorId !== row.actorId ? `<span class="b-badge">Recovery · ${esc(h.actorName || 'Unit')}</span>` : ''}
+      <span class="b-arrow">→</span>
+      <span class="b-target ${h.targetTeam || actorClass}">${esc(h.targetName || 'Target')}</span>
       <span class="b-outcome heal" title="Recovered ${h.amount} HP">+${abbrNum(h.amount)} HP</span>
     </div>`;
   }).join('');
@@ -337,6 +365,9 @@ function renderTurnRowHtml(row, showDetails) {
   const shieldsHtml = (row.shields || []).map(s => {
     return `<div class="b-sub-outcome">
       <span class="b-tree-branch">↳</span>
+      ${s.actorId && s.actorId !== row.actorId ? `<span class="b-badge">Shield · ${esc(s.actorName || 'Unit')}</span>` : ''}
+      <span class="b-arrow">→</span>
+      <span class="b-target ${s.targetTeam || actorClass}">${esc(s.targetName || 'Target')}</span>
       <span class="b-outcome shield" title="Gained ${s.amount} shield">🛡️ +${abbrNum(s.amount)} Shield</span>
     </div>`;
   }).join('');
@@ -345,8 +376,9 @@ function renderTurnRowHtml(row, showDetails) {
     ? `<span class="b-details-info">[Cost: ${row.costSP || 0} SP | ${row.cooldown || 0} CD]</span>`
     : '';
 
-  const sublinesHtml = (row.subrows && row.subrows.length)
-    ? `<div class="b-sublines">${row.subrows.map(s => {
+  const subrows = (row.subrows || []).filter(s => s.type !== 'reaction' || !(row.reactions || []).length);
+  const sublinesHtml = subrows.length
+    ? `<div class="b-sublines">${subrows.map(s => {
         let extra = '';
         if (showDetails) {
           if (s.curVal !== undefined && s.maxVal !== undefined && s.stat) {
@@ -379,6 +411,12 @@ function renderTurnRowHtml(row, showDetails) {
   </div>`;
 }
 
+function battleOutcomeLabel(outcome, success, isSim = false) {
+  if (outcome === 'timeout') return isSim ? 'Draw · Round limit reached' : 'Round limit reached · Contract incomplete';
+  if (outcome === 'mutual_defeat') return 'Neither side survived';
+  return isSim ? (success ? 'Team A Victory' : 'Team B Victory') : (success ? 'Victory' : 'Defeat');
+}
+
 function renderBattleLogComponent({
   allies,
   enemies,
@@ -388,7 +426,10 @@ function renderBattleLogComponent({
   showDetails,
   speed,
   summaryText,
+  success = false,
+  outcome,
   isSim,
+  paused = false,
   battlefieldImage = ''
 }) {
   const visible = flattenedRows.slice(0, shownCount);
@@ -400,6 +441,9 @@ function renderBattleLogComponent({
   return `<div class="battle-log-wrap" role="log" aria-live="polite" data-shown-count="${visible.length}" data-details="${!!showDetails}">
     <div class="battle-toolbar">
       <div class="speed-controls">
+        <button type="button" data-pause ${isDone ? 'disabled' : ''} aria-pressed="${paused}" onclick="window.G9.toggleTickerPause()">${paused ? 'Resume' : 'Pause'}</button>
+        <button type="button" data-step ${isDone ? 'disabled' : ''} onclick="window.G9.stepTicker()">Step</button>
+        <button type="button" data-speed="0.5" class="${speed===.5?'active':''}" onclick="window.G9.setTickerSpeed(.5)">Read</button>
         <button type="button" data-speed="1" class="${speed===1?'active':''}" onclick="window.G9.setTickerSpeed(1)">1x</button>
         <button type="button" data-speed="2" class="${speed===2?'active':''}" onclick="window.G9.setTickerSpeed(2)">2x</button>
         <button type="button" data-speed="4" class="${speed===4?'active':''}" onclick="window.G9.setTickerSpeed(4)">4x</button>
@@ -414,10 +458,10 @@ function renderBattleLogComponent({
     ${renderHpStrip(hpMap, allies, enemies, battlefieldImage)}
     <div class="battle-ticker-viewport" id="${isSim ? 'sim-viewport' : 'battle-viewport'}">
       ${contentHtml}
-      ${!isDone ? '<div class="typing" style="padding:6px 8px;font-style:italic;color:var(--muted)">Battling…</div>' : ''}
+      ${!isDone ? `<div class="typing" style="padding:6px 8px;font-style:italic;color:var(--muted)">${paused ? 'Paused · Step to read the next action.' : 'Battling…'}</div>` : ''}
     </div>
-    <div class="b-result-box ${summaryText.includes('defeated') || summaryText.includes('Team A') ? 'victory' : 'failure'}" ${isDone && summaryText ? '' : 'hidden'}>
-      <h4>Encounter Summary</h4>
+    <div class="b-result-box ${success ? 'victory' : 'failure'}" ${isDone && summaryText ? '' : 'hidden'}>
+      <h4>Encounter Summary · ${battleOutcomeLabel(outcome, success, isSim)}</h4>
       <p>${esc(summaryText)}</p>
     </div>
   </div>`;
@@ -430,23 +474,46 @@ function updateBattleLogComponent(wrap, props) {
   const follow = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <= 35;
   const top = viewport.scrollTop, left = viewport.scrollLeft;
   for (const [team, units] of [['ally', props.allies], ['enemy', props.enemies]]) {
+    const rank = wrap.querySelector(team === 'ally' ? '.gm-rank-allies' : '.gm-rank-enemies');
+    const present = new Set(Array.from(rank.querySelectorAll('.gm-arena-unit'), node => node.dataset.unitId));
+    for (const data of new Set(Object.values(hpMap))) {
+      if (data.team === team && data.id && !present.has(data.id)) {
+        rank.insertAdjacentHTML('beforeend', renderCombatEntity(data, team, units.length, hpMap));
+        present.add(data.id);
+      }
+    }
     for (const node of wrap.querySelectorAll(`.gm-arena-unit.${team}`)) {
-      const u = units[Number(node.dataset.unitIndex)];
+      const u = units.find(unit => (unit.id || unit.name) === node.dataset.unitId) || hpMap[node.dataset.unitId] || units[Number(node.dataset.unitIndex)];
       if (!u) continue;
       const data = hpMap[u.id] || hpMap[u.name] || u;
       const hp = Math.max(0, data.curHp ?? u.hp ?? u.maxHp ?? 100);
       const maxHp = Math.max(1, data.maxHp || u.maxHp || 100);
       const shieldPct = Math.min(100, Math.round((data.curShield || 0) / maxHp * 100));
-      node.classList.toggle('dead', hp <= 0);
+      node.classList.toggle('dead', hp <= 0 || data.alive === false || data.inCombat === false);
       node.querySelector('.gm-float-fill.hp').style.width = `${Math.min(100, Math.round(hp / maxHp * 100))}%`;
       node.querySelector('.gm-float-gauge.hp .gm-float-num').textContent = `${abbrNum(hp)}/${abbrNum(maxHp)}`;
       const shield = node.querySelector('.gm-float-fill.shield');
       shield.style.width = `${shieldPct}%`; shield.style.display = shieldPct ? '' : 'none';
+      node.querySelector('.gm-float-gauge.shield .gm-float-num').textContent = `${abbrNum(data.curShield || 0)} Shield`;
       const mpGauge = node.querySelector('.gm-float-gauge.mp');
       if (mpGauge) {
-        const mp = Math.max(0, data.curMp ?? (u.mp || 80)), maxMp = Math.max(1, data.maxMp || u.maxMp || 100);
+        const mp = Math.max(0, data.sp ?? u.sp ?? 0), maxMp = Math.max(1, data.maxSP ?? u.maxSP ?? 1);
         mpGauge.querySelector('.gm-float-fill.mp').style.width = `${Math.min(100, Math.round(mp / maxMp * 100))}%`;
-        mpGauge.querySelector('.gm-float-num').textContent = `${mp} MP`;
+        mpGauge.querySelector('.gm-float-num').textContent = `${abbrNum(mp)}/${abbrNum(maxMp)} SP`;
+      }
+      const resources = node.querySelector('.gm-unit-resources'), markup = battleResourceMarkup(data);
+      if (resources.innerHTML !== markup) resources.innerHTML = markup;
+      node.classList.toggle('mythical', !!data.inForm);
+      if (node.dataset.formArt !== String(!!data.inForm)) {
+        const holder = document.createElement('div');
+        holder.innerHTML = getCombatSprite({ ...u, ...data });
+        const next = holder.querySelector('img'), image = node.querySelector('.combat-sprite-img');
+        if (image) {
+          for (const attribute of ['src', 'width', 'height', 'alt', 'onerror']) image.setAttribute(attribute, next.getAttribute(attribute));
+          image.style.display = '';
+          const fallback = node.querySelector('.combat-sprite-fallback'); if (fallback) fallback.style.display = 'none';
+        } else node.querySelector('.gm-unit-sprite').innerHTML = holder.innerHTML;
+        node.dataset.formArt = !!data.inForm;
       }
     }
   }
@@ -460,15 +527,21 @@ function updateBattleLogComponent(wrap, props) {
     viewport.insertAdjacentHTML('beforeend', visible.slice(previousCount).map(row => renderTurnRowHtml(row, props.showDetails)).join(''));
   }
   if (!props.isDone && typing) viewport.append(typing);
+  if (typing) typing.textContent = props.paused ? 'Paused · Step to read the next action.' : 'Battling…';
   wrap.dataset.shownCount = visible.length;
   wrap.dataset.details = !!props.showDetails;
   for (const button of wrap.querySelectorAll('[data-speed]')) button.classList.toggle('active', Number(button.dataset.speed) === props.speed);
   wrap.querySelector('[data-skip]').hidden = props.isDone;
+  const pause = wrap.querySelector('[data-pause]');
+  pause.disabled = props.isDone; pause.textContent = props.paused ? 'Resume' : 'Pause'; pause.setAttribute('aria-pressed', !!props.paused);
+  wrap.querySelector('[data-step]').disabled = props.isDone;
   const details = wrap.querySelector('button[data-details]');
   details.classList.toggle('active', !!props.showDetails);
   details.textContent = props.showDetails ? 'Hide Details' : 'Show Details';
   const summary = wrap.querySelector('.b-result-box');
   summary.hidden = !props.isDone || !props.summaryText;
+  summary.classList.toggle('victory', !!props.success); summary.classList.toggle('failure', !props.success);
+  summary.querySelector('h4').textContent = `Encounter Summary · ${battleOutcomeLabel(props.outcome, props.success, props.isSim)}`;
   summary.querySelector('p').textContent = props.summaryText;
   const backdrop = wrap.querySelector('.gm-dungeon-backdrop');
   const image = backdrop.querySelector('img');
@@ -597,8 +670,8 @@ if (typeof document !== 'undefined') (() => {
   }
   function scheduleTicker() {
     const playing = run || (tab === 'simulator' ? simResult : null);
-    if (playing && playing.currentTurn < playing.turnRows.length && !tickerTimer) {
-      const delay = tickerSpeed === 4 ? 100 : (tickerSpeed === 2 ? 250 : 500);
+    if (playing && !playing.paused && playing.currentTurn < playing.turnRows.length && !tickerTimer) {
+      const delay = tickerSpeed === .5 ? 1600 : tickerSpeed === 4 ? 100 : (tickerSpeed === 2 ? 250 : 500);
       const timer = setTimeout(() => {
         if (tickerTimer !== timer) return;
         tickerTimer = null;
@@ -621,8 +694,11 @@ if (typeof document !== 'undefined') (() => {
       allies: isSim ? playing.teamA : playing.initialAllies,
       enemies: isSim ? playing.teamB : playing.initialEnemies,
       flattenedRows: playing.turnRows, shownCount: playing.currentTurn, isDone,
-      showDetails: isSim ? simBattleDetails : showBattleDetails, speed: tickerSpeed,
+      showDetails: isSim ? simBattleDetails : showBattleDetails, speed: tickerSpeed, paused: !!playing.paused,
       summaryText: playing.isCampaign ? summary.replace(/Casualties/g, 'Agents recovered') : summary,
+      success: isSim ? playing.success : playing.result.success,
+      outcome: isSim ? playing.battleOutcome : playing.result.battleOutcome || playing.result.battleSnapshot?.outcome,
+      isSim,
       battlefieldImage: battlefieldImageFor(isSim ? {} : playing.quest, isSim)
     });
     const completion = app.querySelector('.battle-completion');
@@ -678,7 +754,7 @@ if (typeof document !== 'undefined') (() => {
   function battleSimulator(){
     const count=simMode==='1v1'?1:2;
     const side=(arr,label)=>`<div class="sim-side"><h3>${label}</h3>${arr.slice(0,count).map((x,i)=>`<div class="sim-unit"><label>${label} ${i+1} Pathway<select onchange="window.G9.simSet('${label==='Team A'?'A':'B'}',${i},'path',this.value)">${PATH_KEYS.map(k=>`<option value="${k}" ${x.path===k?'selected':''}>${esc(pathOf(k).name)}</option>`).join('')}</select></label><label>Sequence<select onchange="window.G9.simSet('${label==='Team A'?'A':'B'}',${i},'sequence',Number(this.value))">${Array.from({length:10},(_,j)=>9-j).map(n=>`<option value="${n}" ${x.sequence===n?'selected':''}>Sequence ${n}</option>`).join('')}</select></label></div>`).join('')}</div>`;
-    return `<section class="panel battle-simulator"><div class="section-head"><div><h2>Battle Simulator</h2><p>Run a deterministic preview battle between any Pathway and Sequence combination.</p></div><div><button class="${simMode==='1v1'?'active':''}" onclick="window.G9.simMode('1v1')">1v1</button><button class="${simMode==='2v2'?'active':''}" onclick="window.G9.simMode('2v2')">2v2</button></div></div><div class="sim-grid">${side(simA,'Team A')}${side(simB,'Team B')}</div><div class="sim-actions"><button class="primary" onclick="window.G9.runSimulation()">Simulate Battle</button><button onclick="window.G9.clearSimulation()">Clear Log</button></div>${simResult?`<div class="sim-result"><div class="section-head"><h3>${simResult.success?'Team A Victory':'Team B Victory / Draw'}</h3><span>${simResult.rounds} rounds · ${simResult.balanceTrace.length} damage events</span></div><div class="sim-hp"><div><b>Team A</b> ${simResult.teamA.filter(x=>x.alive).length}/${simResult.teamA.length} standing</div><div><b>Team B</b> ${simResult.teamB.filter(x=>x.alive).length}/${simResult.teamB.length} standing</div></div><div class="balance-panel"><div class="section-head"><div><h3>Damage Breakdown</h3><p>Every hit: ability multiplier → raw damage → resistance → DEF → final damage, including effect contributions.</p></div></div><div class="balance-table-wrap"><table class="balance-table"><thead><tr><th>Rnd</th><th>Attacker</th><th>Ability</th><th>Stat</th><th>Mult.</th><th>Raw</th><th>Resist.</th><th>After Resist.</th><th>DEF</th><th>DEF Reduction</th><th>Effects</th><th>Final</th></tr></thead><tbody>${simResult.balanceTrace.map(t=>`<tr><td>${t.round}</td><td>${esc(t.attacker)}</td><td><b>${esc(t.ability)}</b><small>${esc(t.damageType)}${t.critical?' · CRIT':''}</small></td><td>${esc(t.stat)}</td><td>${(Number(t.abilityMultiplier||0)*100).toFixed(0)}%${t.effectiveMultiplier!==t.abilityMultiplier?`<small>eff ${(Number(t.effectiveMultiplier||0)*100).toFixed(0)}%</small>`:''}</td><td>${Math.round(t.raw||0)}</td><td>${Number(t.resistance||0).toFixed(1)}%</td><td>${Math.round(t.afterResistance||0)}</td><td>${Math.round(t.defense||0)}</td><td>${Math.round(t.defenseReduction||0)}</td><td>${t.effectContributions?.length?t.effectContributions.map(e=>`${esc(e.type)}${e.multiplier!=null?` ×${Number(e.multiplier).toFixed(2)}`:''}`).join('<br>'):'—'}</td><td><b>${Math.round(t.final||0)}</b></td></tr>`).join('')}</tbody></table></div></div><div class="sim-battle-log-wrap" style="margin-top:16px">
+    return `<section class="panel battle-simulator"><div class="section-head"><div><h2>Battle Simulator</h2><p>Run a deterministic preview battle between any Pathway and Sequence combination.</p></div><div><button class="${simMode==='1v1'?'active':''}" onclick="window.G9.simMode('1v1')">1v1</button><button class="${simMode==='2v2'?'active':''}" onclick="window.G9.simMode('2v2')">2v2</button></div></div><div class="sim-grid">${side(simA,'Team A')}${side(simB,'Team B')}</div><div class="sim-actions"><button class="primary" onclick="window.G9.runSimulation()">Simulate Battle</button><button onclick="window.G9.clearSimulation()">Clear Log</button></div>${simResult?`<div class="sim-result"><div class="section-head"><h3>${battleOutcomeLabel(simResult.battleOutcome,simResult.success,true)}</h3><span>${simResult.rounds} rounds · ${simResult.balanceTrace.length} damage events</span></div><div class="sim-hp"><div><b>Team A</b> ${simResult.teamA.filter(x=>x.alive).length}/${simResult.teamA.length} standing</div><div><b>Team B</b> ${simResult.teamB.filter(x=>x.alive).length}/${simResult.teamB.length} standing</div></div><div class="balance-panel"><div class="section-head"><div><h3>Damage Breakdown</h3><p>Every hit: ability multiplier → raw damage → resistance → DEF → final damage, including effect contributions.</p></div></div><div class="balance-table-wrap"><table class="balance-table"><thead><tr><th>Rnd</th><th>Attacker</th><th>Ability</th><th>Stat</th><th>Mult.</th><th>Raw</th><th>Resist.</th><th>After Resist.</th><th>DEF</th><th>DEF Reduction</th><th>Effects</th><th>Final</th></tr></thead><tbody>${simResult.balanceTrace.map(t=>`<tr><td>${t.round}</td><td>${esc(t.attacker)}</td><td><b>${esc(t.ability)}</b><small>${esc(t.damageType)}${t.critical?' · CRIT':''}</small></td><td>${esc(t.stat)}</td><td>${(Number(t.abilityMultiplier||0)*100).toFixed(0)}%${t.effectiveMultiplier!==t.abilityMultiplier?`<small>eff ${(Number(t.effectiveMultiplier||0)*100).toFixed(0)}%</small>`:''}</td><td>${Math.round(t.raw||0)}</td><td>${Number(t.resistance||0).toFixed(1)}%</td><td>${Math.round(t.afterResistance||0)}</td><td>${Math.round(t.defense||0)}</td><td>${Math.round(t.defenseReduction||0)}</td><td>${t.effectContributions?.length?t.effectContributions.map(e=>`${esc(e.type)}${e.multiplier!=null?` ×${Number(e.multiplier).toFixed(2)}`:''}`).join('<br>'):'—'}</td><td><b>${Math.round(t.final||0)}</b></td></tr>`).join('')}</tbody></table></div></div><div class="sim-battle-log-wrap" style="margin-top:16px">
   <div class="section-head"><div><h3>Combat Log</h3><p>Unified turn-by-turn combat view.</p></div></div>
   ${renderBattleLogComponent({
     allies: simResult.teamA,
@@ -688,7 +764,10 @@ if (typeof document !== 'undefined') (() => {
     isDone: simResult.currentTurn >= simResult.turnRows.length,
     showDetails: simBattleDetails,
     speed: tickerSpeed,
+    paused: !!simResult.paused,
     summaryText: simResult.summaryText,
+    success: simResult.success,
+    outcome: simResult.battleOutcome,
     isSim: true,
     battlefieldImage: battlefieldImageFor({}, true)
   })}
@@ -737,7 +816,7 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
       <section class="dossier-equipment" aria-label="Equipment"><div class="dossier-equipment-slot" title="${esc(weapon.name)}"><span aria-hidden="true">${weapon.kind==='gun'?'⌁':weapon.kind==='unarmed'?'◇':'†'}</span><small>Weapon</small></div><div class="dossier-equipment-copy"><b>${esc(weapon.name)}</b><small>Weapon ATK: +${weapon.atk} · ${weapon.kind==='gun'?'Gun':weapon.kind==='unarmed'?'Bare Hand':'Melee'} Mastery Lv.${weaponStats(a).mastery}</small>${equipmentPicker(a)}</div></section>
       <div class="dossier-skill-tabs" role="tablist" aria-label="Sequence abilities">${tabMarkup('active')}${tabMarkup('passive')}</div>
       <div class="big-stats dossier-stats">${[['HP',eff.hp],['SP',Math.round(a.sp??maxSPFor(a))],['ATK',eff.atk],['DEF',eff.def],['INT',eff.int],['Speed',cr?cr.speed.toFixed(1):eff.spd||'—']].map(x=>`<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div>
-      <section class="dossier-skill-panel" id="dossier-skill-panel" role="tabpanel" tabindex="0" aria-labelledby="dossier-tab-${skillType}">${skill?`<label class="dossier-rank-picker">Unlocked ${skillType} ability<select onchange="window.G9.dossierSkillSequence(Number(this.value))">${skills.map(x=>`<option value="${x.sequence}" ${x===skill?'selected':''}>Sequence ${x.sequence} — ${esc(x.name)} · ${esc(title(x))}</option>`).join('')}</select></label><h3>Sequence ${skill.sequence} — ${esc(skill.name)}</h3><p>${esc(skill.text)}</p><small>${skill.type==='active'?`SP ${skill.costSP||0} · Cooldown ${skill.cooldown||0} turns`:'Always active'}${skillDamage?` · ${esc(skillDamage)}`:''}</small>`:`<p class="muted">No ${skillType} abilities yet.${a.awakened?'':' Awaken to Sequence 9.'}</p>`}</section>
+      <section class="dossier-skill-panel" id="dossier-skill-panel" role="tabpanel" tabindex="0" aria-labelledby="dossier-tab-${skillType}">${skill?`<label class="dossier-rank-picker">Unlocked ${skillType} ability<select onchange="window.G9.dossierSkillSequence(Number(this.value))">${skills.map(x=>`<option value="${x.sequence}" ${x===skill?'selected':''}>Sequence ${x.sequence} — ${esc(x.name)} · ${esc(title(x))}</option>`).join('')}</select></label><h3>Sequence ${skill.sequence} — ${esc(skill.name)}</h3><p>${esc(skill.text)}</p><small>${skill.type==='active'?(abilityEffects(skill).some(e=>e.type==='signature'&&['door_record','tower_imitation'].includes(e.rule))?'Stored skill SP and cooldown':`SP ${skill.costSP||0} · Cooldown ${skill.cooldown||0} turns`):'Always active'}${skillDamage?` · ${esc(skillDamage)}`:''}</small>`:`<p class="muted">No ${skillType} abilities yet.${a.awakened?'':' Awaken to Sequence 9.'}</p>`}</section>
       ${!a.awakened?`<details class="dossier-details" open><summary>Awakening — Sequence 9</summary><p>This character is an ordinary human. Sequence 9 begins their supernatural pathway; it is not an ordinary-human tier. Choose the Pathway whose nature best fits their characteristics.</p><div class="path-grid">${pathButtons}</div></details>`:''}
       <details class="dossier-details"><summary>Condition & combat details</summary>${statusBar('Madness',a.madness)}${statusBar('Corruption',a.corruption)}${statusBar('Injuries',a.injuries)}${a.injuries>0?'<p class="muted">Injuries reduce effective HP and other stats by up to 30% until treated.</p>':''}${a.madness>=50?'<p class="warning">Madness above 50 causes action loss; at 100 the character becomes a corrupted monster and is permanently lost.</p>':''}${cr?`<div class="combat-rates"><span>Crit ${Math.round(cr.crit*100)}%</span><span>Crit Damage +${Math.round(cr.critDamage*100)}%</span><span>Dodge ${Math.round(cr.dodge*100)}%</span><span>Counter ${Math.round(cr.counter*100)}%</span><span>Speed ${cr.speed.toFixed(1)} · AV ${cr.av.toFixed(1)}</span><span>Archetype ${archetypeOf(a.path)}</span><span>Max SP ${maxSPFor(a)}</span><span>Element Resistance: ${Object.entries(cr.resistances||{}).map(([k,v])=>`${esc(k)} ${v>0?'+':''}${Math.round(v)}%`).join(' · ')||'None'}</span>${cr.passives?.length?`<span>Passives: ${cr.passives.map(esc).join(' · ')}</span>`:''}</div><div class="special-meter"><b>${esc(specialStatFor(a.path,a.sequence,a).name)} ${Math.round(specialStatFor(a.path,a.sequence,a).value)}/100</b><small>Gain: ${esc(specialStatFor(a.path,a.sequence,a).gain)} · Spend: ${esc(specialStatFor(a.path,a.sequence,a).spend)}</small></div>`:''}<p class="muted">Weapon Mastery: Gun ${weaponMasteryValue(a,'gun')} · Melee ${weaponMasteryValue(a,'weapon')} · Bare Hand ${weaponMasteryValue(a,'unarmed')}. Mastery is permanently attached to this character; changing weapons does not reset it.</p>${weapon.kind==='gun'?`<p class="muted">Gun Accuracy: ${Math.round((1-weaponStats(a).masteryMiss)*100)}%</p>`:''}${weapon.bleed?`<p class="muted">Bleed: ${Math.round(weapon.bleed*100)}% if target survives</p>`:''}<p class="muted">Current ATK: ${eff.atk} (base ${a.stats.atk})</p>${a.status==='active'&&a.injuries>0?`<button type="button" onclick="window.G9.heal(${actionId})">Treat injuries</button>`:''}</details>
       ${next?`<details class="dossier-details"><summary>Advancement</summary><p>Next: <b>Sequence ${a.sequence-1} — ${esc(next.next.name)}</b>. Digesting: ${Math.round(a.digest||0)}%.</p><div class="requirement-box"><b>Requirements</b><span>Digesting: ${next.ready?'Complete':'Not complete'}</span><span>${esc(next.mat)}: ${state.materials[next.mat]||0}/${next.materialCost}</span><span>Funds: £${state.funds.toLocaleString()}/£${next.fundsCost}</span></div><button type="button" class="primary full" onclick="window.G9.advance(${actionId})">Review Advancement</button></details>`:''}
@@ -762,7 +841,10 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
       isDone,
       showDetails: showBattleDetails,
       speed: tickerSpeed,
+      paused: !!run.paused,
       summaryText: run.isCampaign?summary.summaryText.replace(/Casualties/g,'Agents recovered'):summary.summaryText,
+      success: run.result.success,
+      outcome: run.result.battleOutcome || run.result.battleSnapshot?.outcome,
       isSim: false,
       battlefieldImage: battlefieldImageFor(q)
     });
@@ -775,7 +857,7 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
       ${logHtml}
       <div class="battle-completion" ${isDone ? '' : 'hidden'}>
       ${run.isCampaign?`<p>${esc(run.result.lines.at(-1)?.text||'')}</p>${run.result.success?campaignRewardMarkup(CAMPAIGN.missions[3].rewards):''}`:''}
-      <div class="result ${run.result.success?'success':'failure'}">${run.isCampaign?(run.result.success?'RESIDENTS RESCUED':'AGENTS RECOVERED · RETRY AVAILABLE'):run.result.success?(wanted?'TARGET ELIMINATED':'CONTRACT FULFILLED'):(wanted?'HUNT FAILED':'CONTRACT FAILED')}</div><button class="primary full" onclick="window.G9.closeQuest()">${run.isCampaign?(run.result.success?'Record victory & continue':'Return and retry'):'Return to Guild'}</button>
+      <div class="result ${run.result.success?'success':'failure'}">${run.isCampaign?(run.result.success?'RESIDENTS RESCUED':'AGENTS RECOVERED · RETRY AVAILABLE'):run.result.success?(wanted?'TARGET ELIMINATED':'CONTRACT FULFILLED'):((run.result.battleOutcome||run.result.battleSnapshot?.outcome)==='timeout'?'ROUND LIMIT · CONTRACT INCOMPLETE':wanted?'HUNT FAILED':'CONTRACT FAILED')}</div><button class="primary full" onclick="window.G9.closeQuest()">${run.isCampaign?(run.result.success?'Record victory & continue':'Return and retry'):'Return to Guild'}</button>
       </div>
     </div></div>`;
   }
@@ -802,9 +884,25 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
       clearTimeout(tickerTimer);tickerTimer=null;run=null;planning=null;chapterSelectionMission=null;tab='campaign';render();
     },
     setTickerSpeed: spd => {
-      tickerSpeed = [1, 2, 4].includes(Number(spd)) ? Number(spd) : 1;
+      tickerSpeed = [.5, 1, 2, 4].includes(Number(spd)) ? Number(spd) : 1;
       clearTimeout(tickerTimer);
       tickerTimer = null;
+      refreshBattle();
+    },
+    toggleTickerPause: () => {
+      const playing = run || (tab === 'simulator' ? simResult : null);
+      if (!playing || playing.currentTurn >= playing.turnRows.length) return;
+      playing.paused = !playing.paused;
+      clearTimeout(tickerTimer); tickerTimer = null;
+      refreshBattle();
+    },
+    stepTicker: () => {
+      const playing = run || (tab === 'simulator' ? simResult : null);
+      if (!playing || playing.currentTurn >= playing.turnRows.length) return;
+      playing.paused = true;
+      clearTimeout(tickerTimer); tickerTimer = null;
+      while (playing.turnRows[playing.currentTurn]?.isRoundHeader) playing.currentTurn++;
+      playing.currentTurn = Math.min(playing.turnRows.length, playing.currentTurn + 1);
       refreshBattle();
     },
     toggleDetails: () => {
@@ -817,26 +915,28 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
     },
     tab:t=>{tab=t;render()},previewPath:path=>{if(PATH_KEYS.includes(path)){previewPath=path;render()}},simMode:m=>{simMode=m;render()},simSet:(team,i,key,value)=>{const arr=team==='A'?simA:simB;if(arr[i])arr[i][key]=value;render()},clearSimulation:()=>{simResult=null;render()},runSimulation:()=>{const seed=Date.now()%2147483647;const count=simMode==='1v1'?1:2;const mk=(x,i)=>{const a=makeAgent(Math.random,{sequence:x.sequence,path:x.path,trait:'Stout Vitality'});a.id=`sim_${i}_${x.path}_${x.sequence}`;a.name=`${pathOf(x.path).name} Seq ${x.sequence}`;a.awakened=true;a.path=x.path;a.sequence=x.sequence;a.recommendedPath=x.path;a.injuries=0;a.weaponId='none';a.weaponMastery={};a.sp=maxSPFor(a);restatAgent(a);return a;};const members=simA.slice(0,count).map((x,i)=>mk(x,i));const opponents=simB.slice(0,count).map((x,i)=>({path:x.path,sequence:x.sequence}));const q={id:'sim',name:`${simMode} Battle`,brief:'Battle Simulator',story:'A controlled simulation. No guild resources are changed.',objective:'combat',difficultySequence:Math.min(...opponents.map(x=>x.sequence)),encounter:true,mundane:false,rewards:{funds:0,reputation:0,materials:{}},enemyCount:count,requiredPath:opponents[0].path};const res=resolveQuest(members,q,seed,{individual:count===1,simulationOpponents:opponents});const snap=res.battleSnapshot||{allies:[],enemies:[]};const simTurns = flattenTurnRows(groupEventsToRows(res.events||[]));
     const simSummary = summarizeBattleEvents(res.events||[], snap);
-    simResult={currentTurn:0,success:res.success,rounds:(res.events&&res.events.length)?Math.max(1,...res.events.map(e=>e.round||1)):(res.lines?res.lines.filter(x=>/^· Round /.test(x.text)).length:1),lines:res.lines,events:res.events||[],turnRows:simTurns,summaryText:simSummary.summaryText,teamA: members.map((m, i) => ({
+    simResult={currentTurn:0,success:res.success,battleOutcome:res.battleOutcome||snap.outcome,rounds:(res.events&&res.events.length)?Math.max(1,...res.events.map(e=>e.round||1)):(res.lines?res.lines.filter(x=>/^· Round /.test(x.text)).length:1),lines:res.lines,events:res.events||[],turnRows:simTurns,summaryText:simSummary.summaryText,teamA: members.map((m, i) => ({
   ...m,
   id: m.id,
   name: m.name,
   path: m.path,
   sequence: m.sequence,
   unitType: m.unitType,
-  alive: snap.allies[i] ? snap.allies[i].alive : true,
-  hp: snap.allies[i] ? snap.allies[i].hp : (m.stats ? m.stats.hp : 100),
-  maxHp: snap.allies[i] ? snap.allies[i].maxHp : (m.stats ? m.stats.hp : 100)
+  hp: snap.allies[i]?.maxHp ?? m.stats?.hp ?? 100,
+  maxHp: snap.allies[i]?.maxHp ?? m.stats?.hp ?? 100,
+  ...(snap.initialUnits || []).find(u => u.id === m.id),
+  alive: snap.allies[i]?.alive ?? true
 })),
 teamB: opponents.map((o, i) => ({
-  id: `opp_${i}`,
-  name: `${pathOf(o.path).name} Seq ${o.sequence}`,
+  id: snap.enemies[i]?.id || `enemy_${i}`,
+  name: snap.enemies[i]?.name || `${pathOf(o.path).name} Seq ${o.sequence}`,
   path: o.path,
   sequence: o.sequence,
   team: 'enemy',
-  alive: snap.enemies[i] ? snap.enemies[i].alive : true,
-  hp: snap.enemies[i] ? snap.enemies[i].hp : 100,
-  maxHp: snap.enemies[i] ? snap.enemies[i].maxHp : 100
+  hp: snap.enemies[i]?.maxHp ?? 100,
+  maxHp: snap.enemies[i]?.maxHp ?? 100,
+  ...(snap.initialUnits || []).find(u => u.id === snap.enemies[i]?.id),
+  alive: snap.enemies[i]?.alive ?? true
 })),balanceTrace:snap.balanceTrace||[]};render()},fastTicker:()=>{if(!run)return;run.currentTurn=Math.min(run.turnRows.length,run.currentTurn+5);refreshBattle();},skipTicker:(isSim=false)=>{const playing=isSim?simResult:run;if(!playing)return;playing.currentTurn=playing.turnRows.length;clearTimeout(tickerTimer);tickerTimer=null;refreshBattle();},dossier:id=>{dossierReturnFocus={id:document.activeElement?.id,action:document.activeElement?.getAttribute('onclick')};selected=id;dossierSkillType='active';dossierSkillSequence=null;render();document.getElementById('dossier-title')?.focus()},
     closeDossier:()=>{selected=null;render();const previous=dossierReturnFocus;const opener=previous?.id?document.getElementById(previous.id):previous?.action?Array.from(app.querySelectorAll('[onclick]')).find(el=>el.getAttribute('onclick')===previous.action):null;(opener||app.querySelector('.tabs [aria-current="page"]'))?.focus();dossierReturnFocus=null},
     dossierSkillTab:type=>{if(!selected||!['active','passive'].includes(type))return;dossierSkillType=type;dossierSkillSequence=null;render();document.getElementById(`dossier-tab-${type}`)?.focus()},
@@ -854,8 +954,8 @@ teamB: opponents.map((o, i) => ({
     clearSelection:()=>{window.G9.selectedIds=[];render()},
     saveTeam:()=>{if(!planning||window.G9.selectedIds.length<1)return toast('Select at least one character.') ;commit(d=>{d.teams[planning.id]=[...window.G9.selectedIds];chronicle(d,`A team was saved for ${planning.name}.`);planning=d.quests.find(q=>q.id===planning.id)});render()},
     cancelPlan:()=>{planning=null;render()},
-    launch:()=>{if(chapterBlocked())return;if(!planning)return;const ids=window.G9.selectedIds||[];if(ids.length<1)return toast('Assign at least one character.');const members=state.roster.filter(a=>ids.includes(a.id)&&a.status==='active'&&a.awakened);if(!members.length)return toast('At least one awakened character is required.');const owners=new Set(members.filter(a=>a.unitType!=='marionette').map(a=>a.id));for(const m of members.filter(a=>a.unitType==='marionette')){if(!owners.has(m.ownerId))return toast('A Marionette can only deploy while its owner is in the party.');const owner=state.roster.find(a=>a.id===m.ownerId);const count=members.filter(a=>a.unitType==='marionette'&&a.ownerId===m.ownerId).length;if(count>threadSlots(owner.sequence))return toast(`The owner can deploy only ${threadSlots(owner.sequence)} Marionette(s) at this Sequence.`);}const q=planning;const individual=members.length===1;const result=resolveQuest(clone(members),q,Date.now()%2147483647,{individual});planning=null;const initialAllies = clone(members).map(m=>{const hp=Math.round(effectiveStats(m).hp*(passiveCombatModifier(m).hp||1));return {id:m.id,name:m.name,team:'ally',path:m.path,sequence:m.sequence,unitType:m.unitType,maxHp:hp,hp};});
-    const initialEnemies = (result.battleSnapshot?.enemies||[]).map(e=>({id:e.id,name:e.name,team:'enemy',maxHp:e.maxHp,hp:e.maxHp}));
+    launch:()=>{if(chapterBlocked())return;if(!planning)return;const ids=window.G9.selectedIds||[];if(ids.length<1)return toast('Assign at least one character.');const members=state.roster.filter(a=>ids.includes(a.id)&&a.status==='active'&&a.awakened);if(!members.length)return toast('At least one awakened character is required.');const owners=new Set(members.filter(a=>a.unitType!=='marionette').map(a=>a.id));for(const m of members.filter(a=>a.unitType==='marionette')){if(!owners.has(m.ownerId))return toast('A Marionette can only deploy while its owner is in the party.');const owner=state.roster.find(a=>a.id===m.ownerId);const count=members.filter(a=>a.unitType==='marionette'&&a.ownerId===m.ownerId).length;if(count>threadSlots(owner.sequence))return toast(`The owner can deploy only ${threadSlots(owner.sequence)} Marionette(s) at this Sequence.`);}const q=planning;const individual=members.length===1;const result=resolveQuest(clone(members),q,Date.now()%2147483647,{individual});planning=null;const initialAllies = result.battleSnapshot?.initialUnits?.filter(u=>u.team==='ally') || clone(members).map(m=>{const hp=Math.round(effectiveStats(m).hp*(passiveCombatModifier(m).hp||1));return {id:m.id,name:m.name,team:'ally',path:m.path,sequence:m.sequence,unitType:m.unitType,maxHp:hp,hp,sp:m.sp??maxSPFor(m),maxSP:maxSPFor(m)};});
+    const initialEnemies = result.battleSnapshot?.initialUnits?.filter(u=>u.team==='enemy') || (result.battleSnapshot?.enemies||[]).map(e=>({...e,team:'enemy',hp:e.maxHp,sp:0}));
     const turnRows = flattenTurnRows(groupEventsToRows(result.events||[]));
     run={quest:q,result,initialAllies,initialEnemies,turnRows,currentTurn:0,isSolo:individual};render()},
     closeQuest:()=>{if(!run||run.currentTurn<run.turnRows.length)return;if(run.isCampaign)return window.G9.settleCampaign();const q=run.quest,res=run.result;commit(d=>{applyConsequences(d,res.consequences);

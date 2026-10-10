@@ -16,13 +16,17 @@
     "name": "Blood Moon",
     "key": "bloodMoon",
     "max": 100,
-    "gain": "Combat actions",
-    "spend": "Pathway abilities",
-    "full": "Next ability is empowered",
+    "gain": "Medicine and actual recovery",
+    "spend": "Medicine or a beast command",
+    "full": "Replenish medicine or empower its delivery",
     "special": "Blood Moon",
     "characteristic": "Caster",
     "quirkName": "Phantom Moon Sanguine",
-    "quirkText": "Survival: Healing Touch [Heal], Blood Siphon [Heal]"
+    "quirkText": "Survival: Healing Touch [Heal], Blood Siphon [Heal]",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -35,7 +39,7 @@
         "label": "Active",
         "spCost": 15,
         "cooldown": 2,
-        "description": "Healing Touch — Restores 12% Max HP to user.",
+        "description": "Healing Touch — Give medicine to a living ally. Full Blood Moon charge replenishes or strengthens the treatment.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -43,10 +47,11 @@
         "tag": "Heal",
         "effects": [
           {
-            "type": "heal",
-            "maxHpRatio": 0.12,
-            "scaling": "INT",
-            "multiplier": 0
+            "type": "signature",
+            "rule": "moon_medicine",
+            "chargeCost": 100,
+            "amount": 0.15,
+            "maxHpRatio": 0.12
           }
         ]
       }
@@ -55,13 +60,13 @@
       "sequence": 8,
       "name": "Beast Tamer",
       "ability": {
-        "id": "vampiric_claws",
-        "name": "Vampiric Claws",
+        "id": "beast_command",
+        "name": "Beast Command",
         "kind": "active",
         "label": "Active",
         "spCost": 20,
         "cooldown": 1,
-        "description": "Vampiric Claws — Deals 135% INT Blood DMG with 25% Lifesteal.",
+        "description": "Beast Command — Direct a tamed beast. Full charge empowers the command; vampiric blood powers begin at Sequence 7.",
         "stat": "INT",
         "scale": 1.35,
         "damageType": "blood",
@@ -69,8 +74,12 @@
         "tag": null,
         "effects": [
           {
-            "type": "lifesteal",
-            "ratio": 0.25
+            "type": "signature",
+            "rule": "moon_beast",
+            "chargeCost": 100,
+            "amount": 0.5,
+            "duration": 3,
+            "slots": 1
           }
         ]
       }
@@ -95,6 +104,12 @@
           {
             "type": "lifesteal",
             "ratio": 0.3
+          },
+          {
+            "type": "signature",
+            "rule": "moon_blood",
+            "chargeCost": 100,
+            "amount": 0.15
           }
         ]
       }

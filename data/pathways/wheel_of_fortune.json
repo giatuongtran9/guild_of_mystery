@@ -17,13 +17,17 @@
     "name": "Fortune",
     "key": "fortune",
     "max": 100,
-    "gain": "Close calls and successful dodges",
-    "spend": "Probability manipulation",
-    "full": "Next failed contest can reroll",
+    "gain": "Dodges and failed enemy attacks",
+    "spend": "A failed contest or Calamity",
+    "full": "Retry once or punish a failed enemy attack",
     "special": "Fortune",
     "characteristic": "Caster",
     "quirkName": "Snake of Mercury",
-    "quirkText": "Survival: Danger Sense [Escape], Lucky Break [Defense], Reset Fate [Heal]"
+    "quirkText": "Survival: Danger Sense [Escape], Lucky Break [Defense], Reset Fate [Heal]",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -98,6 +102,12 @@
           {
             "type": "next_attack_miss",
             "chance": 1
+          },
+          {
+            "type": "signature",
+            "rule": "fortune_retry",
+            "chargeCost": 100,
+            "uses": 1
           }
         ]
       }
@@ -110,7 +120,7 @@
         "name": "Misfortune Aura",
         "kind": "active",
         "label": "Active",
-        "spCost": 35,
+        "spCost": 25,
         "cooldown": 3,
         "description": "Misfortune Aura — Spreads aura lowering enemy Speed and Accuracy by 20% for 2 rounds.",
         "stat": "INT",
@@ -129,6 +139,13 @@
             "type": "debuff_hit",
             "amount": 0.2,
             "duration": 2
+          },
+          {
+            "type": "signature",
+            "rule": "fortune_calamity",
+            "chargeCost": 100,
+            "amount": 1.5,
+            "duration": 3
           }
         ]
       }
@@ -232,7 +249,7 @@
         "label": "Active",
         "spCost": 85,
         "cooldown": 4,
-        "description": "Reincarnation Loop — Resets user HP and buffs to state from 2 rounds prior.",
+        "description": "Reincarnation Loop — Restore your HP and timed combat effects from two rounds earlier; preserve SP, cooldowns and once-only survival uses.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -240,7 +257,9 @@
         "tag": null,
         "effects": [
           {
-            "type": "reset_state",
+            "type": "signature",
+            "rule": "fortune_rewind",
+            "chargeCost": 100,
             "amount": 2
           }
         ]

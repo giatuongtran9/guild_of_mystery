@@ -1,14 +1,32 @@
 // Structured combat event emission helpers
 function teamOf(u, state) {
   if (!state) return 'ally';
-  if (state.allies && state.allies.some(x => x.id === u?.id || (u?.name && x.name === u.name))) return 'ally';
-  if (state.enemies && state.enemies.some(x => x.id === u?.id || (u?.name && x.name === u.name))) return 'enemy';
+  if(u?.id!=null){
+    if(state.allies?.some(x=>x.id===u.id))return 'ally';
+    if(state.enemies?.some(x=>x.id===u.id))return 'enemy';
+  }else{
+    if(state.allies?.some(x=>u?.name&&x.name===u.name))return 'ally';
+    if(state.enemies?.some(x=>u?.name&&x.name===u.name))return 'enemy';
+  }
   return u?.agent ? 'ally' : 'enemy';
 }
 function emitCombatEvent(state, ev) {
   if (!state || !state.events) return;
   if (ev.round === undefined) ev.round = state.currentRound || 0;
   state.events.push(ev);
+}
+function combatResourceSnapshot(unit,state){
+ const a=getCombatAgent(unit),cfg=PATH_METERS[a.path];
+ return {id:unit.id,name:unit.name,team:teamOf(unit,state),path:a.path,sequence:a.sequence,
+  hp:unit.hp,maxHp:unit.maxHp,shield:unit.shield||0,sp:a.sp,maxSP:a.maxSP,alive:unit.alive,
+  meter:cfg?{name:cfg.name,value:getMeterValue(a,a.path),max:cfg.max}:null,inForm:!!unit._inForm,
+  threadSlots:a.path==='fool'?{used:threadUsage(state,a),max:threadSlots(a.sequence)}:null,
+  threadProgress:unit.thread?{value:unit.thread.progress,max:unit.thread.required}:null,
+  statuses:(unit.status||[]).map(name=>({name,turns:unit.statusMeta?.[name]?.duration||0})),
+  recordCount:a._signatureRecords?.length||0};
+}
+function emitCombatResources(state){
+ emitCombatEvent(state,{type:'resources',units:[...state.allies,...state.enemies].map(u=>combatResourceSnapshot(u,state))});
 }
 
 function abbrNum(num) {
@@ -55,6 +73,12 @@ function groupEventsToRows(events, battleSnapshot) {
         r.rows.push(activeTurn);
         activeTurn = null;
       }
+      continue;
+    }
+    if(ev.type==='resources'){
+      if(activeTurn){activeTurn.resources=ev.units;r.rows.push(activeTurn);activeTurn=null;}
+      else if(r.rows.length)r.rows[r.rows.length-1].resources=ev.units;
+      else r.resources=ev.units;
       continue;
     }
 
@@ -118,12 +142,19 @@ function groupEventsToRows(events, battleSnapshot) {
       continue;
     }
 
+    if (activeTurn && ev.type === 'damage' && ev.actorId !== activeTurn.actorId && (ev.isSignature || ev.subtype === 'mythical_authority')) {
+      (activeTurn.reactions = activeTurn.reactions || []).push(ev);
+      activeTurn.subrows.push({ type: 'reaction', text: ev.text || `${ev.actorName} deals ${abbrNum(ev.amount)} ${ev.damageType || ''} damage to ${ev.targetName}.` });
+      continue;
+    }
+
     if (activeTurn && ev.actorId === activeTurn.actorId && ev.type === 'damage' && !ev.isDot) {
       activeTurn.damages.push(ev);
       continue;
     }
 
-    if (activeTurn && ev.actorId === activeTurn.actorId && (ev.type === 'heal' || ev.type === 'shield')) {
+    if (ev.type === 'heal' || ev.type === 'shield') {
+      if (!activeTurn) activeTurn = { id: `support_${ev.round}_${ev.actorId}_${i}`, round: ev.round, type: 'turn', actorId: ev.actorId, actorName: ev.actorName, actorTeam: ev.actorTeam, ability: ev.ability || (ev.type === 'heal' ? 'Recovery' : 'Protection'), damages: [], heals: [], shields: [], subrows: [], deaths: [] };
       if (ev.type === 'heal') activeTurn.heals.push(ev);
       else activeTurn.shields.push(ev);
       continue;
@@ -290,11 +321,15 @@ function summarizeBattleEvents(events, battleSnapshot) {
   let totalDamageDealt = 0;
   const deadAllies = [];
   const deadEnemies = [];
+  let allyHpDamage=0,enemyHpDamage=0,allyShieldDamage=0,enemyShieldDamage=0;
 
   for (const ev of (events || [])) {
     if (ev.round > rounds) rounds = ev.round;
     if (ev.type === 'damage' && ev.amount) {
       totalDamageDealt += ev.amount;
+      const hp=Number(ev.hpLoss??Math.max(0,ev.amount-Number(ev.absorbed||0))),shield=Number(ev.absorbed||0);
+      if(ev.actorTeam==='ally'){allyHpDamage+=hp;allyShieldDamage+=shield;}
+      if(ev.actorTeam==='enemy'){enemyHpDamage+=hp;enemyShieldDamage+=shield;}
     }
     if (ev.type === 'death' && ev.targetName) {
       if (ev.targetTeam === 'ally' && !deadAllies.includes(ev.targetName)) {
@@ -303,7 +338,18 @@ function summarizeBattleEvents(events, battleSnapshot) {
         deadEnemies.push(ev.targetName);
       }
     }
+    if(ev.type==='revive'){
+      const list=ev.targetTeam==='ally'?deadAllies:deadEnemies,index=list.indexOf(ev.targetName);
+      if(index>=0)list.splice(index,1);
+    }
   }
+  if(battleSnapshot){
+    for(const [units,list] of [[battleSnapshot.allies,deadAllies],[battleSnapshot.enemies,deadEnemies]]){
+      list.length=0;for(const u of units||[])if(!u.alive&&!u.summoned)list.push(u.name);
+    }
+  }
+  const allySurvivors=(battleSnapshot?.allies||[]).filter(u=>u.alive&&!u.summoned).length;
+  const enemySurvivors=(battleSnapshot?.enemies||[]).filter(u=>u.alive&&!u.summoned).length;
 
   const deaths = [...deadAllies.map(n => `${n} (Ally)`), ...deadEnemies.map(n => `${n} (Enemy)`)];
   const deathSummary = deaths.length ? `Casualties: ${deaths.join(', ')}` : 'No casualties';
@@ -312,7 +358,8 @@ function summarizeBattleEvents(events, battleSnapshot) {
     totalDamageDealt,
     deadAllies,
     deadEnemies,
-    summaryText: `${rounds} round${rounds === 1 ? '' : 's'} · Total Damage: ${abbrNum(totalDamageDealt)} · ${deathSummary}`
+    allyHpDamage,enemyHpDamage,allyShieldDamage,enemyShieldDamage,allySurvivors,enemySurvivors,
+    summaryText: `${rounds} round${rounds === 1 ? '' : 's'} · Ally HP damage: ${abbrNum(allyHpDamage)} · Enemy HP damage: ${abbrNum(enemyHpDamage)} · ${allySurvivors} guild survivor${allySurvivors===1?'':'s'} · ${deathSummary}`
   };
 }
 
@@ -353,11 +400,12 @@ const COMBAT_TRANSIENT_FIELDS=['_buffs','_debuffs','_speedDebuff','_threadSpeedD
  '_healDamageRatio','_lastAbility','_hpRatio','_partyPassiveEffects','_teamDamageMultiplier',
  '_revivePending','_revived','_formUsed','_inForm','_formBoost','_reflect','_fx','_taunt',
  '_tauntUntilTurn','_tauntGrace','_durationGrace','_extraTurns','_skipTurns','_actedThisRound',
- '_acting','_sleepAppliedThisAction'];
+ '_acting','_sleepAppliedThisAction','_threadChargeRound'];
 function clearCombatTransient(agent){
  const threadCooldown=agent.cooldowns?.thread_binding,pendingThreads=(agent.threadTargets||[]).length>0||(agent.activeThreads||0)>0;
  if(threadCooldown===999||(pendingThreads&&threadCooldown>threadCooldownFor(agent)))agent.cooldowns.thread_binding=threadCooldownFor(agent);
  for(const key of COMBAT_TRANSIENT_FIELDS)delete agent[key];
+ for(const key of Object.keys(agent))if(key.startsWith('_signature')||key.startsWith('_mythical'))delete agent[key];
  agent.threadTargets=[];agent.activeThreads=0;agent.thread=null;
 }
 function makeCombatUnit(source,options={}){
@@ -410,6 +458,7 @@ function makeEnemy(seq,r,i,pathHint=null){
 function makeAuthoredEnemy(spec,r,i){
  if(!spec||!PATH_KEYS.includes(spec.path)||!Number.isInteger(spec.sequence)||spec.sequence<0||spec.sequence>9)throw new Error('Invalid authored enemy pathway or Sequence');
  const e=makeEnemy(spec.sequence,r,i,spec.path);
+ if(spec.id!==undefined){if(typeof spec.id!=='string'||!spec.id.trim())throw new Error('Invalid authored enemy ID');e.id=spec.id;}
  if(spec.name)e.name=String(spec.name);
  if(spec.trait&&TRAITS[spec.trait]){e.trait=spec.trait;e.traits={name:spec.trait,desc:TRAITS[spec.trait].desc};}
  if(spec.stats){for(const k of ['hp','atk','def','int'])if(!Number.isFinite(spec.stats[k])||spec.stats[k]<=0)throw new Error('Invalid authored enemy stats');e.stats={...spec.stats};e._originalStats={...spec.stats};e.hp=e.maxHp=Math.round(spec.stats.hp*(passiveCombatModifier(e.agent).hp||1));}
@@ -418,6 +467,8 @@ function makeAuthoredEnemy(spec,r,i){
  e.weaponMastery=cloneE(spec.weaponMastery||{});
  ensureCombatResource(e.agent);
  if(spec.sp!==undefined){if(!Number.isFinite(spec.sp)||spec.sp<0)throw new Error('Invalid authored enemy SP');e.sp=Math.min(e.maxSP,spec.sp);}
+ if(spec.meter!==undefined){if(!Number.isFinite(spec.meter)||spec.meter<0||spec.meter>100)throw new Error('Invalid authored enemy charge');setMeterValue(e.agent,e.path,spec.meter);}
+ if(spec.startingHp!==undefined){if(!Number.isFinite(spec.startingHp)||spec.startingHp<=0||spec.startingHp>e.maxHp)throw new Error('Invalid authored enemy starting HP');e.hp=Math.round(spec.startingHp);}
  e.resistances=combatResistances(e.agent);
  return e;
 }
@@ -484,14 +535,17 @@ function settleFatalDamage(unit,state,lines=[],source=null){
  if(!unit||unit.hp>0)return {dead:!unit?.alive,revived:false};
  unit.hp=0;
  if(!unit.alive)return {dead:true,revived:false};
+ if(mythicalBeforeFatal(unit,source,state,lines,state?.rng))return {dead:false,revived:false};
  unit.alive=false;
  const text=`${unit.name} falls.`;
  lines.push({text,kind:'victory'});
  emitCombatEvent(state,{round:state?.currentRound||1,type:'death',actorId:source?.id,actorName:source?.name,actorTeam:source?teamOf(source,state):undefined,targetId:unit.id,targetName:unit.name,targetTeam:teamOf(unit,state),text});
  const revived=!!tryRevive(unit,lines,state);
+ if(!revived){signatureFinalDeath(unit,source,state,lines,state?.rng);mythicalFinalDeath(unit,source,state,lines,state?.rng);}
  return {dead:!unit.alive,revived};
 }
 function resolveIncoming(attacker,defender,dmg,state,lines=[],r,opt={}){if(!lines)lines=[];
+ if(defender?.alive)dmg=mythicalBeforeDamage(attacker,defender,dmg,state,lines,r||state?.rng,opt);
  const incoming=Math.max(0,Math.round(dmg*Number(defender?._vulnerability||1))),res={incoming,absorbed:0,hpLoss:0,negated:false,reflected:0,dead:false,revived:false};
  if(!defender||!defender.alive||incoming<=0)return res;
  if(hasStatus(defender,'untargetable')){res.negated=true;lines.push({text:`${defender.name} is untargetable and avoids damage.`,kind:'status'});return res;}
@@ -506,9 +560,10 @@ function resolveIncoming(attacker,defender,dmg,state,lines=[],r,opt={}){if(!line
   const mult=opt.execute?1:incomingMultiplier(defender,dmgType);
   if(mult!==1&&rem>0){const reduced=Math.max(0,Math.round(rem*mult));if(reduced!==rem)lines.push({text:`${defender.name}'s damage ${mult<1?'reduction':'vulnerability'} changes ${rem} damage to ${reduced}.`,kind:'status'});rem=reduced;}
   res.hpLoss=Math.min(Math.max(0,defender.hp),rem);defender.hp=Math.max(0,defender.hp-rem);
-  recordThreadDamage(defender,res.hpLoss,state,lines);
   Object.assign(res,settleFatalDamage(defender,state,lines,attacker));
-  if(defender.hp>0&&(defender.agent||(defender.path&&defender.sequence!=null))){const wasInHit=state?._mythicalFromHit;if(state)state._mythicalFromHit=!opt.indirect;try{tryMythicalForm(defender.agent||defender,defender,state,lines,r);}finally{if(state)state._mythicalFromHit=wasInHit;}}
+  if(defender._mythicalFatalRedirected){res.hpLoss=0;res.absorbed=0;res.redirected=true;delete defender._mythicalFatalRedirected;}
+  recordThreadDamage(defender,res.hpLoss,state,lines);
+  if(defender.hp>0&&(defender.agent||(defender.path&&defender.sequence!=null))){const wasInHit=state?._mythicalFromHit;if(state)state._mythicalFromHit=!!wasInHit||!opt.indirect;try{tryMythicalForm(defender.agent||defender,defender,state,lines,r);}finally{if(state)state._mythicalFromHit=wasInHit;}}
  }
  if(rf&&attacker&&attacker!==defender&&attacker.alive){
   let refl=0;
@@ -525,6 +580,8 @@ function resolveIncoming(attacker,defender,dmg,state,lines=[],r,opt={}){if(!line
    emitCombatEvent(state,{round:state?.currentRound||1,type:'damage',actorId:defender.id,actorName:defender.name,actorTeam:teamOf(defender,state),targetId:attacker.id,targetName:attacker.name,targetTeam:teamOf(attacker,state),amount:res.reflected,incoming:refl,absorbed:rr.absorbed,hpLoss:rr.hpLoss,hpAfter:attacker.hp,maxHp:attacker.maxHp,damageType:rf.element||'reflected',isReflect:true,text:reflectLine.text});
   }
  }
+ const wasInHit=state?._mythicalFromHit;if(state)state._mythicalFromHit=!!wasInHit||!opt.indirect;
+ try{signatureAfterDamage(attacker,defender,res,state,lines,r||state?.rng,opt);mythicalAfterDamage(attacker,defender,res,state,lines,r||state?.rng,opt);}finally{if(state)state._mythicalFromHit=wasInHit;}
  return res;
 }
 function beginTurn(c){if(c._reflect&&c._reflect.untilTurn)c._reflect=undefined;c._tauntUntilTurn=false;if(c._fx&&c._fx.some(f=>f.turn)){c._fx=c._fx.filter(f=>!f.turn);recomputeFx(c);}}
@@ -568,13 +625,13 @@ function tickFx(u){
 }
 function hasStatus(target,status){return !!target?.status?.includes(status);}
 const SELF_STATUSES=['evade','untargetable','guarded','inspired','possession_phase'];
-const CLEANSE_STATUSES=['burn','bleed','poison','curse','silenced','confused','sleep','stunned','frozen','freeze','bound'];
+const CLEANSE_STATUSES=['burn','bleed','poison','curse','curse_link','silenced','confused','sleep','stunned','frozen','freeze','bound'];
 const TRANSFER_STATUSES=[...CLEANSE_STATUSES,'dreambound','controlled','root','no_heal','no_shield'];
 const DOT_RULES=[['burn',.07,'fire'],['poison',.05,'poison'],['curse',.03,'dark'],['decay',.025,'dark'],['bleed',.03,'physical']];
 const THREAD_RULES=Object.freeze({required:5,initialSpeedLoss:.15,dodgeLoss:.10,hitLoss:.10,advancedSpeedLoss:.35,bindingChance:.30,marionetteStats:.55,damageThreshold:.30});
-function statusImmune(t,s){try{return (passiveCombatModifier(t?.agent||t).immunities||[]).includes(s);}catch(e){return false;}}
+function statusImmune(t,s){if(t?._mythicalStatusProtection?.[s]===true)return true;try{return (passiveCombatModifier(t?.agent||t).immunities||[]).includes(s);}catch(e){return false;}}
 function addStatus(target,status,duration=1,source="unknown",extraMeta={}){if(statusImmune(target,status))return;target.status=target.status||[];target.statusMeta=target.statusMeta||{};if(!target.status.includes(status))target.status.push(status);target.statusMeta[status]={duration:Math.max(1,Number(duration)||1),source,_grace:target._acting===true,...(extraMeta||{})};}
-function removeStatus(target,status){if(!target?.status)return;target.status=target.status.filter(x=>x!==status);if(target.statusMeta)delete target.statusMeta[status];}
+function removeStatus(target,status){if(!target?.status)return;target.status=target.status.filter(x=>x!==status);if(target.statusMeta)delete target.statusMeta[status];if(status==='sleep')delete target._mythicalDream;if(status==='frozen')delete target._mythicalPetrified;}
 function processStatuses(unit,add=()=>{},state=null,decrement=true){
  if(!unit.alive)return;unit.status=unit.status||[];unit.statusMeta=unit.statusMeta||{};
  for(const [status,ratio,damageType] of DOT_RULES){
@@ -680,15 +737,20 @@ function applySpiritThread(agent,enemy,actor,state,lines=[],r){if(!lines)lines=[
  if((agent._threadAttempts||0)>=budget)return false;
  agent._threadAttempts=(agent._threadAttempts||0)+1;
  const intGap=(enemy.resistanceInt??enemy.int)-agent.stats.int;
- const resist=Math.max(.08,Math.min(.70,({5:.62,4:.55,3:.45,2:.35,1:.25,0:.20})[agent.sequence]+Math.max(0,enemy.sequence-agent.sequence)*.16+Math.max(0,intGap)/Math.max(1,agent.stats.int)*.5));
+ const charge=getMeterValue(agent,'fool')>=100;
+ const threadRule=abilityEffects(unlockedAbilities(agent).find(s=>s.effectId==='thread_binding')).find(e=>e.type==='signature');
+ const penetration=charge?Number(threadRule?.resistancePenetration??.20):0;
+ const resist=Math.max(0,Math.min(.70,({5:.62,4:.55,3:.45,2:.35,1:.25,0:.20})[agent.sequence]+Math.max(0,enemy.sequence-agent.sequence)*.16+Math.max(0,intGap)/Math.max(1,agent.stats.int)*.5)-penetration);
+ if(charge)changeMeter(agent,'fool',-100);
  if(r()<resist){
    const resistMsg = `${enemy.name} resists the Spirit Body Thread.`;
    lines.push({text:resistMsg,kind:'status'});
    emitCombatEvent(state, {round:state?.currentRound||1,type:'status',actorId:agent.id,actorName:agent.name,actorTeam:teamOf(agent,state),targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),text:resistMsg});
-   changeMeter(agent,'fool',5); if (agent._threadAttempts > 0) agent._threadAttempts--; return false;
+   if (agent._threadAttempts > 0) agent._threadAttempts--;
+   signatureFailedAttack(actor,state,lines,r);return false;
  }
  enemy.thread={ownerId:agent.id,progress:0,required:THREAD_RULES.required};
- agent.threadTargets=[...(agent.threadTargets||[]),enemy.id];agent.activeThreads=agent.threadTargets.length;changeMeter(agent,'fool',-12);
+ agent.threadTargets=[...(agent.threadTargets||[]),enemy.id];agent.activeThreads=agent.threadTargets.length;
  addStatus(enemy,'threaded',enemy.thread.required,'Spirit Body Thread');
  const graspMsg = `${actor.name} grasps the invisible Spirit Body Thread attached to ${enemy.name}.`;
  lines.push({text:graspMsg,kind:'quirk'});
@@ -737,7 +799,7 @@ function recordThreadDamage(target,hpLoss,state,lines=[]){
   emitCombatEvent(state,{type:'thread',subtype:'damage_interrupt',targetId:target.id,targetName:target.name,targetTeam:teamOf(target,state),progress:t.progress,text});
  }
 }
-function processSpiritThreads(state,lines=[]){if(!lines)lines=[];const allUnits=[...state.allies,...state.enemies];for(const ally of allUnits.filter(x=>x.alive&&isThreadBeyonder(x.agent||x))){const agent=ally.agent||ally;const targets=state.allies.includes(ally)?state.enemies:state.allies;for(const enemy of targets.filter(x=>x.thread?.ownerId===agent.id)){const t=enemy.thread;if(!enemy.alive){releaseThread(agent,enemy);lines.push({text:`The thread ends because ${enemy.name} is dead; the slot is freed.`,kind:"system"});continue;}if(!ally.alive||hasThreadCC(ally)||hasStatus(enemy,'untargetable')||hasStatus(enemy,'banished')){
+function processSpiritThreads(state,lines=[]){if(!lines)lines=[];const allUnits=[...state.allies,...state.enemies];for(const ally of allUnits.filter(x=>x.alive&&isThreadBeyonder(x.agent||x)).sort((a,b)=>unitInitiative(b)-unitInitiative(a)||a.name.localeCompare(b.name)||a.id.localeCompare(b.id))){const agent=ally.agent||ally;const targets=state.allies.includes(ally)?state.enemies:state.allies;for(const enemy of targets.filter(x=>x.thread?.ownerId===agent.id)){const t=enemy.thread;if(!enemy.alive){releaseThread(agent,enemy);lines.push({text:`The thread ends because ${enemy.name} is dead; the slot is freed.`,kind:"system"});continue;}if(!ally.alive||hasThreadCC(ally)||hasStatus(enemy,'untargetable')||hasStatus(enemy,'banished')){
         releaseThread(agent,enemy);
         const interruptMsg = `The thread on ${enemy.name} is interrupted and its progress resets.`;
         lines.push({text:interruptMsg,kind:"status"});
@@ -746,6 +808,7 @@ function processSpiritThreads(state,lines=[]){if(!lines)lines=[];const allUnits=
         continue;
       }
       t.progress++;applyThreadStage(enemy);
+      if(agent._threadChargeRound!==state.currentRound){changeMeter(agent,'fool',10);agent._threadChargeRound=state.currentRound;}
       let debuffMsg = '';
       if(t.progress===1){
         enemy._threadSpeedDebuff=THREAD_RULES.initialSpeedLoss;
@@ -766,7 +829,7 @@ function processSpiritThreads(state,lines=[]){if(!lines)lines=[];const allUnits=
         emitCombatEvent(state,{round:state?.currentRound||1,type:'thread',subtype:'debuff',actorId:agent.id,actorName:agent.name,actorTeam:teamOf(agent,state),targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),text:debuffMsg});
       }
       if(t.progress>=t.required){
-        enemy.hp=0;enemy.alive=false;releaseThread(agent,enemy);changeMeter(agent,"fool",18);
+        enemy.hp=0;enemy.alive=false;releaseThread(agent,enemy);
         lines.push({text:`${agent.name} completes the Spirit Body Thread. ${enemy.name} dies and becomes a Marionette for the rest of this battle.`,kind:"victory"});emitCombatEvent(state,{round:state?.currentRound||1,type:'death',actorId:agent.id,actorName:agent.name,actorTeam:teamOf(agent,state),targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),text:`${enemy.name} dies and becomes a Marionette (this battle only).`,converted:true});
         joinMarionette(state,agent,enemy,lines);
       }else{
@@ -909,22 +972,23 @@ function maybeCounter(target,attacker,state,lines=[],r){if(!lines)lines=[];if(!t
   lines.push({text:`${target.name} counters for ${dmg} damage (${Math.round(rates.counter*100)}% counter chance).`,kind:'quirk'});
   emitCombatEvent(state,{round:state?.currentRound||1,type:'cast',actorId:target.id,actorName:target.name,actorTeam:teamOf(target,state),ability:'Counter',costSP:0,cooldown:0,isCounter:true});
   const hit=resolveIncoming(target,attacker,dmg,state,lines,r,{damageType:'physical'});
-  emitCombatEvent(state,{round:state?.currentRound||1,type:'damage',actorId:target.id,actorName:target.name,actorTeam:teamOf(target,state),targetId:attacker.id,targetName:attacker.name,targetTeam:teamOf(attacker,state),amount:hit.hpLoss+hit.absorbed,damageType:'physical',isCounter:true,hpAfter:attacker.hp,maxHp:attacker.maxHp});
+  emitCombatEvent(state,{round:state?.currentRound||1,type:'damage',actorId:target.id,actorName:target.name,actorTeam:teamOf(target,state),targetId:attacker.id,targetName:attacker.name,targetTeam:teamOf(attacker,state),amount:hit.hpLoss+hit.absorbed,absorbed:hit.absorbed,hpLoss:hit.hpLoss,shieldAfter:attacker.shield||0,damageType:'physical',isCounter:true,hpAfter:attacker.hp,maxHp:attacker.maxHp});
  }
 }
 function consumeAttackMiss(actor,r){const chance=Number(actor._nextAttackMiss||0);actor._nextAttackMiss=0;return chance>0&&r()<chance;}
 function consumeCritFailure(actor){const blocked=!!actor._nextCritFail;actor._nextCritFail=0;return blocked;}
 function attackHit(agent,actor,target,state,lines=[],r,{forcedMiss=false,weaponAttack=false,ability='Attack'}={}){
- const miss=text=>{lines.push({text,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'miss',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:target.id,targetName:target.name,targetTeam:teamOf(target,state),text});return false;};
+ const miss=text=>{lines.push({text,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'miss',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:target.id,targetName:target.name,targetTeam:teamOf(target,state),text});signatureFailedAttack(actor,state,lines,r);return false;};
  if(forcedMiss)return miss(`${actor.name}'s ${ability} is forced to miss.`);
  if(!target.alive||hasStatus(target,'untargetable'))return miss(`${actor.name} cannot target ${target.name}.`);
  if(hasStatus(target,'evade')&&(target.statusMeta?.evade?.dodgeRate===undefined||Number(target.statusMeta.evade.dodgeRate)>=1))return miss(`${target.name}'s Evasion lets them slip away untouched — ${actor.name}'s ${ability} misses.`);
  const pm=passiveCombatModifier(agent),targetAgent=getCombatAgent(target),targetStats=targetAgent.stats||target,
    enemyRates=combatRates(targetAgent,target),dodgeMaxCap=Number(G9D?.formulas?.combat_rates?.dodge?.max_rate??1.0);
- const dodgeChance=Math.max(.03,Math.min(dodgeMaxCap,.05+((targetStats.int-agent.stats.int)/Math.max(1,agent.stats.int))*.25+(enemyRates.dodge||0)-(pm.hitChance||0)));
- if(r()<dodgeChance)return miss(`${actor.name}'s ${ability} misses as ${target.name} reads the movement and dodges.`);
+ const intAdvantage=Number(G9D?.formulas?.combat_rates?.dodge?.int_advantage_coefficient??.25);
+ const dodgeChance=Math.max(.03,Math.min(dodgeMaxCap,.05+((targetStats.int-agent.stats.int)/Math.max(1,agent.stats.int))*intAdvantage+(enemyRates.dodge||0)-(pm.hitChance||0)));
+ if(r()<dodgeChance&&!signatureRetryContest(actor,state,lines,r,dodgeChance,true,false))return miss(`${actor.name}'s ${ability} misses as ${target.name} reads the movement and dodges.`);
  const weapon=weaponStats(agent),missChance=Math.max(0,Math.min(.95,(weaponAttack?weapon.masteryMiss:0)-pm.hitChance+(actor._hitChanceDebuff||0)+(actor._threadHitDebuff||0)));
- if(r()<missChance)return miss(weaponAttack?`${actor.name} misses with ${weapon.name}. ${weapon.kind==='gun'?`Gun Mastery Lv.${weapon.mastery} gives ${Math.round((1-missChance)*100)}% accuracy.`:'The attack misses.'}`:`${actor.name}'s ${ability} misses.`);
+ if(r()<missChance&&!signatureRetryContest(actor,state,lines,r,missChance,true,false))return miss(weaponAttack?`${actor.name} misses with ${weapon.name}. ${weapon.kind==='gun'?`Gun Mastery Lv.${weapon.mastery} gives ${Math.round((1-missChance)*100)}% accuracy.`:'The attack misses.'}`:`${actor.name}'s ${ability} misses.`);
  return true;
 }
 function attackOnce(agent,actor,enemy,state,lines=[],r,mult=1){if(!lines)lines=[];
@@ -974,7 +1038,7 @@ function attackOnce(agent,actor,enemy,state,lines=[],r,mult=1){if(!lines)lines=[
    targetId: enemy.id,
    targetName: enemy.name,
    targetTeam: teamOf(enemy, state),
-   amount: dealt,
+   amount: dealt,absorbed:tk.absorbed,hpLoss:tk.hpLoss,shieldAfter:enemy.shield||0,
    damageType: 'physical',
    critical: critical,
    hpAfter: enemy.hp,
@@ -1057,6 +1121,7 @@ function actionDisabled(unit){
  return ['stunned','frozen','freeze','sleep','polymorphed'].some(s=>hasStatus(unit,s)) || hasStatus(unit,'bound') || hasStatus(unit,'unconscious') || (unit._skipTurns > 0) || hasStatus(unit,'banished');
 }
 function handleSleepWake(target,lines=[]){if(!lines)lines=[];
+ if(target._mythicalDream)return;
  if(hasStatus(target,'sleep')){removeStatus(target,'sleep');lines.push({text:`${target.name} wakes from Sleep when struck.`,kind:'status'});}
 }
 
@@ -1067,7 +1132,7 @@ function ensureCombatResource(agent){
 function startRoundCombatResources(units,lines){
   for(const u of units){if(!u.alive)continue;const a=u.agent||u;ensureCombatResource(a);const gain=spTableFor(a).regen;a.sp=Math.min(a.maxSP,a.sp+gain);for(const k of Object.keys(a.cooldowns||{})){if(a.cooldowns[k]>0)a.cooldowns[k]--;}}
 }
-function activeSpecs(agent){return unlockedAbilities(agent).filter(x=>x.type==='active').map(x=>cloneE(x));}
+function activeSpecs(agent){return [...unlockedAbilities(agent).filter(x=>x.type==='active'),...signatureBorrowedAbilities(agent)].map(x=>cloneE(x));}
 function effectiveAbilityCost(agent,spec){return Math.max(0,Math.round(Number(spec.costSP||0)*(1+Number(agent._spCostMultiplier||0))));}
 function abilityReady(agent,spec){ensureCombatResource(agent);return (agent.sp||0)>=effectiveAbilityCost(agent,spec)&&!(agent.cooldowns?.[spec.effectId]>0)&&!hasStatus({status:agent.status||[]},'silenced')&&!(hasStatus(agent,'root')&&spec.tag==='Escape');}
 function abilityAvailable(agent,effectId){return unlockedAbilities(agent).some(x=>x.effectId===effectId||x.id===effectId);}
@@ -1078,9 +1143,10 @@ function chooseStructuredAbility(agent,actor,enemy,state){
  // relevant newly unlocked ability within each role instead of the first
  // (oldest) entry in the Sequence 9 -> 0 content order.
  const ranks=new Map(unlockedTiers(agent).flatMap(t=>(t.abilities||[]).map(a=>[a.effectId||a.id,t.sequence])));
- const isDamage=x=>(x.damage?.multiplier||x.scale||0)>0||abilityEffects(x).some(e=>e.type==='damage_component');
+ const isDamage=x=>(x.damage?.multiplier||x.scale||0)>0||abilityEffects(x).some(e=>e.type==='damage_component')||signatureDamaging(x,actor,enemy);
  const isAutomaticRevival=x=>{const effects=abilityEffects(x).filter(e=>e.type!=='targeting');return effects.length&&effects.every(e=>e.type==='revive'&&e.self);};
  const useful=x=>{if(isDamage(x))return true;const effects=abilityEffects(x),types=effects.map(e=>e.type);const only=k=>types.length&&types.every(y=>k.includes(y)||y==='targeting');
+  if(!signatureUseful(actor,x,enemy,state))return false;
   if(only(['heal']))return !hasStatus(actor,'no_heal')&&hpRatio<.85;
   if(only(['shield']))return !hasStatus(actor,'no_shield')&&effects.some(e=>e.type==='shield'&&(e.fullHp?actor.maxHp:Math.round(actor.maxHp*Number(e.maxHpRatio||0)))>(actor.shield||0));
   if(only(['buff']))return effects.some(e=>e.type==='buff'&&(e.stat==='all'?['atk','def','int']:[e.stat]).some(stat=>(actor._buffs?.[stat]||1)<1+Number(e.amount||0)));
@@ -1089,7 +1155,7 @@ function chooseStructuredAbility(agent,actor,enemy,state){
   if(only(['heal','cleanse']))return hpRatio<.85||(actor.status||[]).length>0;
   if(only(['status','status_chance','silence','skip','banish']))return effects.some(e=>e.type==='targeting'?false:e.type==='status'||e.type==='status_chance'?!(SELF_STATUSES.includes(e.status)?hasStatus(actor,e.status):hasStatus(enemy,e.status)||statusImmune(enemy,e.status)):e.type==='silence'?!hasStatus(enemy,'silenced'):true);
   return true;};
- let specs=activeSpecs(agent).filter(x=>x.effectId!=='thread_binding'&&!isAutomaticRevival(x)&&abilityReady(agent,x)&&!(hasStatus(actor,'root')&&x.tag==='Escape')&&useful(x))
+ let specs=activeSpecs(agent).filter(x=>x.effectId!=='thread_binding'&&!isAutomaticRevival(x)&&(agent.sp||0)>=signatureCastCost(agent,x,enemy,state)&&!(agent.cooldowns?.[x.effectId]>0)&&signatureReady(actor,x,enemy,state)&&!(actor._signatureDeniedSkills?.[x.effectId||x.id]>0)&&!(hasStatus(actor,'root')&&x.tag==='Escape')&&useful(x))
   .sort((a,b)=>(ranks.get(a.effectId||a.id)??Infinity)-(ranks.get(b.effectId||b.id)??Infinity));
   // Teammate will not cast an ability to banish an enemy currently having a thread attached
   if (enemy && enemy.thread) {
@@ -1132,6 +1198,8 @@ function chooseStructuredAbility(agent,actor,enemy,state){
   
  const survival=specs.find(x=>x.tag==='Heal'||x.tag==='Defense'||x.tag==='Escape');
  if(hpRatio<.50&&survival)return survival;
+ const signature=specs.find(s=>s._signatureOwned||abilityEffects(s).some(e=>e.type==='signature'));
+ if(signature)return signature;
  const control=specs.find(x=>abilityEffects(x).some(e=>['skip','banish','silence'].includes(e.type)||(['status','status_chance'].includes(e.type)&&!SELF_STATUSES.includes(e.status)&&!statusImmune(enemy,e.status))));
  if(control&&!(enemy.status||[]).some(s=>['stunned','frozen','freeze','sleep','silenced','banished','polymorphed','bound','unconscious'].includes(s)))return control;
  const damaging=specs.filter(x=>(x.damage?.multiplier||x.scale||0)>0).sort((a,b)=>(b.damage?.multiplier||b.scale||0)-(a.damage?.multiplier||a.scale||0))[0];
@@ -1141,6 +1209,7 @@ function chooseStructuredAbility(agent,actor,enemy,state){
  return specs.find(useful)||null;
 }
 function targetsForEffects(spec,actor,enemy,state){
+ if(spec._signatureOffensiveTarget){const target=[...state.allies,...state.enemies].find(u=>u.id===spec._signatureOffensiveTarget&&u.alive&&!hasStatus(u,'untargetable'));return target?[target]:[];}
  // If casting Time Theft, target an enemy who has not taken their turn yet this round
   if (spec.id === 'time_theft' || spec.effectId === 'time_theft') {
     const pending = foesOf(actor, state).filter(x => x.alive && !x._actedThisRound);
@@ -1199,7 +1268,10 @@ function getCopiedEnemyAbility(actor, enemy, state) {
   return null;
 }
 function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lines)lines=[];
- const castSpec=cloneE(spec),castId=castSpec.effectId||castSpec.id;
+ if(!spec||actor._signatureDeniedSkills?.[spec.effectId||spec.id]>0||!signatureReady(actor,spec,enemy,state))return false;
+ const prepared=signaturePrepareCast(agent,actor,enemy,state,lines,r,spec);
+ if(!prepared)return false;
+ const castSpec=cloneE(prepared),castId=castSpec.effectId||castSpec.id;
  if(hasStatus(actor,'root')&&castSpec.tag==='Escape')return false;
  const castName=(castSpec.text||castSpec.name||castId).split(/\s(?:—|--)\s/)[0];
  spec=castSpec;
@@ -1213,6 +1285,7 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
  ensureCombatResource(agent); const cost=effectiveAbilityCost(agent,castSpec);
  if((agent.sp||0)<cost)return false;
  agent.sp-=cost;actor.sp=agent.sp;
+ spec._signaturePaidSP=cost;
  const baseCd = Number(castSpec.cooldown || 0);
  agent.cooldowns[castId]=(baseCd > 0 ? baseCd + 1 : 0)+Number(agent._cooldownPenalty||0);agent._lastAbility=castId;
  lines.push({text:`ACTION: ${actor.name} casts [${castName}] (Cost: ${cost} SP | ${baseCd}-Turn CD).`,kind:'action'});
@@ -1224,35 +1297,44 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
       actorTeam: teamOf(actor, state),
       ability: castName,
       costSP: cost,
-      cooldown: baseCd
+      cooldown: baseCd,abilityId:castId
     });
  const misfire=Number(actor._skillMisfireChance||0);
  if(misfire&&r()<misfire){
    const text=`${actor.name}'s ${castName} misfires due to disorder!`;
    lines.push({text:`ACTION: ${text}`,kind:'status'});
    emitCombatEvent(state,{round:state?.currentRound||1,type:'status',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),text});
+   spec._signatureMisfired=true;
+   signatureAfterCast(agent,actor,enemy,state,lines,r,spec,[]);mythicalAfterCast(actor,enemy,state,lines,r,spec);
    return true;
  }
+ if(castSpec._signatureCancelled){signatureAfterCast(agent,actor,enemy,state,lines,r,spec,[]);mythicalAfterCast(actor,enemy,state,lines,r,spec);return true;}
+ const mythicalCast=mythicalBeforeCast(agent,actor,enemy,state,lines,r,spec)||{};
+ if(!actor.alive){spec._signatureMisfired=true;signatureAfterCast(agent,actor,enemy,state,lines,r,spec,[]);return true;}
  if(copiedName){
    const text=`${actor.name} reproduces [${copiedName}]!`;
    lines.push({text,kind:'action'});
    emitCombatEvent(state,{round:state?.currentRound||1,type:'status',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),text});
  }
- if(state){state._abilityHistoryByUnit=state._abilityHistoryByUnit||{};(state._abilityHistoryByUnit[actor.id]=state._abilityHistoryByUnit[actor.id]||[]).push({spec:cloneE(spec),round:state.currentRound||1});}
+ if(state){if(!state._abilityHistoryByUnit||Object.getPrototypeOf(state._abilityHistoryByUnit)!==null)state._abilityHistoryByUnit=Object.assign(Object.create(null),state._abilityHistoryByUnit||{});(state._abilityHistoryByUnit[actor.id]=state._abilityHistoryByUnit[actor.id]||[]).push({spec:cloneE(spec),sequence:signatureSourceRank(spec,agent),round:state.currentRound||1});}
  const effects=abilityEffects(spec),allies=sameSideOf(actor,state);
  const durationText=d=>d==='next_turn'?'until their next turn':`for ${d} turn${Number(d)===1?'':'s'}`;
  const targeting=effects.find(e=>e.type==='targeting');
- const supportTargets=targeting?.mode==='all_allies'?allies.filter(t=>t.alive):[actor];
+ const redirect=spec._signatureRedirectTarget&&[...state.allies,...state.enemies].find(u=>u.id===(spec._signatureRedirectTarget.id||spec._signatureRedirectTarget));
+ const supportTargets=mythicalCast.supportTargets||(redirect?[redirect]:(targeting?.mode==='all_allies'?allies.filter(t=>t.alive):[actor]));
  const componentEffects=effects.filter(e=>e.type==='damage_component');
  const effectiveDamageSpec=componentEffects.length?{...(spec.damage||{}),components:componentEffects.map(e=>({stat:e.stat,multiplier:Number(e.multiplier||0)}))}:(spec.damage||null);
- const damaging=Number(effectiveDamageSpec?.multiplier||spec.scale||0)>0||componentEffects.length>0;
+ const primaryDamaging=Number(effectiveDamageSpec?.multiplier||spec.scale||0)>0||componentEffects.length>0;
+ const damaging=primaryDamaging||signatureDamaging(spec,actor,enemy);
  const forcedMiss=damaging?consumeAttackMiss(actor,r):false;
  const critFailed=damaging?consumeCritFailure(actor):false;
  const hitName=copiedName||castName;
  const targets=targetsForEffects(spec,actor,enemy,state).filter(t=>!damaging||attackHit(agent,actor,t,state,lines,r,{forcedMiss,weaponAttack:false,ability:hitName}));
  for(const e of effects){
+  if(mythicalCast.blockedEffects?.includes(e.type))continue;
   const tgs=e.type==='buff'||e.type==='heal'||e.type==='cleanse'||e.type==='shield'||e.type==='revive'?supportTargets:targets;
-  if(e.type==='strip_buffs'||e.type==='nullify_buffs')for(const t of targets){removeFxCat(t,'buff');t.buffs=[];removeStatus(t,'guarded');removeStatus(t,'evade');if((t.shield||0)>0){lines.push({text:`${t.name}'s barrier (${t.shield} HP shield) is stripped away!`,kind:'status'});t.shield=0;}}
+  if(e.type==='signature')applySignatureEffect(e,agent,actor,targets,state,lines,r,spec);
+  else if(e.type==='strip_buffs'||e.type==='nullify_buffs')for(const t of targets){removeFxCat(t,'buff');t.buffs=[];removeStatus(t,'guarded');removeStatus(t,'evade');if((t.shield||0)>0){lines.push({text:`${t.name}'s barrier (${t.shield} HP shield) is stripped away!`,kind:'status'});t.shield=0;}}
   else if(e.type==='cleanse'){for(const t of tgs){const removed=[];for(const st of [...(t.status||[])])if(CLEANSE_STATUSES.includes(st)){removeStatus(t,st);removed.push(st);}if(removed.length)lines.push({text:`${t.name} cleanses: ${removed.join(', ')}.`,kind:'status'});}}
   else if(e.type==='shield')for(const t of tgs){const amount=e.fullHp?t.maxHp:Math.round(t.maxHp*Number(e.maxHpRatio||0)),granted=grantShield(t,amount,e.incomingCategory);if(granted<=0)continue;lines.push({text:`${t.name} gains ${granted} HP of ${e.incomingCategory?e.incomingCategory+' ':''}shield.`,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'shield',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),amount:granted,shieldAfter:t.shield});}
   else if(e.type==='heal')for(const t of tgs){const amount=Math.round(t.maxHp*Number(e.maxHpRatio||0)+(e.scaling==='INT'?agent.stats.int*Number(e.multiplier||0):0));if(amount>0){const restored=recoverHP(t,amount);if(restored>0){lines.push({text:`${t.name} recovers ${restored} HP (${t.hp}/${t.maxHp}).`,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'heal',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),amount:restored,hpAfter:t.hp,maxHp:t.maxHp});}}}
@@ -1320,7 +1402,7 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
  const psychicTrue=effects.some(e=>e.type==='damage_rule'&&e.rule==='psychic_true');
  const rawDamageType=effectiveDamageSpec?.element||effectiveDamageSpec?.type||spec.damageType||'physical';
  const damageType=psychicTrue?'psychic':trueDamage?'true':canonicalResistanceElement(rawDamageType);
- if(damaging){for(const t of targets){
+ if(primaryDamaging){for(const t of targets){
    if(!t.alive)continue;
    let mult=effectiveDamageSpec?.multiplier||spec.scale||0;
    const baseAbilityMultiplier=mult,effectContributions=[];
@@ -1344,21 +1426,27 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
    trace.final=dmg;trace.critical=critical;trace.critBonus=critBonus;trace.critChance=critChance;
    state.balanceTrace.push(trace);
    if(hasStatus(t,'sleep')&&!t._sleepAppliedThisAction)handleSleepWake(t,lines);
-   const tk=resolveIncoming(actor,t,dmg,state,lines,r,{damageType,trueDamage:trueDamage||psychicTrue,execute:executing});
+   const tk=resolveIncoming(actor,t,dmg,state,lines,r,{damageType,trueDamage:trueDamage||psychicTrue,execute:executing,area:['all_enemies','up_to_3_enemies'].includes(targeting?.mode),ability:spec});
    const finalDamage=tk.hpLoss+tk.absorbed;
    const executed=executing&&!!(tk.dead||tk.revived);
    didDamage=true;totalDamage+=finalDamage;
    if(executed)lines.push({text:`EXECUTE: ${t.name} is instantly executed!`,kind:'quirk'});
    lines.push({text:`IMPACT: ${damageType} damage ${finalDamage} to ${t.name}${critical?' critical':''}${trueDamage||psychicTrue?' (TRUE DAMAGE)':''}.`,kind:'damage'});
    emitCombatEvent(state,{
-     round:state?.currentRound||1,type:'damage',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),amount:finalDamage,damageType,critical,trueDamage:trueDamage||psychicTrue,instantKill:executed,hpAfter:t.hp,maxHp:t.maxHp
+     round:state?.currentRound||1,type:'damage',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),amount:finalDamage,absorbed:tk.absorbed,hpLoss:tk.hpLoss,shieldAfter:t.shield||0,damageType,critical,trueDamage:trueDamage||psychicTrue,instantKill:executed,hpAfter:t.hp,maxHp:t.maxHp
    });
    if(matchesIncomingCategory('physical',trueDamage||psychicTrue?'true':damageType)&&t.alive&&actor.alive&&!tk.revived&&!tk.negated&&finalDamage>0)maybeCounter(t,actor,state,lines,r);
  }}
- const healRatio=effects.filter(e=>e.type==='heal_damage_ratio').reduce((n,e)=>n+Number(e.amount||0),0); if(healRatio>0&&didDamage)recoverHP(actor,Math.round(totalDamage*healRatio));
- const abilityLifeSteal=effects.filter(e=>e.type==='lifesteal'&&e.duration===undefined).reduce((n,e)=>n+Number(e.ratio||e.amount||0),0)+Number(actor._lifestealBonus||0)+Number(traitData(agent).lifesteal||0); if(abilityLifeSteal>0&&didDamage)recoverHP(actor,Math.round(totalDamage*abilityLifeSteal));
+ const recoveryTarget=mythicalCast.supportTargets?.[0]||redirect||actor;
+ const healRatio=effects.filter(e=>e.type==='heal_damage_ratio').reduce((n,e)=>n+Number(e.amount||0),0);
+ const activeLifeSteal=effects.filter(e=>e.type==='lifesteal'&&e.duration===undefined).reduce((n,e)=>n+Number(e.ratio||e.amount||0),0);
+ const passiveLifeSteal=Number(actor._lifestealBonus||0)+Number(traitData(agent).lifesteal||0);
+ const recoveries=[[recoveryTarget,healRatio],...(recoveryTarget===actor?[[actor,activeLifeSteal+passiveLifeSteal]]:[[recoveryTarget,activeLifeSteal],[actor,passiveLifeSteal]])];
+ if(didDamage)for(const [target,ratio] of recoveries){if(ratio<=0)continue;const restored=recoverHP(target,Math.round(totalDamage*ratio));if(restored>0){lines.push({text:`${target.name} recovers ${restored} HP (${target.hp}/${target.maxHp}).`,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'heal',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:target.id,targetName:target.name,targetTeam:teamOf(target,state),amount:restored,hpAfter:target.hp,maxHp:target.maxHp});}}
  agent._lowHpBonus=0;agent._abilityCritDamageBonus=0;for(const t of (targets||[]))delete t._sleepAppliedThisAction;
  for(const u of new Set([actor,...supportTargets,...targets]))syncUnitToAgent(u);
+ signatureAfterCast(agent,actor,enemy,state,lines,r,spec,targets);
+ mythicalAfterCast(actor,enemy,state,lines,r,spec);
  return true;
 }
 function syncUnitToAgent(u){if(u&&u.agent&&u.agent!==u){for(const k of ['_buffs','_speedDebuff','_threadSpeedDebuff','_threadDodgeDebuff','_threadHitDebuff','_threadLockDodge','_spCostMultiplier','_cooldownPenalty','_dodgeBonus','_counterBonus','_lifestealBonus'])u.agent[k]=u[k];}}
@@ -1429,6 +1517,7 @@ function resolveQuest(members,quest,seed=Date.now(),decisions={}){
  const individual=!!decisions.individual; const state={allies,enemies,individual,createdMarionettes:[],battleMarionettes:[],rng:r,weaponUsage:{},combatStatsShown:false,balanceTrace:[],events:[]};
  for(const u of allies)u.agent._teamDamageMultiplier=1;
  for(const u of enemies)u.agent._teamDamageMultiplier=individual?COMBAT_BALANCE.enemyDamageIndividual:COMBAT_BALANCE.enemyDamageParty;
+ const initialUnits=[...allies,...enemies].map(u=>combatResourceSnapshot(u,state));
  lines.push({text:`Contract: ${quest.name}`,kind:'system'},{text:quest.story||quest.brief,kind:'story'});
  if(!quest.encounter){
    if(quest.objective==='rescue'){lines.push({text:'The guild searches the neighborhood rather than hunting for a fight. Clues lead through an alley, beneath a bakery awning, and into a coal shed.',kind:'system'},{text:'The missing cat is found frightened but unharmed and returned to its owner.',kind:'victory'});}
@@ -1448,15 +1537,16 @@ function resolveQuest(members,quest,seed=Date.now(),decisions={}){
 
  for(const a of allies)lines.push({text:`${a.name} — ${a.agent.path?`${pathOf(a.agent.path).name} · Sequence ${a.agent.sequence}`:'Unawakened'}.`,kind:'system'});
  let round=0;
- while(allies.some(x=>x.alive)&&enemies.some(x=>x.alive)&&round<15){round++;state.currentRound=round;startRoundCombatResources([...allies,...enemies],lines);lines.push({text:`· Round ${round} ·`,kind:'system'}); emitCombatEvent(state, {round, type: 'round_start'});
+ while(allies.some(x=>x.alive)&&enemies.some(x=>x.alive)&&round<15){round++;state.currentRound=round;startRoundCombatResources([...allies,...enemies],lines);lines.push({text:`· Round ${round} ·`,kind:'system'}); emitCombatEvent(state, {round, type: 'round_start'});emitCombatResources(state);
    for (const u of [...allies, ...enemies]) u._actedThisRound = false;                                                                
-   const initiativeOrder=(a,b)=>unitInitiative(b)-unitInitiative(a)||a.name.localeCompare(b.name);
+   const initiativeOrder=(a,b)=>unitInitiative(b)-unitInitiative(a)||a.name.localeCompare(b.name)||a.id.localeCompare(b.id);
    const initiativeLine=[...allies.filter(x=>x.alive),...enemies.filter(x=>x.alive)].sort(initiativeOrder).map(x=>`${x.name} ${unitInitiative(x).toFixed(1)}`).join(' → '); lines.push({text:`Initiative: ${initiativeLine}`,kind:'system'}); emitCombatEvent(state, {round, type: 'system', subtype: 'initiative', details: initiativeLine, text: `Initiative: ${initiativeLine}`});
    processSpiritThreads(state,lines);                                                                 
    applyPassiveAuras([...allies,...enemies],state);
    const order=[...allies.filter(x=>x.alive),...enemies.filter(x=>x.alive)].sort(initiativeOrder);
    const actors=order;
-   for(const c of actors){try{if(!c.alive||c.inCombat===false)continue;state.currentTurn=(state.currentTurn||0)+1;c._acting = true;beginTurn(c);processStatuses(c,t=>lines.push({text:t,kind:'status'}),state,false);c._actedThisRound = true;if(!c.alive)continue;
+   for(const c of actors){let completed=false;try{if(!c.alive||c.inCombat===false)continue;state.currentTurn=(state.currentTurn||0)+1;c._acting = true;beginTurn(c);signatureTurnStart(c,state,lines,r);mythicalTurnStart(c,state,lines,r);processStatuses(c,t=>lines.push({text:t,kind:'status'}),state,false);c._actedThisRound = true;if(!c.alive)continue;
+       if(mythicalTryAction(c,state,lines,r)||signatureTryAction(c,state,lines,r))continue;
        if(c._skipTurns>0||hasStatus(c,'banished')){if(c._skipTurns>0)c._skipTurns--;lines.push({text:`${c.name} is banished in a spatial fold and cannot act.`,kind:'status'});if(!c._skipTurns||c._skipTurns<=0){removeStatus(c,'banished');removeStatus(c,'untargetable');}continue;}
        if((c.agent.madness||0)>=50&&r()<.18){lines.push({text:`${c.name} loses the action to mounting Madness.`,kind:'status'});continue;}if(actionDisabled(c)){
       lines.push({text:`${c.name} loses the action to Crowd Control.`,kind:'status'});
@@ -1478,15 +1568,16 @@ function resolveQuest(members,quest,seed=Date.now(),decisions={}){
        const targetable=targetPool.filter(x=>!hasStatus(x,'untargetable'));
        const enemy=pickR(r,tauntFilter(c,targetable.length?targetable:targetPool));
        if(!state.combatStatsShown)state.combatStatsShown={};if(!state.combatStatsShown[enemy.id]){lines.push({text:`Combat begins: ${enemy.name} · HP ${enemy.maxHp} · ATK ${enemy.atk} · DEF ${enemy.def} · INT ${enemy.int} · Speed ${speedFor(enemy).toFixed(1)} · AV ${actionValueFor(enemy).toFixed(1)}.`,kind:'system'});state.combatStatsShown[enemy.id]=true;}
-       syncUnitToAgent(c);powerEffect(c.agent,c,enemy,state,lines,r);
+       syncUnitToAgent(c);completed=powerEffect(c.agent,c,enemy,state,lines,r);
        if(c._extraTurns>0&&c.alive&&enemy.alive){c._extraTurns--;powerEffect(c.agent,c,enemy,state,lines,r);}
-   }finally{c._acting = false;tickUnitStatuses(c);tickCombatEffectDurations([c]);}
+   }finally{if(completed)signatureActionFinished(c,state,lines,r);c._acting = false;tickUnitStatuses(c);tickCombatEffectDurations([c]);signatureTurnEnd(c,state,lines,r);mythicalTurnEnd(c,state,lines,r);emitCombatResources(state);}
    }
  }
- const success=allies.some(x=>x.alive&&x.inCombat)&&!enemies.some(x=>x.alive); if(success)lines.push({text:'The hostile force is defeated and the guild completes the contract.',kind:'victory'});else lines.push({text:'The guild is defeated in the encounter.',kind:'failure'});
- const snapshotUnit=x=>({id:x.id,name:x.name,path:x.path,sequence:x.sequence,stats:cloneE(x.stats),
-   initiative:unitInitiative(x),alive:x.alive,hp:x.hp,maxHp:x.maxHp,sp:x.sp,maxSP:x.maxSP});
- const battleSnapshot={allies:allies.map(snapshotUnit),enemies:enemies.map(snapshotUnit),balanceTrace:state.balanceTrace,events:state.events||[]};
+ const guildSurvives=allies.some(x=>x.alive&&x.inCombat),hostilesRemain=enemies.some(x=>x.alive);
+ const success=guildSurvives&&!hostilesRemain,battleOutcome=success?'victory':guildSurvives&&hostilesRemain&&round>=15?'timeout':!guildSurvives&&!hostilesRemain?'mutual_defeat':'defeat';
+ if(success)lines.push({text:'The hostile force is defeated and the guild completes the contract.',kind:'victory'});else lines.push({text:battleOutcome==='timeout'?'The round limit is reached with hostiles remaining; the contract is incomplete.':battleOutcome==='mutual_defeat'?'Neither force survives; the contract is incomplete.':'The guild is defeated in the encounter.',kind:'failure'});
+ const snapshotUnit=x=>({...combatResourceSnapshot(x,state),stats:cloneE(x.stats),summoned:!!x.summoned,initiative:unitInitiative(x)});
+ const battleSnapshot={outcome:battleOutcome,initialUnits,allies:allies.map(snapshotUnit),enemies:enemies.map(snapshotUnit),balanceTrace:state.balanceTrace,events:state.events||[]};
  for(const u of allies.filter(x=>!x.summoned)){const a=u.agent;const gain=digestGain(quest,individual,a);if(success){
   a.digest=Math.min(100,(a.digest||0)+gain);
   const equipped=weaponFor(a), masteryAmount=G9D.system.weapon_mastery.per_completed_contract||2;
@@ -1494,11 +1585,11 @@ function resolveQuest(members,quest,seed=Date.now(),decisions={}){
 }
 a.injuries=Math.min(100,(a.injuries||0)+(u.alive?Math.max(0,Math.round((u.maxHp-u.hp)/u.maxHp*25)):30));a.madness=Math.max(0,Math.min(100,(a.madness||0)+(success?-3:12)));changeMeter(a,a.path,success?12:6);restoreCombatAgentStats(u);if(!u.alive){consequences.push({type:'death',agentId:a.id,text:`${a.name} dies during the contract and is removed from the roster.`});}else{consequences.push({type:'syncAgent',agentId:a.id,agent:a,text:success?`${a.name} returns with new experience and ${gain}% digestion.`:`${a.name} returns shaken from the failed contract.`});}if(a.madness>=100)consequences.push({type:'corruptedDeath',agentId:a.id,text:`${a.name} reaches 100 Madness and becomes a corrupted monster.`});}
  const rewards=cloneE(quest.rewards);if(!success){rewards.funds=Math.round(rewards.funds*.35);rewards.reputation=0;}
- return {lines,events:state.events||[],success,consequences,marionettes:[],marionettesCreated:(state.battleMarionettes||[]).filter(m=>m.side==='ally').length,enemyMarionettesCreated:(state.battleMarionettes||[]).filter(m=>m.side==='enemy').length,weaponUsage:state.weaponUsage,rewards,dayCost:1,battleSnapshot};
+ return {lines,events:state.events||[],success,battleOutcome,consequences,marionettes:[],marionettesCreated:(state.battleMarionettes||[]).filter(m=>m.side==='ally').length,enemyMarionettesCreated:(state.battleMarionettes||[]).filter(m=>m.side==='enemy').length,weaponUsage:state.weaponUsage,rewards,dayCost:1,battleSnapshot};
 }
 
 // Mechanical descriptions use normalized effects and the same defaults as combat.
-function isPhase3DeferredAbility(spec,path){return ['logic_distortion','parasitic_contagion'].includes(spec.effectId||spec.id);}
+function isPhase3DeferredAbility(spec,path){return ['logic_distortion','parasitic_contagion'].includes(spec.effectId||spec.id)&&!abilityEffects(spec).some(e=>e.type==='signature');}
 function ruleNumber(value){return String(Number(Number(value).toFixed(4)));}
 function rulePercent(value){return `${ruleNumber(Number(value)*100)}%`;}
 function ruleLabel(value){return String(value).replace(/_/g,' ').replace(/^./,s=>s.toUpperCase());}
@@ -1533,11 +1624,14 @@ function abilityDescription(spec,path,sequence){
   parts.push(`Progresses one stage each round: ${rulePercent(THREAD_RULES.initialSpeedLoss)} Speed loss; then ${ruleNumber(THREAD_RULES.dodgeLoss*100)}-point Dodge and ${ruleNumber(THREAD_RULES.hitLoss*100)}-point accuracy loss; then ${rulePercent(THREAD_RULES.advancedSpeedLoss)} total Speed loss and no Dodge; stage 4 adds a ${rulePercent(THREAD_RULES.bindingChance)} binding chance`);
   parts.push(`At stage ${THREAD_RULES.required}, the target dies and joins your side as a battle-only marionette with ${rulePercent(THREAD_RULES.marionetteStats)} of its stats`);
   parts.push(`When the threaded target loses more than ${rulePercent(THREAD_RULES.damageThreshold)} of its Max HP in one combatant turn, remove one stack, at most once per turn; shield absorption does not count`);
+  const chargeRule=effects.find(e=>e.type==='signature');
+  if(chargeRule)parts.push(signatureDescription(chargeRule));
  }else{
   if(damaging)parts.push(`Deals ${abilityDamageText(spec)}`);
   for(const e of effects){
    const n=Number(e.amount||0),pct=rulePercent(n),stat=String(e.stat||'').toUpperCase(),d=duration(e);
    switch(e.type){
+    case 'signature':parts.push(signatureDescription(e));break;
     case 'targeting':case 'damage_rule':case 'damage_component':break;
     case 'stat_modifier':if(passive)parts.push(`+${pct} ${stat==='HP'?'Max HP':stat}`);break;
     case 'buff':parts.push(`+${pct} ${stat==='ALL'?'ATK/DEF/INT':stat} ${d}`);break;
@@ -1611,7 +1705,8 @@ function abilityDescription(spec,path,sequence){
  }
  if(damaging)parts.push('Damage and hostile effects use accuracy and Dodge; critical, authority and defense modifiers still apply');
  if(!parts.length)parts.push('No additional combat effect');
- return `${name} — ${parts.join('; ')}. ${passive?'Passive.':`${ruleNumber(spec.costSP||0)} SP · Cooldown ${ruleNumber(spec.cooldown||0)} turn${Number(spec.cooldown||0)===1?'':'s'}.`}`;
+ const copiedCost=effects.some(e=>e.type==='signature'&&['door_record','tower_imitation'].includes(e.rule));
+ return `${name} — ${parts.join('; ')}. ${passive?'Passive.':copiedCost?'Pays the stored ability’s SP cost and cooldown.':`${ruleNumber(spec.costSP||0)} SP · Cooldown ${ruleNumber(spec.cooldown||0)} turn${Number(spec.cooldown||0)===1?'':'s'}.`}`;
 }
 
 // Generate once at bootstrap; later casts clone specs and never mutate definitions.

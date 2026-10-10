@@ -1,0 +1,4896 @@
+{
+  "baseline": "0734c07",
+  "nodeVersion": "v24.19.0",
+  "sourceHashes": {
+    "js/engine.js": "ee3ce952204ba8236a8954fd4ee70a727c82dbc581ad48118ae711172172b151",
+    "js/ui.js": "94f6a35cd7688692be9a6ca77524aeb4da36ebc0b7184ca00050d416f6f17051",
+    "js/paths.js": "257cf4f003450e9346cc988c36a1ef0c025d272d4a1ef3267ab403ef4e615b6d",
+    "js/v15.js": "f2491511aa10949955b6f842ce69512250cdfc7acd995ce0438335af663696e9",
+    "js/node-loader.js": "aaa0e469d1114fa07b60cc994976fda161b1c0e6ca21b997dff9a48fa8e0c750",
+    "js/data-loader.js": "e18faf8a6ffb0fe4c2f328b12a43aadb452c2cf677ef5f14ce9e7bdd66b41cda",
+    "js/exports.js": "5ce202cf755ed424b6fdbe7f6149f85526310f7d2d67d13d42d0b316c60286dd",
+    "js/signatures.js": "acdee2674228a463979eb924514e72788a26219d8920bab151a599130f8797d9",
+    "js/mythical.js": "2aa76697672bbbee56aaf986902dd8e2c0aa97092115589e8f5a91b3f864a840",
+    "js/state.js": "2043aef4079efae2cfde0d7515760b9c18ae76c69faea0917073d0517252eb2c",
+    "tests/battle-log.test.js": "fab7795bc67deff29d4692e155da45e3586d3ca77842d1b658260218f9e0e4f7",
+    "tests/battle-ui.test.js": "61a2bb649096b7482febbf259ad4fa22d48c569c4278dd739514cb21bf25d281",
+    "tests/campaign.test.js": "1dee754c94308be2d1148f433947a4e25ff5e98bc86e923c06094865a0eabc04",
+    "tests/combat-sprite.test.js": "6c150c9c4d6adb0dd71770a1b5a3c234502cc80febdc6418b6bc3df15d9493c3",
+    "tests/fullres-cache-data.test.js": "2f05a073196483e0978ca9f475566f1eb040eebf2f2803ecfacad675f88ce9de",
+    "tests/fullres-layout.test.js": "d37f26a0d7fdfaa1a592e30fe1aabac8e166dff42839b3e8be271da718a40bdb",
+    "tests/fullres-portraits.test.js": "e66c477c38b5ff283aa40c7bed115010afdc3404f8ae4ebc40009ce9f6049523",
+    "tests/mythical-order.test.js": "0924ed7dce14020c36a1224ad1591efa66717f8c5167683b61f18cb6ae510efb",
+    "tests/phase1-ai.test.js": "8c7e5588b3120b93be8cc1ec924f87922c8ad7b55eeffdada76ff92ce13645ad",
+    "tests/phase1-casting.test.js": "e87ac09c0f68ab43015b54e857d022d03f2772fb96099434758c4cdd785c22fd",
+    "tests/phase1-combat-units.test.js": "d37115c898b0590e57a91836507c8426cf6a1c39cd8cf19e754cc51fcf0ddf71",
+    "tests/phase1-damage-pipeline.test.js": "74f6fb22864f1dfdc23d835e2b0eff15c7f03fce3d894bb85001c8b3c543f397",
+    "tests/phase1-lifecycle.test.js": "f5d615062f60c0f902b1eb3930eb9c4076f70503734fa6fff43efd5f16886273",
+    "tests/phase1-progression-resistance.test.js": "9e6b62853940783efba19b15b33aa37385f574d2ad7e636b7fdfe140135706de",
+    "tests/phase2-battle.test.js": "4dd1980f22b9aae59c9fee9807fb0f445277340ce31aa93bc832bea050f61613",
+    "tests/phase2-boot.test.js": "ac2c8745a5911ebdeb6866ee11470d753ccd569193f98900955082f0d496cb1f",
+    "tests/phase2-cache.test.js": "f98e109d0f350963807b6a9941b1843c2996584e4899f2f94987acc1e04ad226",
+    "tests/phase2-modal-dom.test.js": "af3a8f672561db9344c6d98ef220f07135a3395ff0c9e3fc662f664b4b059ca4",
+    "tests/phase2-modal.test.js": "a4bc6a791b0f3acf0480840d7de5b0e73a2361ddb4e559624ff4e0b4665f249b",
+    "tests/phase2-portraits.test.js": "b43c5b10e43413b5bdb9c4afbf190abea54dc1906d6a0258a0152d69cf1d42a8",
+    "tests/phase2-runtime-data.test.js": "3574a0ea4e2e7b363c1c937b61318581fee801335fcd92bc99cd3a0d172b3a6c",
+    "tests/phase2-startup.test.js": "dbcc305149cd9770626d4d812a8589379d66a6ea783a7e5b9e037cbc09fe039c",
+    "tests/phase3-actual-casts.test.js": "d5a63ac4a7b8ba15412bd8160ce5c70ca4d625ec83c2803a9723ea394b0092b8",
+    "tests/phase3-description-dom.test.js": "10fa35d2fd42c9f301680a1264e8b48306d1b1272367ea40b59705aa46d41b79",
+    "tests/phase3-descriptions.test.js": "e56b9e3a3215e1af2741ebd3d8623a3e889b49ef2cbaa4111c08c4e2cfcb45c7",
+    "tests/phase3-existing-rules.test.js": "b1bfbf2b33cdc42d71d80a5ce21f0d29ce03cd80fcd4472575f0503772d3646a",
+    "tests/phase3-thread-damage.test.js": "a1e4c19781e5f8a978817b42e4c834690ca06b12c7e2d96571bdf22b99996dda",
+    "tests/phase4-balance.test.js": "7c510c0c0618e0fc6ba2d8ea5c3aecb3ba71fbfd846cc70bb4abc8759ad8884d",
+    "tests/phase4-core.test.js": "1b4123ca0a2c75328b84dc0417b66bdab802583d70540599046d54cb835eee1a",
+    "tests/phase4-data.test.js": "79f7c254b5debc2ec74b84e06c651493a37c1d2d9d3bd8991cf93ab9c2798e5b",
+    "tests/phase4-mythical.test.js": "acf5fdd2cba4ea71a39fe8a32f9dab3e0592b8c37d11e429105a975cb09dd5f1",
+    "tests/phase4-saves.test.js": "6ddd73558d9d712a1a1a3c65485f3b3e51d94a4e858357cbbcf25bd32d9b7df0",
+    "tests/phase4-side-parity.test.js": "9e3f04e79287c1d7563a2e488f0c41263a7363df3de9525f8c5a79917e3f7222",
+    "tests/phase4-signatures.test.js": "319827686a2d6f909d5201f0c92f1c969150f5d3bd4410cae61d16aafecddab6",
+    "tests/phase4-ui.test.js": "a20f9599356c483e681c5c6146483396aae58a36fbe935d5bcc60ce8e5ac2694",
+    "tests/reflect-order.test.js": "be7167e620417acb85ed541bb9ebdba18c73b388022a5ace52e7123d636d3791",
+    "tests/effects-behavior.js": "9655b2a9bf4d523dfbb49df677aa37ff207bf8ef6c791341f0285208aed2e08f",
+    "tests/generic-effects.js": "b7927d7ec7f5aae2d2ca8dd07e7c45bd0347ef213d2f8c877930ce59ca83e081",
+    "tests/thread-marionette.js": "7d5c005196f299cd22476f77ea57c142216378cd4aebd2ea7faeab94684e15e1",
+    "tests/node-loader.js": "e1f51d99477e568d9a4ddba2aeb652261c5b53bcc4a38d49a8e85310f3274645",
+    "tests/fullres-assets.test.py": "d304813bc31008000d518e22c822bf6f518cc0fc70656f0b0e7557f62c26934a",
+    "tests/phase2-runtime-assets.test.py": "f3559b3b9cfa3662ee5e6322095e814b23496f5a92deff4911f099ab79b375fb"
+  },
+  "changedDuringRun": [],
+  "metrics": {
+    "changedFunctions": 243,
+    "calledFunctions": 231,
+    "mappedFunctions": 243,
+    "namedFunctions": 117,
+    "anonymousFunctions": 126,
+    "calledNamedFunctions": 117,
+    "calledAnonymousFunctions": 114,
+    "coveredNonWhitespaceUTF16Units": 161657,
+    "nonWhitespaceUTF16Units": 178202,
+    "sourceRangePercent": 90.72
+  },
+  "fileMetrics": {
+    "js/engine.js": {
+      "changedFunctions": 49,
+      "calledFunctions": 47,
+      "mappedFunctions": 49,
+      "coveredNonWhitespaceUTF16Units": 67726,
+      "nonWhitespaceUTF16Units": 73572,
+      "sourceRangePercent": 92.05
+    },
+    "js/ui.js": {
+      "changedFunctions": 38,
+      "calledFunctions": 35,
+      "mappedFunctions": 38,
+      "coveredNonWhitespaceUTF16Units": 30872,
+      "nonWhitespaceUTF16Units": 38385,
+      "sourceRangePercent": 80.43
+    },
+    "js/paths.js": {
+      "changedFunctions": 1,
+      "calledFunctions": 1,
+      "mappedFunctions": 1,
+      "coveredNonWhitespaceUTF16Units": 206,
+      "nonWhitespaceUTF16Units": 262,
+      "sourceRangePercent": 78.63
+    },
+    "js/v15.js": {
+      "changedFunctions": 2,
+      "calledFunctions": 2,
+      "mappedFunctions": 2,
+      "coveredNonWhitespaceUTF16Units": 5593,
+      "nonWhitespaceUTF16Units": 5944,
+      "sourceRangePercent": 94.09
+    },
+    "js/node-loader.js": {
+      "changedFunctions": 0,
+      "calledFunctions": 0,
+      "mappedFunctions": 0,
+      "coveredNonWhitespaceUTF16Units": 0,
+      "nonWhitespaceUTF16Units": 0,
+      "sourceRangePercent": null
+    },
+    "js/data-loader.js": {
+      "changedFunctions": 1,
+      "calledFunctions": 1,
+      "mappedFunctions": 1,
+      "coveredNonWhitespaceUTF16Units": 828,
+      "nonWhitespaceUTF16Units": 828,
+      "sourceRangePercent": 100.0
+    },
+    "js/exports.js": {
+      "changedFunctions": 0,
+      "calledFunctions": 0,
+      "mappedFunctions": 0,
+      "coveredNonWhitespaceUTF16Units": 0,
+      "nonWhitespaceUTF16Units": 0,
+      "sourceRangePercent": null
+    },
+    "js/signatures.js": {
+      "changedFunctions": 98,
+      "calledFunctions": 93,
+      "mappedFunctions": 98,
+      "coveredNonWhitespaceUTF16Units": 35255,
+      "nonWhitespaceUTF16Units": 36755,
+      "sourceRangePercent": 95.92
+    },
+    "js/mythical.js": {
+      "changedFunctions": 52,
+      "calledFunctions": 50,
+      "mappedFunctions": 52,
+      "coveredNonWhitespaceUTF16Units": 19074,
+      "nonWhitespaceUTF16Units": 19434,
+      "sourceRangePercent": 98.15
+    },
+    "js/state.js": {
+      "changedFunctions": 2,
+      "calledFunctions": 2,
+      "mappedFunctions": 2,
+      "coveredNonWhitespaceUTF16Units": 2103,
+      "nonWhitespaceUTF16Units": 3022,
+      "sourceRangePercent": 69.59
+    }
+  },
+  "wholeFileSourceRangeMetricsExcludingUI": {
+    "js/engine.js": {
+      "coveredNonWhitespaceUTF16Units": 107116,
+      "nonWhitespaceUTF16Units": 130278,
+      "sourceRangePercent": 82.22
+    },
+    "js/paths.js": {
+      "coveredNonWhitespaceUTF16Units": 5448,
+      "nonWhitespaceUTF16Units": 7923,
+      "sourceRangePercent": 68.76
+    },
+    "js/v15.js": {
+      "coveredNonWhitespaceUTF16Units": 8861,
+      "nonWhitespaceUTF16Units": 10440,
+      "sourceRangePercent": 84.88
+    },
+    "js/node-loader.js": {
+      "coveredNonWhitespaceUTF16Units": 4197,
+      "nonWhitespaceUTF16Units": 4944,
+      "sourceRangePercent": 84.89
+    },
+    "js/data-loader.js": {
+      "coveredNonWhitespaceUTF16Units": 8123,
+      "nonWhitespaceUTF16Units": 9321,
+      "sourceRangePercent": 87.15
+    },
+    "js/exports.js": {
+      "coveredNonWhitespaceUTF16Units": 2780,
+      "nonWhitespaceUTF16Units": 2780,
+      "sourceRangePercent": 100.0
+    },
+    "js/signatures.js": {
+      "coveredNonWhitespaceUTF16Units": 36047,
+      "nonWhitespaceUTF16Units": 37547,
+      "sourceRangePercent": 96.01
+    },
+    "js/mythical.js": {
+      "coveredNonWhitespaceUTF16Units": 20311,
+      "nonWhitespaceUTF16Units": 20671,
+      "sourceRangePercent": 98.26
+    },
+    "js/state.js": {
+      "coveredNonWhitespaceUTF16Units": 6225,
+      "nonWhitespaceUTF16Units": 8917,
+      "sourceRangePercent": 69.81
+    }
+  },
+  "functions": [
+    {
+      "file": "js/engine.js",
+      "function": "teamOf",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 2,
+      "endLine": 12,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 44,
+        "v8End": 430,
+        "functionName": "teamOf"
+      },
+      "coveredNonWhitespaceUTF16Units": 163,
+      "nonWhitespaceUTF16Units": 253,
+      "sourceRangePercent": 64.43
+    },
+    {
+      "file": "js/engine.js",
+      "function": "<anonymous:5:26>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 5,
+      "endLine": 5,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 146,
+        "v8End": 160,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 14,
+      "nonWhitespaceUTF16Units": 14,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "<anonymous:6:27>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 6,
+      "endLine": 6,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 204,
+        "v8End": 218,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 14,
+      "nonWhitespaceUTF16Units": 14,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "<anonymous:8:26>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 8,
+      "endLine": 8,
+      "called": false,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 271,
+        "v8End": 298,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 0,
+      "nonWhitespaceUTF16Units": 27,
+      "sourceRangePercent": 0.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "<anonymous:9:27>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 9,
+      "endLine": 9,
+      "called": false,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 342,
+        "v8End": 369,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 0,
+      "nonWhitespaceUTF16Units": 27,
+      "sourceRangePercent": 0.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "combatResourceSnapshot",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 18,
+      "endLine": 27,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 601,
+        "v8End": 1305,
+        "functionName": "combatResourceSnapshot"
+      },
+      "coveredNonWhitespaceUTF16Units": 612,
+      "nonWhitespaceUTF16Units": 621,
+      "sourceRangePercent": 98.55
+    },
+    {
+      "file": "js/engine.js",
+      "function": "<anonymous:25:33>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 25,
+      "endLine": 25,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 1197,
+        "v8End": 1254,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 54,
+      "nonWhitespaceUTF16Units": 57,
+      "sourceRangePercent": 94.74
+    },
+    {
+      "file": "js/engine.js",
+      "function": "emitCombatResources",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 28,
+      "endLine": 30,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 1306,
+        "v8End": 1469,
+        "functionName": "emitCombatResources"
+      },
+      "coveredNonWhitespaceUTF16Units": 125,
+      "nonWhitespaceUTF16Units": 125,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "<anonymous:29:86>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 29,
+      "endLine": 29,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 1429,
+        "v8End": 1463,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 34,
+      "nonWhitespaceUTF16Units": 34,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "groupEventsToRows",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 50,
+      "endLine": 317,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 1944,
+        "v8End": 9762,
+        "functionName": "groupEventsToRows"
+      },
+      "coveredNonWhitespaceUTF16Units": 4906,
+      "nonWhitespaceUTF16Units": 5177,
+      "sourceRangePercent": 94.77
+    },
+    {
+      "file": "js/engine.js",
+      "function": "summarizeBattleEvents",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 319,
+      "endLine": 364,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 9764,
+        "v8End": 11926,
+        "functionName": "summarizeBattleEvents"
+      },
+      "coveredNonWhitespaceUTF16Units": 1685,
+      "nonWhitespaceUTF16Units": 1762,
+      "sourceRangePercent": 95.63
+    },
+    {
+      "file": "js/engine.js",
+      "function": "<anonymous:351:58>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 351,
+      "endLine": 351,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 11199,
+        "v8End": 11222,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 23,
+      "nonWhitespaceUTF16Units": 23,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "<anonymous:352:60>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 352,
+      "endLine": 352,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 11292,
+        "v8End": 11315,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 23,
+      "nonWhitespaceUTF16Units": 23,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "clearCombatTransient",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 404,
+      "endLine": 410,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 14448,
+        "v8End": 15004,
+        "functionName": "clearCombatTransient"
+      },
+      "coveredNonWhitespaceUTF16Units": 535,
+      "nonWhitespaceUTF16Units": 535,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "makeAuthoredEnemy",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 458,
+      "endLine": 474,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 19115,
+        "v8End": 20798,
+        "functionName": "makeAuthoredEnemy"
+      },
+      "coveredNonWhitespaceUTF16Units": 1339,
+      "nonWhitespaceUTF16Units": 1612,
+      "sourceRangePercent": 83.06
+    },
+    {
+      "file": "js/engine.js",
+      "function": "settleFatalDamage",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 534,
+      "endLine": 546,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 23694,
+        "v8End": 24507,
+        "functionName": "settleFatalDamage"
+      },
+      "coveredNonWhitespaceUTF16Units": 737,
+      "nonWhitespaceUTF16Units": 782,
+      "sourceRangePercent": 94.25
+    },
+    {
+      "file": "js/engine.js",
+      "function": "resolveIncoming",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 547,
+      "endLine": 586,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 24508,
+        "v8End": 28699,
+        "functionName": "resolveIncoming"
+      },
+      "coveredNonWhitespaceUTF16Units": 3958,
+      "nonWhitespaceUTF16Units": 4029,
+      "sourceRangePercent": 98.24
+    },
+    {
+      "file": "js/engine.js",
+      "function": "statusImmune",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 632,
+      "endLine": 632,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 32383,
+        "v8End": 32566,
+        "functionName": "statusImmune"
+      },
+      "coveredNonWhitespaceUTF16Units": 153,
+      "nonWhitespaceUTF16Units": 179,
+      "sourceRangePercent": 85.47
+    },
+    {
+      "file": "js/engine.js",
+      "function": "removeStatus",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 634,
+      "endLine": 634,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 32940,
+        "v8End": 33211,
+        "functionName": "removeStatus"
+      },
+      "coveredNonWhitespaceUTF16Units": 247,
+      "nonWhitespaceUTF16Units": 254,
+      "sourceRangePercent": 97.24
+    },
+    {
+      "file": "js/engine.js",
+      "function": "applySpiritThread",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 724,
+      "endLine": 759,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 37498,
+        "v8End": 40081,
+        "functionName": "applySpiritThread"
+      },
+      "coveredNonWhitespaceUTF16Units": 2297,
+      "nonWhitespaceUTF16Units": 2374,
+      "sourceRangePercent": 96.76
+    },
+    {
+      "file": "js/engine.js",
+      "function": "<anonymous:741:63>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 741,
+      "endLine": 741,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 38566,
+        "v8End": 38598,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 32,
+      "nonWhitespaceUTF16Units": 32,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "<anonymous:741:103>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 741,
+      "endLine": 741,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 38606,
+        "v8End": 38629,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 23,
+      "nonWhitespaceUTF16Units": 23,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "processSpiritThreads",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 802,
+      "endLine": 837,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 43257,
+        "v8End": 46901,
+        "functionName": "processSpiritThreads"
+      },
+      "coveredNonWhitespaceUTF16Units": 3037,
+      "nonWhitespaceUTF16Units": 3064,
+      "sourceRangePercent": 99.12
+    },
+    {
+      "file": "js/engine.js",
+      "function": "<anonymous:802:196>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 802,
+      "endLine": 802,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 43453,
+        "v8End": 43551,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 72,
+      "nonWhitespaceUTF16Units": 98,
+      "sourceRangePercent": 73.47
+    },
+    {
+      "file": "js/engine.js",
+      "function": "maybeCounter",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 968,
+      "endLine": 977,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 56756,
+        "v8End": 57995,
+        "functionName": "maybeCounter"
+      },
+      "coveredNonWhitespaceUTF16Units": 1169,
+      "nonWhitespaceUTF16Units": 1205,
+      "sourceRangePercent": 97.01
+    },
+    {
+      "file": "js/engine.js",
+      "function": "attackHit",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 980,
+      "endLine": 993,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 58242,
+        "v8End": 60310,
+        "functionName": "attackHit"
+      },
+      "coveredNonWhitespaceUTF16Units": 1588,
+      "nonWhitespaceUTF16Units": 1679,
+      "sourceRangePercent": 94.58
+    },
+    {
+      "file": "js/engine.js",
+      "function": "miss",
+      "type": "ArrowFunctionExpression",
+      "named": true,
+      "startLine": 981,
+      "endLine": 981,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 58369,
+        "v8End": 58679,
+        "functionName": "miss"
+      },
+      "coveredNonWhitespaceUTF16Units": 306,
+      "nonWhitespaceUTF16Units": 309,
+      "sourceRangePercent": 99.03
+    },
+    {
+      "file": "js/engine.js",
+      "function": "attackOnce",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 994,
+      "endLine": 1050,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 60311,
+        "v8End": 64147,
+        "functionName": "attackOnce"
+      },
+      "coveredNonWhitespaceUTF16Units": 3474,
+      "nonWhitespaceUTF16Units": 3518,
+      "sourceRangePercent": 98.75
+    },
+    {
+      "file": "js/engine.js",
+      "function": "handleSleepWake",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 1123,
+      "endLine": 1126,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 79337,
+        "v8End": 79576,
+        "functionName": "handleSleepWake"
+      },
+      "coveredNonWhitespaceUTF16Units": 219,
+      "nonWhitespaceUTF16Units": 228,
+      "sourceRangePercent": 96.05
+    },
+    {
+      "file": "js/engine.js",
+      "function": "activeSpecs",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 1135,
+      "endLine": 1135,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 80081,
+        "v8End": 80231,
+        "functionName": "activeSpecs"
+      },
+      "coveredNonWhitespaceUTF16Units": 116,
+      "nonWhitespaceUTF16Units": 116,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "chooseStructuredAbility",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 1139,
+      "endLine": 1210,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 80750,
+        "v8End": 86671,
+        "functionName": "chooseStructuredAbility"
+      },
+      "coveredNonWhitespaceUTF16Units": 1995,
+      "nonWhitespaceUTF16Units": 2030,
+      "sourceRangePercent": 98.28
+    },
+    {
+      "file": "js/engine.js",
+      "function": "isDamage",
+      "type": "ArrowFunctionExpression",
+      "named": true,
+      "startLine": 1146,
+      "endLine": 1146,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 81266,
+        "v8End": 81395,
+        "functionName": "isDamage"
+      },
+      "coveredNonWhitespaceUTF16Units": 99,
+      "nonWhitespaceUTF16Units": 99,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "useful",
+      "type": "ArrowFunctionExpression",
+      "named": true,
+      "startLine": 1148,
+      "endLine": 1157,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 81575,
+        "v8End": 82939,
+        "functionName": "useful"
+      },
+      "coveredNonWhitespaceUTF16Units": 602,
+      "nonWhitespaceUTF16Units": 640,
+      "sourceRangePercent": 94.06
+    },
+    {
+      "file": "js/engine.js",
+      "function": "<anonymous:1158:37>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 1158,
+      "endLine": 1158,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 82978,
+        "v8End": 83274,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 272,
+      "nonWhitespaceUTF16Units": 296,
+      "sourceRangePercent": 91.89
+    },
+    {
+      "file": "js/engine.js",
+      "function": "<anonymous:1201:28>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 1201,
+      "endLine": 1201,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 85846,
+        "v8End": 85915,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 46,
+      "nonWhitespaceUTF16Units": 46,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "<anonymous:1201:73>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 1201,
+      "endLine": 1201,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 85891,
+        "v8End": 85914,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 23,
+      "nonWhitespaceUTF16Units": 23,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "targetsForEffects",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 1211,
+      "endLine": 1223,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 86672,
+        "v8End": 87589,
+        "functionName": "targetsForEffects"
+      },
+      "coveredNonWhitespaceUTF16Units": 549,
+      "nonWhitespaceUTF16Units": 595,
+      "sourceRangePercent": 92.27
+    },
+    {
+      "file": "js/engine.js",
+      "function": "<anonymous:1212:89>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 1212,
+      "endLine": 1212,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 86813,
+        "v8End": 86892,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 79,
+      "nonWhitespaceUTF16Units": 79,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "applyStructuredAbility",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 1270,
+      "endLine": 1451,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 89365,
+        "v8End": 113887,
+        "functionName": "applyStructuredAbility"
+      },
+      "coveredNonWhitespaceUTF16Units": 21048,
+      "nonWhitespaceUTF16Units": 22643,
+      "sourceRangePercent": 92.96
+    },
+    {
+      "file": "js/engine.js",
+      "function": "<anonymous:1323:87>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 1323,
+      "endLine": 1323,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 92844,
+        "v8End": 92919,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 75,
+      "nonWhitespaceUTF16Units": 75,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "resolveQuest",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 1513,
+      "endLine": 1589,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 117915,
+        "v8End": 127880,
+        "functionName": "resolveQuest"
+      },
+      "coveredNonWhitespaceUTF16Units": 6588,
+      "nonWhitespaceUTF16Units": 8462,
+      "sourceRangePercent": 77.85
+    },
+    {
+      "file": "js/engine.js",
+      "function": "<anonymous:1520:47>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 1520,
+      "endLine": 1520,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 119232,
+        "v8End": 119266,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 34,
+      "nonWhitespaceUTF16Units": 34,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "initiativeOrder",
+      "type": "ArrowFunctionExpression",
+      "named": true,
+      "startLine": 1542,
+      "endLine": 1542,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 121899,
+        "v8End": 121997,
+        "functionName": "initiativeOrder"
+      },
+      "coveredNonWhitespaceUTF16Units": 98,
+      "nonWhitespaceUTF16Units": 98,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "snapshotUnit",
+      "type": "ArrowFunctionExpression",
+      "named": true,
+      "startLine": 1579,
+      "endLine": 1579,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 126114,
+        "v8End": 126228,
+        "functionName": "snapshotUnit"
+      },
+      "coveredNonWhitespaceUTF16Units": 114,
+      "nonWhitespaceUTF16Units": 114,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "isPhase3DeferredAbility",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 1592,
+      "endLine": 1592,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 127965,
+        "v8End": 128146,
+        "functionName": "isPhase3DeferredAbility"
+      },
+      "coveredNonWhitespaceUTF16Units": 147,
+      "nonWhitespaceUTF16Units": 156,
+      "sourceRangePercent": 94.23
+    },
+    {
+      "file": "js/engine.js",
+      "function": "<anonymous:1592:155>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 1592,
+      "endLine": 1592,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 128120,
+        "v8End": 128143,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 23,
+      "nonWhitespaceUTF16Units": 23,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "abilityDescription",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 1614,
+      "endLine": 1710,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 130292,
+        "v8End": 141569,
+        "functionName": "abilityDescription"
+      },
+      "coveredNonWhitespaceUTF16Units": 8881,
+      "nonWhitespaceUTF16Units": 9867,
+      "sourceRangePercent": 90.01
+    },
+    {
+      "file": "js/engine.js",
+      "function": "<anonymous:1627:32>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 1627,
+      "endLine": 1627,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 131819,
+        "v8End": 131842,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 23,
+      "nonWhitespaceUTF16Units": 23,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/engine.js",
+      "function": "<anonymous:1708:31>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 1708,
+      "endLine": 1708,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 141243,
+        "v8End": 141318,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 75,
+      "nonWhitespaceUTF16Units": 75,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/ui.js",
+      "function": "flattenTurnRows",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 3,
+      "endLine": 12,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 119,
+        "v8End": 426,
+        "functionName": "flattenTurnRows"
+      },
+      "coveredNonWhitespaceUTF16Units": 247,
+      "nonWhitespaceUTF16Units": 247,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/ui.js",
+      "function": "calculateCurrentHp",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 14,
+      "endLine": 86,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 428,
+        "v8End": 3330,
+        "functionName": "calculateCurrentHp"
+      },
+      "coveredNonWhitespaceUTF16Units": 1558,
+      "nonWhitespaceUTF16Units": 2117,
+      "sourceRangePercent": 73.59
+    },
+    {
+      "file": "js/ui.js",
+      "function": "getCombatSprite",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 126,
+      "endLine": 165,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 4564,
+        "v8End": 7657,
+        "functionName": "getCombatSprite"
+      },
+      "coveredNonWhitespaceUTF16Units": 2174,
+      "nonWhitespaceUTF16Units": 2525,
+      "sourceRangePercent": 86.1
+    },
+    {
+      "file": "js/ui.js",
+      "function": "battleResourceMarkup",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 181,
+      "endLine": 188,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 8314,
+        "v8End": 9178,
+        "functionName": "battleResourceMarkup"
+      },
+      "coveredNonWhitespaceUTF16Units": 496,
+      "nonWhitespaceUTF16Units": 632,
+      "sourceRangePercent": 78.48
+    },
+    {
+      "file": "js/ui.js",
+      "function": "<anonymous:187:32>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 187,
+      "endLine": 187,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 9012,
+        "v8End": 9163,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 126,
+      "nonWhitespaceUTF16Units": 133,
+      "sourceRangePercent": 94.74
+    },
+    {
+      "file": "js/ui.js",
+      "function": "renderCombatEntity",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 190,
+      "endLine": 243,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 9180,
+        "v8End": 11908,
+        "functionName": "renderCombatEntity"
+      },
+      "coveredNonWhitespaceUTF16Units": 1831,
+      "nonWhitespaceUTF16Units": 2142,
+      "sourceRangePercent": 85.48
+    },
+    {
+      "file": "js/ui.js",
+      "function": "renderHpStrip",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 245,
+      "endLine": 267,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 11910,
+        "v8End": 12865,
+        "functionName": "renderHpStrip"
+      },
+      "coveredNonWhitespaceUTF16Units": 676,
+      "nonWhitespaceUTF16Units": 684,
+      "sourceRangePercent": 98.83
+    },
+    {
+      "file": "js/ui.js",
+      "function": "<anonymous:255:30>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 255,
+      "endLine": 255,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 12470,
+        "v8End": 12520,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 44,
+      "nonWhitespaceUTF16Units": 44,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/ui.js",
+      "function": "<anonymous:263:29>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 263,
+      "endLine": 263,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 12768,
+        "v8End": 12817,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 43,
+      "nonWhitespaceUTF16Units": 43,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/ui.js",
+      "function": "renderTurnRowHtml",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 269,
+      "endLine": 412,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 12867,
+        "v8End": 19853,
+        "functionName": "renderTurnRowHtml"
+      },
+      "coveredNonWhitespaceUTF16Units": 1546,
+      "nonWhitespaceUTF16Units": 2867,
+      "sourceRangePercent": 53.92
+    },
+    {
+      "file": "js/ui.js",
+      "function": "<anonymous:330:102>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 330,
+      "endLine": 353,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 15331,
+        "v8End": 16899,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 837,
+      "nonWhitespaceUTF16Units": 1306,
+      "sourceRangePercent": 64.09
+    },
+    {
+      "file": "js/ui.js",
+      "function": "<anonymous:355:42>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 355,
+      "endLine": 363,
+      "called": false,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 16954,
+        "v8End": 17423,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 0,
+      "nonWhitespaceUTF16Units": 390,
+      "sourceRangePercent": 0.0
+    },
+    {
+      "file": "js/ui.js",
+      "function": "<anonymous:365:46>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 365,
+      "endLine": 373,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 17482,
+        "v8End": 17960,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 308,
+      "nonWhitespaceUTF16Units": 398,
+      "sourceRangePercent": 77.39
+    },
+    {
+      "file": "js/ui.js",
+      "function": "<anonymous:379:45>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 379,
+      "endLine": 379,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 18223,
+        "v8End": 18282,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 22,
+      "nonWhitespaceUTF16Units": 51,
+      "sourceRangePercent": 43.14
+    },
+    {
+      "file": "js/ui.js",
+      "function": "battleOutcomeLabel",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 414,
+      "endLine": 418,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 19855,
+        "v8End": 20207,
+        "functionName": "battleOutcomeLabel"
+      },
+      "coveredNonWhitespaceUTF16Units": 226,
+      "nonWhitespaceUTF16Units": 294,
+      "sourceRangePercent": 76.87
+    },
+    {
+      "file": "js/ui.js",
+      "function": "renderBattleLogComponent",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 420,
+      "endLine": 468,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 20209,
+        "v8End": 22757,
+        "functionName": "renderBattleLogComponent"
+      },
+      "coveredNonWhitespaceUTF16Units": 2059,
+      "nonWhitespaceUTF16Units": 2120,
+      "sourceRangePercent": 97.12
+    },
+    {
+      "file": "js/ui.js",
+      "function": "updateBattleLogComponent",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 470,
+      "endLine": 554,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 22759,
+        "v8End": 28553,
+        "functionName": "updateBattleLogComponent"
+      },
+      "coveredNonWhitespaceUTF16Units": 4470,
+      "nonWhitespaceUTF16Units": 4785,
+      "sourceRangePercent": 93.42
+    },
+    {
+      "file": "js/ui.js",
+      "function": "<anonymous:478:80>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 478,
+      "endLine": 478,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 23426,
+        "v8End": 23453,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 25,
+      "nonWhitespaceUTF16Units": 25,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/ui.js",
+      "function": "<anonymous:486:27>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 486,
+      "endLine": 486,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 23825,
+        "v8End": 23879,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 37,
+      "nonWhitespaceUTF16Units": 48,
+      "sourceRangePercent": 77.08
+    },
+    {
+      "file": "js/ui.js",
+      "function": "scheduleTicker",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 671,
+      "endLine": 685,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 38343,
+        "v8End": 38983,
+        "functionName": "scheduleTicker"
+      },
+      "coveredNonWhitespaceUTF16Units": 295,
+      "nonWhitespaceUTF16Units": 295,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/ui.js",
+      "function": "refreshBattle",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 686,
+      "endLine": 708,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 38986,
+        "v8End": 40473,
+        "functionName": "refreshBattle"
+      },
+      "coveredNonWhitespaceUTF16Units": 1137,
+      "nonWhitespaceUTF16Units": 1253,
+      "sourceRangePercent": 90.74
+    },
+    {
+      "file": "js/ui.js",
+      "function": "battleSimulator",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 754,
+      "endLine": 775,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 50366,
+        "v8End": 54375,
+        "functionName": "battleSimulator"
+      },
+      "coveredNonWhitespaceUTF16Units": 2354,
+      "nonWhitespaceUTF16Units": 2368,
+      "sourceRangePercent": 99.41
+    },
+    {
+      "file": "js/ui.js",
+      "function": "dossier",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 792,
+      "endLine": 828,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 64238,
+        "v8End": 73632,
+        "functionName": "dossier"
+      },
+      "coveredNonWhitespaceUTF16Units": 6251,
+      "nonWhitespaceUTF16Units": 7369,
+      "sourceRangePercent": 84.83
+    },
+    {
+      "file": "js/ui.js",
+      "function": "<anonymous:819:593>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 819,
+      "endLine": 819,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 69061,
+        "v8End": 69136,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 75,
+      "nonWhitespaceUTF16Units": 75,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/ui.js",
+      "function": "runModal",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 830,
+      "endLine": 863,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 75507,
+        "v8End": 78163,
+        "functionName": "runModal"
+      },
+      "coveredNonWhitespaceUTF16Units": 1257,
+      "nonWhitespaceUTF16Units": 2352,
+      "sourceRangePercent": 53.44
+    },
+    {
+      "file": "js/ui.js",
+      "function": "setTickerSpeed",
+      "type": "ArrowFunctionExpression",
+      "named": true,
+      "startLine": 886,
+      "endLine": 891,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 79396,
+        "v8End": 79567,
+        "functionName": "setTickerSpeed"
+      },
+      "coveredNonWhitespaceUTF16Units": 123,
+      "nonWhitespaceUTF16Units": 125,
+      "sourceRangePercent": 98.4
+    },
+    {
+      "file": "js/ui.js",
+      "function": "toggleTickerPause",
+      "type": "ArrowFunctionExpression",
+      "named": true,
+      "startLine": 892,
+      "endLine": 898,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 79592,
+        "v8End": 79870,
+        "functionName": "toggleTickerPause"
+      },
+      "coveredNonWhitespaceUTF16Units": 171,
+      "nonWhitespaceUTF16Units": 214,
+      "sourceRangePercent": 79.91
+    },
+    {
+      "file": "js/ui.js",
+      "function": "stepTicker",
+      "type": "ArrowFunctionExpression",
+      "named": true,
+      "startLine": 899,
+      "endLine": 907,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 79888,
+        "v8End": 80333,
+        "functionName": "stepTicker"
+      },
+      "coveredNonWhitespaceUTF16Units": 317,
+      "nonWhitespaceUTF16Units": 360,
+      "sourceRangePercent": 88.06
+    },
+    {
+      "file": "js/ui.js",
+      "function": "runSimulation",
+      "type": "ArrowFunctionExpression",
+      "named": true,
+      "startLine": 916,
+      "endLine": 940,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 80835,
+        "v8End": 83150,
+        "functionName": "runSimulation"
+      },
+      "coveredNonWhitespaceUTF16Units": 1021,
+      "nonWhitespaceUTF16Units": 1117,
+      "sourceRangePercent": 91.41
+    },
+    {
+      "file": "js/ui.js",
+      "function": "<anonymous:918:356>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 918,
+      "endLine": 929,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 82382,
+        "v8End": 82698,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 198,
+      "nonWhitespaceUTF16Units": 244,
+      "sourceRangePercent": 81.15
+    },
+    {
+      "file": "js/ui.js",
+      "function": "<anonymous:927:36>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 927,
+      "endLine": 927,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 82636,
+        "v8End": 82654,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 14,
+      "nonWhitespaceUTF16Units": 14,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/ui.js",
+      "function": "<anonymous:930:21>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 930,
+      "endLine": 940,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 82722,
+        "v8End": 83103,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 219,
+      "nonWhitespaceUTF16Units": 295,
+      "sourceRangePercent": 74.24
+    },
+    {
+      "file": "js/ui.js",
+      "function": "<anonymous:938:36>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 938,
+      "endLine": 938,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 83025,
+        "v8End": 83058,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 29,
+      "nonWhitespaceUTF16Units": 29,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/ui.js",
+      "function": "launch",
+      "type": "ArrowFunctionExpression",
+      "named": true,
+      "startLine": 957,
+      "endLine": 960,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 91331,
+        "v8End": 93018,
+        "functionName": "launch"
+      },
+      "coveredNonWhitespaceUTF16Units": 649,
+      "nonWhitespaceUTF16Units": 1125,
+      "sourceRangePercent": 57.69
+    },
+    {
+      "file": "js/ui.js",
+      "function": "<anonymous:957:1070>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 957,
+      "endLine": 957,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 92390,
+        "v8End": 92408,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 18,
+      "nonWhitespaceUTF16Units": 18,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/ui.js",
+      "function": "<anonymous:957:1112>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 957,
+      "endLine": 957,
+      "called": false,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 92432,
+        "v8End": 92656,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 0,
+      "nonWhitespaceUTF16Units": 222,
+      "sourceRangePercent": 0.0
+    },
+    {
+      "file": "js/ui.js",
+      "function": "<anonymous:958:71>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 958,
+      "endLine": 958,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 92730,
+        "v8End": 92749,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 19,
+      "nonWhitespaceUTF16Units": 19,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/ui.js",
+      "function": "<anonymous:958:136>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 958,
+      "endLine": 958,
+      "called": false,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 92795,
+        "v8End": 92835,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 0,
+      "nonWhitespaceUTF16Units": 40,
+      "sourceRangePercent": 0.0
+    },
+    {
+      "file": "js/paths.js",
+      "function": "specialStatFor",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 50,
+      "endLine": 53,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 3806,
+        "v8End": 4080,
+        "functionName": "specialStatFor"
+      },
+      "coveredNonWhitespaceUTF16Units": 206,
+      "nonWhitespaceUTF16Units": 262,
+      "sourceRangePercent": 78.63
+    },
+    {
+      "file": "js/v15.js",
+      "function": "v15Damage",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 40,
+      "endLine": 86,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 2433,
+        "v8End": 6569,
+        "functionName": "v15Damage"
+      },
+      "coveredNonWhitespaceUTF16Units": 3420,
+      "nonWhitespaceUTF16Units": 3606,
+      "sourceRangePercent": 94.84
+    },
+    {
+      "file": "js/v15.js",
+      "function": "tryMythicalForm",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 138,
+      "endLine": 218,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 9069,
+        "v8End": 12116,
+        "functionName": "tryMythicalForm"
+      },
+      "coveredNonWhitespaceUTF16Units": 2173,
+      "nonWhitespaceUTF16Units": 2338,
+      "sourceRangePercent": 92.94
+    },
+    {
+      "file": "js/data-loader.js",
+      "function": "validateRuntimeManifest",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 51,
+      "endLine": 57,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 2571,
+        "v8End": 3644,
+        "functionName": "validateRuntimeManifest"
+      },
+      "coveredNonWhitespaceUTF16Units": 828,
+      "nonWhitespaceUTF16Units": 828,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureRule",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 9,
+      "endLine": 9,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 822,
+        "v8End": 921,
+        "functionName": "signatureRule"
+      },
+      "coveredNonWhitespaceUTF16Units": 97,
+      "nonWhitespaceUTF16Units": 97,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureEffects",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 10,
+      "endLine": 10,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 922,
+        "v8End": 1015,
+        "functionName": "signatureEffects"
+      },
+      "coveredNonWhitespaceUTF16Units": 68,
+      "nonWhitespaceUTF16Units": 68,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:10:67>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 10,
+      "endLine": 10,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 989,
+        "v8End": 1012,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 23,
+      "nonWhitespaceUTF16Units": 23,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureDescription",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 11,
+      "endLine": 41,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 1016,
+        "v8End": 5915,
+        "functionName": "signatureDescription"
+      },
+      "coveredNonWhitespaceUTF16Units": 4196,
+      "nonWhitespaceUTF16Units": 4244,
+      "sourceRangePercent": 98.87
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "p",
+      "type": "ArrowFunctionExpression",
+      "named": true,
+      "startLine": 11,
+      "endLine": 11,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 1086,
+        "v8End": 1112,
+        "functionName": "p"
+      },
+      "coveredNonWhitespaceUTF16Units": 26,
+      "nonWhitespaceUTF16Units": 26,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureUnits",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 42,
+      "endLine": 42,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 5916,
+        "v8End": 6004,
+        "functionName": "signatureUnits"
+      },
+      "coveredNonWhitespaceUTF16Units": 78,
+      "nonWhitespaceUTF16Units": 86,
+      "sourceRangePercent": 90.7
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureUnit",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 43,
+      "endLine": 43,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 6005,
+        "v8End": 6096,
+        "functionName": "signatureUnit"
+      },
+      "coveredNonWhitespaceUTF16Units": 71,
+      "nonWhitespaceUTF16Units": 71,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:43:70>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 43,
+      "endLine": 43,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 6075,
+        "v8End": 6093,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 18,
+      "nonWhitespaceUTF16Units": 18,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureLog",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 44,
+      "endLine": 44,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 6097,
+        "v8End": 6326,
+        "functionName": "signatureLog"
+      },
+      "coveredNonWhitespaceUTF16Units": 228,
+      "nonWhitespaceUTF16Units": 228,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureBonus",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 45,
+      "endLine": 45,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 6327,
+        "v8End": 6594,
+        "functionName": "signatureBonus"
+      },
+      "coveredNonWhitespaceUTF16Units": 262,
+      "nonWhitespaceUTF16Units": 265,
+      "sourceRangePercent": 98.87
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureSpend",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 46,
+      "endLine": 46,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 6595,
+        "v8End": 6890,
+        "functionName": "signatureSpend"
+      },
+      "coveredNonWhitespaceUTF16Units": 273,
+      "nonWhitespaceUTF16Units": 288,
+      "sourceRangePercent": 94.79
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureDamage",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 47,
+      "endLine": 48,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 6891,
+        "v8End": 7742,
+        "functionName": "signatureDamage"
+      },
+      "coveredNonWhitespaceUTF16Units": 833,
+      "nonWhitespaceUTF16Units": 844,
+      "sourceRangePercent": 98.7
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureHeal",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 49,
+      "endLine": 49,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 7743,
+        "v8End": 8122,
+        "functionName": "signatureHeal"
+      },
+      "coveredNonWhitespaceUTF16Units": 376,
+      "nonWhitespaceUTF16Units": 376,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureEligible",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 50,
+      "endLine": 55,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 8123,
+        "v8End": 8791,
+        "functionName": "signatureEligible"
+      },
+      "coveredNonWhitespaceUTF16Units": 503,
+      "nonWhitespaceUTF16Units": 522,
+      "sourceRangePercent": 96.36
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:51:30>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 51,
+      "endLine": 51,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 8353,
+        "v8End": 8430,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 77,
+      "nonWhitespaceUTF16Units": 77,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:53:101>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 53,
+      "endLine": 53,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 8644,
+        "v8End": 8697,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 23,
+      "nonWhitespaceUTF16Units": 27,
+      "sourceRangePercent": 85.19
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:53:127>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 53,
+      "endLine": 53,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 8670,
+        "v8End": 8696,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 20,
+      "nonWhitespaceUTF16Units": 26,
+      "sourceRangePercent": 76.92
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureObserved",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 56,
+      "endLine": 56,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 8792,
+        "v8End": 9398,
+        "functionName": "signatureObserved"
+      },
+      "coveredNonWhitespaceUTF16Units": 494,
+      "nonWhitespaceUTF16Units": 547,
+      "sourceRangePercent": 90.31
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:56:146>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 56,
+      "endLine": 56,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 8938,
+        "v8End": 8950,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 12,
+      "nonWhitespaceUTF16Units": 12,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:56:423>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 56,
+      "endLine": 56,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 9215,
+        "v8End": 9251,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 25,
+      "nonWhitespaceUTF16Units": 36,
+      "sourceRangePercent": 69.44
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureSourceRank",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 57,
+      "endLine": 57,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 9399,
+        "v8End": 9623,
+        "functionName": "signatureSourceRank"
+      },
+      "coveredNonWhitespaceUTF16Units": 147,
+      "nonWhitespaceUTF16Units": 147,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:57:118>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 57,
+      "endLine": 57,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 9517,
+        "v8End": 9592,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 23,
+      "nonWhitespaceUTF16Units": 27,
+      "sourceRangePercent": 85.19
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:57:144>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 57,
+      "endLine": 57,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 9543,
+        "v8End": 9591,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 42,
+      "nonWhitespaceUTF16Units": 48,
+      "sourceRangePercent": 87.5
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureOwned",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 58,
+      "endLine": 58,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 9624,
+        "v8End": 9921,
+        "functionName": "signatureOwned"
+      },
+      "coveredNonWhitespaceUTF16Units": 277,
+      "nonWhitespaceUTF16Units": 294,
+      "sourceRangePercent": 94.22
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureBorrowedAbilities",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 59,
+      "endLine": 59,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 9922,
+        "v8End": 10328,
+        "functionName": "signatureBorrowedAbilities"
+      },
+      "coveredNonWhitespaceUTF16Units": 220,
+      "nonWhitespaceUTF16Units": 403,
+      "sourceRangePercent": 54.59
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureCopySource",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 60,
+      "endLine": 65,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 10329,
+        "v8End": 11139,
+        "functionName": "signatureCopySource"
+      },
+      "coveredNonWhitespaceUTF16Units": 783,
+      "nonWhitespaceUTF16Units": 788,
+      "sourceRangePercent": 99.37
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureCastCost",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 66,
+      "endLine": 66,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 11140,
+        "v8End": 11325,
+        "functionName": "signatureCastCost"
+      },
+      "coveredNonWhitespaceUTF16Units": 182,
+      "nonWhitespaceUTF16Units": 182,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureTimed",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 67,
+      "endLine": 67,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 11326,
+        "v8End": 11483,
+        "functionName": "signatureTimed"
+      },
+      "coveredNonWhitespaceUTF16Units": 155,
+      "nonWhitespaceUTF16Units": 155,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureDamaging",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 68,
+      "endLine": 68,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 11484,
+        "v8End": 12049,
+        "functionName": "signatureDamaging"
+      },
+      "coveredNonWhitespaceUTF16Units": 486,
+      "nonWhitespaceUTF16Units": 486,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:68:118>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 68,
+      "endLine": 68,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 11602,
+        "v8End": 11632,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 30,
+      "nonWhitespaceUTF16Units": 30,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:68:495>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 68,
+      "endLine": 68,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 11979,
+        "v8End": 12019,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 40,
+      "nonWhitespaceUTF16Units": 40,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureSupportTypes",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 69,
+      "endLine": 69,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 12050,
+        "v8End": 12492,
+        "functionName": "signatureSupportTypes"
+      },
+      "coveredNonWhitespaceUTF16Units": 435,
+      "nonWhitespaceUTF16Units": 435,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureHealableAllies",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 70,
+      "endLine": 70,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 12493,
+        "v8End": 12615,
+        "functionName": "signatureHealableAllies"
+      },
+      "coveredNonWhitespaceUTF16Units": 85,
+      "nonWhitespaceUTF16Units": 85,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:70:84>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 70,
+      "endLine": 70,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 12577,
+        "v8End": 12612,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 35,
+      "nonWhitespaceUTF16Units": 35,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureUseful",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 71,
+      "endLine": 81,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 12616,
+        "v8End": 14022,
+        "functionName": "signatureUseful"
+      },
+      "coveredNonWhitespaceUTF16Units": 933,
+      "nonWhitespaceUTF16Units": 1228,
+      "sourceRangePercent": 75.98
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:73:110>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 73,
+      "endLine": 73,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 12935,
+        "v8End": 12950,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 15,
+      "nonWhitespaceUTF16Units": 15,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:73:256>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 73,
+      "endLine": 73,
+      "called": false,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 13081,
+        "v8End": 13119,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 0,
+      "nonWhitespaceUTF16Units": 38,
+      "sourceRangePercent": 0.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:80:179>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 80,
+      "endLine": 80,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 13905,
+        "v8End": 13990,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 53,
+      "nonWhitespaceUTF16Units": 53,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:80:231>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 80,
+      "endLine": 80,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 13957,
+        "v8End": 13989,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 32,
+      "nonWhitespaceUTF16Units": 32,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureReady",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 82,
+      "endLine": 92,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 14023,
+        "v8End": 15830,
+        "functionName": "signatureReady"
+      },
+      "coveredNonWhitespaceUTF16Units": 1610,
+      "nonWhitespaceUTF16Units": 1654,
+      "sourceRangePercent": 97.34
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:86:125>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 86,
+      "endLine": 86,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 14980,
+        "v8End": 15010,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 30,
+      "nonWhitespaceUTF16Units": 30,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:88:112>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 88,
+      "endLine": 88,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 15197,
+        "v8End": 15244,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 47,
+      "nonWhitespaceUTF16Units": 47,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:89:63>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 89,
+      "endLine": 89,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 15451,
+        "v8End": 15488,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 34,
+      "nonWhitespaceUTF16Units": 37,
+      "sourceRangePercent": 91.89
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureDeceptionState",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 93,
+      "endLine": 93,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 15831,
+        "v8End": 16211,
+        "functionName": "signatureDeceptionState"
+      },
+      "coveredNonWhitespaceUTF16Units": 378,
+      "nonWhitespaceUTF16Units": 378,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureOwnDeceptionState",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 94,
+      "endLine": 94,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 16212,
+        "v8End": 16370,
+        "functionName": "signatureOwnDeceptionState"
+      },
+      "coveredNonWhitespaceUTF16Units": 156,
+      "nonWhitespaceUTF16Units": 156,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signaturePrepareCast",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 95,
+      "endLine": 109,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 16371,
+        "v8End": 18860,
+        "functionName": "signaturePrepareCast"
+      },
+      "coveredNonWhitespaceUTF16Units": 2135,
+      "nonWhitespaceUTF16Units": 2233,
+      "sourceRangePercent": 95.61
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:95:304>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 95,
+      "endLine": 95,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 16675,
+        "v8End": 16711,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 36,
+      "nonWhitespaceUTF16Units": 36,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:102:127>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 102,
+      "endLine": 102,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 17664,
+        "v8End": 17696,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 32,
+      "nonWhitespaceUTF16Units": 32,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:102:223>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 102,
+      "endLine": 102,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 17760,
+        "v8End": 17829,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 47,
+      "nonWhitespaceUTF16Units": 47,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:102:269>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 102,
+      "endLine": 102,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 17806,
+        "v8End": 17828,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 22,
+      "nonWhitespaceUTF16Units": 22,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:104:110>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 104,
+      "endLine": 104,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 18279,
+        "v8End": 18350,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 71,
+      "nonWhitespaceUTF16Units": 71,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureCreateCompanion",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 110,
+      "endLine": 112,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 18861,
+        "v8End": 20029,
+        "functionName": "signatureCreateCompanion"
+      },
+      "coveredNonWhitespaceUTF16Units": 1114,
+      "nonWhitespaceUTF16Units": 1114,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:110:157>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 110,
+      "endLine": 110,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 19018,
+        "v8End": 19055,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 37,
+      "nonWhitespaceUTF16Units": 37,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureCaptureSoul",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 113,
+      "endLine": 113,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 20030,
+        "v8End": 20743,
+        "functionName": "signatureCaptureSoul"
+      },
+      "coveredNonWhitespaceUTF16Units": 535,
+      "nonWhitespaceUTF16Units": 590,
+      "sourceRangePercent": 90.68
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:113:221>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 113,
+      "endLine": 113,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 20251,
+        "v8End": 20303,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 52,
+      "nonWhitespaceUTF16Units": 52,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:113:341>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 113,
+      "endLine": 113,
+      "called": false,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 20371,
+        "v8End": 20430,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 0,
+      "nonWhitespaceUTF16Units": 59,
+      "sourceRangePercent": 0.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "applySignatureEffect",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 114,
+      "endLine": 144,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 20744,
+        "v8End": 29175,
+        "functionName": "applySignatureEffect"
+      },
+      "coveredNonWhitespaceUTF16Units": 7507,
+      "nonWhitespaceUTF16Units": 7734,
+      "sourceRangePercent": 97.06
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:114:127>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 114,
+      "endLine": 114,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 20871,
+        "v8End": 20882,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 11,
+      "nonWhitespaceUTF16Units": 11,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:114:178>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 114,
+      "endLine": 114,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 20922,
+        "v8End": 20932,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 10,
+      "nonWhitespaceUTF16Units": 10,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:114:222>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 114,
+      "endLine": 114,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 20966,
+        "v8End": 20976,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 10,
+      "nonWhitespaceUTF16Units": 10,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:114:302>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 114,
+      "endLine": 114,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 21046,
+        "v8End": 21085,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 39,
+      "nonWhitespaceUTF16Units": 39,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:114:411>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 114,
+      "endLine": 114,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 21155,
+        "v8End": 21187,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 32,
+      "nonWhitespaceUTF16Units": 32,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:118:274>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 118,
+      "endLine": 118,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 21571,
+        "v8End": 21598,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 27,
+      "nonWhitespaceUTF16Units": 27,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:120:165>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 120,
+      "endLine": 120,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 22607,
+        "v8End": 22649,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 42,
+      "nonWhitespaceUTF16Units": 42,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:120:292>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 120,
+      "endLine": 120,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 22734,
+        "v8End": 22757,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 23,
+      "nonWhitespaceUTF16Units": 23,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:120:463>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 120,
+      "endLine": 120,
+      "called": false,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 22905,
+        "v8End": 22928,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 0,
+      "nonWhitespaceUTF16Units": 23,
+      "sourceRangePercent": 0.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:123:182>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 123,
+      "endLine": 123,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 23888,
+        "v8End": 23934,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 46,
+      "nonWhitespaceUTF16Units": 46,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:126:307>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 126,
+      "endLine": 126,
+      "called": false,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 25151,
+        "v8End": 25200,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 0,
+      "nonWhitespaceUTF16Units": 49,
+      "sourceRangePercent": 0.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:126:396>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 126,
+      "endLine": 126,
+      "called": false,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 25240,
+        "v8End": 25251,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 0,
+      "nonWhitespaceUTF16Units": 11,
+      "sourceRangePercent": 0.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:128:135>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 128,
+      "endLine": 128,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 25634,
+        "v8End": 25647,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 13,
+      "nonWhitespaceUTF16Units": 13,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:129:154>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 129,
+      "endLine": 129,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 25921,
+        "v8End": 25957,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 36,
+      "nonWhitespaceUTF16Units": 36,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:132:78>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 132,
+      "endLine": 132,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 26449,
+        "v8End": 26486,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 34,
+      "nonWhitespaceUTF16Units": 37,
+      "sourceRangePercent": 91.89
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:136:94>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 136,
+      "endLine": 136,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 27290,
+        "v8End": 27370,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 68,
+      "nonWhitespaceUTF16Units": 80,
+      "sourceRangePercent": 85.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:137:91>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 137,
+      "endLine": 137,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 27590,
+        "v8End": 27628,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 38,
+      "nonWhitespaceUTF16Units": 38,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureAfterCast",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 145,
+      "endLine": 156,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 29176,
+        "v8End": 32831,
+        "functionName": "signatureAfterCast"
+      },
+      "coveredNonWhitespaceUTF16Units": 3147,
+      "nonWhitespaceUTF16Units": 3240,
+      "sourceRangePercent": 97.13
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:146:69>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 146,
+      "endLine": 146,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 30001,
+        "v8End": 30044,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 43,
+      "nonWhitespaceUTF16Units": 43,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:147:73>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 147,
+      "endLine": 147,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 30426,
+        "v8End": 30464,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 38,
+      "nonWhitespaceUTF16Units": 38,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:148:162>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 148,
+      "endLine": 148,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 30671,
+        "v8End": 30711,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 40,
+      "nonWhitespaceUTF16Units": 40,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:151:147>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 151,
+      "endLine": 151,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 31095,
+        "v8End": 31169,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 74,
+      "nonWhitespaceUTF16Units": 74,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:154:370>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 154,
+      "endLine": 154,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 32109,
+        "v8End": 32167,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 38,
+      "nonWhitespaceUTF16Units": 58,
+      "sourceRangePercent": 65.52
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:155:75>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 155,
+      "endLine": 155,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 32631,
+        "v8End": 32743,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 108,
+      "nonWhitespaceUTF16Units": 112,
+      "sourceRangePercent": 96.43
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureAfterDamage",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 157,
+      "endLine": 160,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 32832,
+        "v8End": 34113,
+        "functionName": "signatureAfterDamage"
+      },
+      "coveredNonWhitespaceUTF16Units": 1150,
+      "nonWhitespaceUTF16Units": 1150,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:157:462>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 157,
+      "endLine": 157,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 33294,
+        "v8End": 33327,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 33,
+      "nonWhitespaceUTF16Units": 33,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:159:130>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 159,
+      "endLine": 159,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 33967,
+        "v8End": 34052,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 85,
+      "nonWhitespaceUTF16Units": 85,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureFailedAttack",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 161,
+      "endLine": 161,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 34114,
+        "v8End": 34587,
+        "functionName": "signatureFailedAttack"
+      },
+      "coveredNonWhitespaceUTF16Units": 419,
+      "nonWhitespaceUTF16Units": 419,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:161:221>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 161,
+      "endLine": 161,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 34335,
+        "v8End": 34386,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 51,
+      "nonWhitespaceUTF16Units": 51,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureTryAction",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 162,
+      "endLine": 162,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 34588,
+        "v8End": 35096,
+        "functionName": "signatureTryAction"
+      },
+      "coveredNonWhitespaceUTF16Units": 426,
+      "nonWhitespaceUTF16Units": 426,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:162:225>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 162,
+      "endLine": 162,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 34813,
+        "v8End": 34883,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 70,
+      "nonWhitespaceUTF16Units": 70,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureTurnStart",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 163,
+      "endLine": 166,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 35097,
+        "v8End": 36133,
+        "functionName": "signatureTurnStart"
+      },
+      "coveredNonWhitespaceUTF16Units": 850,
+      "nonWhitespaceUTF16Units": 895,
+      "sourceRangePercent": 94.97
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:163:133>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 163,
+      "endLine": 163,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 35230,
+        "v8End": 35276,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 46,
+      "nonWhitespaceUTF16Units": 46,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:164:92>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 164,
+      "endLine": 164,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 35457,
+        "v8End": 35492,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 35,
+      "nonWhitespaceUTF16Units": 35,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:165:84>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 165,
+      "endLine": 165,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 36018,
+        "v8End": 36059,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 41,
+      "nonWhitespaceUTF16Units": 41,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureTurnEnd",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 167,
+      "endLine": 172,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 36134,
+        "v8End": 37547,
+        "functionName": "signatureTurnEnd"
+      },
+      "coveredNonWhitespaceUTF16Units": 1327,
+      "nonWhitespaceUTF16Units": 1337,
+      "sourceRangePercent": 99.25
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:169:204>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 169,
+      "endLine": 169,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 37094,
+        "v8End": 37108,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 14,
+      "nonWhitespaceUTF16Units": 14,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "<anonymous:170:75>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 170,
+      "endLine": 170,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 37186,
+        "v8End": 37222,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 36,
+      "nonWhitespaceUTF16Units": 36,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureFinalDeath",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 173,
+      "endLine": 173,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 37548,
+        "v8End": 37981,
+        "functionName": "signatureFinalDeath"
+      },
+      "coveredNonWhitespaceUTF16Units": 415,
+      "nonWhitespaceUTF16Units": 429,
+      "sourceRangePercent": 96.74
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureActionFinished",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 174,
+      "endLine": 174,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 37982,
+        "v8End": 38363,
+        "functionName": "signatureActionFinished"
+      },
+      "coveredNonWhitespaceUTF16Units": 374,
+      "nonWhitespaceUTF16Units": 378,
+      "sourceRangePercent": 98.94
+    },
+    {
+      "file": "js/signatures.js",
+      "function": "signatureRetryContest",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 175,
+      "endLine": 175,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 38364,
+        "v8End": 38825,
+        "functionName": "signatureRetryContest"
+      },
+      "coveredNonWhitespaceUTF16Units": 447,
+      "nonWhitespaceUTF16Units": 447,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalUnits",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 26,
+      "endLine": 26,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 1330,
+        "v8End": 1417,
+        "functionName": "mythicalUnits"
+      },
+      "coveredNonWhitespaceUTF16Units": 77,
+      "nonWhitespaceUTF16Units": 85,
+      "sourceRangePercent": 90.59
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalAgent",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 27,
+      "endLine": 27,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 1418,
+        "v8End": 1473,
+        "functionName": "mythicalAgent"
+      },
+      "coveredNonWhitespaceUTF16Units": 47,
+      "nonWhitespaceUTF16Units": 53,
+      "sourceRangePercent": 88.68
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalActive",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 28,
+      "endLine": 28,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 1474,
+        "v8End": 1637,
+        "functionName": "mythicalActive"
+      },
+      "coveredNonWhitespaceUTF16Units": 160,
+      "nonWhitespaceUTF16Units": 160,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalOwners",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 29,
+      "endLine": 29,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 1638,
+        "v8End": 1744,
+        "functionName": "mythicalOwners"
+      },
+      "coveredNonWhitespaceUTF16Units": 79,
+      "nonWhitespaceUTF16Units": 79,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:29:78>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 29,
+      "endLine": 29,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 1716,
+        "v8End": 1741,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 25,
+      "nonWhitespaceUTF16Units": 25,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalNote",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 30,
+      "endLine": 33,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 1745,
+        "v8End": 2150,
+        "functionName": "mythicalNote"
+      },
+      "coveredNonWhitespaceUTF16Units": 386,
+      "nonWhitespaceUTF16Units": 399,
+      "sourceRangePercent": 96.74
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalHeal",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 34,
+      "endLine": 34,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 2151,
+        "v8End": 2495,
+        "functionName": "mythicalHeal"
+      },
+      "coveredNonWhitespaceUTF16Units": 335,
+      "nonWhitespaceUTF16Units": 335,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalSpellDamage",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 35,
+      "endLine": 35,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 2496,
+        "v8End": 2733,
+        "functionName": "mythicalSpellDamage"
+      },
+      "coveredNonWhitespaceUTF16Units": 235,
+      "nonWhitespaceUTF16Units": 235,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalHit",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 36,
+      "endLine": 41,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 2734,
+        "v8End": 3306,
+        "functionName": "mythicalHit"
+      },
+      "coveredNonWhitespaceUTF16Units": 540,
+      "nonWhitespaceUTF16Units": 551,
+      "sourceRangePercent": 98.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalControl",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 42,
+      "endLine": 48,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 3307,
+        "v8End": 4105,
+        "functionName": "mythicalControl"
+      },
+      "coveredNonWhitespaceUTF16Units": 624,
+      "nonWhitespaceUTF16Units": 640,
+      "sourceRangePercent": 97.5
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:43:19>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 43,
+      "endLine": 43,
+      "called": false,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 3389,
+        "v8End": 3396,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 0,
+      "nonWhitespaceUTF16Units": 7,
+      "sourceRangePercent": 0.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:44:43>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 44,
+      "endLine": 44,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 3442,
+        "v8End": 3565,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 123,
+      "nonWhitespaceUTF16Units": 123,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalRecall",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 49,
+      "endLine": 54,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 4106,
+        "v8End": 4652,
+        "functionName": "mythicalRecall"
+      },
+      "coveredNonWhitespaceUTF16Units": 484,
+      "nonWhitespaceUTF16Units": 491,
+      "sourceRangePercent": 98.57
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:51:43>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 51,
+      "endLine": 51,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 4261,
+        "v8End": 4296,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 35,
+      "nonWhitespaceUTF16Units": 35,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalAwaken",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 55,
+      "endLine": 84,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 4653,
+        "v8End": 7161,
+        "functionName": "mythicalAwaken"
+      },
+      "coveredNonWhitespaceUTF16Units": 2299,
+      "nonWhitespaceUTF16Units": 2368,
+      "sourceRangePercent": 97.09
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:61:55>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 61,
+      "endLine": 61,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 5383,
+        "v8End": 5393,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 10,
+      "nonWhitespaceUTF16Units": 10,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:65:50>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 65,
+      "endLine": 65,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 5746,
+        "v8End": 5756,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 10,
+      "nonWhitespaceUTF16Units": 10,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:71:50>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 71,
+      "endLine": 71,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 6277,
+        "v8End": 6287,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 10,
+      "nonWhitespaceUTF16Units": 10,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalTurnStart",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 85,
+      "endLine": 91,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 7162,
+        "v8End": 8090,
+        "functionName": "mythicalTurnStart"
+      },
+      "coveredNonWhitespaceUTF16Units": 843,
+      "nonWhitespaceUTF16Units": 848,
+      "sourceRangePercent": 99.41
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:88:83>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 88,
+      "endLine": 88,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 7537,
+        "v8End": 7547,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 10,
+      "nonWhitespaceUTF16Units": 10,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:89:78>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 89,
+      "endLine": 89,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 7701,
+        "v8End": 7748,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 47,
+      "nonWhitespaceUTF16Units": 47,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalExpire",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 92,
+      "endLine": 100,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 8091,
+        "v8End": 9015,
+        "functionName": "mythicalExpire"
+      },
+      "coveredNonWhitespaceUTF16Units": 856,
+      "nonWhitespaceUTF16Units": 856,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:95:111>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 95,
+      "endLine": 95,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 8396,
+        "v8End": 8412,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 16,
+      "nonWhitespaceUTF16Units": 16,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:96:171>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 96,
+      "endLine": 96,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 8586,
+        "v8End": 8602,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 16,
+      "nonWhitespaceUTF16Units": 16,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalTurnEnd",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 101,
+      "endLine": 104,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 9016,
+        "v8End": 9282,
+        "functionName": "mythicalTurnEnd"
+      },
+      "coveredNonWhitespaceUTF16Units": 259,
+      "nonWhitespaceUTF16Units": 259,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalBeforeDamage",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 105,
+      "endLine": 121,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 9283,
+        "v8End": 10992,
+        "functionName": "mythicalBeforeDamage"
+      },
+      "coveredNonWhitespaceUTF16Units": 1514,
+      "nonWhitespaceUTF16Units": 1551,
+      "sourceRangePercent": 97.61
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:109:99>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 109,
+      "endLine": 109,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 9726,
+        "v8End": 9800,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 31,
+      "nonWhitespaceUTF16Units": 31,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:109:129>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 109,
+      "endLine": 109,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 9756,
+        "v8End": 9799,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 43,
+      "nonWhitespaceUTF16Units": 43,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:117:70>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 117,
+      "endLine": 117,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 10627,
+        "v8End": 10642,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 15,
+      "nonWhitespaceUTF16Units": 15,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalAfterDamage",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 122,
+      "endLine": 141,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 10993,
+        "v8End": 13179,
+        "functionName": "mythicalAfterDamage"
+      },
+      "coveredNonWhitespaceUTF16Units": 1836,
+      "nonWhitespaceUTF16Units": 1850,
+      "sourceRangePercent": 99.24
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:126:40>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 126,
+      "endLine": 126,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 11346,
+        "v8End": 11387,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 41,
+      "nonWhitespaceUTF16Units": 41,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:132:40>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 132,
+      "endLine": 132,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 12069,
+        "v8End": 12134,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 65,
+      "nonWhitespaceUTF16Units": 65,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:137:49>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 137,
+      "endLine": 137,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 12545,
+        "v8End": 12594,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 49,
+      "nonWhitespaceUTF16Units": 49,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:137:105>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 137,
+      "endLine": 137,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 12601,
+        "v8End": 12633,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 32,
+      "nonWhitespaceUTF16Units": 32,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:140:89>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 140,
+      "endLine": 140,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 12992,
+        "v8End": 13074,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 82,
+      "nonWhitespaceUTF16Units": 82,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalBeforeFatal",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 142,
+      "endLine": 151,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 13180,
+        "v8End": 14420,
+        "functionName": "mythicalBeforeFatal"
+      },
+      "coveredNonWhitespaceUTF16Units": 1036,
+      "nonWhitespaceUTF16Units": 1115,
+      "sourceRangePercent": 92.91
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:147:39>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 147,
+      "endLine": 147,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 13893,
+        "v8End": 13969,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 76,
+      "nonWhitespaceUTF16Units": 76,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalFinalDeath",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 152,
+      "endLine": 161,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 14421,
+        "v8End": 15048,
+        "functionName": "mythicalFinalDeath"
+      },
+      "coveredNonWhitespaceUTF16Units": 488,
+      "nonWhitespaceUTF16Units": 504,
+      "sourceRangePercent": 96.83
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:156:48>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 156,
+      "endLine": 156,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 14631,
+        "v8End": 14729,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 98,
+      "nonWhitespaceUTF16Units": 98,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalBeforeCast",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 162,
+      "endLine": 167,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 15049,
+        "v8End": 16264,
+        "functionName": "mythicalBeforeCast"
+      },
+      "coveredNonWhitespaceUTF16Units": 844,
+      "nonWhitespaceUTF16Units": 862,
+      "sourceRangePercent": 97.91
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:164:17>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 164,
+      "endLine": 164,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 15254,
+        "v8End": 15292,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 38,
+      "nonWhitespaceUTF16Units": 38,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:164:95>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 164,
+      "endLine": 164,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 15332,
+        "v8End": 15364,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 32,
+      "nonWhitespaceUTF16Units": 32,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:164:207>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 164,
+      "endLine": 164,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 15444,
+        "v8End": 15632,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 150,
+      "nonWhitespaceUTF16Units": 150,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:164:355>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 164,
+      "endLine": 164,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 15592,
+        "v8End": 15630,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 38,
+      "nonWhitespaceUTF16Units": 38,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:165:59>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 165,
+      "endLine": 165,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 15934,
+        "v8End": 15998,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 64,
+      "nonWhitespaceUTF16Units": 64,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalAfterCast",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 168,
+      "endLine": 171,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 16265,
+        "v8End": 16824,
+        "functionName": "mythicalAfterCast"
+      },
+      "coveredNonWhitespaceUTF16Units": 516,
+      "nonWhitespaceUTF16Units": 521,
+      "sourceRangePercent": 99.04
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:170:47>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 170,
+      "endLine": 170,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 16442,
+        "v8End": 16470,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 28,
+      "nonWhitespaceUTF16Units": 28,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalTryAction",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 172,
+      "endLine": 177,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 16825,
+        "v8End": 17698,
+        "functionName": "mythicalTryAction"
+      },
+      "coveredNonWhitespaceUTF16Units": 718,
+      "nonWhitespaceUTF16Units": 739,
+      "sourceRangePercent": 97.16
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:173:19>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 173,
+      "endLine": 173,
+      "called": false,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 16906,
+        "v8End": 16913,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 0,
+      "nonWhitespaceUTF16Units": 7,
+      "sourceRangePercent": 0.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "<anonymous:175:123>",
+      "type": "ArrowFunctionExpression",
+      "named": false,
+      "startLine": 175,
+      "endLine": 175,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 17213,
+        "v8End": 17304,
+        "functionName": ""
+      },
+      "coveredNonWhitespaceUTF16Units": 91,
+      "nonWhitespaceUTF16Units": 91,
+      "sourceRangePercent": 100.0
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalDamageOptions",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 178,
+      "endLine": 180,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 17699,
+        "v8End": 17995,
+        "functionName": "mythicalDamageOptions"
+      },
+      "coveredNonWhitespaceUTF16Units": 279,
+      "nonWhitespaceUTF16Units": 291,
+      "sourceRangePercent": 95.88
+    },
+    {
+      "file": "js/mythical.js",
+      "function": "mythicalDescription",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 181,
+      "endLine": 208,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 17996,
+        "v8End": 21898,
+        "functionName": "mythicalDescription"
+      },
+      "coveredNonWhitespaceUTF16Units": 3344,
+      "nonWhitespaceUTF16Units": 3353,
+      "sourceRangePercent": 99.73
+    },
+    {
+      "file": "js/state.js",
+      "function": "ensureAgentSchema",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 5,
+      "endLine": 20,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 128,
+        "v8End": 1683,
+        "functionName": "ensureAgentSchema"
+      },
+      "coveredNonWhitespaceUTF16Units": 1024,
+      "nonWhitespaceUTF16Units": 1401,
+      "sourceRangePercent": 73.09
+    },
+    {
+      "file": "js/state.js",
+      "function": "migrateSave",
+      "type": "FunctionDeclaration",
+      "named": true,
+      "startLine": 39,
+      "endLine": 39,
+      "called": true,
+      "mappedToV8Function": true,
+      "v8Range": {
+        "v8Start": 3279,
+        "v8End": 5205,
+        "functionName": "migrateSave"
+      },
+      "coveredNonWhitespaceUTF16Units": 1079,
+      "nonWhitespaceUTF16Units": 1621,
+      "sourceRangePercent": 66.56
+    }
+  ],
+  "suiteResults": [
+    {
+      "suite": "tests/battle-log.test.js",
+      "exitCode": 0,
+      "seconds": 0.299,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/battle-log.test.js.log"
+    },
+    {
+      "suite": "tests/battle-ui.test.js",
+      "exitCode": 0,
+      "seconds": 5.995,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/battle-ui.test.js.log"
+    },
+    {
+      "suite": "tests/campaign.test.js",
+      "exitCode": 0,
+      "seconds": 3.201,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/campaign.test.js.log"
+    },
+    {
+      "suite": "tests/combat-sprite.test.js",
+      "exitCode": 0,
+      "seconds": 0.593,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/combat-sprite.test.js.log"
+    },
+    {
+      "suite": "tests/fullres-cache-data.test.js",
+      "exitCode": 0,
+      "seconds": 0.635,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/fullres-cache-data.test.js.log"
+    },
+    {
+      "suite": "tests/fullres-layout.test.js",
+      "exitCode": 0,
+      "seconds": 6.46,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/fullres-layout.test.js.log"
+    },
+    {
+      "suite": "tests/fullres-portraits.test.js",
+      "exitCode": 0,
+      "seconds": 6.809,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/fullres-portraits.test.js.log"
+    },
+    {
+      "suite": "tests/mythical-order.test.js",
+      "exitCode": 0,
+      "seconds": 6.995,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/mythical-order.test.js.log"
+    },
+    {
+      "suite": "tests/phase1-ai.test.js",
+      "exitCode": 0,
+      "seconds": 0.922,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase1-ai.test.js.log"
+    },
+    {
+      "suite": "tests/phase1-casting.test.js",
+      "exitCode": 0,
+      "seconds": 3.753,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase1-casting.test.js.log"
+    },
+    {
+      "suite": "tests/phase1-combat-units.test.js",
+      "exitCode": 0,
+      "seconds": 3.15,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase1-combat-units.test.js.log"
+    },
+    {
+      "suite": "tests/phase1-damage-pipeline.test.js",
+      "exitCode": 0,
+      "seconds": 0.263,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase1-damage-pipeline.test.js.log"
+    },
+    {
+      "suite": "tests/phase1-lifecycle.test.js",
+      "exitCode": 0,
+      "seconds": 0.65,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase1-lifecycle.test.js.log"
+    },
+    {
+      "suite": "tests/phase1-progression-resistance.test.js",
+      "exitCode": 0,
+      "seconds": 0.434,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase1-progression-resistance.test.js.log"
+    },
+    {
+      "suite": "tests/phase2-battle.test.js",
+      "exitCode": 0,
+      "seconds": 10.821,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase2-battle.test.js.log"
+    },
+    {
+      "suite": "tests/phase2-boot.test.js",
+      "exitCode": 0,
+      "seconds": 0.169,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase2-boot.test.js.log"
+    },
+    {
+      "suite": "tests/phase2-cache.test.js",
+      "exitCode": 0,
+      "seconds": 0.309,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase2-cache.test.js.log"
+    },
+    {
+      "suite": "tests/phase2-modal-dom.test.js",
+      "exitCode": 0,
+      "seconds": 4.45,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase2-modal-dom.test.js.log"
+    },
+    {
+      "suite": "tests/phase2-modal.test.js",
+      "exitCode": 0,
+      "seconds": 2.43,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase2-modal.test.js.log"
+    },
+    {
+      "suite": "tests/phase2-portraits.test.js",
+      "exitCode": 0,
+      "seconds": 0.151,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase2-portraits.test.js.log"
+    },
+    {
+      "suite": "tests/phase2-runtime-data.test.js",
+      "exitCode": 0,
+      "seconds": 0.301,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase2-runtime-data.test.js.log"
+    },
+    {
+      "suite": "tests/phase2-startup.test.js",
+      "exitCode": 0,
+      "seconds": 0.711,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase2-startup.test.js.log"
+    },
+    {
+      "suite": "tests/phase3-actual-casts.test.js",
+      "exitCode": 0,
+      "seconds": 1.39,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase3-actual-casts.test.js.log"
+    },
+    {
+      "suite": "tests/phase3-description-dom.test.js",
+      "exitCode": 0,
+      "seconds": 28.137,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase3-description-dom.test.js.log"
+    },
+    {
+      "suite": "tests/phase3-descriptions.test.js",
+      "exitCode": 0,
+      "seconds": 0.215,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase3-descriptions.test.js.log"
+    },
+    {
+      "suite": "tests/phase3-existing-rules.test.js",
+      "exitCode": 0,
+      "seconds": 0.234,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase3-existing-rules.test.js.log"
+    },
+    {
+      "suite": "tests/phase3-thread-damage.test.js",
+      "exitCode": 0,
+      "seconds": 0.168,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase3-thread-damage.test.js.log"
+    },
+    {
+      "suite": "tests/phase4-balance.test.js",
+      "exitCode": 0,
+      "seconds": 24.802,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase4-balance.test.js.log"
+    },
+    {
+      "suite": "tests/phase4-core.test.js",
+      "exitCode": 0,
+      "seconds": 0.328,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase4-core.test.js.log"
+    },
+    {
+      "suite": "tests/phase4-data.test.js",
+      "exitCode": 0,
+      "seconds": 0.168,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase4-data.test.js.log"
+    },
+    {
+      "suite": "tests/phase4-mythical.test.js",
+      "exitCode": 0,
+      "seconds": 0.357,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase4-mythical.test.js.log"
+    },
+    {
+      "suite": "tests/phase4-saves.test.js",
+      "exitCode": 0,
+      "seconds": 0.213,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase4-saves.test.js.log"
+    },
+    {
+      "suite": "tests/phase4-side-parity.test.js",
+      "exitCode": 0,
+      "seconds": 0.238,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase4-side-parity.test.js.log"
+    },
+    {
+      "suite": "tests/phase4-signatures.test.js",
+      "exitCode": 0,
+      "seconds": 0.344,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase4-signatures.test.js.log"
+    },
+    {
+      "suite": "tests/phase4-ui.test.js",
+      "exitCode": 0,
+      "seconds": 5.58,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase4-ui.test.js.log"
+    },
+    {
+      "suite": "tests/reflect-order.test.js",
+      "exitCode": 0,
+      "seconds": 5.744,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/reflect-order.test.js.log"
+    },
+    {
+      "suite": "tests/effects-behavior.js",
+      "exitCode": 0,
+      "seconds": 0.296,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/effects-behavior.js.log"
+    },
+    {
+      "suite": "tests/generic-effects.js",
+      "exitCode": 0,
+      "seconds": 0.151,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/generic-effects.js.log"
+    },
+    {
+      "suite": "tests/thread-marionette.js",
+      "exitCode": 0,
+      "seconds": 2.133,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/thread-marionette.js.log"
+    },
+    {
+      "suite": "tests/node-loader.js",
+      "exitCode": 0,
+      "seconds": 0.208,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/node-loader.js.log"
+    },
+    {
+      "suite": "tests/fullres-assets.test.py",
+      "exitCode": 0,
+      "seconds": 1.192,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/fullres-assets.test.py.log"
+    },
+    {
+      "suite": "tests/phase2-runtime-assets.test.py",
+      "exitCode": 0,
+      "seconds": 16.112,
+      "failures": [],
+      "log": "/tmp/phase4-final-coverage/run-1791603167524248789/phase2-runtime-assets.test.py.log"
+    }
+  ],
+  "limitations": [
+    "This is not standard statement or branch coverage.",
+    "The source-range metric counts non-whitespace UTF-16 source units of changed/new functions, including comments and signatures.",
+    "Nested function spans are removed from their parent denominator and counted separately; unchanged functions and immediate-invocation wrappers are excluded.",
+    "Full production sources, exact concatenated sources and the exact portrait-prefix evaluation are mapped; synthetic dossier slices and framework/test code are excluded.",
+    "V8 execution reach does not prove correctness; regression assertions are reported separately.",
+    "Top-level statements outside changed/new functions are not part of this metric."
+  ],
+  "sourceMappingSummary": {
+    "exactMappingsValidated": 1005,
+    "byFile": {
+      "js/data-loader.js": 83,
+      "js/engine.js": 122,
+      "js/exports.js": 69,
+      "js/mythical.js": 122,
+      "js/node-loader.js": 68,
+      "js/paths.js": 122,
+      "js/signatures.js": 122,
+      "js/state.js": 122,
+      "js/ui.js": 53,
+      "js/v15.js": 122
+    },
+    "note": "Every captured mapping was byte-checked against the exact production source. Repeated script mapping details remain in the local raw collection; this report keeps their counts."
+  }
+}

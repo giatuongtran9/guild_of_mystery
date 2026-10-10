@@ -16,13 +16,17 @@
     "name": "War Momentum",
     "key": "warMomentum",
     "max": 100,
-    "gain": "Dealing/suffering damage and team combat",
-    "spend": "Fire, Cull, Weather and Conquest",
-    "full": "Next offensive ability gains AoE",
+    "gain": "Provocation and focused allied attacks",
+    "spend": "War Command",
+    "full": "An allied follow-up strikes the focused enemy",
     "special": "War Momentum",
     "characteristic": "Body / War",
     "quirkName": "War Authority",
-    "quirkText": "Combat-only battlefield aggression and burn."
+    "quirkText": "Combat-only battlefield aggression and burn.",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -223,6 +227,17 @@
             "stat": "speed",
             "amount": 0.25,
             "duration": 2
+          },
+          {
+            "type": "signature",
+            "rule": "red_war_command",
+            "chargeCost": 100,
+            "amount": 0.5,
+            "duration": 2
+          },
+          {
+            "type": "targeting",
+            "mode": "all_allies"
           }
         ]
       }

@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 
-const SCRIPTS = ['paths', 'v15', 'generate', 'engine', 'state', 'campaign', 'ui'].map(name => `js/${name}.js`);
+const SCRIPTS = ['paths', 'v15', 'generate', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'].map(name => `js/${name}.js`);
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex').slice(0, 16);
 
 function compactRuntimeAssets(assets) {

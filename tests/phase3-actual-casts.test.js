@@ -12,9 +12,8 @@ const balance = JSON.parse(fs.readFileSync(path.join(gameRoot, 'data/balance.jso
 const formulas = JSON.parse(fs.readFileSync(path.join(gameRoot, 'data/formulas.json'), 'utf8'));
 const authored = Object.fromEntries(g.PATH_KEYS.map(key => [key, JSON.parse(fs.readFileSync(path.join(gameRoot, `data/pathways/${key}.json`), 'utf8'))]));
 const high = () => .99;
-const deferred = new Set(['logic_distortion', 'parasitic_contagion']);
 const coverage = [];
-let current, failures = 0, diagnosticFailures = 0;
+let current, failures = 0;
 function check(value, message) { current.assertions++; assert(value, message); }
 function equal(actual, expected, message) { current.assertions++; assert.equal(actual, expected, message); }
 function near(actual, expected, message) { check(Math.abs(actual - expected) < 1e-8, `${message}: ${actual} vs ${expected}`); }
@@ -74,6 +73,16 @@ function prepare(w, spec) {
     // The source is witnessed through the real cast path, never injected history.
     check(cast(w, shipped('fool', 8), high, w.v, w.ally), 'enemy casts the copied skill');
   }
+  const signature=spec.effects.find(e=>e.type==='signature');
+  if(['door_record','tower_imitation','error_theft'].includes(signature?.rule)) {
+    check(cast(w,shipped('fool',8),high,w.v,w.ally),'source ability is witnessed through a real cast');
+    if(signature.rule==='tower_imitation')check(cast(w,shipped('fool',8),high,w.v,w.ally),'Polymath analyzes a second real source cast');
+    g.setMeterValue(w.a,w.a.path,signature.chargeCost);
+  }
+  if(signature?.rule==='fortune_rewind') {
+    w.u.hp=Math.round(w.u.maxHp*.7);g.signatureTurnEnd(w.u,w.state,[],high);
+    w.state.currentRound=3;w.u.hp=Math.round(w.u.maxHp*.3);w.a.cooldowns.old_skill=3;
+  }
   w.state.events = []; w.state.balanceTrace = [];
 }
 function damageChecks(w, effectiveSpec, victimList, mult, critical = false) {
@@ -109,24 +118,210 @@ function exerciseThread(w, spec, text) {
   equal(puppet.maxHp, Math.round(w.v.maxHp * .55), 'Marionette HP is 55% of victim');
   equal(w.a.cooldowns.thread_binding, spec.cooldown + 1, 'real cooldown begins at conversion');
   equal(w.state.createdMarionettes.length, 0, 'Marionette is battle-only');
+  const empowered=world('fool',0,current.team),rule=spec.effects.find(e=>e.rule==='thread_binding');
+  g.setMeterValue(empowered.a,'fool',rule.chargeCost);
+  check(g.powerEffect(empowered.a,empowered.u,empowered.v,empowered.state,[],()=>0),'full charge overcomes equal-rank Sequence 0 resistance even at zero RNG');
+  equal(empowered.v.thread.progress,0,'empowerment cannot bypass any binding stages');
+  equal(empowered.v.thread.required,5,'empowered binding still requires five stages');
+  equal(g.getMeterValue(empowered.a,'fool'),0,'valid empowered attachment spends exactly 100 charge');
+  check(text.includes('20 percentage points')&&text.includes('no minimum resistance'),'tooltip discloses resistance benefit and removed floor');
 }
-function exerciseDeferred(key,rank,team) {
-  const spec=shipped(key,rank),w=world(key,rank,team);w.u.hp=Math.round(w.u.maxHp*.6);
-  const before={sp:w.a.sp,hp:w.u.hp,victimSP:w.v.sp,victimHP:w.v.hp,otherHP:w.other.hp};
-  check(cast(w,spec),'Phase4 diagnostic executes the unchanged shipped ability');
-  equal(before.sp-w.a.sp,spec.costSP,'diagnostic actual SP cost');
-  if(spec.effectId==='logic_distortion') {
-    const effect=spec.effects.find(e=>e.type==='mind_control');
-    equal(before.otherHP-w.other.hp,Math.round(w.v.stats.atk*effect.damageMultiplier),'diagnostic compelled teammate strike');
-    equal(w.v.hp,before.victimHP,'diagnostic selected victim is not struck');statusExpiry(w.v,'stunned',1);
-    current.phase4Findings.push('Primary-skill redirection is absent; current cast strikes an enemy teammate at 150% base ATK and stuns the selected target for one action.');
-  } else {
-    const heal=spec.effects.find(e=>e.type==='heal'),drain=spec.effects.find(e=>e.type==='sp_drain');
-    equal(w.u.hp-before.hp,Math.round(w.u.maxHp*heal.maxHpRatio),'diagnostic immediate healing');
-    equal(before.victimSP-w.v.sp,drain.amount,'diagnostic immediate SP drain');
-    const resource=w.v.sp;for(let i=0;i<2;i++){g.processStatuses(w.v,()=>{},w.state,false);g.tickUnitStatuses(w.v);g.tickCombatEffectDurations([w.v]);}
-    equal(w.v.sp,resource,'diagnostic drain does not repeat over two actions');
-    current.phase4Findings.push('The authored periodic drain remains absent; current cast immediately drains 20 SP once and heals 10% caster Max HP.');
+function signatureExpiry(w,unit,field,turns) {
+  equal(unit[field]?.turns,turns,`${field} duration comes from ability data`);
+  for(let i=1;i<turns;i++){g.signatureTurnEnd(unit,w.state,[],high);equal(unit[field]?.turns,turns-i,`${field} remaining turn ${i}`);}
+  g.signatureTurnEnd(unit,w.state,[],high);check(!unit[field],`${field} expires after ${turns} affected turns`);
+}
+function signatureDamageAmount(w,victim,amount,element) {
+  return expectedDamage(w.a,w.u,victim,{damage:{scaling:'INT',multiplier:amount,type:'elemental',element,formula:'pure_caster_ability'},effects:[]});
+}
+function exerciseSignature(key,rank,team,e,text) {
+  // This second real shipped cast supplies the signature's contextual prerequisite.
+  // It does not replace the ordinary cast and quantitative generic effects above.
+  const w=world(key,rank,team),spec=shipped(key,rank),source=shipped('fool',8);
+  const full=()=>g.setMeterValue(w.a,key,e.chargeCost);
+  const witnessed=(count=1)=>{for(let i=0;i<count;i++)check(cast(w,source,high,w.v,w.ally),'eligible source witnessed through actual cast');};
+  const run=()=>{const original=JSON.stringify(spec);check(cast(w,spec),'contextual shipped signature cast');equal(JSON.stringify(spec),original,'signature cannot mutate shared definitions');};
+  const chargeSpent=()=>check(g.getMeterValue(w.a,key)<e.chargeCost,'full charge is spent on its signature payoff');
+  if(e.duration!==undefined)tooltipDuration(text,e.duration);
+  switch(e.rule) {
+    case 'door_record':case 'tower_imitation': {
+      witnessed(e.rule==='tower_imitation'?2:1);full();const before=w.a.sp,hp=w.v.hp;
+      const wanted=expectedDamage(w.a,w.u,w.v,source);run();
+      equal(before-w.a.sp,source.costSP,'replay pays the source SP cost');
+      equal(hp-w.v.hp,wanted,'source is reproduced at full scaling with caster stats');chargeSpent();
+      if(e.rule==='door_record')equal(w.a._signatureRecords.length,0,'stored record consumed once');
+      else check(!w.a._signatureRecords,'analysis does not create a Door record book');
+      const prefix=e.rule==='door_record'?'record':'imitation';
+      equal(w.a.cooldowns[`${prefix}:${source.effectId}`],source.cooldown+1,'source cooldown remains owned');
+      tooltipNumber(text,String(e.chargeCost),'replay charge');break;
+    }
+    case 'error_theft': {
+      witnessed();full();run();chargeSpent();
+      equal(w.v._signatureDeniedSkills[source.effectId],e.duration,'exact observed skill is denied');
+      const borrowed=g.signatureBorrowedAbilities(w.a);equal(borrowed.length,e.uses,'one owned paid use');
+      const before=w.a.sp;check(cast(w,borrowed[0]),'stolen ability is really cast');equal(before-w.a.sp,source.costSP,'stolen use pays original SP');
+      equal(g.signatureBorrowedAbilities(w.a).length,0,'one paid use is consumed');
+      equal(cast(w,source,high,w.v,w.u),false,'owner cannot cast denied skill');
+      g.signatureTurnEnd(w.v,w.state,[],high);check(cast(w,source,high,w.v,w.u),'skill returns after one affected owner turn');
+      tooltipNumber(text,String(e.chargeCost),'theft charge');break;
+    }
+    case 'error_distortion': {
+      const otherHP=w.other.hp,ownHP=w.u.hp;run();
+      equal(w.other.hp,otherHP,'distortion cannot create an immediate extra attack');check(!g.hasStatus(w.v,'stunned'),'distortion preserves the victim scheduled action');
+      equal(w.v._signatureDistortion.turns,e.duration,'distortion duration');equal(g.getMeterValue(w.a,key),10,'ordinary successful distortion needs no full charge');
+      const before=w.b.sp,wanted=expectedDamage(w.b,w.v,w.other,source);
+      check(cast(w,source,high,w.v,w.u),'victim casts its real paid damaging ability');
+      equal(before-w.b.sp,source.costSP,'distorted skill retains original SP cost');equal(w.b.cooldowns[source.effectId],source.cooldown+1,'distorted skill retains original cooldown');
+      equal(otherHP-w.other.hp,wanted,'distortion changes the victim target without changing its damage');equal(w.u.hp,ownHP,'intended opponent is unharmed');check(!w.v._signatureDistortion,'one paid use consumes distortion');
+      const remaining=w.other.hp;check(cast(w,shipped('paragon',8),high,w.v,w.u),'later damaging ability casts normally');equal(w.other.hp,remaining,'distortion cannot redirect a second paid cast');check(w.u.hp<ownHP,'second cast reaches the opposing side');
+      const exp=world(key,rank,team);check(cast(exp,spec),'independent expiring distortion cast');signatureExpiry(exp,exp.v,'_signatureDistortion',e.duration);
+      const immune=world(key,rank,team);immune.v.path=immune.b.path='visionary';immune.v.sequence=immune.b.sequence=2;immune.b.awakened=true;
+      check(cast(immune,spec),'resisted distortion still pays its ordinary cast');check(!immune.v._signatureDistortion,'Confusion immunity blocks distortion');
+      for(const [roll,rejected] of [[.25-1e-6,true],[.25,false]]) {
+        const resisted=world(key,rank,team);resisted.b.trait='Stoic Mind';
+        check(cast(resisted,spec,()=>roll),'mental resistance boundary cast is paid');equal(!!resisted.v._signatureDistortion,!rejected,'25% Stoic Mind resistance rejects below its published boundary');
+      }
+      check(text.includes('normal SP, cooldown, damage and hit rules'),'tooltip discloses preserved source rules');break;
+    }
+    case 'error_parasite': {
+      w.u.hp=Math.floor(w.u.maxHp*.5);run();equal(w.u._signatureParasite.hostId,w.v.id,'one host is selected');
+      equal(w.v._signatureParasites[0].turns,e.duration,'host timer is explicit');
+      for(let turn=0;turn<e.duration;turn++) {
+        const sp=w.b.sp,ownSP=w.a.sp,hp=w.u.hp,drain=Math.min(e.drain??e.amount,sp);
+        g.signatureTurnStart(w.v,w.state,[],high);
+        equal(w.b.sp,sp-drain,'each host turn drains actual available SP');
+        equal(w.a.sp,Math.min(w.a.maxSP,ownSP+drain),'drained SP is transferred without manufacture');
+        if(e.maxHpRatio)equal(w.u.hp,Math.min(w.u.maxHp,hp+Math.round(w.u.maxHp*e.maxHpRatio)),'host tick recovers published HP');
+        g.signatureTurnEnd(w.v,w.state,[],high);
+      }
+      equal(w.v._signatureParasites.length,0,'parasite stops after its stated duration');
+      const sp=w.b.sp;g.signatureTurnStart(w.v,w.state,[],high);equal(w.b.sp,sp,'no extra drain after expiry');
+      tooltipNumber(text,`${e.drain??e.amount} SP`,'per-host-turn SP drain');break;
+    }
+    case 'visionary_hypnosis': {
+      full();const hp=w.other.hp;run();statusExpiry(w.v,'stunned',e.duration);chargeSpent();
+      check(w.v._signatureCommand,'victim receives one compelled action');equal(w.other.hp,hp,'hypnosis cannot manufacture an immediate extra attack');
+      check(g.signatureTryAction(w.v,w.state,[],high),'command consumes the victim next scheduled action');check(w.other.hp<hp,'compelled action affects its own team');
+      check(!w.v._signatureCommand,'one commanded action consumes the instruction');break;
+    }
+    case 'darkness_nightmare': {
+      g.addStatus(w.v,'sleep',e.duration,'fixture');full();const hp=w.v.hp,wanted=signatureDamageAmount(w,w.v,e.amount,'psychic');run();
+      equal(hp-w.v.hp,wanted,'dream damage matches configured INT scaling');check(g.hasStatus(w.v,'sleep'),'indirect dream damage preserves sleep');chargeSpent();
+      tooltipNumber(text,percent(e.amount),'dream damage');break;
+    }
+    case 'death_summon':case 'paragon_device':case 'moon_beast': {
+      run();const units=[...w.state.allies,...w.state.enemies],companion=units.find(u=>u.id===w.u._signatureCompanionId);
+      check(companion?.alive&&companion.summoned,'actual temporary companion joins the caster side');
+      check(w.state[team].includes(companion),'companion belongs to the casting side');
+      equal(companion.stats.atk,Math.round(w.a.stats.atk*e.amount),'companion ATK follows configured coefficient');
+      equal(companion.stats.int,Math.round(w.a.stats.int*e.amount),'companion INT follows configured coefficient');
+      equal(companion._signatureLifetime,e.duration,'companion lifetime');
+      tooltipNumber(text,percent(e.amount),'companion stat strength');
+      const id=companion.id;full();equal(cast(w,spec),false,'a full-lifetime companion cannot be redundantly refreshed');
+      // Owner acts before its weaker companion when the cooldown becomes ready.
+      for(let round=1;round<=spec.cooldown+1;round++) {
+        w.a.cooldowns[spec.effectId]--;
+        if(round<=spec.cooldown)g.signatureTurnEnd(companion,w.state,[],high);
+      }
+      equal(w.a.cooldowns[spec.effectId],0,'renewal waits for the authored cooldown');check(companion.alive,'companion remains until its last scheduled action');
+      run();equal(w.u._signatureCompanionId,id,'full charge sustains the existing slot');chargeSpent();
+      for(let i=1;i<e.duration;i++){g.signatureTurnEnd(companion,w.state,[],high);check(companion.alive,`companion survives turn ${i}`);}
+      g.signatureTurnEnd(companion,w.state,[],high);check(!companion.alive&&!companion.inCombat,'companion expires exactly at its lifetime');break;
+    }
+    case 'giant_guardian': {
+      full();run();chargeSpent();for(const ally of [w.u,w.ally])equal(ally.shield,Math.round(ally.maxHp*e.amount),'protective shield amount');
+      const hp=w.v.hp;g.resolveIncoming(w.v,w.u,10,w.state,[],high,{damageType:'physical'});
+      equal(hp-w.v.hp,Math.round(w.a.stats.atk*.5),'one direct hit triggers the protective counter');check(!w.u._signatureGuard,'counter is consumed once');
+      const exp=world(key,rank,team);g.setMeterValue(exp.a,key,e.chargeCost);check(cast(exp,spec),'second guardian fixture');signatureExpiry(exp,exp.u,'_signatureGuard',e.duration);
+      tooltipNumber(text,percent(e.amount),'protective shield');break;
+    }
+    case 'red_war_command': {
+      full();run();chargeSpent();for(const ally of [w.u,w.ally]){equal(ally._signatureWarFollow.amount,e.amount,'follow-up coefficient');equal(ally._signatureWarFollow.ownerId,w.u.id,'command owner');}
+      const hp=w.v.hp;g.resolveIncoming(w.ally,w.v,10,w.state,[],high,{damageType:'physical'});
+      equal(hp-w.v.hp,10+Math.round(w.a.stats.atk*e.amount),'allied landed hit gains bounded extra strike');check(!w.ally._signatureWarFollow,'follow-up consumed once');
+      signatureExpiry(w,w.u,'_signatureWarFollow',e.duration);tooltipNumber(text,percent(e.amount),'command follow-up');break;
+    }
+    case 'sun_purify': {
+      g.addStatus(w.ally,'curse',3,'fixture');w.v.path=w.b.path='darkness';w.v._shieldIncomingCategory='magic';w.v.shield=200;
+      full();run();chargeSpent();check(!g.hasStatus(w.ally,'curse'),'extra purification reaches an ally');equal(w.v.shield,0,'enemy dark protection dismantled');
+      tooltipNumber(text,String(e.amount),'extra effects cleansed');break;
+    }
+    case 'tyrant_soaked':run();signatureExpiry(w,w.v,'_signatureSoaked',e.duration);break;
+    case 'tyrant_lightning': {
+      check(cast(w,shipped('tyrant',5)),'Water ability supplies real Soaked prerequisite');full();const hp=w.other.hp,wanted=signatureDamageAmount(w,w.other,e.amount,'lightning');run();
+      equal(hp-w.other.hp,wanted,'one secondary foe receives configured chain damage');check(!w.v._signatureSoaked,'Soaked is consumed');chargeSpent();tooltipNumber(text,percent(e.amount),'Lightning chain');break;
+    }
+    case 'demoness_affliction': {
+      // The same inherited ability enables its spread only after advancement to Sequence 5.
+      const spread=world(key,5,team);g.addStatus(spread.v,'curse',e.duration,'fixture');g.setMeterValue(spread.a,key,e.chargeCost);
+      check(cast(spread,spec),'Sequence 5 inherited curse cast');statusExpiry(spread.other,'curse',e.duration);
+      check(spread.other.statusMeta.curse.signatureSpread,'spread is marked nonrecursive');check(g.getMeterValue(spread.a,key)<e.chargeCost,'spread spends Affliction');
+      equal(g.getMeterValue(w.a,key),0,'Sequence 7 ordinary curse does not spend advanced charge');break;
+    }
+    case 'fortune_retry': {
+      full();run();equal(w.u._signatureRetry.chargeCost,e.chargeCost,'retry token cost');
+      const hp=w.v.hp;let roll=0;check(g.attackOnce(w.a,w.u,w.v,w.state,[],()=>roll++===0?0:.99),'failed hit contest is retried');check(w.v.hp<hp,'retry can land a real strike');chargeSpent();check(!w.u._signatureRetry,'one contest consumes token');
+      const exp=world(key,rank,team);check(cast(exp,spec),'second retry fixture');signatureExpiry(exp,exp.u,'_signatureRetry',e.duration??2);break;
+    }
+    case 'fortune_calamity': {
+      run();const hp=w.v.hp,failed=shipped('fool',8);g.addStatus(w.v,'next_miss',1,'fixture');w.v._nextAttackMiss=1;
+      check(cast(w,failed,high,w.v,w.u),'enemy pays for a real failed damaging cast');
+      equal(hp-w.v.hp,Math.round(w.b.stats.int*e.amount),'failed cast suffers configured backlash');
+      signatureExpiry(w,w.v,'_signatureCalamity',e.duration);tooltipNumber(text,percent(e.amount),'misfortune backlash');break;
+    }
+    case 'fortune_rewind': {
+      w.u.hp=7000;check(cast(w,shipped('abyss',3)),'historical buffs arise from an actual cast');g.signatureTurnEnd(w.u,w.state,[],high);
+      w.state.currentRound=3;w.u.hp=2000;g.tickCombatEffectDurations([w.u]);g.tickCombatEffectDurations([w.u]);w.a.cooldowns.older_spell=4;const sp=w.a.sp;run();
+      equal(w.u.hp,7000,'HP comes from two rounds earlier');near(w.u._buffs.atk,1.25,'earlier timed ATK buff restored');
+      equal(w.a.cooldowns.older_spell,4,'cooldowns remain current');equal(w.a.sp,sp-spec.costSP,'SP is paid rather than rewound');
+      check(/two rounds earlier/.test(text),'tooltip states the historical lookback');break;
+    }
+    case 'emperor_redirect': {
+      full();run();chargeSpent();w.u.hp=w.u.maxHp-2000;w.v.hp=w.v.maxHp-2000;
+      const own=w.u.hp,victim=w.v.hp;check(cast(w,shipped('hanged_man',7),high,w.v,w.u),'enemy really casts eligible recovery');
+      equal(w.v.hp,victim,'enemy cannot retain redirected benefit');equal(w.u.hp,own+Math.round(w.u.maxHp*.15),'redirected recovery uses actual recipient HP');check(!w.u._signatureRedirect,'benefit redirect consumed once');
+      const exp=world(key,rank,team);g.setMeterValue(exp.a,key,e.chargeCost);check(cast(exp,spec),'second redirect fixture');signatureExpiry(exp,exp.u,'_signatureRedirect',e.duration);break;
+    }
+    case 'justiciar_prohibition': {
+      run();w.v.hp=w.v.maxHp-2000;const hp=w.v.hp,sp=w.b.sp,heal=shipped('hanged_man',7);check(cast(w,heal,high,w.v,w.u),'prohibited paid action is still a cast');
+      equal(w.b.sp,sp-heal.costSP,'violating caster still pays SP');check(w.v.hp<=hp,'judgment cannot add recovery');check(g.getMeterValue(w.a,key)>0,'actual violation builds Law');
+      signatureExpiry(w,w.v,'_signatureProhibition',e.duration);break;
+    }
+    case 'hanged_graze': {
+      w.v.path=w.b.path='door';w.b.awakened=true;w.v.awakened=true;run();witnessed();w.v.hp=1;
+      g.resolveIncoming(w.u,w.v,100,w.state,[],high,{damageType:'true',trueDamage:true});check(w.a._signatureSoul,'one final defeated soul is retained');
+      equal(w.a._signatureSoul.sourceId,w.v.id,'soul belongs to the defeated enemy');full();const before=w.a.sp;
+      check(cast(w,spec,high,w.u,w.other),'grazed skill is paid and cast on a living foe');equal(before-w.a.sp,source.costSP,'grazed use pays source cost');check(!w.a._signatureSoul,'grazed skill is released once');chargeSpent();break;
+    }
+    case 'hermit_scroll': {
+      check(cast(w,shipped('hermit',8)),'own learned spell prepares a scroll');check(w.a._signatureScroll,'one owned scroll exists');full();w.a.cooldowns.mystic_spell=5;
+      const before=w.a.sp,hp=w.v.hp,scroll=shipped('hermit',8),wanted=expectedDamage(w.a,w.u,w.v,scroll);run();
+      equal(before-w.a.sp,scroll.costSP,'scroll pays source SP');equal(hp-w.v.hp,wanted,'scroll uses full source strength');equal(w.a.cooldowns.mystic_spell,5,'source cooldown remains independent');equal(w.a._signatureScroll,null,'one scroll consumed');chargeSpent();break;
+    }
+    case 'mother_seed': {
+      w.ally.hp=Math.round(w.ally.maxHp*.2);full();run();chargeSpent();equal(w.ally._signatureSeed.amount,e.amount*2,'charge doubles one seed regeneration');
+      const hp=w.ally.hp;g.signatureTurnStart(w.ally,w.state,[],high);equal(w.ally.hp,hp+Math.round(w.ally.maxHp*e.amount*2),'seed regenerates configured Max HP');
+      g.addStatus(w.ally,'no_heal',1);const prohibited=w.ally.hp;g.signatureTurnStart(w.ally,w.state,[],high);equal(w.ally.hp,prohibited,'seed respects healing prohibition');
+      signatureExpiry(w,w.ally,'_signatureSeed',e.duration);tooltipNumber(text,percent(e.amount),'seed ordinary healing');break;
+    }
+    case 'moon_medicine': {
+      w.ally.hp=Math.round(w.ally.maxHp*.2);full();const hp=w.ally.hp;run();chargeSpent();
+      equal(w.ally.hp,hp+Math.round(w.ally.maxHp*(e.maxHpRatio+e.amount)),'dose and empowered recovery use configured Max HP');equal(w.u._signatureMedicine,1,'one dose is consumed after bounded replenishment');
+      tooltipNumber(text,percent(e.maxHpRatio),'ordinary dose');tooltipNumber(text,percent(e.amount),'empowered medicine');break;
+    }
+    case 'moon_blood': {
+      w.ally.hp=Math.round(w.ally.maxHp*.2);full();const hp=w.ally.hp;run();chargeSpent();equal(w.ally.hp,hp+Math.round(w.ally.maxHp*e.amount),'charged blood recovery helps injured ally');tooltipNumber(text,percent(e.amount),'blood recovery');break;
+    }
+    case 'abyss_desire': {
+      run();check(cast(w,source,high,w.v,w.ally),'marked enemy pays actual SP');equal(w.v._signatureDesire.paidSP,source.costSP,'desire uses paid resource amount');
+      full();const hp=w.v.hp;run();equal(hp-w.v.hp,Math.round(w.a.stats.int*e.amount+source.costSP),'charged desire converts actual paid SP to Fire damage');chargeSpent();
+      equal(w.v._signatureDesire.paidSP,0,'paid SP cannot detonate repeatedly');signatureExpiry(w,w.v,'_signatureDesire',e.duration);tooltipNumber(text,percent(e.amount),'Desire INT coefficient');break;
+    }
+    case 'chained_release': {
+      run();statusExpiry(w.u,'curse',e.duration);full();const hp=w.v.hp,base=expectedDamage(w.a,w.u,w.v,spec);run();
+      equal(hp-w.v.hp,base+Math.round(w.u.maxHp*e.amount),'contained curse adds configured Max HP release');check(!g.hasStatus(w.u,'curse'),'successful release removes self curse');chargeSpent();tooltipNumber(text,percent(e.amount),'curse release');break;
+    }
+    default:throw new Error(`Unhandled signature quantitative assertion for ${e.rule}`);
   }
 }
 function exerciseActive(key, rank, team, text) {
@@ -135,26 +330,30 @@ function exerciseActive(key, rank, team, text) {
   prepare(w, spec);
   const foes = targets(w, spec), supports = spec.effects.some(e => e.type === 'targeting' && e.mode === 'all_allies') ? [w.u, w.ally] : [w.u];
   const before = {sp:w.a.sp, hp:w.u.hp, targetSP:foes.map(t=>t.sp), targetHP:foes.map(t=>t.hp), allyHP:w.ally.hp};
-  const copied = spec.effects.some(e => e.type === 'copy_ability');
+  const signature=spec.effects.find(e=>e.type==='signature');
+  const owned=signature&&['door_record','tower_imitation'].includes(signature.rule);
+  const copied = owned||spec.effects.some(e => e.type === 'copy_ability');
   const effectiveSpec = copied ? shipped('fool', 8) : spec;
+  const castId=owned?`${signature.rule==='door_record'?'record':'imitation'}:${effectiveSpec.effectId}`:spec.effectId;
+  const paidSpec=owned?effectiveSpec:spec;
   let mult = effectiveSpec.damage?.multiplier || 0;
   if (spec.effects.some(e => e.type === 'low_hp_bonus')) mult *= 1 + spec.effects.find(e => e.type === 'low_hp_bonus').amount;
   const untouched = JSON.stringify(spec);
   check(cast(w, spec), 'actual shipped cast succeeds');
   equal(JSON.stringify(spec), untouched, 'cast never mutates shared normalized spec');
   const drain = spec.effects.find(e => e.type === 'sp_siphon');
-  equal(w.a.sp, Math.min(w.a.maxSP, before.sp - spec.costSP + (drain ? foes.length * drain.amount : 0)), 'actual SP spend and siphon');
-  equal(w.a.cooldowns[spec.effectId], spec.cooldown > 0 ? spec.cooldown + 1 : 0, 'advertised cooldown survives its own effects');
+  equal(w.a.sp, Math.min(w.a.maxSP, before.sp - paidSpec.costSP + (drain ? foes.length * drain.amount : 0)), 'actual SP spend and siphon');
+  equal(w.a.cooldowns[castId], paidSpec.cooldown > 0 ? paidSpec.cooldown + 1 : 0, 'advertised cooldown survives its own effects');
   const castEvent = w.state.events.find(e => e.type === 'cast' && e.actorId === w.u.id);
-  check(castEvent, 'real cast event recorded'); equal(castEvent.costSP, spec.costSP, 'cast event SP agrees with tooltip');
-  equal(castEvent.cooldown, spec.cooldown, 'cast event cooldown agrees with tooltip');
-  tooltipNumber(text, `${spec.costSP} SP`, 'SP cost');
-  if (spec.cooldown) tooltipNumber(text, `${spec.cooldown}`, 'cooldown');
+  check(castEvent, 'real cast event recorded'); equal(castEvent.costSP, paidSpec.costSP, 'cast event SP agrees with actual source cost');
+  equal(castEvent.cooldown, paidSpec.cooldown, 'cast event cooldown agrees with actual source cooldown');
+  if(owned)check(text.includes('original SP cost and cooldown'),'borrowed cast discloses original resource rules');
+  else {tooltipNumber(text, `${spec.costSP} SP`, 'SP cost');if (spec.cooldown) tooltipNumber(text, `${spec.cooldown}`, 'cooldown');}
   if (mult || effectiveSpec.effects.some(e => e.type === 'damage_component')) {
     const damageText = g.abilityDamageText(effectiveSpec);
     check(damageText.length > 0, 'damaging cast has generated damage formula');
     tooltipNumber(damageText, percent(effectiveSpec.damage.multiplier), 'configured damage multiplier');
-    damageChecks(w, effectiveSpec, foes, mult);
+    damageChecks(w, owned?{...effectiveSpec,id:castId,effectId:castId}:effectiveSpec, foes, mult);
   }
   for (const e of spec.effects) {
     const d = duration(e);
@@ -285,6 +484,7 @@ function exerciseActive(key, rank, team, text) {
         const wanted=expectedDamage(criticalWorld.a,criticalWorld.u,criticalWorld.v,spec,{critical:true,critBonus:e.type==='crit_bonus'?e.amount:0});equal(trace.final,wanted,'critical damage matches independent coefficients');break;
       }
       case 'damage_rule':case 'targeting':break;
+      case 'signature':exerciseSignature(key,rank,team,e,text);break;
       // These schema entries have no Phase3 activation hook; generated rules omit them.
       case 'revive':case 'stat_modifier':current.phase4Effects.push(e.type);break;
       default:throw new Error(`Unhandled quantitative assertion for ${e.type}`);
@@ -295,24 +495,24 @@ for(const key of g.PATH_KEYS)for(let rank=9;rank>=0;rank--){
   const spec=shipped(key,rank),id=spec.effectId||spec.id;
   const dataAbility=authored[key].sequences.find(t=>t.sequence===rank).ability;
   assert.equal(dataAbility.id,id,`shipped data identity ${key}/${rank}`);
-  const row={pathway:key,sequence:rank,ability:id,blocking:!deferred.has(id),assertions:0,teams:[],phase4Effects:[],phase4Findings:[],errors:[]};
+  const row={pathway:key,sequence:rank,ability:id,blocking:true,assertions:0,teams:[],phase4Effects:[],phase4Findings:[],errors:[]};
   current=row;
   try { const text=g.abilityDescription(spec,key,rank);equal(spec.text,text,'live runtime tooltip');check(text.length>10&&!/undefined|NaN/.test(text),'finite generated tooltip'); }
   catch(error){row.errors.push(error.message);}
   for(const team of ['allies','enemies']){
     current.team=team;
-    try {if(!row.blocking)exerciseDeferred(key,rank,team);else if(spec.type==='passive')row.assertions+=exercisePassive(key,rank,team);else exerciseActive(key,rank,team,g.abilityDescription(spec,key,rank));row.teams.push(team);}
+    try {if(spec.type==='passive')row.assertions+=exercisePassive(key,rank,team);else exerciseActive(key,rank,team,g.abilityDescription(spec,key,rank));row.teams.push(team);}
     catch(error){row.errors.push(`${team}: ${error.message}`);}
   }
   row.phase4Effects=[...new Set(row.phase4Effects)];row.phase4Findings=[...new Set(row.phase4Findings)];delete row.team;
-  row.result=!row.blocking?'DEFERRED_PHASE4':row.errors.length?'FAIL':'PASS';
-  if(row.errors.length)row.blocking?failures++:diagnosticFailures++;
-  coverage.push(row);console.log(`${row.blocking?row.result:'PHASE4 DIAGNOSTIC'} ${key}/${rank} ${id}: ${row.assertions} assertions, ${row.teams.length}/2 teams${row.errors.length?' — '+row.errors.join('; '):''}`);
+  row.result=row.errors.length?'FAIL':'PASS';
+  if(row.errors.length)failures++;
+  coverage.push(row);console.log(`${row.result} ${key}/${rank} ${id}: ${row.assertions} assertions, ${row.teams.length}/2 teams${row.errors.length?' — '+row.errors.join('; '):''}`);
 }
 assert.equal(coverage.length,220,'all 220 rank abilities have a coverage record');
-assert.equal(coverage.filter(r=>r.blocking).length,218,'218 blocking Phase3 abilities');
-assert.equal(coverage.filter(r=>!r.blocking).length,2,'two deferred Error diagnostics');
-const report={abilities:coverage.length,blockingAbilities:218,diagnosticAbilities:2,blockingFailures:failures,diagnosticFailures,assertions:coverage.reduce((n,r)=>n+r.assertions,0),coverage};
+assert.equal(coverage.filter(r=>r.blocking).length,220,'all 220 abilities are blocking');
+assert.equal(coverage.filter(r=>!r.blocking).length,0,'no deferred diagnostics remain');
+const report={abilities:coverage.length,blockingAbilities:220,diagnosticAbilities:0,blockingFailures:failures,diagnosticFailures:0,assertions:coverage.reduce((n,r)=>n+r.assertions,0),coverage};
 if(process.env.PHASE3_COVERAGE_PATH)fs.writeFileSync(process.env.PHASE3_COVERAGE_PATH,JSON.stringify(report,null,2)+'\n');
-console.log(`Phase3 actual casts: ${218-failures}/218 blocking abilities passed; 2 Phase4 diagnostics; ${report.assertions} quantitative assertions.`);
+console.log(`Actual casts: ${220-failures}/220 blocking abilities passed; no deferred diagnostics; ${report.assertions} quantitative assertions.`);
 if(failures)process.exitCode=1;

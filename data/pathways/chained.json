@@ -16,13 +16,17 @@
     "name": "Restraint",
     "key": "restraint",
     "max": 100,
-    "gain": "Combat actions",
-    "spend": "Pathway abilities",
-    "full": "Next ability is empowered",
+    "gain": "Enduring damage while containing a curse",
+    "spend": "Madness Curse",
+    "full": "Release the contained curse before it backlashes",
     "special": "Restraint",
     "characteristic": "Physical",
     "quirkName": "Bandaged Curse Vessel",
-    "quirkText": "Survival: Shackled Endurance [Defense], Possession Phase [Escape]"
+    "quirkText": "Survival: Shackled Endurance [Defense], Possession Phase [Escape]",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -79,6 +83,13 @@
             "amount": 0.15,
             "stat": "speed",
             "duration": 2
+          },
+          {
+            "type": "signature",
+            "rule": "chained_release",
+            "chargeCost": 100,
+            "amount": 0.3,
+            "duration": 4
           }
         ]
       }

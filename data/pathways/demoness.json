@@ -13,16 +13,20 @@
   "role": "Curse / Poison / Evasion",
   "intro": "The Demoness pathway combines agility, curses, poison, charm and catastrophic feminine transformation. It excels at control and punishing prolonged fights.",
   "meter": {
-    "name": "Corruption",
-    "key": "corruption",
+    "name": "Affliction",
+    "key": "affliction",
     "max": 100,
-    "gain": "Curses and prolonged combat",
-    "spend": "Plague, Catastrophe and Thralls",
-    "full": "Next curse triggers plague",
-    "special": "Corruption",
+    "gain": "Curse damage",
+    "spend": "A curse from Sequence 5",
+    "full": "Spread one curse to one other foe; cannot spread recursively",
+    "special": "Affliction",
     "characteristic": "Hybrid / Affliction",
     "quirkName": "Pestilence Authority",
-    "quirkText": "Combat-only curses, charm, poison and survival."
+    "quirkText": "Combat-only curses, charm, poison and survival.",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -100,6 +104,12 @@
           {
             "type": "status",
             "status": "curse",
+            "duration": 2
+          },
+          {
+            "type": "signature",
+            "rule": "demoness_affliction",
+            "chargeCost": 100,
             "duration": 2
           }
         ]

@@ -16,7 +16,7 @@ test('chapter data exposes five original, ordered missions and authored Sequence
  assert.strictEqual(g.CAMPAIGN.missions[3].enemy.path,'darkness');assert(g.CAMPAIGN.missions.every(m=>m.rewards.digestion>0));
 });
 test('new guild derives recruitment, awakening and equipment readiness without granting progress',()=>{
- const s=g.newGame();assert.strictEqual(s.schema,9);let st=g.campaignStatus(s);assert(!st.ready);assert(st.requirements.every(r=>!r.done));
+ const s=g.newGame();assert.strictEqual(s.schema,g.SAVE_VERSION);let st=g.campaignStatus(s);assert(!st.ready);assert(st.requirements.every(r=>!r.done));
  const a=g.makeAgent(()=>.5,{sequence:10});s.roster=[a];assert(g.campaignStatus(s).requirements[0].done);assert(!g.campaignStart(s,'open_doors').ok);
  a.awakened=true;a.path='fool';a.sequence=9;g.restatAgent(a);assert(!g.campaignStatus(s).ready);a.weaponId='knife';assert(g.campaignStatus(s).ready);
  assert.deepStrictEqual(s.campaign.completed,[]);

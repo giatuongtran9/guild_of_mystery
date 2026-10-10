@@ -16,13 +16,17 @@
     "name": "Knowledge",
     "key": "knowledge",
     "max": 100,
-    "gain": "Investigating and witnessing powers",
-    "spend": "Scrolls and deep prying",
-    "full": "Next spell is empowered",
+    "gain": "Casting your own learned spells",
+    "spend": "Knowledge Arrow",
+    "full": "Release one owned scroll separately from its original cooldown",
     "special": "Knowledge",
     "characteristic": "Caster",
     "quirkName": "Informational Eye",
-    "quirkText": "Survival: Scroll Ward [Defense], Information Reconstruction [Heal]"
+    "quirkText": "Survival: Scroll Ward [Defense], Information Reconstruction [Heal]",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -131,6 +135,13 @@
           {
             "type": "defense_penetration",
             "amount": 0.2
+          },
+          {
+            "type": "signature",
+            "rule": "hermit_scroll",
+            "chargeCost": 100,
+            "slots": 1,
+            "multiplier": 1
           }
         ]
       }

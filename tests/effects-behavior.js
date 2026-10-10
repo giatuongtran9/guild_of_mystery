@@ -60,6 +60,15 @@ const without = type => spec => { spec.effects = spec.effects.filter(e => e.type
 const T = {};   // effect type -> [description, fn returning boolean/detail]
 const hurt = ({ ua, uc }) => { ua.hp = Math.round(ua.maxHp * .5); uc.hp = Math.round(uc.maxHp * .5); };
 
+T.signature = () => {
+  const a=mk('death',7),u=g.makeCombatUnit(a),v=g.makeCombatUnit(mk('door',7));
+  const state={allies:[u],enemies:[v],events:[],balanceTrace:[],currentRound:1};
+  const spec=g.tierFor('death',7).abilities[0],e=spec.effects.find(x=>x.type==='signature');
+  const before=a.sp;g.applyStructuredAbility(u.agent,u,v,state,[],()=>.99,spec);
+  const summoned=state.allies.find(x=>x.id===u._signatureCompanionId);
+  return summoned?.alive&&summoned.summoned&&summoned._signatureLifetime===e.duration
+    &&summoned.stats.atk===Math.round(u.agent.stats.atk*e.amount)&&u.agent.sp<before;
+};
 T.shield = () => { const r = cast([{ type: 'shield', maxHpRatio: .3 }]); return r.ua.shield > 0 && !(r.uc.shield > 0); };
 T.heal = () => { const r = cast([{ type: 'heal', maxHpRatio: .3 }], hurt); return r.ua.hp > r.ua.maxHp * .5 && r.uc.hp === Math.round(r.uc.maxHp * .5); };
 T.buff = () => { const r = cast([{ type: 'buff', stat: 'def', amount: .25 }]); return r.ua._buffs?.def > 1 && r.a._buffs?.def > 1 && !r.ub._buffs; };
@@ -134,8 +143,9 @@ T.execute = () => { const x = firstReal('execute'); const e = x.e, prep = ({ ub 
 T.crit_bonus = () => { const x = firstReal('crit_bonus'); const mk2 = c => realCast(x.path, x.seq, x.id, { mod: c }); const a = realCast(x.path, x.seq, x.id, { mod: s => { s.effects.forEach(e => { if (e.type === 'crit_bonus') e.amount = 5; }); } }); return typeof a.dmg === 'number'; };
 T.defense_penetration = () => { const x = firstReal('defense_penetration'); const keepDef = ({ ub }) => { ub.def = 50000; ub.agent = undefined; };
   const a = realCast(x.path, x.seq, x.id, { prep: keepDef }), b = realCast(x.path, x.seq, x.id, { prep: keepDef, mod: without('defense_penetration') }); return a.dmg >= b.dmg; };
-T.heal_damage_ratio = () => { const x = firstReal('heal_damage_ratio'); const prep = ({ ua }) => { ua.hp = Math.round(ua.maxHp * .5); };
-  const a = realCast(x.path, x.seq, x.id, { prep }), b = realCast(x.path, x.seq, x.id, { prep, mod: without('heal_damage_ratio') }); return a.selfHeal > b.selfHeal; };
+T.heal_damage_ratio = () => { const prep = ({ ua }) => { ua.hp = Math.round(ua.maxHp * .5); };
+  const a = realCast('mother',6,'life_seed', { prep,mod:s=>s.effects.push({type:'heal_damage_ratio',amount:.1}) }), b = realCast('mother',6,'life_seed', { prep });
+  return a.selfHeal===Math.round(a.dmg*.1)&&b.selfHeal===0; };
 T.skill_misfire = () => { const r = cast([{ type: 'skill_misfire', chance: 1 }]); return r.lines.some(l => /misfire/i.test(l.text)); };
 
 
@@ -253,7 +263,7 @@ for (const [t, fn] of Object.entries(T)) { let ok = false, d; try { ok = !!fn();
   check('every timed effect on an active ability has an explicit duration', missing.length === 0, missing.slice(0, 6).join('; '));
   for (const rows of Object.values(data)) for (const x of rows) {
     if (x.kind !== 'active') continue;
-    const d = x.ab.description || '', nums = [...d.matchAll(/for\s+(\d+)\s*(?:rounds?|turns?)|(\d+)-(?:round|turn)/gi)].map(m => Number(m[1] || m[2]));
+    const d = g.abilityDescription(g.tierFor(x.path,x.seq).abilities[0],x.path,x.seq), nums = [...d.matchAll(/for\s+(\d+)\s*(?:rounds?|turns?)|(\d+)-(?:round|turn)/gi)].map(m => Number(m[1] || m[2]));
     const timed = (x.ab.effects || []).filter(e => TIMED.has(e.type) && e.duration !== undefined && !(e.type === 'steal_stat' && e.stat === 'hp'));
     const statusDur = (x.ab.effects || []).filter(e => e.type === 'status' || e.type === 'status_chance').map(e => e.duration);
     if (nums.length === 1 && timed.length && !timed.some(e => e.duration === nums[0]) && !statusDur.includes(nums[0])) mismatch.push(`${x.path}:${x.seq} ${x.id} says ${nums[0]} but ${timed.map(e => e.type + '@' + e.duration).join(',')}`);

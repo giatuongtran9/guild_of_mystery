@@ -18,6 +18,23 @@ const mk = (path, seq, id) => { const a = g.makeAgent(Math.random, { sequence: s
   assert.strictEqual(rows[0].damages.length, 1);
   assert.deepStrictEqual(rows[0].subrows.map(s => s.type), ['mythical', 'status'], 'order: awakening, then stun');
 }
+// --- synthetic: a reactive authority must not steal the row from the hit that awakened it
+{
+  const ev = [
+    { round: 1, type: 'cast', actorId: 'S', actorName: 'Scholar', actorTeam: 'enemy', ability: 'Strike', costSP: 10 },
+    { round: 1, type: 'story', subtype: 'mythical_form', inTurn: true, actorId: 'W', actorName: 'Wheel', text: 'MYTHICAL FORM: Wheel awakens' },
+    { round: 1, type: 'damage', subtype: 'mythical_authority', actorId: 'W', actorName: 'Wheel', targetId: 'S', amount: 20, hpLoss: 20, absorbed: 0 },
+    { round: 1, type: 'damage', actorId: 'S', actorName: 'Scholar', targetId: 'W', amount: 50, hpLoss: 50, absorbed: 0 },
+    { round: 1, type: 'resources', units: [{ id: 'W', hp: 50 }, { id: 'S', hp: 80 }] },
+  ];
+  const rows = g.groupEventsToRows(ev)[0].rows;
+  assert.strictEqual(rows.length, 1, 'awakening and its authority remain inside the causing attack');
+  assert.strictEqual(rows[0].actorId, 'S');
+  assert.strictEqual(rows[0].damages[0], ev[3]);
+  assert.strictEqual(rows[0].reactions[0], ev[2], 'reactive damage retains its own actor');
+  assert.deepStrictEqual(rows[0].subrows.map(s => s.type), ['mythical', 'reaction']);
+  assert.strictEqual(rows[0].resources, ev[4].units, 'final resources attach to the complete attack');
+}
 // --- synthetic: awakening NOT caused by a hit keeps its own row, after the pending turn
 {
   const ev = [
@@ -39,9 +56,9 @@ for (let sd = 1; sd <= 150; sd++) {
   const ev = res.events, rows = g.groupEventsToRows(ev).flatMap(r => r.rows);
   ev.forEach((e, i) => {
     if (!(e.subtype === 'mythical_form' && e.inTurn)) return;
-    // the hit that caused it = first non-reflect damage after it, in the same round
+    // The causing attack follows the awakening; reflected hits may awaken its caster instead of its target.
     let hit = null;
-    for (let j = i + 1; j < ev.length; j++) { if (ev[j].type === 'round_start') break; if (ev[j].type === 'damage' && !ev[j].isReflect) { hit = ev[j]; break; } }
+    for (let j = i + 1; j < ev.length; j++) { if (ev[j].type === 'round_start') break; if (ev[j].type === 'damage' && !ev[j].isReflect && !ev[j].isSignature && ev[j].subtype !== 'mythical_authority') { hit = ev[j]; break; } }
     if (!hit) return; // not caused by an attack hit (e.g. start-of-round DoT tick)
     seen++; if (ev.slice(i + 1, ev.indexOf(hit)).some(x => x.type === 'cast')) basic++;
     assert(!rows.some(r => r.type === 'story' && r.text === e.text), `seed ${sd}: in-hit awakening must not be a standalone row`);

@@ -16,13 +16,17 @@
     "name": "Soul",
     "key": "soul",
     "max": 100,
-    "gain": "Defeating foes and spirit contact",
-    "spend": "Undead and spirit techniques",
-    "full": "Next death effect is empowered",
+    "gain": "Final enemy deaths and spirit contact",
+    "spend": "Necromancy Summon",
+    "full": "Restore or sustain your one temporary undead companion",
     "special": "Death Authority",
     "characteristic": "Hybrid / Death",
     "quirkName": "Death Authority",
-    "quirkText": "Combat-only death, revival and undead control."
+    "quirkText": "Combat-only death, revival and undead control.",
+    "gainAction": 20,
+    "gainSignature": 10,
+    "signatureGainLimit": 1,
+    "spendAmount": 100
   },
   "sequences": [
     {
@@ -93,7 +97,7 @@
         "label": "Active",
         "spCost": 25,
         "cooldown": 3,
-        "description": "Necromancy Summon — Summons skeleton soldier absorbing 15% Max HP damage.",
+        "description": "Necromancy Summon — Summon one temporary undead companion. Full Soul charge restores or sustains it.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -101,9 +105,12 @@
         "tag": "Defense",
         "effects": [
           {
-            "type": "shield",
-            "maxHpRatio": 0.15,
-            "fullHp": false
+            "type": "signature",
+            "rule": "death_summon",
+            "chargeCost": 100,
+            "amount": 0.75,
+            "duration": 4,
+            "slots": 1
           }
         ]
       }
@@ -141,11 +148,11 @@
         "name": "Zombie Transformation",
         "kind": "active",
         "label": "Active Stance",
-        "spCost": 45,
+        "spCost": 25,
         "cooldown": 3,
-        "description": "Zombie Transformation — +25% DEF, physical slash resistance, deals 170% ATK Death DMG on hit.",
+        "description": "Zombie Transformation — +25% DEF, physical slash resistance, deals 230% ATK Death DMG on hit.",
         "stat": "ATK",
-        "scale": 1.7,
+        "scale": 2.3,
         "damageType": "death",
         "formula": "empowered_hybrid_physical",
         "tag": "Defense",

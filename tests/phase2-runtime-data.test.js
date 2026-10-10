@@ -12,7 +12,7 @@ const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'guild-runtime-data-test-'));
 try {
   fs.cpSync(path.join(root, 'data'), path.join(temp, 'data'), { recursive: true, filter: name => !name.includes(`${path.sep}assets`) && !name.includes(`${path.sep}runtime`) });
   fs.mkdirSync(path.join(temp, 'js'));
-  for (const name of ['paths', 'v15', 'generate', 'engine', 'state', 'campaign', 'ui']) fs.writeFileSync(path.join(temp, `js/${name}.js`), `// ${name}\n`);
+  for (const name of ['paths', 'v15', 'generate', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui']) fs.writeFileSync(path.join(temp, `js/${name}.js`), `// ${name}\n`);
   for (const name of ['data-loader', 'boot']) fs.writeFileSync(path.join(temp, `js/${name}.js`), `// ${name}\n`);
   fs.mkdirSync(path.join(temp, 'css')); fs.writeFileSync(path.join(temp, 'css/tokens.css'), ':root { color: white; }\n');
   fs.writeFileSync(path.join(temp, 'index.html'), '<link rel="stylesheet" href="css/tokens.css">\n<script src="js/data-loader.js"></script>\n<script src="js/boot.js"></script>\n');
@@ -33,7 +33,7 @@ try {
   assert.equal(bundle.schema, 'guild.runtime-data.v1');
   assert.equal(Object.keys(bundle.pathwayFiles).length, 22);
   assert.equal(Object.values(bundle.pathwayFiles).reduce((n, p) => n + p.sequences.length, 0), 220);
-  assert.equal(Object.keys(manifest.scriptVersions).length, 7);
+  assert.equal(Object.keys(manifest.scriptVersions).length, 9);
   assert.match(manifest.serviceWorkerVersion, /^[a-f0-9]{16}$/);
   for (const file of originals) assert.equal(hash(file), before[file], `authored JSON changed: ${file}`);
   assert.equal(buildRuntimeData({ root: temp }).version, first.version, 'same inputs must create identical releases');
