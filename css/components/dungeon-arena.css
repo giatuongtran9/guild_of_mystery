@@ -48,7 +48,7 @@
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  gap: 24px;
+  gap: 12px;
   width: 100%;
 }
 
@@ -68,7 +68,7 @@
 
 .gm-rank-allies {
   padding-bottom: 2px;
-  min-height: 235px;
+  min-height: 0;
   overflow-x: auto;
   overflow-y: hidden;
   justify-content: flex-start;
@@ -89,8 +89,8 @@
   text-align: center;
   position: relative;
   transition: transform 0.2s ease, opacity 0.2s ease;
-  flex: 0 0 132px;
-  width: 132px;
+  flex: 0 0 96px;
+  width: 96px;
   scroll-snap-align: center;
 }
 
@@ -123,8 +123,8 @@
 .gm-unit-sprite {
   position: relative;
   z-index: 2;
-  width: 68px;
-  height: 68px;
+  width: 64px;
+  height: 64px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -138,22 +138,14 @@
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.8));
 }
 
-.gm-arena-unit.ally {
-  flex: 0 0 160px;
-  width: 160px;
-  scroll-snap-align: center;
-}
-
-.gm-arena-unit.ally .gm-unit-sprite {
-  width: 160px;
-  height: 160px;
-}
-
-.gm-arena-unit.ally .combat-sprite-img {
+.gm-arena-unit .combat-sprite-img {
   width: 100%;
   height: 100%;
   max-width: none;
   max-height: none;
+}
+
+.gm-arena-unit.ally .combat-sprite-img {
   filter: none;
 }
 
@@ -198,6 +190,7 @@
 
 .gm-unit-name-label {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
@@ -261,8 +254,18 @@
   position: absolute;
   top: 0;
   left: 0;
-  background: linear-gradient(90deg, #1976d2, #42a5f5);
+  background: #ffffff;
   opacity: 0.85;
+  z-index: 1;
+}
+
+.gm-float-num.gm-shield-num {
+  display: block;
+  color: #ffffff;
+}
+
+.gm-shield-num[hidden] {
+  display: none;
 }
 
 .gm-float-fill.mp {
@@ -326,14 +329,6 @@
     min-height: 0;
   }
 
-  .gm-arena-unit,
-  .gm-arena-unit.ally {
-    flex: 0 0 min(300px, 100%);
-    width: min(300px, 100%);
-    flex-direction: row;
-    gap: 8px;
-  }
-
   .gm-unit-sprite-anchor {
     flex: 0 0 auto;
     margin-bottom: 0;
@@ -345,13 +340,13 @@
   }
 
   .gm-rank-allies {
-    gap: 16px;
+    gap: 8px;
     padding-bottom: 12px;
     min-height: 0;
   }
 
   .gm-rank-enemies {
-    gap: 16px;
+    gap: 8px;
     min-height: 0;
   }
 

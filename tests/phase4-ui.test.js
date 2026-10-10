@@ -14,7 +14,10 @@ function pureFixture() {
   const w = dom.window;
   w.abbrNum = g.abbrNum;
   w.G9_DATA = { runtimeAssets: { entries: {
-    'data/assets/characters/fool/fool_mythical.png': { portrait: { src: 'data/assets/runtime/characters/fool/fool_mythical.192.0123456789abcdef.webp', width: 192, height: 192 } }
+    'data/assets/characters/fool/fool_mythical.png': {
+      full: { src: 'data/assets/characters/fool/fool_mythical.png?v=0123456789abcdef', width: 1254, height: 1254 },
+      portrait: { src: 'data/assets/runtime/characters/fool/fool_mythical.192.0123456789abcdef.webp', width: 192, height: 192 }
+    }
   } } };
   w.eval(fs.readFileSync(path.join(root, 'js/ui.js'), 'utf8').split('// ===== Browser UI =====')[0]);
   return { dom, w };
@@ -79,6 +82,72 @@ async function main() {
     const map = f.w.calculateCurrentHp([unit], [], [{ shields: [{ targetId: unit.id, amount: 30 }] }, { damages: [{ targetId: unit.id, amount: 20, hpLoss: 0, absorbed: 20, shieldAfter: 10 }] }]);
     assert.equal(map.reader.curHp, 100); assert.equal(map.reader.curShield, 10);
   });
+  await test('shield overlays the HP track while keeping HP and shield numbers distinct', f => {
+    const map = f.w.calculateCurrentHp([unit], [enemy], [{ resources: [{ ...unit, hp: 65, shield: 40 }] }]);
+    f.w.document.body.innerHTML = f.w.renderHpStrip(map, [unit], [enemy]);
+    const node = f.w.document.querySelector('.gm-arena-unit.ally');
+    const track = node.querySelector('.gm-float-gauge.hp .gm-float-track');
+    assert(track.querySelector('.gm-float-fill.shield'), 'shield must share the HP track');
+    assert.equal(node.querySelector('.gm-float-fill.hp').style.width, '65%');
+    assert.equal(node.querySelector('.gm-float-fill.shield').style.width, '40%');
+    assert.equal(node.querySelector('.gm-hp-num').textContent, '65/100');
+    assert.equal(node.querySelector('.gm-shield-num').textContent, '40 Shield');
+    assert(!node.querySelector('.gm-float-gauge.shield'), 'no separate shield bar');
+  });
+  await test('playback removes an exhausted shield overlay without changing HP or image nodes', f => {
+    const rows = [{ resources: [{ ...unit, hp: 65, shield: 40 }] }, { resources: [{ ...unit, hp: 65, shield: 0 }] }];
+    const props = { allies: [unit], enemies: [enemy], flattenedRows: rows, shownCount: 1, isDone: false, speed: 1 };
+    f.w.document.body.innerHTML = f.w.renderBattleLogComponent(props);
+    const wrap = f.w.document.querySelector('.battle-log-wrap'), node = wrap.querySelector('.gm-arena-unit.ally');
+    const image = node.querySelector('img'), shield = node.querySelector('.gm-float-fill.shield');
+    f.w.updateBattleLogComponent(wrap, { ...props, shownCount: 2 });
+    assert.equal(node.querySelector('img'), image); assert.equal(node.querySelector('.gm-float-fill.shield'), shield);
+    assert.equal(shield.style.display, 'none'); assert(node.querySelector('.gm-shield-num').hidden);
+    assert.equal(node.querySelector('.gm-hp-num').textContent, '65/100');
+  });
+  await test('shield overlay is white and layered above the HP fill', f => {
+    const style = f.w.document.createElement('style');
+    style.textContent = fs.readFileSync(path.join(root, 'css/components/dungeon-arena.css'), 'utf8');
+    f.w.document.head.append(style);
+    f.w.document.body.innerHTML = f.w.renderCombatEntity({ ...unit, curHp: 65, curShield: 40 }, 'ally', 0, {});
+    const shield = f.w.getComputedStyle(f.w.document.querySelector('.gm-float-fill.shield'));
+    assert.equal(shield.backgroundColor, 'rgb(255, 255, 255)');
+    assert.equal(shield.position, 'absolute'); assert.equal(shield.zIndex, '1');
+  });
+  await test('both battle teams defer original image requests until their portraits are visible', f => {
+    const map = f.w.calculateCurrentHp([unit], [enemy], []);
+    f.w.document.body.innerHTML = f.w.renderHpStrip(map, [unit], [enemy]);
+    for (const image of f.w.document.querySelectorAll('.gm-arena-unit img')) {
+      assert(!image.hasAttribute('src'), 'offscreen battle art must not start a download');
+      assert(image.dataset.src.endsWith('.png')); assert.equal(image.getAttribute('loading'), 'lazy');
+      assert.equal(image.getAttribute('decoding'), 'async');
+    }
+  });
+  await test('scrolling reveals deferred originals while clipped portraits stay unfetched', f => {
+    const map = f.w.calculateCurrentHp([unit, { ...unit, id: 'second' }], [enemy], []);
+    f.w.document.body.innerHTML = f.w.renderHpStrip(map, [unit, { ...unit, id: 'second' }], [enemy]);
+    const images = Array.from(f.w.document.querySelectorAll('.gm-rank-allies img'));
+    const row = f.w.document.querySelector('.gm-rank-allies');
+    row.getBoundingClientRect = () => ({ left: 10, right: 180, top: 10, bottom: 100 });
+    images[0].getBoundingClientRect = () => ({ left: 20, right: 84, top: 20, bottom: 84, width: 64, height: 64 });
+    images[1].getBoundingClientRect = () => ({ left: 200, right: 264, top: 20, bottom: 84, width: 64, height: 64 });
+    f.w.prioritizeVisiblePartyPortraits();
+    assert(images[0].getAttribute('src').endsWith('.png')); assert.equal(images[0].fetchPriority, 'high');
+    assert(!images[1].hasAttribute('src')); assert.equal(images[1].getAttribute('loading'), 'lazy');
+    images[1].getBoundingClientRect = images[0].getBoundingClientRect;
+    f.w.prioritizeVisiblePartyPortraits();
+    assert(images[1].getAttribute('src').endsWith('.png')); assert(!images[1].hasAttribute('data-src'));
+  });
+  await test('battle mythical art uses the original without changing the dossier portrait policy', f => {
+    const data = { ...unit, curHp: 100, inForm: true };
+    f.w.document.body.innerHTML = f.w.renderCombatEntity(data, 'ally', 0, {});
+    const image = f.w.document.querySelector('img');
+    assert.equal(image.dataset.src, 'data/assets/characters/fool/fool_mythical.png?v=0123456789abcdef');
+    assert.equal(image.getAttribute('width'), '1254');
+    const dossier = f.w.getCombatSprite(data, { variant: 'full', loading: 'eager', priority: 'auto' });
+    assert(dossier.includes('fool_mythical.192.0123456789abcdef.webp'), 'existing dossier behavior must stay unchanged');
+    assert(dossier.includes('src="')); assert(!dossier.includes('data-src="'));
+  });
   await test('mythical artwork uses the versioned 192 portrait instead of original sequence art', f => {
     const html = f.w.getCombatSprite({ ...unit, inForm: true }, { variant: 'portrait' });
     assert(html.includes('fool_mythical.192.0123456789abcdef.webp'));
@@ -127,7 +196,7 @@ async function main() {
     const node = f.app.querySelector('.gm-arena-unit.ally'), image = node.querySelector('img');
     f.w.G9.toggleTickerPause(); f.w.G9.stepTicker();
     assert.equal(f.app.querySelector('.gm-arena-unit.ally'), node); assert.equal(node.querySelector('img'), image);
-    assert(image.src.includes('fool_mythical.192.')); assert(node.textContent.includes('25 Shield')); assert(node.textContent.includes('12/80 SP'));
+    assert((image.getAttribute('src') || image.dataset.src).includes('fool_mythical.png?v=')); assert(node.textContent.includes('25 Shield')); assert(node.textContent.includes('12/80 SP'));
   }, true);
   await test('summon snapshots append once and show expiration without inventing HP loss', f => {
     const summon = { ...unit, id: 'summon', name: 'Companion', hp: 20, maxHp: 20, alive: true, summoned: true };

@@ -114,11 +114,21 @@ const COMBAT_SPRITE_PATHS = new Map([
 
 function prioritizeVisiblePartyPortraits() {
   if (typeof document === 'undefined' || typeof window === 'undefined') return;
-  for (const image of document.querySelectorAll('.gm-arena-unit.ally .combat-sprite-img, .campaign-agent .combat-sprite-img')) {
+  for (const image of document.querySelectorAll('.gm-arena-unit .combat-sprite-img, .campaign-agent .combat-sprite-img')) {
     const box = image.getBoundingClientRect();
-    if (box.width > 0 && box.height > 0 && box.bottom > 0 && box.right > 0 && box.top < window.innerHeight && box.left < window.innerWidth) {
+    const rank = image.closest?.('.gm-rank-row');
+    const bounds = rank?.getBoundingClientRect();
+    const visible = box.width > 0 && box.height > 0 && box.bottom > 0 && box.right > 0 && box.top < window.innerHeight && box.left < window.innerWidth;
+    if (visible && (!bounds || (box.right > bounds.left && box.left < bounds.right && box.bottom > bounds.top && box.top < bounds.bottom))) {
       image.loading = 'eager';
-      image.fetchPriority = 'high';
+      image.fetchPriority = !rank || image.closest('.ally') ? 'high' : 'auto';
+      if (image.dataset?.src) {
+        image.src = image.dataset.src;
+        delete image.dataset.src;
+      }
+    } else if (rank) {
+      image.loading = 'lazy';
+      image.fetchPriority = 'auto';
     }
   }
 }
@@ -146,7 +156,7 @@ function getCombatSprite(u, options = {}) {
   const stem = inForm ? `${spritePath}_mythical` : `${spritePath}_seq${spriteSeq}`;
   const original = `${assetBase}${spritePath}/${stem}.png`;
   const legacy = inForm ? original : `${assetBase}${spritePath}/seq${spriteSeq}.png`;
-  const variant = ['portrait','dossier'].includes(options.variant) ? options.variant : inForm ? 'portrait' : 'full';
+  const variant = options.variant === 'battle' ? 'full' : ['portrait','dossier'].includes(options.variant) ? options.variant : inForm ? 'portrait' : 'full';
   const size = variant === 'dossier' ? 384 : 192;
   const assets = typeof G9_DATA !== 'undefined' ? G9_DATA.runtimeAssets?.entries : null;
   const art = assets?.[`data/assets/characters/${spritePath}/${stem}.png`]?.[variant];
@@ -161,7 +171,7 @@ function getCombatSprite(u, options = {}) {
   const quoted = value => "'" + String(value).replace(/[\\'<>&"\r\n\u2028\u2029]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')) + "'";
   const legacyError = `this.onerror=()=>{${hide}};this.src=${quoted(legacy)};`;
   const onerror = valid ? `this.onerror=()=>{${legacyError}};this.src=${quoted(original)};` : legacyError;
-  return `<img class="combat-sprite-img" src="${esc(src)}" width="${valid ? art.width : size}" height="${valid ? art.height : size}" loading="${loading}" decoding="async"${priority} onerror="${onerror}" alt="${inForm ? 'Mythical Form' : `Seq ${spriteSeq}`}"><div class="combat-sprite-fallback" style="display:none">${esc((u.name||'?').slice(0,2).toUpperCase())}</div>`;
+  return `<img class="combat-sprite-img" ${options.variant === 'battle' ? 'data-src' : 'src'}="${esc(src)}" width="${valid ? art.width : size}" height="${valid ? art.height : size}" loading="${loading}" decoding="async"${priority} onerror="${onerror}" alt="${inForm ? 'Mythical Form' : `Seq ${spriteSeq}`}"><div class="combat-sprite-fallback" style="display:none">${esc((u.name||'?').slice(0,2).toUpperCase())}</div>`;
 }
 function battlefieldImageFor(quest = {}, isSim = false) {
   const config = typeof G9D !== 'undefined' ? G9D.contracts.battlefields || {} : {};
@@ -208,7 +218,7 @@ function renderCombatEntity(u, team, index, hpMap) {
       if (match) seqDisplay = `Seq ${match[1]}`;
     }
 
-    const sprite = (team === 'ally' || u.path || u.campaignEnemy || data.inForm) ? getCombatSprite({ ...u, ...data }) : `<div class="combat-enemy-avatar"><span class="enemy-skull">💀</span></div>`;
+    const sprite = (team === 'ally' || u.path || u.campaignEnemy || data.inForm) ? getCombatSprite({ ...u, ...data }, { variant: 'battle' }) : `<div class="combat-enemy-avatar"><span class="enemy-skull">💀</span></div>`;
 
     return `<div class="gm-arena-unit ${team} ${dead ? 'dead' : ''} ${data.inForm ? 'mythical' : ''}" data-unit-index="${index}" data-unit-id="${esc(u.id || u.name)}" data-form-art="${!!data.inForm}">
       <div class="gm-unit-sprite-anchor">
@@ -224,12 +234,10 @@ function renderCombatEntity(u, team, index, hpMap) {
         <div class="gm-float-gauge hp">
           <div class="gm-float-track">
             <div class="gm-float-fill hp" style="width:${hpPct}%"></div>
+            <div class="gm-float-fill shield" style="width:${shieldPct}%;${shieldPct > 0 ? '' : 'display:none'}"></div>
           </div>
-          <span class="gm-float-num">${abbrNum(curHp)}/${abbrNum(maxHp)}</span>
-        </div>
-        <div class="gm-float-gauge shield">
-          <div class="gm-float-track"><div class="gm-float-fill shield" style="width:${shieldPct}%;${shieldPct > 0 ? '' : 'display:none'}"></div></div>
-          <span class="gm-float-num">${abbrNum(shield)} Shield</span>
+          <span class="gm-float-num gm-hp-num">${abbrNum(curHp)}/${abbrNum(maxHp)}</span>
+          <span class="gm-float-num gm-shield-num" ${shield > 0 ? '' : 'hidden'}>${abbrNum(shield)} Shield</span>
         </div>
         <div class="gm-float-gauge mp">
           <div class="gm-float-track">
@@ -491,10 +499,12 @@ function updateBattleLogComponent(wrap, props) {
       const shieldPct = Math.min(100, Math.round((data.curShield || 0) / maxHp * 100));
       node.classList.toggle('dead', hp <= 0 || data.alive === false || data.inCombat === false);
       node.querySelector('.gm-float-fill.hp').style.width = `${Math.min(100, Math.round(hp / maxHp * 100))}%`;
-      node.querySelector('.gm-float-gauge.hp .gm-float-num').textContent = `${abbrNum(hp)}/${abbrNum(maxHp)}`;
+      node.querySelector('.gm-hp-num').textContent = `${abbrNum(hp)}/${abbrNum(maxHp)}`;
       const shield = node.querySelector('.gm-float-fill.shield');
       shield.style.width = `${shieldPct}%`; shield.style.display = shieldPct ? '' : 'none';
-      node.querySelector('.gm-float-gauge.shield .gm-float-num').textContent = `${abbrNum(data.curShield || 0)} Shield`;
+      const shieldNum = node.querySelector('.gm-shield-num');
+      shieldNum.textContent = `${abbrNum(data.curShield || 0)} Shield`;
+      shieldNum.hidden = !(data.curShield > 0);
       const mpGauge = node.querySelector('.gm-float-gauge.mp');
       if (mpGauge) {
         const mp = Math.max(0, data.sp ?? u.sp ?? 0), maxMp = Math.max(1, data.maxSP ?? u.maxSP ?? 1);
@@ -506,10 +516,14 @@ function updateBattleLogComponent(wrap, props) {
       node.classList.toggle('mythical', !!data.inForm);
       if (node.dataset.formArt !== String(!!data.inForm)) {
         const holder = document.createElement('div');
-        holder.innerHTML = getCombatSprite({ ...u, ...data });
+        holder.innerHTML = getCombatSprite({ ...u, ...data }, { variant: 'battle' });
         const next = holder.querySelector('img'), image = node.querySelector('.combat-sprite-img');
         if (image) {
-          for (const attribute of ['src', 'width', 'height', 'alt', 'onerror']) image.setAttribute(attribute, next.getAttribute(attribute));
+          for (const attribute of ['src', 'data-src', 'width', 'height', 'alt', 'onerror']) {
+            const value = next.getAttribute(attribute);
+            if (value === null) image.removeAttribute(attribute);
+            else image.setAttribute(attribute, value);
+          }
           image.style.display = '';
           const fallback = node.querySelector('.combat-sprite-fallback'); if (fallback) fallback.style.display = 'none';
         } else node.querySelector('.gm-unit-sprite').innerHTML = holder.innerHTML;

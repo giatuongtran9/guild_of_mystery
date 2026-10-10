@@ -11,7 +11,7 @@ const unit = team => `<div class="gm-arena-unit ${team}"><div class="gm-unit-spr
 const fixtures = {
   dossier: `<div class="overlay dossier-overlay"><section class="modal character-dossier"><h2>Character</h2><div class="dossier-identity"><div class="dossier-portrait"><button class="dossier-portrait-zoom" aria-label="Enlarge portrait">${image}</button></div><div class="dossier-progression"><p>White Tower · Sequence 9</p><p>Digesting 40%</p></div></div><div class="big-stats dossier-stats"><div><span>HP</span><b>150</b></div><div><span>Attack</span><b>20</b></div></div></section></div>`,
   campaign: `<main><section class="campaign-page"><aside class="campaign-assignment"><div class="campaign-party"><button class="campaign-agent"><span class="campaign-agent-img">${image}</span><span class="campaign-agent-copy"><b>Mara Vale</b><small>White Tower · Seq 9</small><small>Knife · Digest 40%</small></span><span class="campaign-agent-check">✓</span></button></div></aside></section></main>`,
-  battle: `<main><div class="gm-dungeon-arena"><div class="gm-stage-playfield"><div class="gm-rank-row gm-rank-enemies">${unit('enemy').repeat(3)}</div><div class="gm-arena-midline"></div><div class="gm-rank-row gm-rank-allies">${unit('ally').repeat(3)}</div></div></div></main>`
+  battle: `<main><div class="gm-dungeon-arena"><div class="gm-stage-playfield"><div class="gm-rank-row gm-rank-enemies">${unit('enemy').repeat(6)}</div><div class="gm-arena-midline"></div><div class="gm-rank-row gm-rank-allies">${unit('ally').repeat(6)}</div></div></div></main>`
 };
 
 (async () => {
@@ -53,8 +53,9 @@ const fixtures = {
             assert(result.image.left >= result.card.left && result.image.right <= result.card.right, 'party artwork must stay inside its card');
             assert(result.copy.left >= result.card.left && result.copy.right <= result.card.right, 'party text must stay inside its card');
           } else if (fixture === 'battle') {
-            assert(result.image.width >= 140 && result.image.width <= 180, 'battle party artwork must be 140–180px');
-            assert(result.enemy.width <= 68, 'enemy artwork must keep its compact formation');
+            assert.equal(result.image.width, 64, 'battle party artwork must be 64px');
+            assert.equal(result.image.height, 64, 'battle party canvas must be square');
+            assert.equal(result.enemy.width, 64, 'enemy artwork must also be 64px');
             assert(result.image.bottom <= result.arena.bottom, 'battle artwork must not be cropped by arena bounds');
             assert(result.lastVisible, 'every ally must be reachable without overlap');
             if (width <= 560) assert(result.rowScrollable, 'phone battle allies must scroll within the arena');
