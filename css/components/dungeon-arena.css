@@ -47,7 +47,7 @@
 .gm-rank-row {
   display: flex;
   justify-content: center;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 12px;
   width: 100%;
 }
@@ -196,16 +196,21 @@
   gap: 4px;
   margin-bottom: 2px;
   width: 100%;
+  min-height: 2.4em;
 }
 
 .unit-name {
   font-size: 0.8rem;
   font-weight: 600;
+  line-height: 1.2;
   color: #e5edf5;
-  white-space: nowrap;
+  white-space: normal;
   overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 110px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+  max-width: 100%;
   text-shadow: 0 1px 3px rgba(0,0,0,0.9);
 }
 
@@ -266,6 +271,15 @@
 
 .gm-shield-num[hidden] {
   display: none;
+}
+
+.gm-float-fill.meter {
+  background: linear-gradient(90deg, #b8923f, #f0d28a);
+}
+
+.gm-float-gauge.meter.ready .gm-float-num {
+  color: #ffe0a1;
+  font-weight: 700;
 }
 
 .gm-float-fill.mp {
@@ -348,12 +362,5 @@
   .gm-rank-enemies {
     gap: 8px;
     min-height: 0;
-  }
-
-  .gm-rank-allies::before,
-  .gm-rank-allies::after,
-  .gm-rank-enemies::before,
-  .gm-rank-enemies::after {
-    display: none;
   }
 }
