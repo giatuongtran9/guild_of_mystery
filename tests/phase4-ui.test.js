@@ -67,7 +67,7 @@ async function main() {
     const html = f.w.renderHpStrip(hpMap, [unit], [enemy]);
     f.w.document.body.innerHTML = html;
     assert.equal(f.w.document.querySelectorAll('.gm-float-gauge.mp').length, 2);
-    for (const value of f.w.document.querySelectorAll('.gm-float-gauge.mp .gm-float-num')) assert.equal(value.textContent, '0/80 SP');
+    for (const value of f.w.document.querySelectorAll('.gm-float-gauge.mp .gm-float-num')) assert.equal(value.textContent, '0/80');
     assert(!html.includes('80 MP'));
   });
   await test('authoritative resources update HP shield SP charge slots binding and status', f => {
@@ -76,7 +76,8 @@ async function main() {
     assert.equal(map.reader.curHp, 65); assert.equal(map.reader.curShield, 40); assert.equal(map.reader.sp, 10);
     f.w.document.body.innerHTML = f.w.renderHpStrip(map, [unit], [enemy]);
     const node = f.w.document.querySelector('.gm-arena-unit.ally');
-    for (const text of ['40 Shield', '10/80 SP', '100/100', 'Slots 1/2', 'Binding 3/5', 'Bound · 1 turn']) assert(node.textContent.includes(text), text);
+    for (const text of ['40 Shield', '10/80', '100/100']) assert(node.textContent.includes(text), text);
+    for (const text of ['SP', 'Slots', 'Binding', 'Bound', 'Seq']) assert(!node.textContent.includes(text), 'removed: ' + text);
   });
   await test('shield-only damage cannot reduce reconstructed HP', f => {
     const map = f.w.calculateCurrentHp([unit], [], [{ shields: [{ targetId: unit.id, amount: 30 }] }, { damages: [{ targetId: unit.id, amount: 20, hpLoss: 0, absorbed: 20, shieldAfter: 10 }] }]);
@@ -196,7 +197,7 @@ async function main() {
     const node = f.app.querySelector('.gm-arena-unit.ally'), image = node.querySelector('img');
     f.w.G9.toggleTickerPause(); f.w.G9.stepTicker();
     assert.equal(f.app.querySelector('.gm-arena-unit.ally'), node); assert.equal(node.querySelector('img'), image);
-    assert((image.getAttribute('src') || image.dataset.src).includes('fool_mythical.png?v=')); assert(node.textContent.includes('25 Shield')); assert(node.textContent.includes('12/80 SP'));
+    assert((image.getAttribute('src') || image.dataset.src).includes('fool_mythical.png?v=')); assert(node.textContent.includes('25 Shield')); assert(node.textContent.includes('12/80'));
   }, true);
   await test('summon snapshots append once and show expiration without inventing HP loss', f => {
     const summon = { ...unit, id: 'summon', name: 'Companion', hp: 20, maxHp: 20, alive: true, summoned: true };
@@ -235,14 +236,13 @@ async function main() {
     const map = f.w.calculateCurrentHp([unit], [], [{ resources: [{ ...unit, meter: { name: '<img src=x onerror=alert(1)>', value: 5, max: 100 }, statuses: [{ name: '<script>bad</script>', turns: 2 }] }] }]);
     f.w.document.body.innerHTML = f.w.renderHpStrip(map, [unit], []);
     assert.equal(f.w.document.querySelector('script'), null); assert.equal(f.w.document.querySelectorAll('img').length, 1);
-    assert(f.w.document.body.textContent.includes('<script>bad</script>'));
+    assert(!f.w.document.body.innerHTML.includes('<script>bad</script>'));
   });
   await test('malformed resource counters cannot become injected image markup', f => {
     const malicious = '<img src=x onerror=alert(1)>';
-    const map = f.w.calculateCurrentHp([unit], [], [{ resources: [{ ...unit, path: 'door', recordCount: malicious, threadSlots: { used: malicious, max: 2 }, threadProgress: { value: malicious, max: 5 } }] }]);
+    const map = f.w.calculateCurrentHp([unit], [], [{ resources: [{ ...unit, path: 'door', recordCount: malicious, meter: { name: 'M', value: malicious, max: malicious }, threadSlots: { used: malicious, max: 2 }, threadProgress: { value: malicious, max: 5 } }] }]);
     f.w.document.body.innerHTML = f.w.renderHpStrip(map, [unit], []);
     assert.equal(f.w.document.querySelectorAll('img').length, 1);
-    assert(f.w.document.body.textContent.includes(malicious));
   });
   await test('resource IDs that match object prototypes remain ordinary owned records', f => {
     const map = f.w.calculateCurrentHp([], [], [{ resources: [{ id: 'constructor', name: 'Prototype-shaped ID', hp: 7, maxHp: 10, shield: 0 }] }]);
