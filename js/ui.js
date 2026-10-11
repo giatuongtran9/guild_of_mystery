@@ -162,7 +162,7 @@ function getCombatSprite(u, options = {}) {
   const art = assets?.[`data/assets/characters/${spritePath}/${stem}.png`]?.[variant];
   const canonical = `data/assets/characters/${spritePath}/${stem}.png`;
   const valid = art && (variant === 'full'
-    ? Number.isInteger(art.width) && art.width > 0 && Number.isInteger(art.height) && art.height > 0 && typeof art.src === 'string' && art.src.startsWith(canonical + '?v=') && /^[a-f0-9]{16}$/.test(art.src.slice(canonical.length + 3))
+    ? Number.isInteger(art.width) && art.width > 0 && Number.isInteger(art.height) && art.height > 0 && typeof art.src === 'string' && [canonical, canonical.replace('/characters/', '/revisions/')].some(source => art.src.startsWith(source + '?v=') && /^[a-f0-9]{16}$/.test(art.src.slice(source.length + 3)))
     : art.width === size && art.height === size && new RegExp(`^data/assets/runtime/characters/${spritePath}/${stem}\\.${size}\\.[a-f0-9]{16}\\.(png|webp)$`).test(art.src));
   const src = valid ? art.src : original;
   const loading = options.loading === 'eager' ? 'eager' : 'lazy';
@@ -625,7 +625,7 @@ if (typeof document !== 'undefined') (() => {
     const source=opener.querySelector('img');if(!source)return;
     const url=new URL(source.currentSrc||source.src,document.baseURI),base=new URL('./',document.baseURI);
     const relative=url.pathname.startsWith(base.pathname)?url.pathname.slice(base.pathname.length):'';
-    if(url.origin!==base.origin||!/^data\/assets\/characters\/[a-z][a-z0-9_]*\/[a-z][a-z0-9_]*_seq[0-9]\.png$/.test(relative)||url.hash||url.search&&!/^\?v=[a-f0-9]{16}$/.test(url.search))return;
+    if(url.origin!==base.origin||!/^data\/assets\/(?:characters|revisions)\/[a-z][a-z0-9_]*\/[a-z][a-z0-9_]*_seq[0-9]\.png$/.test(relative)||url.hash||url.search&&!/^\?v=[a-f0-9]{16}$/.test(url.search))return;
     const dialog=document.createElement('section');dialog.className='portrait-viewer';
     dialog.setAttribute('role','dialog');dialog.setAttribute('aria-modal','true');dialog.setAttribute('aria-label','Full-resolution character portrait');
     dialog.innerHTML=`<div class="portrait-viewer-dialog"><div class="portrait-viewer-toolbar"><button type="button" aria-label="Close portrait" onclick="window.G9.closePortrait()">Close</button><button type="button" aria-label="Fit image">Fit</button><button type="button" aria-label="Actual size">100%</button><button type="button" aria-label="Zoom out">−</button><output class="portrait-viewer-percent"></output><button type="button" aria-label="Zoom in">+</button><input type="range" aria-label="Zoom" max="200" step="1"></div><p class="portrait-viewer-error" role="status" hidden>The original image could not be loaded.</p><div class="portrait-viewer-canvas" tabindex="0" aria-label="Drag to move; pinch to zoom"><img class="portrait-viewer-image" src="${esc(url.href)}" width="${source.width}" height="${source.height}" decoding="async" draggable="false" alt="${esc(source.alt)}"></div></div>`;

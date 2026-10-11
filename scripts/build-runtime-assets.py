@@ -84,6 +84,17 @@ def build_assets(repo_root):
     sources = sorted(source_root.rglob('*.png'))
     if not sources:
         raise ValueError('No source character PNG files were found')
+    override_file = safe_path(repo, repo / 'data/assets/character-overrides.json')
+    overrides = json.loads(override_file.read_text()) if override_file.exists() else {}
+    source_keys = {source.relative_to(repo).as_posix() for source in sources}
+    if not isinstance(overrides, dict) or set(overrides) - source_keys:
+        raise ValueError('Artwork overrides must map existing character source paths')
+    for key, revised in overrides.items():
+        if revised != key.replace('/characters/', '/revisions/'):
+            raise ValueError('Revised artwork must retain the original character identity')
+        safe_path(repo, repo / revised)
+        if not (repo / revised).is_file():
+            raise ValueError(f'Missing revised artwork: {revised}')
     entries = {}
     for source in sources:
         safe_path(repo, source)
@@ -94,8 +105,17 @@ def build_assets(repo_root):
             image = original.convert('RGBA')
         entry = {'source': {'src': source_src, 'width': image.width, 'height': image.height,
                             'bytes': len(source_data), 'sha256': sha256(source_data)}}
-        # Refer to original bytes directly so full-resolution art loses no detail.
-        entry['full'] = {**entry['source'], 'src': f"{source_src}?v={entry['source']['sha256'][:16]}"}
+        selected = entry['source']
+        if source_src in overrides:
+            revised_src = overrides[source_src]
+            revised_data = (repo / revised_src).read_bytes()
+            with Image.open(BytesIO(revised_data)) as revised:
+                revised.load()
+                image = revised.convert('RGBA')
+            selected = entry['artwork'] = {'src': revised_src, 'width': image.width, 'height': image.height,
+                                           'bytes': len(revised_data), 'sha256': sha256(revised_data)}
+        # Deliver the selected source bytes directly, retaining original provenance.
+        entry['full'] = {**selected, 'src': f"{selected['src']}?v={selected['sha256'][:16]}"}
         for variant, side in SIZES.items():
             png, webp = encode_variants(square_portrait(image, side))
             extension, data = min([('png', png), ('webp', webp)], key=lambda pair: len(pair[1]))
