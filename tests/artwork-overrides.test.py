@@ -95,5 +95,29 @@ class ArtworkOverrideTests(unittest.TestCase):
             builder.build_assets(self.repo)
 
 
+class PublishedArtworkTests(unittest.TestCase):
+    def test_selected_revisions_are_active_and_fully_inside_transparent_canvases(self):
+        overrides = json.loads((ROOT / 'data/assets/character-overrides.json').read_text())
+        manifest = json.loads((ROOT / 'data/assets/runtime/characters/manifest.json').read_text())
+        self.assertTrue(overrides, 'Approved outliers must be selected in the game')
+        for key, revision in overrides.items():
+            with self.subTest(character=key):
+                entry = manifest['entries'][key]
+                self.assertEqual(entry['artwork']['src'], revision)
+                self.assertEqual(entry['artwork']['sha256'], hashlib.sha256((ROOT / revision).read_bytes()).hexdigest())
+                self.assertEqual(entry['full']['src'], f"{revision}?v={entry['artwork']['sha256'][:16]}")
+                with Image.open(ROOT / revision) as image:
+                    self.assertEqual(image.size, (1254, 1254))
+                    alpha = image.convert('RGBA').getchannel('A')
+                    self.assertEqual(alpha.getextrema(), (0, 255))
+                    edges = [alpha.crop((0, 0, image.width, 1)), alpha.crop((0, image.height - 1, image.width, image.height)),
+                             alpha.crop((0, 0, 1, image.height)), alpha.crop((image.width - 1, 0, image.width, image.height))]
+                    self.assertLessEqual(max(edge.getextrema()[1] for edge in edges), 32, 'No visible art may touch a canvas edge')
+        for key, entry in manifest['entries'].items():
+            if key not in overrides:
+                self.assertNotIn('artwork', entry)
+                self.assertEqual(entry['full']['src'].split('?')[0], key)
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)
