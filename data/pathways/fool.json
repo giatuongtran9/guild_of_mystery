@@ -152,7 +152,7 @@
         "label": "Active Control",
         "spCost": 45,
         "cooldown": 5,
-        "description": "Thread Binding — Five stages convert the victim into a combat-only marionette. More than 30% Max HP lost within one combatant turn removes one stage. At 100 charge, reduce attachment resistance by 20 percentage points with no minimum resistance.",
+        "description": "Thread Binding — Five stages convert the victim into a combat-only marionette; one stage is added at the start of each of the victim's turns, and every thread is cut immediately if you are stunned, frozen, put to sleep, polymorphed, bound, rendered unconscious or banished, or you lose your action to Madness or Fear. More than 30% Max HP lost within one combatant turn removes one stage. At 100 charge, reduce attachment resistance by 20 percentage points with no minimum resistance.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",

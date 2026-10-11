@@ -174,7 +174,7 @@
         "label": "Active",
         "spCost": 50,
         "cooldown": 3,
-        "description": "Parasitic Contagion — Establish one parasite host for two turns, drain SP and recover health while the host remains alive.",
+        "description": "Parasitic Contagion — Establish one parasite host for two turns, drain SP (20 plus 10% of the host's Max SP) and recover health while the host remains alive.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -187,6 +187,7 @@
             "chargeCost": 100,
             "duration": 2,
             "amount": 20,
+            "spRatio": 0.1,
             "maxHpRatio": 0.1
           }
         ]
