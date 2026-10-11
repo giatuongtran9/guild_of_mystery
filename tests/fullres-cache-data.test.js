@@ -54,6 +54,24 @@ const assetManifest = () => ({ schemaVersion: 1, version: '1234567890abcdef', en
       assert.deepEqual(actual.portrait, descriptor(192));
       assert.deepEqual(actual.dossier, descriptor(384));
     });
+    await test('compact boot data selects separate revision pixels under the original logical ID', () => {
+      const manifest = assetManifest(), entry = manifest.entries[original];
+      entry.artwork = { ...source, src: original.replace('/characters/', '/revisions/'), sha256: '3'.repeat(64) };
+      entry.full = { ...entry.artwork, src: entry.artwork.src + '?v=' + '3'.repeat(16) };
+      write(manifest);
+      const release = buildRuntimeData({ root: temp });
+      const actual = JSON.parse(fs.readFileSync(path.join(temp, release.bundle))).runtimeAssets.entries[original];
+      assert.deepEqual(actual.full, { src: entry.full.src, width: 1254, height: 837 });
+    });
+    for (const bad of ['https://evil.test/art.png', 'data/assets/revisions/error/error_seq9.png', original]) {
+      await test('revision metadata rejects an unrelated source: ' + bad, () => {
+        const manifest = assetManifest(), entry = manifest.entries[original];
+        entry.artwork = { ...source, src: bad };
+        entry.full = { ...entry.artwork, src: bad + '?v=' + '1'.repeat(16) };
+        write(manifest);
+        assert.throws(() => buildRuntimeData({ root: temp }), /full|original|artwork/i);
+      });
+    }
     for (const [name, mutate] of [
       ['external URL', entry => entry.full.src = 'https://evil.test/art.png?v=1111111111111111'],
       ['different source', entry => entry.full.src = 'data/assets/characters/fool/fool_seq8.png?v=1111111111111111'],
@@ -107,6 +125,12 @@ const assetManifest = () => ({ schemaVersion: 1, version: '1234567890abcdef', en
   await test('versioned full originals are stored durably without changing their response', async () => {
     const w = worker(); assert.equal(await (await w.dispatch(w.request(full))).text(), 'unchanged original PNG');
     await w.dispatch(w.request(full)); assert.equal(w.stats.fetches, 1); assert.equal(w.files.size, 1);
+  });
+  await test('versioned revisions use the same durable cache while unversioned revisions bypass it', async () => {
+    const w = worker(), revised = full.replace('/characters/', '/revisions/');
+    await w.dispatch(w.request(revised)); await w.dispatch(w.request(revised));
+    assert.equal(w.stats.fetches, 1); assert.equal(w.files.size, 1);
+    assert.equal(await w.dispatch(w.request(revised.split('?')[0])), null);
   });
   await test('new original hashes cache separately without deleting the previous version', async () => {
     const w = worker(); await w.dispatch(w.request(full)); await w.dispatch(w.request(original + '?v=2222222222222222'));

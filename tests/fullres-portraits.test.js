@@ -45,6 +45,25 @@ function pointer(w,canvas,type,id,x,y=100) {const event=new w.Event(type,{bubble
   await test('non-square originals retain their width and height without square padding',()=>{
     const {c,key,render}=prefix();c.G9_DATA.runtimeAssets.entries[key]=metadata(key,1000,1400);assert(render().includes('width="1000" height="1400"'));
   });
+  await test('approved revisions retain logical identity and full-resolution battle delivery',()=>{
+    const {c,key,render}=prefix(),revised=key.replace('/characters/','/revisions/')+'?v=0123456789abcdef';
+    c.G9_DATA.runtimeAssets.entries[key].full.src=revised;
+    assert(render().includes(`src="${revised}"`));
+    assert(render({variant:'battle'}).includes(`data-src="${revised}"`));
+    assert(render({variant:'battle'}).includes('width="1254" height="1254"'));
+    c.G9_DATA.runtimeAssets.entries[key].full.src=revised.replace('fool_seq9','fool_seq8');
+    assert(!render().includes('/revisions/'));
+  });
+  await test('approved revision opens the existing full-resolution viewer without changing saves',async()=>{
+    const f=await fixture();try{
+      const revised=f.key.replace('/characters/','/revisions/')+'?v=0123456789abcdef';
+      f.opener.querySelector('img').src=revised;
+      const before=f.read(),viewer=open(f);
+      assert(viewer.querySelector('img').src.endsWith(revised));
+      assert.equal(f.read(),before);
+      f.w.G9.closePortrait();
+    }finally{f.dom.window.close();}
+  });
   await test('missing full metadata falls back to the original rather than a downsized variant',()=>{
     const {c,key,render}=prefix();delete c.G9_DATA.runtimeAssets.entries[key].full;assert(render().includes(`src="${key}"`));assert(!render().includes('.192.'));
   });
