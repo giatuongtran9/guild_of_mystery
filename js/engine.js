@@ -630,8 +630,11 @@ const CLEANSE_STATUSES=['burn','bleed','poison','curse','curse_link','silenced',
 const TRANSFER_STATUSES=[...CLEANSE_STATUSES,'dreambound','controlled','root','no_heal','no_shield'];
 const DOT_RULES=[['burn',.07,'fire'],['poison',.05,'poison'],['curse',.03,'dark'],['decay',.025,'dark'],['bleed',.03,'physical']];
 const THREAD_RULES=Object.freeze({required:5,initialSpeedLoss:.15,dodgeLoss:.10,hitLoss:.10,advancedSpeedLoss:.35,bindingChance:.30,marionetteStats:.55,damageThreshold:.30});
+// The battle currently being resolved. addStatus uses it to cut a Fool's threads the moment the Fool is crowd-controlled.
+let ACTIVE_BATTLE=null;
+function bindBattle(state,lines){ACTIVE_BATTLE=state?{state,lines}:null;}
 function statusImmune(t,s){if(t?._mythicalStatusProtection?.[s]===true)return true;try{return (passiveCombatModifier(t?.agent||t).immunities||[]).includes(s);}catch(e){return false;}}
-function addStatus(target,status,duration=1,source="unknown",extraMeta={}){if(statusImmune(target,status))return;target.status=target.status||[];target.statusMeta=target.statusMeta||{};if(!target.status.includes(status))target.status.push(status);target.statusMeta[status]={duration:Math.max(1,Number(duration)||1),source,_grace:target._acting===true,...(extraMeta||{})};}
+function addStatus(target,status,duration=1,source="unknown",extraMeta={}){if(statusImmune(target,status))return;target.status=target.status||[];target.statusMeta=target.statusMeta||{};if(!target.status.includes(status))target.status.push(status);target.statusMeta[status]={duration:Math.max(1,Number(duration)||1),source,_grace:target._acting===true,...(extraMeta||{})};interruptThreadsOnOwnerCC(target,status);}
 function removeStatus(target,status){if(!target?.status)return;target.status=target.status.filter(x=>x!==status);if(target.statusMeta)delete target.statusMeta[status];if(status==='sleep')delete target._mythicalDream;if(status==='frozen')delete target._mythicalPetrified;}
 function processStatuses(unit,add=()=>{},state=null,decrement=true){
  if(!unit.alive)return;unit.status=unit.status||[];unit.statusMeta=unit.statusMeta||{};
@@ -676,11 +679,31 @@ function isThreadBeyonder(agent) {
 
 function hasThreadCC(agentUnit) {
   const statuses = agentUnit?.status || [];
-  return ["stunned", "frozen", "polymorphed", "bound", "unconscious"].some((x) => statuses.includes(x));
+  return ["stunned", "frozen", "freeze", "sleep", "polymorphed", "bound", "unconscious", "banished"].some((x) => statuses.includes(x));
 }
 
 function threadUsage(state,agent){return (agent.threadTargets||[]).length+((state&&state.battleMarionettes)||[]).filter(m=>m.ownerId===agent.id&&m.unit.alive).length;}
 function threadCooldownFor(agent){const sp=unlockedAbilities(agent).find(x=>x.effectId==='thread_binding'||x.id==='thread_binding');const cd=Number(sp?.cooldown??5);return cd>0?cd+1:0;}
+
+// A thread owner who is crowd-controlled loses all of their threads at once, not at the next thread tick.
+function interruptOwnerThreads(ownerUnit, state, lines=[]) {
+  const units = [...(state?.allies || []), ...(state?.enemies || [])];
+  if (!ownerUnit || !units.includes(ownerUnit)) return false;
+  const ownerId = ownerUnit.agent?.id || ownerUnit.id;
+  let interrupted = false;
+  for (const victim of units.filter(u => u.thread && u.thread.ownerId === ownerId)) {
+    interrupted = checkThreadInterruptOnTarget(victim, state, lines) || interrupted;
+  }
+  return interrupted;
+}
+
+function interruptThreadsOnOwnerCC(target, status) {
+  const battle = ACTIVE_BATTLE;
+  if (!battle || !hasThreadCC({ status: [status] })) return false;
+  const agent = target?.agent || target;
+  if (!agent || !isThreadBeyonder(agent) || !(agent.threadTargets || []).length) return false;
+  return interruptOwnerThreads(target, battle.state, battle.lines);
+}
 
 function checkThreadInterruptOnTarget(target, state, lines=[]) {
   if (!target || !target.thread) return false;
@@ -711,9 +734,11 @@ function checkThreadInterruptOnTarget(target, state, lines=[]) {
 }
 
 function releaseThread(agent,enemy){
-  agent.cooldowns=agent.cooldowns||{};agent.cooldowns.thread_binding=threadCooldownFor(agent); // CD counts from the moment the thread resolves
-  agent.threadTargets=(agent.threadTargets||[]).filter(id=>id!==enemy.id);
-  agent.activeThreads=agent.threadTargets.length;
+  if(agent){ // the owner can already be gone from the battle
+    agent.cooldowns=agent.cooldowns||{};agent.cooldowns.thread_binding=threadCooldownFor(agent); // CD counts from the moment the thread resolves
+    agent.threadTargets=(agent.threadTargets||[]).filter(id=>id!==enemy.id);
+    agent.activeThreads=agent.threadTargets.length;
+  }
   enemy.thread=null;
   removeStatus(enemy,"threaded");
   enemy._threadSpeedDebuff=0;
@@ -800,42 +825,44 @@ function recordThreadDamage(target,hpLoss,state,lines=[]){
   emitCombatEvent(state,{type:'thread',subtype:'damage_interrupt',targetId:target.id,targetName:target.name,targetTeam:teamOf(target,state),progress:t.progress,text});
  }
 }
-function processSpiritThreads(state,lines=[]){if(!lines)lines=[];const allUnits=[...state.allies,...state.enemies];for(const ally of allUnits.filter(x=>x.alive&&isThreadBeyonder(x.agent||x)).sort((a,b)=>unitInitiative(b)-unitInitiative(a)||a.name.localeCompare(b.name)||a.id.localeCompare(b.id))){const agent=ally.agent||ally;const targets=state.allies.includes(ally)?state.enemies:state.allies;for(const enemy of targets.filter(x=>x.thread?.ownerId===agent.id)){const t=enemy.thread;if(!enemy.alive){releaseThread(agent,enemy);lines.push({text:`The thread ends because ${enemy.name} is dead; the slot is freed.`,kind:"system"});continue;}if(!ally.alive||hasThreadCC(ally)||hasStatus(enemy,'untargetable')||hasStatus(enemy,'banished')){
-        releaseThread(agent,enemy);
-        const interruptMsg = `The thread on ${enemy.name} is interrupted and its progress resets.`;
-        lines.push({text:interruptMsg,kind:"status"});
-        emitCombatEvent(state,{round:state?.currentRound||1,type:'thread',subtype:'interrupt',actorId:agent.id,actorName:agent.name,actorTeam:teamOf(agent,state),targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),text:interruptMsg});
-        if(agent._threadAttempts>0)agent._threadAttempts--;
-        continue;
-      }
-      t.progress++;applyThreadStage(enemy);
-      if(agent._threadChargeRound!==state.currentRound){changeMeter(agent,'fool',10);agent._threadChargeRound=state.currentRound;}
-      let debuffMsg = '';
-      if(t.progress===1){
-        enemy._threadSpeedDebuff=THREAD_RULES.initialSpeedLoss;
-        debuffMsg = `${enemy.name} suffers -15% Speed from tightening Spirit Threads.`;
-      }else if(t.progress===2){
-        enemy._threadDodgeDebuff=-THREAD_RULES.dodgeLoss;
-        enemy._threadHitDebuff=THREAD_RULES.hitLoss;
-        debuffMsg = `${enemy.name} suffers -10% Dodge and +10% Miss chance from tightening Spirit Threads.`;
-      }else if(t.progress===3){
-        enemy._threadSpeedDebuff=THREAD_RULES.advancedSpeedLoss;
-        enemy._threadLockDodge=true;
-        debuffMsg = `${enemy.name} suffers -35% Speed and cannot dodge from tightening Spirit Threads.`;
-      }else if(t.progress===4){
-        debuffMsg = `${enemy.name} is on the verge of total control (30% chance to be bound each turn).`;
-      }
-      if(debuffMsg){
-        lines.push({text:debuffMsg,kind:'status'});
-        emitCombatEvent(state,{round:state?.currentRound||1,type:'thread',subtype:'debuff',actorId:agent.id,actorName:agent.name,actorTeam:teamOf(agent,state),targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),text:debuffMsg});
-      }
-      if(t.progress>=t.required){
-        enemy.hp=0;enemy.alive=false;releaseThread(agent,enemy);
-        lines.push({text:`${agent.name} completes the Spirit Body Thread. ${enemy.name} dies and becomes a Marionette for the rest of this battle.`,kind:"victory"});emitCombatEvent(state,{round:state?.currentRound||1,type:'death',actorId:agent.id,actorName:agent.name,actorTeam:teamOf(agent,state),targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),text:`${enemy.name} dies and becomes a Marionette (this battle only).`,converted:true});
-        joinMarionette(state,agent,enemy,lines);
-      }else{
-        lines.push({text:`${enemy.name}'s thread holds. ${t.required-t.progress} round(s) remain.`,kind:"status"});emitCombatEvent(state,{round:state?.currentRound||1,type:'thread',actorId:agent.id,actorName:agent.name,actorTeam:teamOf(agent,state),targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),text:`${enemy.name}'s thread holds. ${t.required-t.progress} round(s) remain.`});
-      }}}}
+function findThreadOwnerUnit(state,ownerId){return [...(state?.allies||[]),...(state?.enemies||[])].find(u=>(u.agent?.id||u.id)===ownerId)||null;}
+// One Spirit Thread step for a single victim. The battle loop calls this at the start of the victim's own turn.
+function tickSpiritThread(enemy,state,lines=[]){
+ if(!lines)lines=[];
+ const t=enemy?.thread;if(!t)return false;
+ const ownerUnit=findThreadOwnerUnit(state,t.ownerId),agent=ownerUnit?(ownerUnit.agent||ownerUnit):null,round=state?.currentRound||1;
+ const emit=(subtype,text)=>emitCombatEvent(state,{round,type:'thread',...(subtype?{subtype}:{}),actorId:agent?.id,actorName:agent?.name,actorTeam:agent?teamOf(agent,state):undefined,targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),text});
+ if(!enemy.alive){releaseThread(agent,enemy);lines.push({text:`The thread ends because ${enemy.name} is dead; the slot is freed.`,kind:'system'});return false;}
+ // Owner CC normally cuts the thread the moment it lands (interruptThreadsOnOwnerCC); this also catches CC that was already active.
+ if(!ownerUnit||!ownerUnit.alive||hasThreadCC(ownerUnit)||hasStatus(enemy,'untargetable')||hasStatus(enemy,'banished')){
+  releaseThread(agent,enemy);
+  const msg=`The thread on ${enemy.name} is interrupted and its progress resets.`;
+  lines.push({text:msg,kind:'status'});emit('interrupt',msg);
+  if(agent&&agent._threadAttempts>0)agent._threadAttempts--;
+  return false;
+ }
+ t.progress++;applyThreadStage(enemy);
+ if(agent._threadChargeRound!==state.currentRound){changeMeter(agent,'fool',10);agent._threadChargeRound=state.currentRound;}
+ const stageMsg={1:`${enemy.name} suffers -15% Speed from tightening Spirit Threads.`,
+  2:`${enemy.name} suffers -10% Dodge and +10% Miss chance from tightening Spirit Threads.`,
+  3:`${enemy.name} suffers -35% Speed and cannot dodge from tightening Spirit Threads.`,
+  4:`${enemy.name} is on the verge of total control (30% chance to be bound each turn).`}[t.progress];
+ if(stageMsg){lines.push({text:stageMsg,kind:'status'});emit('debuff',stageMsg);}
+ if(t.progress>=t.required){
+  enemy.hp=0;enemy.alive=false;releaseThread(agent,enemy);
+  lines.push({text:`${agent.name} completes the Spirit Body Thread. ${enemy.name} dies and becomes a Marionette for the rest of this battle.`,kind:'victory'});
+  emitCombatEvent(state,{round,type:'death',actorId:agent.id,actorName:agent.name,actorTeam:teamOf(agent,state),targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),text:`${enemy.name} dies and becomes a Marionette (this battle only).`,converted:true});
+  joinMarionette(state,agent,enemy,lines);
+ }else{
+  const text=`${enemy.name}'s thread holds. ${t.required-t.progress} turn(s) remain.`;
+  lines.push({text,kind:'status'});emit(null,text);
+ }
+ return true;
+}
+// Round-start housekeeping: frees the slot of any thread whose victim died since the last turn.
+function cleanupSpiritThreads(state,lines=[]){if(!lines)lines=[];for(const v of [...state.allies,...state.enemies])if(v.thread&&!v.alive)tickSpiritThread(v,state,lines);}
+// Advances every attached thread by one stage. The battle loop ticks per victim turn instead; this is kept for direct use and tests.
+function processSpiritThreads(state,lines=[]){if(!lines)lines=[];for(const v of [...state.allies,...state.enemies].filter(x=>x.thread).sort((a,b)=>unitInitiative(b)-unitInitiative(a)||a.name.localeCompare(b.name)||a.id.localeCompare(b.id)))tickSpiritThread(v,state,lines);}
 
 function abilityEffects(spec){return Array.isArray(spec?.effects)?spec.effects:[];}
 function hasEffect(spec,type){return abilityEffects(spec).some(e=>e.type===type);}
@@ -1515,11 +1542,13 @@ function tickCombatEffectDurations(units){
  }
 }
 
-function resolveQuest(members,quest,seed=Date.now(),decisions={}){
+function resolveQuest(...args){try{return resolveQuestBattle(...args);}finally{bindBattle(null);}}
+function resolveQuestBattle(members,quest,seed=Date.now(),decisions={}){
  const r=rand(seed),lines=[],consequences=[],allies=members.map(a=>makeCombatUnit(a));
  const authoredOpponents=Array.isArray(decisions.authoredOpponents)&&decisions.authoredOpponents.length?decisions.authoredOpponents:null;
  const simulationOpponents=Array.isArray(decisions.simulationOpponents)?decisions.simulationOpponents:null; const enemyCount=simulationOpponents?.length || quest.enemyCount|| (allies.length===1?1:(allies.length>=3 && quest.difficultySequence>=7?2:(quest.difficultySequence>=5?2:3))); const enemies=quest.encounter?(authoredOpponents?authoredOpponents.map((spec,i)=>makeAuthoredEnemy(spec,r,i)):simulationOpponents?simulationOpponents.map((spec,i)=>makeEnemy(spec.sequence,r,i,spec.path)):Array.from({length:enemyCount},(_,i)=>makeEnemy(quest.difficultySequence,r,i,quest.requiredPath))):[];
  const individual=!!decisions.individual; const state={allies,enemies,individual,createdMarionettes:[],battleMarionettes:[],rng:r,weaponUsage:{},combatStatsShown:false,balanceTrace:[],events:[]};
+ bindBattle(state,lines);
  for(const u of allies)u.agent._teamDamageMultiplier=1;
  for(const u of enemies)u.agent._teamDamageMultiplier=individual?COMBAT_BALANCE.enemyDamageIndividual:COMBAT_BALANCE.enemyDamageParty;
  const initialUnits=[...allies,...enemies].map(u=>combatResourceSnapshot(u,state));
@@ -1546,14 +1575,15 @@ function resolveQuest(members,quest,seed=Date.now(),decisions={}){
    for (const u of [...allies, ...enemies]) u._actedThisRound = false;                                                                
    const initiativeOrder=(a,b)=>unitInitiative(b)-unitInitiative(a)||a.name.localeCompare(b.name)||a.id.localeCompare(b.id);
    const initiativeLine=[...allies.filter(x=>x.alive),...enemies.filter(x=>x.alive)].sort(initiativeOrder).map(x=>`${x.name} ${unitInitiative(x).toFixed(1)}`).join(' → '); lines.push({text:`Initiative: ${initiativeLine}`,kind:'system'}); emitCombatEvent(state, {round, type: 'system', subtype: 'initiative', details: initiativeLine, text: `Initiative: ${initiativeLine}`});
-   processSpiritThreads(state,lines);                                                                 
+   cleanupSpiritThreads(state,lines);
    applyPassiveAuras([...allies,...enemies],state);
    const order=[...allies.filter(x=>x.alive),...enemies.filter(x=>x.alive)].sort(initiativeOrder);
    const actors=order;
    for(const c of actors){let completed=false;try{if(!c.alive||c.inCombat===false)continue;state.currentTurn=(state.currentTurn||0)+1;c._acting = true;beginTurn(c);signatureTurnStart(c,state,lines,r);mythicalTurnStart(c,state,lines,r);processStatuses(c,t=>lines.push({text:t,kind:'status'}),state,false);c._actedThisRound = true;if(!c.alive)continue;
+       if(c.thread){tickSpiritThread(c,state,lines);if(!c.alive)continue;} // Spirit Threads advance on the victim's own turn
        if(mythicalTryAction(c,state,lines,r)||signatureTryAction(c,state,lines,r))continue;
        if(c._skipTurns>0||hasStatus(c,'banished')){if(c._skipTurns>0)c._skipTurns--;lines.push({text:`${c.name} is banished in a spatial fold and cannot act.`,kind:'status'});if(!c._skipTurns||c._skipTurns<=0){removeStatus(c,'banished');removeStatus(c,'untargetable');}continue;}
-       if((c.agent.madness||0)>=50&&r()<.18){lines.push({text:`${c.name} loses the action to mounting Madness.`,kind:'status'});continue;}if(actionDisabled(c)){
+       if((c.agent.madness||0)>=50&&r()<.18){lines.push({text:`${c.name} loses the action to mounting Madness.`,kind:'status'});interruptOwnerThreads(c,state,lines);continue;}if(actionDisabled(c)){
       lines.push({text:`${c.name} loses the action to Crowd Control.`,kind:'status'});
       emitCombatEvent(state, {
         round: state?.currentRound || 1,
@@ -1566,7 +1596,7 @@ function resolveQuest(members,quest,seed=Date.now(),decisions={}){
       });
       continue;
     }
-       if(c.thread&&c.thread.progress>=4&&r()<THREAD_RULES.bindingChance){addStatus(c,'bound',1,'Spirit Body Thread');}if(hasStatus(c,'fear')&&r()<.35){lines.push({text:`${c.name} loses this action to a status effect.`,kind:'status'});continue;}
+       if(c.thread&&c.thread.progress>=4&&r()<THREAD_RULES.bindingChance){addStatus(c,'bound',1,'Spirit Body Thread');}if(hasStatus(c,'fear')&&r()<.35){lines.push({text:`${c.name} loses this action to a status effect.`,kind:'status'});interruptOwnerThreads(c,state,lines);continue;}
        const isConfused=hasStatus(c,'confused')&&r()<0.50;if(isConfused)lines.push({text:`${c.name} is Confused and targets an ally!`,kind:'status'});
        const targetPool=(isConfused?sameSideOf(c,state):foesOf(c,state)).filter(x=>x.alive&&x.inCombat!==false);
        if(!targetPool.length)continue;
@@ -1626,7 +1656,8 @@ function abilityDescription(spec,path,sequence){
  if(targetMode==='all_allies')parts.push('Supports all living allies');
  if((spec.effectId||spec.id)==='thread_binding'){
   parts.push('Attempts Spirit Body Threads on one enemy; resistance can prevent attachment');
-  parts.push(`Progresses one stage each round: ${rulePercent(THREAD_RULES.initialSpeedLoss)} Speed loss; then ${ruleNumber(THREAD_RULES.dodgeLoss*100)}-point Dodge and ${ruleNumber(THREAD_RULES.hitLoss*100)}-point accuracy loss; then ${rulePercent(THREAD_RULES.advancedSpeedLoss)} total Speed loss and no Dodge; stage 4 adds a ${rulePercent(THREAD_RULES.bindingChance)} binding chance`);
+  parts.push(`Progresses one stage at the start of each of the target's turns: ${rulePercent(THREAD_RULES.initialSpeedLoss)} Speed loss; then ${ruleNumber(THREAD_RULES.dodgeLoss*100)}-point Dodge and ${ruleNumber(THREAD_RULES.hitLoss*100)}-point accuracy loss; then ${rulePercent(THREAD_RULES.advancedSpeedLoss)} total Speed loss and no Dodge; stage 4 adds a ${rulePercent(THREAD_RULES.bindingChance)} binding chance`);
+  parts.push('All of your threads are cut immediately if you are stunned, frozen, put to sleep, polymorphed, bound, rendered unconscious or banished, or lose your action to Madness or Fear');
   parts.push(`At stage ${THREAD_RULES.required}, the target dies and joins your side as a battle-only marionette with ${rulePercent(THREAD_RULES.marionetteStats)} of its stats`);
   parts.push(`When the threaded target loses more than ${rulePercent(THREAD_RULES.damageThreshold)} of its Max HP in one combatant turn, remove one stack, at most once per turn; shield absorption does not count`);
   const chargeRule=effects.find(e=>e.type==='signature');
