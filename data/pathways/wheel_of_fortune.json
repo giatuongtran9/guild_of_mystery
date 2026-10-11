@@ -143,7 +143,6 @@
           {
             "type": "signature",
             "rule": "fortune_calamity",
-            "chargeCost": 100,
             "amount": 1.5,
             "duration": 3
           }
@@ -275,7 +274,7 @@
         "label": "Active",
         "spCost": 100,
         "cooldown": 4,
-        "description": "Snake of Mercury — Sheds fate skin to negate fatal blow and deal 300% INT Fate DMG.",
+        "description": "Snake of Mercury — Deals 300% INT Fate DMG and sheds a fate skin that revives you at 10% Max HP if a lethal blow lands within 2 turns.",
         "stat": "INT",
         "scale": 3,
         "damageType": "fate",
@@ -285,7 +284,8 @@
           {
             "type": "revive",
             "self": true,
-            "hpRatio": 0.01
+            "hpRatio": 0.1,
+            "duration": 2
           }
         ]
       }

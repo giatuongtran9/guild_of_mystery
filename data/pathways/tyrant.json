@@ -174,7 +174,6 @@
           {
             "type": "signature",
             "rule": "tyrant_soaked",
-            "chargeCost": 100,
             "duration": 2
           }
         ]

@@ -156,7 +156,7 @@
             "rule": "abyss_desire",
             "chargeCost": 100,
             "amount": 0.5,
-            "duration": 2
+            "duration": 5
           }
         ]
       }
