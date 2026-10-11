@@ -185,15 +185,16 @@ function exerciseSignature(key,rank,team,e,text) {
     }
     case 'error_parasite': {
       w.u.hp=Math.floor(w.u.maxHp*.5);run();equal(w.u._signatureParasite.hostId,w.v.id,'one host is selected');
-      equal(w.v._signatureParasites[0].turns,e.duration,'host timer is explicit');
+      equal(w.u._signatureParasite.turns,e.duration,'one shared parasite timer');equal(w.v._signatureParasites[0].turns,undefined,'host entry has no separate timer');
       for(let turn=0;turn<e.duration;turn++) {
         const sp=w.b.sp,ownSP=w.a.sp,hp=w.u.hp,drain=Math.min(e.drain??e.amount,sp);
         g.signatureTurnStart(w.v,w.state,[],high);
         equal(w.b.sp,sp-drain,'each host turn drains actual available SP');
         equal(w.a.sp,Math.min(w.a.maxSP,ownSP+drain),'drained SP is transferred without manufacture');
         if(e.maxHpRatio)equal(w.u.hp,Math.min(w.u.maxHp,hp+Math.round(w.u.maxHp*e.maxHpRatio)),'host tick recovers published HP');
-        g.signatureTurnEnd(w.v,w.state,[],high);
+        g.signatureTurnEnd(w.v,w.state,[],high);g.signatureTurnEnd(w.u,w.state,[],high);
       }
+      for(let extra=0;extra<2&&w.u._signatureParasite;extra++)g.signatureTurnEnd(w.u,w.state,[],high);
       equal(w.v._signatureParasites.length,0,'parasite stops after its stated duration');
       const sp=w.b.sp;g.signatureTurnStart(w.v,w.state,[],high);equal(w.b.sp,sp,'no extra drain after expiry');
       tooltipNumber(text,`${e.drain??e.amount} SP`,'per-host-turn SP drain');break;
