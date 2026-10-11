@@ -107,7 +107,8 @@ for (const gr of grouped) {
       mergedRowsFound++;
       assert(row.actorName, 'Merged row must have actorName');
       assert(row.ability, 'Merged row must have ability');
-      assert(row.damages[0].amount > 0, 'Merged damage must be greater than 0');
+      // A counter can legitimately land for 0 (for example against a target made untargetable by a replayed record), so only direct damage must be positive.
+      assert(row.damages[0].isCounter || row.damages[0].amount > 0, 'Merged damage must be greater than 0');
     }
   }
 }

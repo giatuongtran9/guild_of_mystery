@@ -197,8 +197,9 @@ test('actual Parasitic Contagion drains the target caster resource', () => {
   cast(g, w, 'parasitic_contagion');
   assert.equal(w.b.sp, 100, 'attachment does not drain before the host acts');
   g.signatureTurnStart(w.enemy, w.state, w.lines, () => .99);
-  assert.equal(w.b.sp, 80, 'agent SP is the castable resource');
-  assert.equal(w.enemy.sp, 80, 'combat display SP must agree');
+  const left = 100 - Math.min(Math.round(20 + .1 * w.b.maxSP), 100); // 20 flat plus 10% of the host's Max SP
+  assert.equal(w.b.sp, left, 'agent SP is the castable resource');
+  assert.equal(w.enemy.sp, left, 'combat display SP must agree');
 });
 
 test('a misfire aura does not cause its own first cast to misfire', () => {

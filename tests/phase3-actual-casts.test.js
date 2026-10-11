@@ -187,7 +187,7 @@ function exerciseSignature(key,rank,team,e,text) {
       w.u.hp=Math.floor(w.u.maxHp*.5);run();equal(w.u._signatureParasite.hostId,w.v.id,'one host is selected');
       equal(w.u._signatureParasite.turns,e.duration,'one shared parasite timer');equal(w.v._signatureParasites[0].turns,undefined,'host entry has no separate timer');
       for(let turn=0;turn<e.duration;turn++) {
-        const sp=w.b.sp,ownSP=w.a.sp,hp=w.u.hp,drain=Math.min(e.drain??e.amount,sp);
+        const sp=w.b.sp,ownSP=w.a.sp,hp=w.u.hp,drain=Math.min(Math.round((e.drain??e.amount)+(e.spRatio||0)*w.b.maxSP),sp);
         g.signatureTurnStart(w.v,w.state,[],high);
         equal(w.b.sp,sp-drain,'each host turn drains actual available SP');
         equal(w.a.sp,Math.min(w.a.maxSP,ownSP+drain),'drained SP is transferred without manufacture');

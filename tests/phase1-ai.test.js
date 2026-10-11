@@ -135,7 +135,9 @@ test('no-heal preserves mixed healing and enemy SP drain', () => {
   g.powerEffect(w.a, w.actor, w.enemy, w.state, [], () => 0.99);
   assert.strictEqual(w.b.sp,sp,'parasitism drains on the host turn, rather than on attachment');
   g.signatureTurnStart(w.enemy,w.state,[],()=>.99);
-  assert.strictEqual(w.b.sp,sp-20,'the attached parasite retains its useful SP drain on the host turn');
+  const drained=Math.min(Math.round(20+.1*w.b.maxSP),sp); // 20 flat plus 10% of the host's Max SP
+  assert(drained>20,'the drain scales with the host SP pool');
+  assert.strictEqual(w.b.sp,sp-drained,'the attached parasite retains its useful SP drain on the host turn');
   assert.strictEqual(w.actor.hp, hp);
 });
 
