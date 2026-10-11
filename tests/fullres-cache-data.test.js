@@ -63,7 +63,16 @@ const assetManifest = () => ({ schemaVersion: 1, version: '1234567890abcdef', en
       const actual = JSON.parse(fs.readFileSync(path.join(temp, release.bundle))).runtimeAssets.entries[original];
       assert.deepEqual(actual.full, { src: entry.full.src, width: 1254, height: 837 });
     });
-    for (const bad of ['https://evil.test/art.png', 'data/assets/revisions/error/error_seq9.png', original]) {
+    await test('hash-named revision metadata keeps previous full URLs and logical IDs', () => {
+      const manifest = assetManifest(), entry = manifest.entries[original];
+      entry.artwork = { ...source, src: original.replace('/characters/', '/revisions/').replace('.png', '.' + '3'.repeat(16) + '.png'), sha256: '3'.repeat(64) };
+      entry.full = { ...entry.artwork, src: entry.artwork.src + '?v=' + '3'.repeat(16) };
+      write(manifest);
+      const release = buildRuntimeData({ root: temp });
+      const actual = JSON.parse(fs.readFileSync(path.join(temp, release.bundle))).runtimeAssets.entries[original];
+      assert.deepEqual(actual.full, { src: entry.full.src, width: 1254, height: 837 });
+    });
+    for (const bad of ['https://evil.test/art.png', 'data/assets/revisions/error/error_seq9.png', original, 'data/assets/revisions/fool/fool_seq9.' + '2'.repeat(16) + '.png']) {
       await test('revision metadata rejects an unrelated source: ' + bad, () => {
         const manifest = assetManifest(), entry = manifest.entries[original];
         entry.artwork = { ...source, src: bad };
@@ -135,6 +144,16 @@ const assetManifest = () => ({ schemaVersion: 1, version: '1234567890abcdef', en
   await test('new original hashes cache separately without deleting the previous version', async () => {
     const w = worker(); await w.dispatch(w.request(full)); await w.dispatch(w.request(original + '?v=2222222222222222'));
     assert.equal(w.stats.fetches, 2); assert.equal(w.files.size, 2);
+  });
+  await test('hash-named revisions cache independently while mismatched filename and query hashes bypass caching', async () => {
+    const w = worker(), stem = original.replace('/characters/', '/revisions/').replace('.png', '');
+    for (const hash of ['1'.repeat(16), '2'.repeat(16)]) {
+      const url = stem + '.' + hash + '.png?v=' + hash;
+      await w.dispatch(w.request(url)); await w.dispatch(w.request(url));
+    }
+    assert.equal(w.stats.fetches, 2); assert.equal(w.files.size, 2);
+    assert.equal(await w.dispatch(w.request(stem + '.' + '1'.repeat(16) + '.png?v=' + '2'.repeat(16))), null);
+    assert.equal(w.stats.fetches, 2);
   });
   for (const relative of [original, original + '?v=invalid', full + '&redirect=external', original + '?v=1111111111111111&v=2222222222222222',
     'data/assets/characters/fool/other.png?v=1111111111111111',

@@ -64,6 +64,21 @@ function pointer(w,canvas,type,id,x,y=100) {const event=new w.Event(type,{bubble
       f.w.G9.closePortrait();
     }finally{f.dom.window.close();}
   });
+  await test('hash-named revisions render and enlarge while a mismatched filename hash is rejected',async()=>{
+    const {c,key,render}=prefix(),hash='0123456789abcdef';
+    const revised=key.replace('/characters/','/revisions/').replace('.png','.'+hash+'.png')+'?v='+hash;
+    c.G9_DATA.runtimeAssets.entries[key].full.src=revised;
+    assert(render({variant:'battle'}).includes(`data-src="${revised}"`));
+    c.G9_DATA.runtimeAssets.entries[key].full.src=revised.replace('?v='+hash,'?v=1111111111111111');
+    assert(!render({variant:'battle'}).includes('/revisions/'));
+    const f=await fixture();try{
+      const full=f.key.replace('/characters/','/revisions/').replace('.png','.'+hash+'.png')+'?v='+hash;
+      f.opener.querySelector('img').src=full;
+      const before=f.read(),viewer=open(f);assert(viewer.querySelector('img').src.endsWith(full));assert.equal(f.read(),before);
+      f.w.G9.closePortrait();f.opener.querySelector('img').src=full.replace('?v='+hash,'?v=1111111111111111');
+      f.opener.click();assert.equal(f.w.document.querySelector('.portrait-viewer'),null);
+    }finally{f.dom.window.close();}
+  });
   await test('missing full metadata falls back to the original rather than a downsized variant',()=>{
     const {c,key,render}=prefix();delete c.G9_DATA.runtimeAssets.entries[key].full;assert(render().includes(`src="${key}"`));assert(!render().includes('.192.'));
   });

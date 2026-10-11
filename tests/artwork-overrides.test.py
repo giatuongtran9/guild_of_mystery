@@ -58,6 +58,30 @@ class ArtworkOverrideTests(unittest.TestCase):
         self.assertNotIn('artwork', manifest['entries'][self.key])
         self.assertTrue(manifest['entries'][self.key]['full']['src'].startswith(self.key + '?v='))
 
+    def test_hash_named_revision_keeps_previous_selected_source_unchanged(self):
+        self.select()
+        before = builder.build_assets(self.repo)
+        old_bytes = self.revision.read_bytes()
+        candidate = self.revision.with_suffix('.candidate')
+        Image.new('RGBA', (67, 113), (40, 80, 120, 180)).save(candidate, format='PNG')
+        digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
+        revision = self.revision.with_name(f'fool_seq9.{digest[:16]}.png')
+        candidate.rename(revision)
+        self.select({self.key: revision.relative_to(self.repo).as_posix()})
+        after = builder.build_assets(self.repo)
+        self.assertEqual(after['entries'][self.key]['artwork']['src'], revision.relative_to(self.repo).as_posix())
+        self.assertEqual(after['entries'][self.key]['full']['sha256'], digest)
+        self.assertEqual(self.revision.read_bytes(), old_bytes)
+        self.assertEqual(self.original.read_bytes(), self.original_bytes)
+        self.assertTrue((self.repo / f"data/assets/runtime/characters/manifest.{before['version']}.json").is_file())
+
+    def test_hash_named_revision_rejects_a_filename_that_disagrees_with_its_bytes(self):
+        revision = self.revision.with_name('fool_seq9.' + '0' * 16 + '.png')
+        revision.write_bytes(self.revision.read_bytes())
+        self.select({self.key: revision.relative_to(self.repo).as_posix()})
+        with self.assertRaisesRegex(ValueError, 'hash'):
+            builder.build_assets(self.repo)
+
     def test_empty_map_preserves_original_build(self):
         before = builder.build_assets(self.repo)
         self.select({})
