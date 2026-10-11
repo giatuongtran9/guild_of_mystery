@@ -1351,25 +1351,32 @@
       }
     },
     "data/assets/characters/death/death_seq0.png": {
+      "artwork": {
+        "bytes": 2308222,
+        "height": 1254,
+        "sha256": "b1239418bfcee5c5fc6cbfa2e4b69395b54f8d260bee96f0244869e984297395",
+        "src": "data/assets/revisions/death/death_seq0.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 220964,
+        "bytes": 211730,
         "height": 384,
-        "sha256": "5ae65d65ff5294e3044215662d5720b8d3920bee0830adf4e9c0615089945a9f",
-        "src": "data/assets/runtime/characters/death/death_seq0.384.5ae65d65ff5294e3.webp",
+        "sha256": "ed75f120311be712e9858797663228c25da69ece383132b4d65a2712522f4e1c",
+        "src": "data/assets/runtime/characters/death/death_seq0.384.ed75f120311be712.webp",
         "width": 384
       },
       "full": {
-        "bytes": 2471785,
+        "bytes": 2308222,
         "height": 1254,
-        "sha256": "9ff45a4f7d97c0c95afb730c6053269e8cafb4412559e31366d38d5cfa637af1",
-        "src": "data/assets/characters/death/death_seq0.png?v=9ff45a4f7d97c0c9",
+        "sha256": "b1239418bfcee5c5fc6cbfa2e4b69395b54f8d260bee96f0244869e984297395",
+        "src": "data/assets/revisions/death/death_seq0.png?v=b1239418bfcee5c5",
         "width": 1254
       },
       "portrait": {
-        "bytes": 65558,
+        "bytes": 63254,
         "height": 192,
-        "sha256": "3b97fb78990e3bf564feb82e618c3b73a96445fe86921b318c0a697ea8714e42",
-        "src": "data/assets/runtime/characters/death/death_seq0.192.3b97fb78990e3bf5.webp",
+        "sha256": "83e153c2a43ba047c24e69d7748a8d844c930891dea57e3016f3c1be3ca8cf19",
+        "src": "data/assets/runtime/characters/death/death_seq0.192.83e153c2a43ba047.webp",
         "width": 192
       },
       "source": {
@@ -1381,25 +1388,32 @@
       }
     },
     "data/assets/characters/death/death_seq1.png": {
+      "artwork": {
+        "bytes": 2099232,
+        "height": 1254,
+        "sha256": "f27a14a33eb9215129ee6ec2996b2429439f25669884493f728bc9fdad83d4c0",
+        "src": "data/assets/revisions/death/death_seq1.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 169798,
+        "bytes": 197518,
         "height": 384,
-        "sha256": "8c3871dd7035042eb8df196152b0655ada6be64288a62d0d373609ae4fec14de",
-        "src": "data/assets/runtime/characters/death/death_seq1.384.8c3871dd7035042e.webp",
+        "sha256": "f913b50b9e996e73f84838ab465b8e85dd8c5af3116d1959f7ff65cc661cdb89",
+        "src": "data/assets/runtime/characters/death/death_seq1.384.f913b50b9e996e73.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1831471,
+        "bytes": 2099232,
         "height": 1254,
-        "sha256": "94d43fdfbbcebfff42df65eca476f97fbed1d8796b320596ece591361d806712",
-        "src": "data/assets/characters/death/death_seq1.png?v=94d43fdfbbcebfff",
+        "sha256": "f27a14a33eb9215129ee6ec2996b2429439f25669884493f728bc9fdad83d4c0",
+        "src": "data/assets/revisions/death/death_seq1.png?v=f27a14a33eb92151",
         "width": 1254
       },
       "portrait": {
-        "bytes": 51196,
+        "bytes": 59590,
         "height": 192,
-        "sha256": "0c8fd87a16e571382e56c2117475fb6de912e3629afddce9c2fa169cece32441",
-        "src": "data/assets/runtime/characters/death/death_seq1.192.0c8fd87a16e57138.webp",
+        "sha256": "9b416433556359e33104544da407dc885504a76a864882ce19e7d32653daf2c7",
+        "src": "data/assets/runtime/characters/death/death_seq1.192.9b416433556359e3.webp",
         "width": 192
       },
       "source": {
@@ -1441,25 +1455,32 @@
       }
     },
     "data/assets/characters/death/death_seq3.png": {
+      "artwork": {
+        "bytes": 1696346,
+        "height": 1254,
+        "sha256": "29cbdfbd65be4343446835fe3282e4c65c076ae4c4b349be3e55709d39e52804",
+        "src": "data/assets/revisions/death/death_seq3.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 125494,
+        "bytes": 154680,
         "height": 384,
-        "sha256": "4f65268d90c6fa6007a524271187ca1530833a2914af6ec1fd1f501cb01d28b5",
-        "src": "data/assets/runtime/characters/death/death_seq3.384.4f65268d90c6fa60.webp",
+        "sha256": "8db224d880a09cf46c8aeeff58d5c5ff843c3bdd1ec338fd416c49cbb3d953eb",
+        "src": "data/assets/runtime/characters/death/death_seq3.384.8db224d880a09cf4.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1387458,
+        "bytes": 1696346,
         "height": 1254,
-        "sha256": "c85efa39536aeaee4bc8c2ca391f4918c38928abf15399bf30e42b4874b282bd",
-        "src": "data/assets/characters/death/death_seq3.png?v=c85efa39536aeaee",
+        "sha256": "29cbdfbd65be4343446835fe3282e4c65c076ae4c4b349be3e55709d39e52804",
+        "src": "data/assets/revisions/death/death_seq3.png?v=29cbdfbd65be4343",
         "width": 1254
       },
       "portrait": {
-        "bytes": 38534,
+        "bytes": 48424,
         "height": 192,
-        "sha256": "ee30549c46f9809acd9eba4d83fab1800aadb35c1b6594343a23048f8d4e68a6",
-        "src": "data/assets/runtime/characters/death/death_seq3.192.ee30549c46f9809a.webp",
+        "sha256": "2da1630816bc086f4ea8dfd4f351a16b6d97898c7606ff8fc56d786e4cd3cdcc",
+        "src": "data/assets/runtime/characters/death/death_seq3.192.2da1630816bc086f.webp",
         "width": 192
       },
       "source": {
@@ -1651,25 +1672,32 @@
       }
     },
     "data/assets/characters/demoness/demoness_mythical.png": {
+      "artwork": {
+        "bytes": 1613649,
+        "height": 1254,
+        "sha256": "f8423db38a4173f9951089a93a2b2254c4d993f50e68a9d08927380cd8e55523",
+        "src": "data/assets/revisions/demoness/demoness_mythical.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 134804,
+        "bytes": 150618,
         "height": 384,
-        "sha256": "27741cb5eb24eb6a2625f5f2434b90e9a3e263127ac86770275571483689a706",
-        "src": "data/assets/runtime/characters/demoness/demoness_mythical.384.27741cb5eb24eb6a.webp",
+        "sha256": "e277a943f3198745ff8201c34ca7a8cd406ac8e5b116c98f94004306d5e7f6ca",
+        "src": "data/assets/runtime/characters/demoness/demoness_mythical.384.e277a943f3198745.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1462644,
-        "height": 1268,
-        "sha256": "3c4d1a0b3415bd839b0db0944eea3757e73a7e5109b2c1a45dcf6bec88771019",
-        "src": "data/assets/characters/demoness/demoness_mythical.png?v=3c4d1a0b3415bd83",
-        "width": 1241
+        "bytes": 1613649,
+        "height": 1254,
+        "sha256": "f8423db38a4173f9951089a93a2b2254c4d993f50e68a9d08927380cd8e55523",
+        "src": "data/assets/revisions/demoness/demoness_mythical.png?v=f8423db38a4173f9",
+        "width": 1254
       },
       "portrait": {
-        "bytes": 43368,
+        "bytes": 46192,
         "height": 192,
-        "sha256": "ef5567029328d294276fb39a90edee4eada448b5938c88d54276c0a423379454",
-        "src": "data/assets/runtime/characters/demoness/demoness_mythical.192.ef5567029328d294.webp",
+        "sha256": "2f68e5454f60bc662eff34616513e45b6cc4765c952d5c54951e2f2ea875f9ba",
+        "src": "data/assets/runtime/characters/demoness/demoness_mythical.192.2f68e5454f60bc66.webp",
         "width": 192
       },
       "source": {
@@ -1681,25 +1709,32 @@
       }
     },
     "data/assets/characters/demoness/demoness_seq0.png": {
+      "artwork": {
+        "bytes": 1851466,
+        "height": 1254,
+        "sha256": "7ffcd8441d153ed91e9e67c311fb113d388425d7f567006e2cf557cd6a549720",
+        "src": "data/assets/revisions/demoness/demoness_seq0.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 180848,
+        "bytes": 173668,
         "height": 384,
-        "sha256": "bb4885e5e4c016ed37e4776cc7daa1e37299dea7561e9ce3ad7aa6021bf7a2c4",
-        "src": "data/assets/runtime/characters/demoness/demoness_seq0.384.bb4885e5e4c016ed.webp",
+        "sha256": "da5aaf55416fe239e946d914ef2f14dfa5a93c32e158eb6e8790f3d6bde61474",
+        "src": "data/assets/runtime/characters/demoness/demoness_seq0.384.da5aaf55416fe239.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1779088,
+        "bytes": 1851466,
         "height": 1254,
-        "sha256": "5aa62c9bf681ef3493074efd0513c61666232a9740fe00e77bf2e51111bbae56",
-        "src": "data/assets/characters/demoness/demoness_seq0.png?v=5aa62c9bf681ef34",
+        "sha256": "7ffcd8441d153ed91e9e67c311fb113d388425d7f567006e2cf557cd6a549720",
+        "src": "data/assets/revisions/demoness/demoness_seq0.png?v=7ffcd8441d153ed9",
         "width": 1254
       },
       "portrait": {
-        "bytes": 58630,
+        "bytes": 56148,
         "height": 192,
-        "sha256": "5eab3bfe6d59c60f4aac27dd92b4eecbe9df25668c0e9f4907dd564354578931",
-        "src": "data/assets/runtime/characters/demoness/demoness_seq0.192.5eab3bfe6d59c60f.webp",
+        "sha256": "e76984d432d38d8e115835c80061b34016cc3ad2237620d4a81f7651121e8ff7",
+        "src": "data/assets/runtime/characters/demoness/demoness_seq0.192.e76984d432d38d8e.webp",
         "width": 192
       },
       "source": {
@@ -1711,25 +1746,32 @@
       }
     },
     "data/assets/characters/demoness/demoness_seq1.png": {
+      "artwork": {
+        "bytes": 2005798,
+        "height": 1254,
+        "sha256": "56f5545332b06ce1a887f00893a05f3287b36d50550cd86d5c315c6066ef7777",
+        "src": "data/assets/revisions/demoness/demoness_seq1.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 182278,
+        "bytes": 189976,
         "height": 384,
-        "sha256": "00a9e1ad639d31905689f1fab29938596ba239ea59735ae794ba203d826d35c9",
-        "src": "data/assets/runtime/characters/demoness/demoness_seq1.384.00a9e1ad639d3190.webp",
+        "sha256": "c28f9dbb039c0ecfc8100a120973b8951b806d95c35b763cf19917a30530fe60",
+        "src": "data/assets/runtime/characters/demoness/demoness_seq1.384.c28f9dbb039c0ecf.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1800930,
+        "bytes": 2005798,
         "height": 1254,
-        "sha256": "a138733e0f0721351567d8df926b432a509adc97535f86229275fda4dc70bdea",
-        "src": "data/assets/characters/demoness/demoness_seq1.png?v=a138733e0f072135",
+        "sha256": "56f5545332b06ce1a887f00893a05f3287b36d50550cd86d5c315c6066ef7777",
+        "src": "data/assets/revisions/demoness/demoness_seq1.png?v=56f5545332b06ce1",
         "width": 1254
       },
       "portrait": {
-        "bytes": 55892,
+        "bytes": 57730,
         "height": 192,
-        "sha256": "bc563b9a84100e99280e6776b633fdac21d6387a2f66c8bba73426231612755f",
-        "src": "data/assets/runtime/characters/demoness/demoness_seq1.192.bc563b9a84100e99.webp",
+        "sha256": "d33adb8451cd05f11d5ca381cee0a15467325b20348970ed9a4f5c2832a738ef",
+        "src": "data/assets/runtime/characters/demoness/demoness_seq1.192.d33adb8451cd05f1.webp",
         "width": 192
       },
       "source": {
@@ -1741,25 +1783,32 @@
       }
     },
     "data/assets/characters/demoness/demoness_seq2.png": {
+      "artwork": {
+        "bytes": 1509411,
+        "height": 1254,
+        "sha256": "54e2810ddd6ea0d665d08d1849e0189e42989a75fcc38be1859b56e4d32bdbaf",
+        "src": "data/assets/revisions/demoness/demoness_seq2.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 132242,
+        "bytes": 147922,
         "height": 384,
-        "sha256": "cf021be9b2c172da59ed83ddd79bd9edad00d59d81070c2df0551c5256fd8ca6",
-        "src": "data/assets/runtime/characters/demoness/demoness_seq2.384.cf021be9b2c172da.webp",
+        "sha256": "55ab039f017b5732855d44165fa933dd967905757dc9c6ae5fca4543cafdd232",
+        "src": "data/assets/runtime/characters/demoness/demoness_seq2.384.55ab039f017b5732.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1299751,
+        "bytes": 1509411,
         "height": 1254,
-        "sha256": "06c58a5201a1a124a4802b05c3d8a65ff34654da12683af2cd598c504cd4853d",
-        "src": "data/assets/characters/demoness/demoness_seq2.png?v=06c58a5201a1a124",
+        "sha256": "54e2810ddd6ea0d665d08d1849e0189e42989a75fcc38be1859b56e4d32bdbaf",
+        "src": "data/assets/revisions/demoness/demoness_seq2.png?v=54e2810ddd6ea0d6",
         "width": 1254
       },
       "portrait": {
-        "bytes": 43826,
+        "bytes": 45836,
         "height": 192,
-        "sha256": "d22e5b4d2e1c685489a2187f9e4bde58e014457def8bf3b2a00d3bbdc1cecb4f",
-        "src": "data/assets/runtime/characters/demoness/demoness_seq2.192.d22e5b4d2e1c6854.webp",
+        "sha256": "9a80f377fcd6ceee56af38ec0b1e7a7a2c8e848ddb8523be44d280fa5d75d0e4",
+        "src": "data/assets/runtime/characters/demoness/demoness_seq2.192.9a80f377fcd6ceee.webp",
         "width": 192
       },
       "source": {
@@ -2011,25 +2060,32 @@
       }
     },
     "data/assets/characters/door/door_seq0.png": {
+      "artwork": {
+        "bytes": 1910559,
+        "height": 1254,
+        "sha256": "0027d39670fb18f5eaad5dd28b9c3c6a2cf267f41223385c81e3c74566a73a17",
+        "src": "data/assets/revisions/door/door_seq0.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 210730,
+        "bytes": 193930,
         "height": 384,
-        "sha256": "25b30d3eb0e815a8abc751023a7436f12957e8286dbb5bb0c2a6fd12f9a3a3fe",
-        "src": "data/assets/runtime/characters/door/door_seq0.384.25b30d3eb0e815a8.webp",
+        "sha256": "cd064bc248edc0be83cb6f5415850a571603ae34acc9da7a96c90864e570a27f",
+        "src": "data/assets/runtime/characters/door/door_seq0.384.cd064bc248edc0be.webp",
         "width": 384
       },
       "full": {
-        "bytes": 2024208,
+        "bytes": 1910559,
         "height": 1254,
-        "sha256": "6da09e6dd0a02dda11ec94220d2283529e0ab12edc596a6fc41b751b7c026e87",
-        "src": "data/assets/characters/door/door_seq0.png?v=6da09e6dd0a02dda",
+        "sha256": "0027d39670fb18f5eaad5dd28b9c3c6a2cf267f41223385c81e3c74566a73a17",
+        "src": "data/assets/revisions/door/door_seq0.png?v=0027d39670fb18f5",
         "width": 1254
       },
       "portrait": {
-        "bytes": 65730,
+        "bytes": 61424,
         "height": 192,
-        "sha256": "a9ee394633e95d1557345386c5f898a22ccb6a4b7ab40df967aae270cea62a1c",
-        "src": "data/assets/runtime/characters/door/door_seq0.192.a9ee394633e95d15.webp",
+        "sha256": "a9dadb43138a6acd3a095c9caeb90e4c9f27c143f6cfee7e05c217ce43eaca80",
+        "src": "data/assets/runtime/characters/door/door_seq0.192.a9dadb43138a6acd.webp",
         "width": 192
       },
       "source": {
@@ -2041,25 +2097,32 @@
       }
     },
     "data/assets/characters/door/door_seq1.png": {
+      "artwork": {
+        "bytes": 1597566,
+        "height": 1254,
+        "sha256": "992c8e859f2d02f344218a424ef9df0ffec5a09cc26bb1adaa9efde08670c7cf",
+        "src": "data/assets/revisions/door/door_seq1.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 141036,
+        "bytes": 166368,
         "height": 384,
-        "sha256": "5412e965a485cd1170ca97d315718ef6f1a62cf499da8c3adeb56295852280ae",
-        "src": "data/assets/runtime/characters/door/door_seq1.384.5412e965a485cd11.webp",
+        "sha256": "48b3c7104863a632db1398b073e0d2dbd70d8882b660f39146a0549db6e3901b",
+        "src": "data/assets/runtime/characters/door/door_seq1.384.48b3c7104863a632.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1436888,
+        "bytes": 1597566,
         "height": 1254,
-        "sha256": "933bbaa08a05c7f82a600c93c499436f6916cf6507e744bd5c6ebf539cba59d3",
-        "src": "data/assets/characters/door/door_seq1.png?v=933bbaa08a05c7f8",
+        "sha256": "992c8e859f2d02f344218a424ef9df0ffec5a09cc26bb1adaa9efde08670c7cf",
+        "src": "data/assets/revisions/door/door_seq1.png?v=992c8e859f2d02f3",
         "width": 1254
       },
       "portrait": {
-        "bytes": 42886,
+        "bytes": 52342,
         "height": 192,
-        "sha256": "87112ca419154673ffcc9b6134ecfc5390ba572229547a513fe05da99d3086bf",
-        "src": "data/assets/runtime/characters/door/door_seq1.192.87112ca419154673.webp",
+        "sha256": "7af72b7215e3f3e802565f09308f0c91c859c7bf8f7a040df2d1629199794ad5",
+        "src": "data/assets/runtime/characters/door/door_seq1.192.7af72b7215e3f3e8.webp",
         "width": 192
       },
       "source": {
@@ -2071,25 +2134,32 @@
       }
     },
     "data/assets/characters/door/door_seq2.png": {
+      "artwork": {
+        "bytes": 1443508,
+        "height": 1254,
+        "sha256": "f1200352d616b2d1d70e6d086c8fb327dc5e16e8b641e8e284ddb92d9becd5bc",
+        "src": "data/assets/revisions/door/door_seq2.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 140544,
+        "bytes": 141272,
         "height": 384,
-        "sha256": "f6c19ba933f75dc01e6dbf2ffed862beee09782dbe8fd5739f29dfc60b39bea2",
-        "src": "data/assets/runtime/characters/door/door_seq2.384.f6c19ba933f75dc0.webp",
+        "sha256": "7a41271005fe21e236c55bf0fc09a7a217a1e104cb5a7171c397dc6442c4f197",
+        "src": "data/assets/runtime/characters/door/door_seq2.384.7a41271005fe21e2.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1406146,
+        "bytes": 1443508,
         "height": 1254,
-        "sha256": "cb1e002d884a442a99ab2da7267de8987c78f88e33e49e3a51737269cfca5266",
-        "src": "data/assets/characters/door/door_seq2.png?v=cb1e002d884a442a",
+        "sha256": "f1200352d616b2d1d70e6d086c8fb327dc5e16e8b641e8e284ddb92d9becd5bc",
+        "src": "data/assets/revisions/door/door_seq2.png?v=f1200352d616b2d1",
         "width": 1254
       },
       "portrait": {
-        "bytes": 42102,
+        "bytes": 42404,
         "height": 192,
-        "sha256": "f6ece220ce97c4016d31c934caa1d0e51c340dac63f14899f0de3723d36b0a70",
-        "src": "data/assets/runtime/characters/door/door_seq2.192.f6ece220ce97c401.webp",
+        "sha256": "7e8d2391d6689b23b69d12865fed4e8bf7534b426cba5b25fd1e53fb010c27c5",
+        "src": "data/assets/runtime/characters/door/door_seq2.192.7e8d2391d6689b23.webp",
         "width": 192
       },
       "source": {
@@ -2101,25 +2171,32 @@
       }
     },
     "data/assets/characters/door/door_seq3.png": {
+      "artwork": {
+        "bytes": 1582958,
+        "height": 1254,
+        "sha256": "09e9fcf3b5c3d07d94f01dc0a1b16f164bbf0ab70905f7ab8afac1b169abd55c",
+        "src": "data/assets/revisions/door/door_seq3.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 140118,
+        "bytes": 159310,
         "height": 384,
-        "sha256": "8e35f9e0e57ceb9355403fc6a3fd3e76d5e505b3e0ff09da1c253faa6c466fe5",
-        "src": "data/assets/runtime/characters/door/door_seq3.384.8e35f9e0e57ceb93.webp",
+        "sha256": "56b032c5885fe427b4a0f1904f6a74290a73d39fac4fd99c9b9155f29783dca5",
+        "src": "data/assets/runtime/characters/door/door_seq3.384.56b032c5885fe427.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1408268,
+        "bytes": 1582958,
         "height": 1254,
-        "sha256": "8ad26b4741f40d7fca9bba2bffd7894bff06f27b5f72e05c84fc8a2f3ace7072",
-        "src": "data/assets/characters/door/door_seq3.png?v=8ad26b4741f40d7f",
+        "sha256": "09e9fcf3b5c3d07d94f01dc0a1b16f164bbf0ab70905f7ab8afac1b169abd55c",
+        "src": "data/assets/revisions/door/door_seq3.png?v=09e9fcf3b5c3d07d",
         "width": 1254
       },
       "portrait": {
-        "bytes": 43838,
+        "bytes": 49974,
         "height": 192,
-        "sha256": "aaa181bc249a9d857631a12d3e97878e3bc1fa3c31dcf8aab5b8a904fbbf42cb",
-        "src": "data/assets/runtime/characters/door/door_seq3.192.aaa181bc249a9d85.webp",
+        "sha256": "7f9f70fc51fad998f1d1008d449481945fe58e0274ed0d402d2bfa290dd756f9",
+        "src": "data/assets/runtime/characters/door/door_seq3.192.7f9f70fc51fad998.webp",
         "width": 192
       },
       "source": {
@@ -2131,25 +2208,32 @@
       }
     },
     "data/assets/characters/door/door_seq4.png": {
+      "artwork": {
+        "bytes": 1190742,
+        "height": 1254,
+        "sha256": "4c0d066055f1f02141ed7c702656f6c93cc78a16e066077ddd880148449d9363",
+        "src": "data/assets/revisions/door/door_seq4.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 114572,
+        "bytes": 118558,
         "height": 384,
-        "sha256": "2df2feddd1674c0fce13ebb52abdfd743e7719f737d3f4367ed5ed95becf0b0a",
-        "src": "data/assets/runtime/characters/door/door_seq4.384.2df2feddd1674c0f.webp",
+        "sha256": "ea31ac24c4f14a9449ec7fdac5aeb6a510af9345053ac8c75e63bdeb114376e8",
+        "src": "data/assets/runtime/characters/door/door_seq4.384.ea31ac24c4f14a94.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1195863,
+        "bytes": 1190742,
         "height": 1254,
-        "sha256": "25aaeb819e5bd02abeb8092e02ee66f4d9a1e5dbc2aac9df7a2a338f17ef518c",
-        "src": "data/assets/characters/door/door_seq4.png?v=25aaeb819e5bd02a",
+        "sha256": "4c0d066055f1f02141ed7c702656f6c93cc78a16e066077ddd880148449d9363",
+        "src": "data/assets/revisions/door/door_seq4.png?v=4c0d066055f1f021",
         "width": 1254
       },
       "portrait": {
-        "bytes": 36224,
+        "bytes": 37452,
         "height": 192,
-        "sha256": "58dc8930d6773ebb9354804bce7b387f72699a4c9124dbfe7eed0484b651ebf6",
-        "src": "data/assets/runtime/characters/door/door_seq4.192.58dc8930d6773ebb.webp",
+        "sha256": "9d09b3bed4af148328065b03ca9a24ee9f14648fe33b7038b7863cfbb3ceee17",
+        "src": "data/assets/runtime/characters/door/door_seq4.192.9d09b3bed4af1483.webp",
         "width": 192
       },
       "source": {
@@ -2161,25 +2245,32 @@
       }
     },
     "data/assets/characters/door/door_seq5.png": {
+      "artwork": {
+        "bytes": 1445175,
+        "height": 1254,
+        "sha256": "2028b50701d1a01d0466c7419e18c44e3f05a2f92a612f2f85bc3c6f506b648a",
+        "src": "data/assets/revisions/door/door_seq5.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 129806,
+        "bytes": 145832,
         "height": 384,
-        "sha256": "8d057494bf51d9da62767773775b1bdbcd5ce920f6f3537ac0230403091afe0a",
-        "src": "data/assets/runtime/characters/door/door_seq5.384.8d057494bf51d9da.webp",
+        "sha256": "d4ca3dd0d56a914313bd838a6f7a4cfa89f2342ad9419b4186e60b98cf961971",
+        "src": "data/assets/runtime/characters/door/door_seq5.384.d4ca3dd0d56a9143.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1276262,
+        "bytes": 1445175,
         "height": 1254,
-        "sha256": "e257400eaf3ce0ad26aabda4dbf1bcbe31d982eadd0f00211873b34be7365c9e",
-        "src": "data/assets/characters/door/door_seq5.png?v=e257400eaf3ce0ad",
+        "sha256": "2028b50701d1a01d0466c7419e18c44e3f05a2f92a612f2f85bc3c6f506b648a",
+        "src": "data/assets/revisions/door/door_seq5.png?v=2028b50701d1a01d",
         "width": 1254
       },
       "portrait": {
-        "bytes": 40036,
+        "bytes": 44136,
         "height": 192,
-        "sha256": "5e9ded17a1d4a826861743126d59a34fc66280ebbbd3c26b698ef3ec68f78327",
-        "src": "data/assets/runtime/characters/door/door_seq5.192.5e9ded17a1d4a826.webp",
+        "sha256": "3213c7019af37511aac974021929bbdd3984bc8a553c69aedff98dfd6d1ef4a3",
+        "src": "data/assets/runtime/characters/door/door_seq5.192.3213c7019af37511.webp",
         "width": 192
       },
       "source": {
@@ -2671,25 +2762,32 @@
       }
     },
     "data/assets/characters/fool/fool_seq0.png": {
+      "artwork": {
+        "bytes": 1753623,
+        "height": 1254,
+        "sha256": "c99c54409a5066c74eccb8d18b72a23ffb72a1e9e0e833b77566ad2c8b2abd72",
+        "src": "data/assets/revisions/fool/fool_seq0.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 196560,
+        "bytes": 170886,
         "height": 384,
-        "sha256": "988cda150e2ca00340d1f98c6c80058f9636278b091711b69085efe05130c9f2",
-        "src": "data/assets/runtime/characters/fool/fool_seq0.384.988cda150e2ca003.webp",
+        "sha256": "6920565df2f68a44c2de144b20c3adada94349869023c1ab36e56c9a8aea3a11",
+        "src": "data/assets/runtime/characters/fool/fool_seq0.384.6920565df2f68a44.webp",
         "width": 384
       },
       "full": {
-        "bytes": 2073317,
+        "bytes": 1753623,
         "height": 1254,
-        "sha256": "3731627656575d75dcec498dcc1ffe08c98485b2310f094577a4cc63a968cc69",
-        "src": "data/assets/characters/fool/fool_seq0.png?v=3731627656575d75",
+        "sha256": "c99c54409a5066c74eccb8d18b72a23ffb72a1e9e0e833b77566ad2c8b2abd72",
+        "src": "data/assets/revisions/fool/fool_seq0.png?v=c99c54409a5066c7",
         "width": 1254
       },
       "portrait": {
-        "bytes": 59116,
+        "bytes": 52340,
         "height": 192,
-        "sha256": "9f49f9701b558fb1f8560c444f128517ad7c0577b8cba9ac57ddde1aa28242df",
-        "src": "data/assets/runtime/characters/fool/fool_seq0.192.9f49f9701b558fb1.webp",
+        "sha256": "7e629b59099844a46e110e943cd536c4b77e441f1aa4dc39bd45263ef52a8062",
+        "src": "data/assets/runtime/characters/fool/fool_seq0.192.7e629b59099844a4.webp",
         "width": 192
       },
       "source": {
@@ -2701,25 +2799,32 @@
       }
     },
     "data/assets/characters/fool/fool_seq1.png": {
+      "artwork": {
+        "bytes": 1332730,
+        "height": 1254,
+        "sha256": "f51ffdf9c8257b7561cfa42ceb5da98626db05122fd144e227470af0b7305c5c",
+        "src": "data/assets/revisions/fool/fool_seq1.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 146914,
+        "bytes": 128038,
         "height": 384,
-        "sha256": "ef8feacdef6677431472af52ae3b39d47873472419e9e6e790563468a8d1c01b",
-        "src": "data/assets/runtime/characters/fool/fool_seq1.384.ef8feacdef667743.webp",
+        "sha256": "ee2c4a67db74ba6f7be2570f63c3ec223b57fea0d37be86d2b57b33df5975af1",
+        "src": "data/assets/runtime/characters/fool/fool_seq1.384.ee2c4a67db74ba6f.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1553764,
+        "bytes": 1332730,
         "height": 1254,
-        "sha256": "988a79f16766d4543e2c2d92ee60b38743cfefc788536a32046e139de08d9577",
-        "src": "data/assets/characters/fool/fool_seq1.png?v=988a79f16766d454",
+        "sha256": "f51ffdf9c8257b7561cfa42ceb5da98626db05122fd144e227470af0b7305c5c",
+        "src": "data/assets/revisions/fool/fool_seq1.png?v=f51ffdf9c8257b75",
         "width": 1254
       },
       "portrait": {
-        "bytes": 46606,
+        "bytes": 42788,
         "height": 192,
-        "sha256": "324cad70a958e476037c739e5d3a19f9bd66d2e56df63261385ac459ad31d637",
-        "src": "data/assets/runtime/characters/fool/fool_seq1.192.324cad70a958e476.webp",
+        "sha256": "f9db9e05b78219fbf8aa174ec1156215576db7e9665fef7985e8c2f64e77b3ad",
+        "src": "data/assets/runtime/characters/fool/fool_seq1.192.f9db9e05b78219fb.webp",
         "width": 192
       },
       "source": {
@@ -2731,25 +2836,32 @@
       }
     },
     "data/assets/characters/fool/fool_seq2.png": {
+      "artwork": {
+        "bytes": 1302361,
+        "height": 1254,
+        "sha256": "c400e59ac55cc130388ff37c911306d638ed6adf4b328a116d498cb40b19513e",
+        "src": "data/assets/revisions/fool/fool_seq2.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 132264,
+        "bytes": 123524,
         "height": 384,
-        "sha256": "f25afe3c98e63c5f33acfb733846ea3be3bc10594172adabbb4a7fefbf0c80d1",
-        "src": "data/assets/runtime/characters/fool/fool_seq2.384.f25afe3c98e63c5f.webp",
+        "sha256": "ad5203b12ae5e3fe4379e70e17de22afed42f299112d7422bf9d8d5d9bdefbd5",
+        "src": "data/assets/runtime/characters/fool/fool_seq2.384.ad5203b12ae5e3fe.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1421274,
+        "bytes": 1302361,
         "height": 1254,
-        "sha256": "8badceb8ab4fec1f6ed8eee0677c6a9314a2cd283bffe6efb1fc21c2a539d77d",
-        "src": "data/assets/characters/fool/fool_seq2.png?v=8badceb8ab4fec1f",
+        "sha256": "c400e59ac55cc130388ff37c911306d638ed6adf4b328a116d498cb40b19513e",
+        "src": "data/assets/revisions/fool/fool_seq2.png?v=c400e59ac55cc130",
         "width": 1254
       },
       "portrait": {
-        "bytes": 40964,
+        "bytes": 39120,
         "height": 192,
-        "sha256": "3f6db6cf3f79a6850ea3c2ec96e9225cdbe1df1f95057c7e4dd381ad83d29893",
-        "src": "data/assets/runtime/characters/fool/fool_seq2.192.3f6db6cf3f79a685.webp",
+        "sha256": "ae5d67af50d73bc8f7f6055d35e6882fdfedd4b0cc9749f5e80f91b1a39ae6ce",
+        "src": "data/assets/runtime/characters/fool/fool_seq2.192.ae5d67af50d73bc8.webp",
         "width": 192
       },
       "source": {
@@ -2761,25 +2873,32 @@
       }
     },
     "data/assets/characters/fool/fool_seq3.png": {
+      "artwork": {
+        "bytes": 2332198,
+        "height": 1254,
+        "sha256": "2f9cdecfc486e55f2f8d35b85b68b384d8d6add2b3477c68432236061ee3e194",
+        "src": "data/assets/revisions/fool/fool_seq3.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 187520,
+        "bytes": 192064,
         "height": 384,
-        "sha256": "7f6c82c413d978123e88c869ad5ac57e3f76d0b5218b5ba5f16028ee79fb0d4e",
-        "src": "data/assets/runtime/characters/fool/fool_seq3.384.7f6c82c413d97812.webp",
+        "sha256": "f89c5734357690315040d8e5bfc5a7a16e779a4d68ba662eef5b080c569d43e8",
+        "src": "data/assets/runtime/characters/fool/fool_seq3.384.f89c573435769031.webp",
         "width": 384
       },
       "full": {
-        "bytes": 2246694,
+        "bytes": 2332198,
         "height": 1254,
-        "sha256": "f37fcb7483c4a6482fc18f5351083de73c8bb731227101794e0f76b6a2cd0d2c",
-        "src": "data/assets/characters/fool/fool_seq3.png?v=f37fcb7483c4a648",
+        "sha256": "2f9cdecfc486e55f2f8d35b85b68b384d8d6add2b3477c68432236061ee3e194",
+        "src": "data/assets/revisions/fool/fool_seq3.png?v=2f9cdecfc486e55f",
         "width": 1254
       },
       "portrait": {
-        "bytes": 55788,
+        "bytes": 56836,
         "height": 192,
-        "sha256": "8e56b2dfa31a37745c3950a6aa6cae1ff4b2269795fca50f8e3e93c3fe8181cc",
-        "src": "data/assets/runtime/characters/fool/fool_seq3.192.8e56b2dfa31a3774.webp",
+        "sha256": "c353cbeef17d956b6c41fd10204c516877b26c3703fdad49af7131613f5b3d78",
+        "src": "data/assets/runtime/characters/fool/fool_seq3.192.c353cbeef17d956b.webp",
         "width": 192
       },
       "source": {
@@ -2791,25 +2910,32 @@
       }
     },
     "data/assets/characters/fool/fool_seq4.png": {
+      "artwork": {
+        "bytes": 996163,
+        "height": 1254,
+        "sha256": "8b9d5f2a780309b1861d0bc7630cf8dc76a34d64481ba73b11badb67943dcd1b",
+        "src": "data/assets/revisions/fool/fool_seq4.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 92184,
+        "bytes": 93986,
         "height": 384,
-        "sha256": "1c0251b90347d61158817436068df3f42c36b07322d75272aa68a8fbe9339005",
-        "src": "data/assets/runtime/characters/fool/fool_seq4.384.1c0251b90347d611.webp",
+        "sha256": "b911bc99730b9d85e7723596d7557613ed45dbb0617bcbdee6868d9dc5f69ae5",
+        "src": "data/assets/runtime/characters/fool/fool_seq4.384.b911bc99730b9d85.webp",
         "width": 384
       },
       "full": {
-        "bytes": 975684,
+        "bytes": 996163,
         "height": 1254,
-        "sha256": "ecdcfeeefaf560da10ed7baba006b1a3fea1181a16c61309e18eaea33b461cbe",
-        "src": "data/assets/characters/fool/fool_seq4.png?v=ecdcfeeefaf560da",
+        "sha256": "8b9d5f2a780309b1861d0bc7630cf8dc76a34d64481ba73b11badb67943dcd1b",
+        "src": "data/assets/revisions/fool/fool_seq4.png?v=8b9d5f2a780309b1",
         "width": 1254
       },
       "portrait": {
-        "bytes": 29686,
+        "bytes": 29966,
         "height": 192,
-        "sha256": "2b1223c2c1076de71069ad4bf02fa8743455032f1f775213b06b100da46ce539",
-        "src": "data/assets/runtime/characters/fool/fool_seq4.192.2b1223c2c1076de7.webp",
+        "sha256": "bc927d53cf06b54ef55f76c3eb96b41f79f102967ffb17a3df3d437e27f4d464",
+        "src": "data/assets/runtime/characters/fool/fool_seq4.192.bc927d53cf06b54e.webp",
         "width": 192
       },
       "source": {
@@ -2821,25 +2947,32 @@
       }
     },
     "data/assets/characters/fool/fool_seq5.png": {
+      "artwork": {
+        "bytes": 1136857,
+        "height": 1254,
+        "sha256": "54631908929338c21f175247b8bdcf8941861bfa1b6b17b72fbb1e0891ffd4a6",
+        "src": "data/assets/revisions/fool/fool_seq5.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 88574,
+        "bytes": 105436,
         "height": 384,
-        "sha256": "e4af719444d0d726f4c91461bc0b3f6faa59fa09ebcabacb71a0e4f4ee8b4755",
-        "src": "data/assets/runtime/characters/fool/fool_seq5.384.e4af719444d0d726.webp",
+        "sha256": "b8c2c97e8877551a389e884fa3230e4aed99ebf75be83c78a6af332474188f7c",
+        "src": "data/assets/runtime/characters/fool/fool_seq5.384.b8c2c97e8877551a.webp",
         "width": 384
       },
       "full": {
-        "bytes": 969516,
+        "bytes": 1136857,
         "height": 1254,
-        "sha256": "1b16be72cafc2529a287b17be98f0463b176765d214d7b367a268c128e787cf0",
-        "src": "data/assets/characters/fool/fool_seq5.png?v=1b16be72cafc2529",
+        "sha256": "54631908929338c21f175247b8bdcf8941861bfa1b6b17b72fbb1e0891ffd4a6",
+        "src": "data/assets/revisions/fool/fool_seq5.png?v=54631908929338c2",
         "width": 1254
       },
       "portrait": {
-        "bytes": 27832,
+        "bytes": 33682,
         "height": 192,
-        "sha256": "af4fe7a9cc29fc94735e3d838f5d082bad5f923187d203677823f61686ecf9e8",
-        "src": "data/assets/runtime/characters/fool/fool_seq5.192.af4fe7a9cc29fc94.webp",
+        "sha256": "bd891c5a080c3abe4cb0130b523c13f4f8434c45cf1133f37a65e318f679b40a",
+        "src": "data/assets/runtime/characters/fool/fool_seq5.192.bd891c5a080c3abe.webp",
         "width": 192
       },
       "source": {
@@ -2881,25 +3014,32 @@
       }
     },
     "data/assets/characters/fool/fool_seq7.png": {
+      "artwork": {
+        "bytes": 838919,
+        "height": 1254,
+        "sha256": "721182ef562b44b9228a0fe0c16a3626ed4fd934d7dc6903d3ee335d9a94e85c",
+        "src": "data/assets/revisions/fool/fool_seq7.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 69854,
+        "bytes": 78224,
         "height": 384,
-        "sha256": "ca387eaffcfa2bea70c8023537656ac4382f8141e0f817e5024ce2621dd842b3",
-        "src": "data/assets/runtime/characters/fool/fool_seq7.384.ca387eaffcfa2bea.webp",
+        "sha256": "d0ea68bc3c0a7c6f0c32135d713823d5cce2ae57d7166067f18be4a5ed5e67e8",
+        "src": "data/assets/runtime/characters/fool/fool_seq7.384.d0ea68bc3c0a7c6f.webp",
         "width": 384
       },
       "full": {
-        "bytes": 736173,
+        "bytes": 838919,
         "height": 1254,
-        "sha256": "bcc51a4f8600d7811453c933f75847d8d633ab30561a892fcc5a4f62973ea2e0",
-        "src": "data/assets/characters/fool/fool_seq7.png?v=bcc51a4f8600d781",
+        "sha256": "721182ef562b44b9228a0fe0c16a3626ed4fd934d7dc6903d3ee335d9a94e85c",
+        "src": "data/assets/revisions/fool/fool_seq7.png?v=721182ef562b44b9",
         "width": 1254
       },
       "portrait": {
-        "bytes": 22346,
+        "bytes": 26060,
         "height": 192,
-        "sha256": "6ae926e8f86feedc659e06440030ff4c4fa309303f02dd3623b0c6f3517461cf",
-        "src": "data/assets/runtime/characters/fool/fool_seq7.192.6ae926e8f86feedc.webp",
+        "sha256": "d4af57ba28d0061885ab95c498d38102ac90d40cb6c4301f4cffd1bc1744f294",
+        "src": "data/assets/runtime/characters/fool/fool_seq7.192.d4af57ba28d00618.webp",
         "width": 192
       },
       "source": {
@@ -2911,25 +3051,32 @@
       }
     },
     "data/assets/characters/fool/fool_seq8.png": {
+      "artwork": {
+        "bytes": 671791,
+        "height": 1254,
+        "sha256": "f8a29d2530789c57d96387ec7c7e75acb73ea33121611f156ec87164a8e45a15",
+        "src": "data/assets/revisions/fool/fool_seq8.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 61742,
+        "bytes": 63306,
         "height": 384,
-        "sha256": "4598dc506f1aae96373b364120dd29891bc5eca099ec840d46a488b8763f7557",
-        "src": "data/assets/runtime/characters/fool/fool_seq8.384.4598dc506f1aae96.webp",
+        "sha256": "06daf3e2686132ede501d8265fe88dc5937498290d873d70af570272e3833f5f",
+        "src": "data/assets/runtime/characters/fool/fool_seq8.384.06daf3e2686132ed.webp",
         "width": 384
       },
       "full": {
-        "bytes": 665424,
+        "bytes": 671791,
         "height": 1254,
-        "sha256": "a78918936b8c557a12ae100630414b07bdfd53059eba2acb3bda4d77ec76f6f3",
-        "src": "data/assets/characters/fool/fool_seq8.png?v=a78918936b8c557a",
+        "sha256": "f8a29d2530789c57d96387ec7c7e75acb73ea33121611f156ec87164a8e45a15",
+        "src": "data/assets/revisions/fool/fool_seq8.png?v=f8a29d2530789c57",
         "width": 1254
       },
       "portrait": {
-        "bytes": 19930,
+        "bytes": 20270,
         "height": 192,
-        "sha256": "c19507c4ef1d47cee98ba75befef77034f730298b065928871ad48be18b818d5",
-        "src": "data/assets/runtime/characters/fool/fool_seq8.192.c19507c4ef1d47ce.webp",
+        "sha256": "9a07dc2e26d6fca37c87fb4f53ad3a39f949947f70cba73e9137fe88feeae422",
+        "src": "data/assets/runtime/characters/fool/fool_seq8.192.9a07dc2e26d6fca3.webp",
         "width": 192
       },
       "source": {
@@ -3001,25 +3148,32 @@
       }
     },
     "data/assets/characters/giant/giant_seq0.png": {
+      "artwork": {
+        "bytes": 1976214,
+        "height": 1254,
+        "sha256": "1b25ad28242896ea8b8f839b58425db5d7b26ed9d351479dd925becba89c8e87",
+        "src": "data/assets/revisions/giant/giant_seq0.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 181840,
+        "bytes": 199926,
         "height": 384,
-        "sha256": "2e02f81b90b619a0deceb77f87074d6bd61688dace09c5792bb83fe10d4ebab9",
-        "src": "data/assets/runtime/characters/giant/giant_seq0.384.2e02f81b90b619a0.webp",
+        "sha256": "affdcb6936abdc99cc953c6caa044f4f0a117548c75d6d4d719f6c494b5198ae",
+        "src": "data/assets/runtime/characters/giant/giant_seq0.384.affdcb6936abdc99.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1803695,
+        "bytes": 1976214,
         "height": 1254,
-        "sha256": "f37a5156d790486d0cbc2bbbad4d360b2d035e7e89df71e2ac9725b5da086ff5",
-        "src": "data/assets/characters/giant/giant_seq0.png?v=f37a5156d790486d",
+        "sha256": "1b25ad28242896ea8b8f839b58425db5d7b26ed9d351479dd925becba89c8e87",
+        "src": "data/assets/revisions/giant/giant_seq0.png?v=1b25ad28242896ea",
         "width": 1254
       },
       "portrait": {
-        "bytes": 53052,
+        "bytes": 60268,
         "height": 192,
-        "sha256": "5785fe30469d51d6534e599a7b54ed2461253176a38ddf8d0c0949b47a78060d",
-        "src": "data/assets/runtime/characters/giant/giant_seq0.192.5785fe30469d51d6.webp",
+        "sha256": "60a6aa5f7962b82cd71f9268f86b81a4ea5b634831d0df43a9c67be04901d527",
+        "src": "data/assets/runtime/characters/giant/giant_seq0.192.60a6aa5f7962b82c.webp",
         "width": 192
       },
       "source": {
@@ -3031,25 +3185,32 @@
       }
     },
     "data/assets/characters/giant/giant_seq1.png": {
+      "artwork": {
+        "bytes": 2219324,
+        "height": 1254,
+        "sha256": "33b9f6b44c0e424cfe58b7d47e9a3a820589d6dfeb8ffbb6daf677917986c0c0",
+        "src": "data/assets/revisions/giant/giant_seq1.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 211460,
+        "bytes": 222562,
         "height": 384,
-        "sha256": "daccea990a825aa6e996349f97a2a0f784e29051ad342683f919b59d884cce70",
-        "src": "data/assets/runtime/characters/giant/giant_seq1.384.daccea990a825aa6.webp",
+        "sha256": "185dd46f0be27050bf42ca10cddd8f0930bc09327df4c23c032bc5ac567e4340",
+        "src": "data/assets/runtime/characters/giant/giant_seq1.384.185dd46f0be27050.webp",
         "width": 384
       },
       "full": {
-        "bytes": 2112163,
+        "bytes": 2219324,
         "height": 1254,
-        "sha256": "1da0b372a9bab6cb558c01696ea2196425a207af92eb9955201cab3bbf4f583b",
-        "src": "data/assets/characters/giant/giant_seq1.png?v=1da0b372a9bab6cb",
+        "sha256": "33b9f6b44c0e424cfe58b7d47e9a3a820589d6dfeb8ffbb6daf677917986c0c0",
+        "src": "data/assets/revisions/giant/giant_seq1.png?v=33b9f6b44c0e424c",
         "width": 1254
       },
       "portrait": {
-        "bytes": 60404,
+        "bytes": 65448,
         "height": 192,
-        "sha256": "15799e4099082031f6487e21fbbc6b466a1c0de58f1bbbdfd928a806c183a257",
-        "src": "data/assets/runtime/characters/giant/giant_seq1.192.15799e4099082031.webp",
+        "sha256": "074ba34e661a538e00a5be1684fc31158f172cdff94c1aac5757c027a948f6cc",
+        "src": "data/assets/runtime/characters/giant/giant_seq1.192.074ba34e661a538e.webp",
         "width": 192
       },
       "source": {
@@ -3061,25 +3222,32 @@
       }
     },
     "data/assets/characters/giant/giant_seq2.png": {
+      "artwork": {
+        "bytes": 1868789,
+        "height": 1254,
+        "sha256": "d9d0ac7243cd1d33236642b15624d172bf56e7a4745aad0752f17ada4214b53e",
+        "src": "data/assets/revisions/giant/giant_seq2.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 171588,
+        "bytes": 185238,
         "height": 384,
-        "sha256": "04d35e0bf01869702e05520e1d9eb107b98b7e554d29fa9d66bfdde8b110196a",
-        "src": "data/assets/runtime/characters/giant/giant_seq2.384.04d35e0bf0186970.webp",
+        "sha256": "173434ef2f68d45b5dea732316c88beb5f422e581c39e30fcd3d6180a641c388",
+        "src": "data/assets/runtime/characters/giant/giant_seq2.384.173434ef2f68d45b.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1753292,
+        "bytes": 1868789,
         "height": 1254,
-        "sha256": "324d8dfd86ef1f0558008b13ec184a532f2d0017173a9e00967878df121be166",
-        "src": "data/assets/characters/giant/giant_seq2.png?v=324d8dfd86ef1f05",
+        "sha256": "d9d0ac7243cd1d33236642b15624d172bf56e7a4745aad0752f17ada4214b53e",
+        "src": "data/assets/revisions/giant/giant_seq2.png?v=d9d0ac7243cd1d33",
         "width": 1254
       },
       "portrait": {
-        "bytes": 54276,
+        "bytes": 59254,
         "height": 192,
-        "sha256": "3066911b97b8a924b4976a580da35ca16cc19e1f2f6a813685b097dd3a41b597",
-        "src": "data/assets/runtime/characters/giant/giant_seq2.192.3066911b97b8a924.webp",
+        "sha256": "52d415c8594a25ebde7a84a9244a8a9fa4c12bb5e84856fb0c28e6a64417b96f",
+        "src": "data/assets/runtime/characters/giant/giant_seq2.192.52d415c8594a25eb.webp",
         "width": 192
       },
       "source": {
@@ -3091,25 +3259,32 @@
       }
     },
     "data/assets/characters/giant/giant_seq3.png": {
+      "artwork": {
+        "bytes": 1552630,
+        "height": 1254,
+        "sha256": "f21c94bec7495eec549a83170673e43ab47201f7e71cda0e3b289bafd0674973",
+        "src": "data/assets/revisions/giant/giant_seq3.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 134350,
+        "bytes": 149354,
         "height": 384,
-        "sha256": "aff368c137dd9e242ae3c96a8002910e2a18e58e16eb5b36034e5765b5a52b93",
-        "src": "data/assets/runtime/characters/giant/giant_seq3.384.aff368c137dd9e24.webp",
+        "sha256": "1e53967c3716729f640645c6f96bceac4d0e959869daabdd2e3d495fd32afcce",
+        "src": "data/assets/runtime/characters/giant/giant_seq3.384.1e53967c3716729f.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1444685,
+        "bytes": 1552630,
         "height": 1254,
-        "sha256": "34734c14c9160699bc723fd13e147ec04d42698490d3a638fe84e2c846a01513",
-        "src": "data/assets/characters/giant/giant_seq3.png?v=34734c14c9160699",
+        "sha256": "f21c94bec7495eec549a83170673e43ab47201f7e71cda0e3b289bafd0674973",
+        "src": "data/assets/revisions/giant/giant_seq3.png?v=f21c94bec7495eec",
         "width": 1254
       },
       "portrait": {
-        "bytes": 41276,
+        "bytes": 46940,
         "height": 192,
-        "sha256": "5756b96a44a10bca854bc968431f6abc0d88389bf21e1180555f7b5df56052a0",
-        "src": "data/assets/runtime/characters/giant/giant_seq3.192.5756b96a44a10bca.webp",
+        "sha256": "cfb241ceae721a1fb0a22a17c4ad125331f96d9044ab8a5389ab3c45e2d49e42",
+        "src": "data/assets/runtime/characters/giant/giant_seq3.192.cfb241ceae721a1f.webp",
         "width": 192
       },
       "source": {
@@ -3121,25 +3296,32 @@
       }
     },
     "data/assets/characters/giant/giant_seq4.png": {
+      "artwork": {
+        "bytes": 1322585,
+        "height": 1254,
+        "sha256": "23db306fd4322a1d7139a273878e8282b483788c6f05cfe1bb12f68371123422",
+        "src": "data/assets/revisions/giant/giant_seq4.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 111832,
+        "bytes": 120804,
         "height": 384,
-        "sha256": "9547b662348c90b4a23e55f5e5c4ccf8fab9a6ed6fdc95b01c0a78a073f072ba",
-        "src": "data/assets/runtime/characters/giant/giant_seq4.384.9547b662348c90b4.webp",
+        "sha256": "7753cbb26b1f9cf7b13ba44224350c7f316b2dcee60aacd22667abc1d8c5251b",
+        "src": "data/assets/runtime/characters/giant/giant_seq4.384.7753cbb26b1f9cf7.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1302578,
+        "bytes": 1322585,
         "height": 1254,
-        "sha256": "1a237bc6dec0048f2e0b1da59711b3a2a1950e9311ba1ce0336951d34d4cd913",
-        "src": "data/assets/characters/giant/giant_seq4.png?v=1a237bc6dec0048f",
+        "sha256": "23db306fd4322a1d7139a273878e8282b483788c6f05cfe1bb12f68371123422",
+        "src": "data/assets/revisions/giant/giant_seq4.png?v=23db306fd4322a1d",
         "width": 1254
       },
       "portrait": {
-        "bytes": 34784,
+        "bytes": 38388,
         "height": 192,
-        "sha256": "a2294e9a8c33caef685227b497e4a1abaace7d9da4bccbcdc5b802e0e52886f4",
-        "src": "data/assets/runtime/characters/giant/giant_seq4.192.a2294e9a8c33caef.webp",
+        "sha256": "a815995bd9e4cbcf29384eeeb538dc474e9a5c43d80d3a427ff81a83cbeeec53",
+        "src": "data/assets/runtime/characters/giant/giant_seq4.192.a815995bd9e4cbcf.webp",
         "width": 192
       },
       "source": {
@@ -3151,25 +3333,32 @@
       }
     },
     "data/assets/characters/giant/giant_seq5.png": {
+      "artwork": {
+        "bytes": 1571607,
+        "height": 1254,
+        "sha256": "a5d2718358f94f4871afb5dbf11f37ec574299bf502a77e162a45177bf58d507",
+        "src": "data/assets/revisions/giant/giant_seq5.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 138784,
+        "bytes": 152408,
         "height": 384,
-        "sha256": "4827663a4e06eec2be9dd2d45f3b90f2ce86aa0cefacfd992f680931b2830eb7",
-        "src": "data/assets/runtime/characters/giant/giant_seq5.384.4827663a4e06eec2.webp",
+        "sha256": "df723f17c840103444e7aad93375f07e6616e8f1a42790907c1d4f2ae7ac24c3",
+        "src": "data/assets/runtime/characters/giant/giant_seq5.384.df723f17c8401034.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1493580,
+        "bytes": 1571607,
         "height": 1254,
-        "sha256": "f14b6aaf6e801b4a7cda2a5bb479c4b2fc5cc9093af7f4353ccfc0119d5482a6",
-        "src": "data/assets/characters/giant/giant_seq5.png?v=f14b6aaf6e801b4a",
+        "sha256": "a5d2718358f94f4871afb5dbf11f37ec574299bf502a77e162a45177bf58d507",
+        "src": "data/assets/revisions/giant/giant_seq5.png?v=a5d2718358f94f48",
         "width": 1254
       },
       "portrait": {
-        "bytes": 42068,
+        "bytes": 46106,
         "height": 192,
-        "sha256": "e824137f105730019748fabbbb7085b86ad2d07c3d019ba9340d08c0ada92578",
-        "src": "data/assets/runtime/characters/giant/giant_seq5.192.e824137f10573001.webp",
+        "sha256": "f66c51a9e201e27a1753a963c83bc8af3722c35ac77dbdb0e9f165f6b764abee",
+        "src": "data/assets/runtime/characters/giant/giant_seq5.192.f66c51a9e201e27a.webp",
         "width": 192
       },
       "source": {
@@ -3181,25 +3370,32 @@
       }
     },
     "data/assets/characters/giant/giant_seq6.png": {
+      "artwork": {
+        "bytes": 911344,
+        "height": 1254,
+        "sha256": "a964fa86ef7e8fa6f2db59c808cb12ffcfeef70dbdda939549e87ff4c78b0cd9",
+        "src": "data/assets/revisions/giant/giant_seq6.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 105584,
+        "bytes": 87592,
         "height": 384,
-        "sha256": "b6b60a283b2c52caa192054208d69b7baebb12311f56084548821adc98858444",
-        "src": "data/assets/runtime/characters/giant/giant_seq6.384.b6b60a283b2c52ca.webp",
+        "sha256": "c504a06b8039780a6d3a6f1ef028be7411dd9f5b0417b2737cd951b3a8193e9a",
+        "src": "data/assets/runtime/characters/giant/giant_seq6.384.c504a06b8039780a.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1243961,
+        "bytes": 911344,
         "height": 1254,
-        "sha256": "cfa547f5578c79d90ed0f35d83061033b52614d221a9685ff5800ecd33beb4b9",
-        "src": "data/assets/characters/giant/giant_seq6.png?v=cfa547f5578c79d9",
+        "sha256": "a964fa86ef7e8fa6f2db59c808cb12ffcfeef70dbdda939549e87ff4c78b0cd9",
+        "src": "data/assets/revisions/giant/giant_seq6.png?v=a964fa86ef7e8fa6",
         "width": 1254
       },
       "portrait": {
-        "bytes": 34038,
+        "bytes": 29974,
         "height": 192,
-        "sha256": "ea151e909467c6eae31d6fa77655e06f09a8c7d5fce4a06d57b713f3f892a6cf",
-        "src": "data/assets/runtime/characters/giant/giant_seq6.192.ea151e909467c6ea.webp",
+        "sha256": "3a2d8bcd4f2fc807e5980beaccfcec51bb3b4ece60b7517085f45b9dc87400ba",
+        "src": "data/assets/runtime/characters/giant/giant_seq6.192.3a2d8bcd4f2fc807.webp",
         "width": 192
       },
       "source": {
@@ -3991,25 +4187,32 @@
       }
     },
     "data/assets/characters/justiciar/justiciar_seq0.png": {
+      "artwork": {
+        "bytes": 1561664,
+        "height": 1254,
+        "sha256": "2191a32ecc7e118ed6a5cdbb59c48bdf4263ef66a23f68db8179eff776bbc437",
+        "src": "data/assets/revisions/justiciar/justiciar_seq0.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 110060,
+        "bytes": 147584,
         "height": 384,
-        "sha256": "d2a9bfefc4c884f87eb07fbe8262bc852e53badad7fa369c8d7c3aa56a19b51d",
-        "src": "data/assets/runtime/characters/justiciar/justiciar_seq0.384.d2a9bfefc4c884f8.webp",
+        "sha256": "88607716e54e131e6398e87d5b47e3fb4f11e101071f942c79aec53bd000f319",
+        "src": "data/assets/runtime/characters/justiciar/justiciar_seq0.384.88607716e54e131e.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1209683,
-        "height": 1230,
-        "sha256": "442fa91823af6865982d0d1fa435a9fa2bb43ad4ece6e0275b7b89fe9874f18e",
-        "src": "data/assets/characters/justiciar/justiciar_seq0.png?v=442fa91823af6865",
-        "width": 1278
+        "bytes": 1561664,
+        "height": 1254,
+        "sha256": "2191a32ecc7e118ed6a5cdbb59c48bdf4263ef66a23f68db8179eff776bbc437",
+        "src": "data/assets/revisions/justiciar/justiciar_seq0.png?v=2191a32ecc7e118e",
+        "width": 1254
       },
       "portrait": {
-        "bytes": 33466,
+        "bytes": 45428,
         "height": 192,
-        "sha256": "91334638b3cd8b22e645dd5e5fbc0e372fd8a633fc2a45dd6df51e448f2771e1",
-        "src": "data/assets/runtime/characters/justiciar/justiciar_seq0.192.91334638b3cd8b22.webp",
+        "sha256": "9dbf1895d05a8e154cbade225f718d77203a8d90805e49eb0ce1b9641a75e51a",
+        "src": "data/assets/runtime/characters/justiciar/justiciar_seq0.192.9dbf1895d05a8e15.webp",
         "width": 192
       },
       "source": {
@@ -4021,25 +4224,32 @@
       }
     },
     "data/assets/characters/justiciar/justiciar_seq1.png": {
+      "artwork": {
+        "bytes": 1550489,
+        "height": 1254,
+        "sha256": "6859bee452c45934c51491a9ef2f6151ca08bad953856c957188d1d4e2b3ad91",
+        "src": "data/assets/revisions/justiciar/justiciar_seq1.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 120896,
+        "bytes": 149236,
         "height": 384,
-        "sha256": "76a23639c98a87234798ed1ae9d0b5cfa6cbb1b2f93e1ef825def45df3d06439",
-        "src": "data/assets/runtime/characters/justiciar/justiciar_seq1.384.76a23639c98a8723.webp",
+        "sha256": "9c978d456f9d8dff59fabfd26b956079b2b889bb5240c37f168526ffc010b0eb",
+        "src": "data/assets/runtime/characters/justiciar/justiciar_seq1.384.9c978d456f9d8dff.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1295569,
-        "height": 1230,
-        "sha256": "a00ca9e992bdd9020376ed1d03e6156e755be114ce1c1fbd3a17f9ba600c6f40",
-        "src": "data/assets/characters/justiciar/justiciar_seq1.png?v=a00ca9e992bdd902",
-        "width": 1278
+        "bytes": 1550489,
+        "height": 1254,
+        "sha256": "6859bee452c45934c51491a9ef2f6151ca08bad953856c957188d1d4e2b3ad91",
+        "src": "data/assets/revisions/justiciar/justiciar_seq1.png?v=6859bee452c45934",
+        "width": 1254
       },
       "portrait": {
-        "bytes": 36924,
+        "bytes": 46356,
         "height": 192,
-        "sha256": "f440c9c0c29e65cfda10e7fc93b6e809def04fdd1a9cae290003be5379760343",
-        "src": "data/assets/runtime/characters/justiciar/justiciar_seq1.192.f440c9c0c29e65cf.webp",
+        "sha256": "93c14a54f51f146d3f5b533f7af23ae20bd5f00609ed89c66e872084e001e83d",
+        "src": "data/assets/runtime/characters/justiciar/justiciar_seq1.192.93c14a54f51f146d.webp",
         "width": 192
       },
       "source": {
@@ -4051,25 +4261,32 @@
       }
     },
     "data/assets/characters/justiciar/justiciar_seq2.png": {
+      "artwork": {
+        "bytes": 1846779,
+        "height": 1254,
+        "sha256": "81ba8b82898366ec54d5937f9f111347ea8bed2cb718f76c30090a37edf85a1d",
+        "src": "data/assets/revisions/justiciar/justiciar_seq2.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 134234,
+        "bytes": 176966,
         "height": 384,
-        "sha256": "8a1b3acd8145b7c2414d16c9c27c019a5ef8eac562ab496dacfd685d2815e38b",
-        "src": "data/assets/runtime/characters/justiciar/justiciar_seq2.384.8a1b3acd8145b7c2.webp",
+        "sha256": "9a28fc0e68ab4179447cdcd0de5c5f594afd37a24a7da05d06ed131138e9ae01",
+        "src": "data/assets/runtime/characters/justiciar/justiciar_seq2.384.9a28fc0e68ab4179.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1482628,
-        "height": 1230,
-        "sha256": "30ac6b5bfc800c3ac43886d8a8caff2fc0f8b788f0a932008d6712b4af6bea94",
-        "src": "data/assets/characters/justiciar/justiciar_seq2.png?v=30ac6b5bfc800c3a",
-        "width": 1278
+        "bytes": 1846779,
+        "height": 1254,
+        "sha256": "81ba8b82898366ec54d5937f9f111347ea8bed2cb718f76c30090a37edf85a1d",
+        "src": "data/assets/revisions/justiciar/justiciar_seq2.png?v=81ba8b82898366ec",
+        "width": 1254
       },
       "portrait": {
-        "bytes": 41370,
+        "bytes": 56134,
         "height": 192,
-        "sha256": "7b7543bd30f1579bca6126a01bf2487564ef64eea61626a55f2008a942a19930",
-        "src": "data/assets/runtime/characters/justiciar/justiciar_seq2.192.7b7543bd30f1579b.webp",
+        "sha256": "5ec78e1498625574ab96c6b4fe39b3fc6e5cbc92de1e13af14f31d38f8aab198",
+        "src": "data/assets/runtime/characters/justiciar/justiciar_seq2.192.5ec78e1498625574.webp",
         "width": 192
       },
       "source": {
@@ -4081,25 +4298,32 @@
       }
     },
     "data/assets/characters/justiciar/justiciar_seq3.png": {
+      "artwork": {
+        "bytes": 1483619,
+        "height": 1254,
+        "sha256": "cccad008a884c343470351181453090fbed41a0501ae71cd71f3d054cdd2eb8a",
+        "src": "data/assets/revisions/justiciar/justiciar_seq3.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 122368,
+        "bytes": 141170,
         "height": 384,
-        "sha256": "5318e518acdad64b078498c35fa07118c2265ff25ff8e1acb42aed2c620f005a",
-        "src": "data/assets/runtime/characters/justiciar/justiciar_seq3.384.5318e518acdad64b.webp",
+        "sha256": "8a9954561a87f6cf919354245b409c380b83e490a5983db8356267b80643cc2c",
+        "src": "data/assets/runtime/characters/justiciar/justiciar_seq3.384.8a9954561a87f6cf.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1329940,
-        "height": 1230,
-        "sha256": "aac850c9b1974b0264699d1ef84eeb9ea41e7c37eba5fe91959dcd13f6a36fe1",
-        "src": "data/assets/characters/justiciar/justiciar_seq3.png?v=aac850c9b1974b02",
-        "width": 1278
+        "bytes": 1483619,
+        "height": 1254,
+        "sha256": "cccad008a884c343470351181453090fbed41a0501ae71cd71f3d054cdd2eb8a",
+        "src": "data/assets/revisions/justiciar/justiciar_seq3.png?v=cccad008a884c343",
+        "width": 1254
       },
       "portrait": {
-        "bytes": 37168,
+        "bytes": 43440,
         "height": 192,
-        "sha256": "4a24cad550321abcacf13ac3ae0bbab7923ebbb2c165182033d88a7a3a7b4744",
-        "src": "data/assets/runtime/characters/justiciar/justiciar_seq3.192.4a24cad550321abc.webp",
+        "sha256": "43cda66ff47a6325311aceed3aa824d2ad27bd5b61f0f33edc6daab3ff00c07f",
+        "src": "data/assets/runtime/characters/justiciar/justiciar_seq3.192.43cda66ff47a6325.webp",
         "width": 192
       },
       "source": {
@@ -4111,25 +4335,32 @@
       }
     },
     "data/assets/characters/justiciar/justiciar_seq4.png": {
+      "artwork": {
+        "bytes": 1369594,
+        "height": 1254,
+        "sha256": "a9fb84da5f2bf390c5bb0098de54c5d8125f916109ec49a78c5b1d1416423c08",
+        "src": "data/assets/revisions/justiciar/justiciar_seq4.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 104856,
+        "bytes": 136112,
         "height": 384,
-        "sha256": "4192fd29e0d4e19dee81c07ab558c9cda4b90b9f8c7cabfaebd794726af1c893",
-        "src": "data/assets/runtime/characters/justiciar/justiciar_seq4.384.4192fd29e0d4e19d.webp",
+        "sha256": "a55331d236a4548ea43bf06485964a686a5db143f90e1620e851d759d9ab86c0",
+        "src": "data/assets/runtime/characters/justiciar/justiciar_seq4.384.a55331d236a4548e.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1103839,
-        "height": 1230,
-        "sha256": "3cc6172964f6de41f02bd938fbc43949f3551e5be86ef39549191905413c463f",
-        "src": "data/assets/characters/justiciar/justiciar_seq4.png?v=3cc6172964f6de41",
-        "width": 1278
+        "bytes": 1369594,
+        "height": 1254,
+        "sha256": "a9fb84da5f2bf390c5bb0098de54c5d8125f916109ec49a78c5b1d1416423c08",
+        "src": "data/assets/revisions/justiciar/justiciar_seq4.png?v=a9fb84da5f2bf390",
+        "width": 1254
       },
       "portrait": {
-        "bytes": 34280,
+        "bytes": 41820,
         "height": 192,
-        "sha256": "6f6b8068e773a195ff1bd9b622aed484baac76e5b51a33d634969503ee71b279",
-        "src": "data/assets/runtime/characters/justiciar/justiciar_seq4.192.6f6b8068e773a195.webp",
+        "sha256": "0f38fb4fe37b4df04859f92951074fe27d19d5c772f2d1788b0ddd41fc5395a3",
+        "src": "data/assets/runtime/characters/justiciar/justiciar_seq4.192.0f38fb4fe37b4df0.webp",
         "width": 192
       },
       "source": {
@@ -4141,25 +4372,32 @@
       }
     },
     "data/assets/characters/justiciar/justiciar_seq5.png": {
+      "artwork": {
+        "bytes": 1246808,
+        "height": 1254,
+        "sha256": "bbc4b7350e562ff7c9e369dc10419fad0a510a885ed86abd7cd0c22d1d801742",
+        "src": "data/assets/revisions/justiciar/justiciar_seq5.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 74114,
+        "bytes": 124706,
         "height": 384,
-        "sha256": "a4cc86aa8133962ac3bd4f6ea6d3c32c13578de271ede5a0f2fd5388bc2ca087",
-        "src": "data/assets/runtime/characters/justiciar/justiciar_seq5.384.a4cc86aa8133962a.webp",
+        "sha256": "4c123835b752a51a3679fa7b22dc72da9e200ab08c1c53be2939f2efd0fe9a5a",
+        "src": "data/assets/runtime/characters/justiciar/justiciar_seq5.384.4c123835b752a51a.webp",
         "width": 384
       },
       "full": {
-        "bytes": 813836,
-        "height": 1230,
-        "sha256": "1e1d253cdc7014b7783d3a4574041841428883247e6b1b8634cd755cd5b3d45d",
-        "src": "data/assets/characters/justiciar/justiciar_seq5.png?v=1e1d253cdc7014b7",
-        "width": 1278
+        "bytes": 1246808,
+        "height": 1254,
+        "sha256": "bbc4b7350e562ff7c9e369dc10419fad0a510a885ed86abd7cd0c22d1d801742",
+        "src": "data/assets/revisions/justiciar/justiciar_seq5.png?v=bbc4b7350e562ff7",
+        "width": 1254
       },
       "portrait": {
-        "bytes": 23970,
+        "bytes": 38106,
         "height": 192,
-        "sha256": "aa6b9a8209f0c91a84a2503585ca4edf833b1b7a523bf24c94ee9431b4887d17",
-        "src": "data/assets/runtime/characters/justiciar/justiciar_seq5.192.aa6b9a8209f0c91a.webp",
+        "sha256": "2272ab6044ba43d7cdf6af5dbf7e0f119a102beb277f566cfd0c665ed5c1a1ba",
+        "src": "data/assets/runtime/characters/justiciar/justiciar_seq5.192.2272ab6044ba43d7.webp",
         "width": 192
       },
       "source": {
@@ -4171,25 +4409,32 @@
       }
     },
     "data/assets/characters/justiciar/justiciar_seq6.png": {
+      "artwork": {
+        "bytes": 1070661,
+        "height": 1254,
+        "sha256": "a505b74996c9d2a62346de9b3dfca5dd622848e13d190d5f968ef8ccfca1eefc",
+        "src": "data/assets/revisions/justiciar/justiciar_seq6.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 72890,
+        "bytes": 98874,
         "height": 384,
-        "sha256": "640871fc9c26277dcb9735c7a4763a7a083b7b187ce9ea99ad99373fddf5d5a6",
-        "src": "data/assets/runtime/characters/justiciar/justiciar_seq6.384.640871fc9c26277d.webp",
+        "sha256": "681b6dabc0b2711c1f72a931b7fc2d2d9e277a9bc3ef4b854ceb916ec0b55771",
+        "src": "data/assets/runtime/characters/justiciar/justiciar_seq6.384.681b6dabc0b2711c.webp",
         "width": 384
       },
       "full": {
-        "bytes": 804464,
-        "height": 1230,
-        "sha256": "ff374aaa75cfcbfbde9ba172b84fc90ab7a1f4687b1b1bb19fd032843c64d8fd",
-        "src": "data/assets/characters/justiciar/justiciar_seq6.png?v=ff374aaa75cfcbfb",
-        "width": 1278
+        "bytes": 1070661,
+        "height": 1254,
+        "sha256": "a505b74996c9d2a62346de9b3dfca5dd622848e13d190d5f968ef8ccfca1eefc",
+        "src": "data/assets/revisions/justiciar/justiciar_seq6.png?v=a505b74996c9d2a6",
+        "width": 1254
       },
       "portrait": {
-        "bytes": 24454,
+        "bytes": 30072,
         "height": 192,
-        "sha256": "bfa68dba8047586c57c20dad47d0cfaaae2c1093252800382549786b058418f2",
-        "src": "data/assets/runtime/characters/justiciar/justiciar_seq6.192.bfa68dba8047586c.webp",
+        "sha256": "a8ef14638a451a7957ee8680df2b91f0a01a578d3bf3e6b096d6ca9cfa969584",
+        "src": "data/assets/runtime/characters/justiciar/justiciar_seq6.192.a8ef14638a451a79.webp",
         "width": 192
       },
       "source": {
@@ -4201,25 +4446,32 @@
       }
     },
     "data/assets/characters/justiciar/justiciar_seq7.png": {
+      "artwork": {
+        "bytes": 899908,
+        "height": 1254,
+        "sha256": "4a0babfd92c2c9013b19cf3024225c634a1f84fbdfe66bfdbbc2ca42ccae4627",
+        "src": "data/assets/revisions/justiciar/justiciar_seq7.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 55240,
+        "bytes": 84884,
         "height": 384,
-        "sha256": "caf646e7a2841f11bd19099806e43b7ece5f09514854a7091f94b7c6dbe3ffb4",
-        "src": "data/assets/runtime/characters/justiciar/justiciar_seq7.384.caf646e7a2841f11.webp",
+        "sha256": "45441ce84be7ede0b89e07f4a345a5381bd41b6f674aaf324508710d16da12c9",
+        "src": "data/assets/runtime/characters/justiciar/justiciar_seq7.384.45441ce84be7ede0.webp",
         "width": 384
       },
       "full": {
-        "bytes": 634308,
-        "height": 1230,
-        "sha256": "b1055363fc15cfce1d9e8b2929597d3e9895879dadd7234ea776c8d37bbbf3a6",
-        "src": "data/assets/characters/justiciar/justiciar_seq7.png?v=b1055363fc15cfce",
-        "width": 1278
+        "bytes": 899908,
+        "height": 1254,
+        "sha256": "4a0babfd92c2c9013b19cf3024225c634a1f84fbdfe66bfdbbc2ca42ccae4627",
+        "src": "data/assets/revisions/justiciar/justiciar_seq7.png?v=4a0babfd92c2c901",
+        "width": 1254
       },
       "portrait": {
-        "bytes": 17820,
+        "bytes": 25802,
         "height": 192,
-        "sha256": "c4ac7616b7358ffc1a54781ed8eec3d0b6fc2ee91f34b10a8604f123005fa380",
-        "src": "data/assets/runtime/characters/justiciar/justiciar_seq7.192.c4ac7616b7358ffc.webp",
+        "sha256": "8f1821ad8261116fd2c800f344ef643747e07f3fc7dd92f65052dc00ca448598",
+        "src": "data/assets/runtime/characters/justiciar/justiciar_seq7.192.8f1821ad8261116f.webp",
         "width": 192
       },
       "source": {
@@ -4231,25 +4483,32 @@
       }
     },
     "data/assets/characters/justiciar/justiciar_seq8.png": {
+      "artwork": {
+        "bytes": 965295,
+        "height": 1254,
+        "sha256": "5065d483bea04c1e1446645796eb3c3d651a80110a784464d295d254769079b2",
+        "src": "data/assets/revisions/justiciar/justiciar_seq8.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 58008,
+        "bytes": 93262,
         "height": 384,
-        "sha256": "3de64e2c6514840655ff54ac10b60ac86d3c01b60e55dfbba00b384a885d0129",
-        "src": "data/assets/runtime/characters/justiciar/justiciar_seq8.384.3de64e2c65148406.webp",
+        "sha256": "20ac197eb5e750dfd07ca4e330e91979820dfb61dccb3e6d33dbddd986bd74d9",
+        "src": "data/assets/runtime/characters/justiciar/justiciar_seq8.384.20ac197eb5e750df.webp",
         "width": 384
       },
       "full": {
-        "bytes": 664900,
-        "height": 1230,
-        "sha256": "14f3094afdac8ca83dfee0c69a0221954b389b966bee472767b00b0a0818000b",
-        "src": "data/assets/characters/justiciar/justiciar_seq8.png?v=14f3094afdac8ca8",
-        "width": 1278
+        "bytes": 965295,
+        "height": 1254,
+        "sha256": "5065d483bea04c1e1446645796eb3c3d651a80110a784464d295d254769079b2",
+        "src": "data/assets/revisions/justiciar/justiciar_seq8.png?v=5065d483bea04c1e",
+        "width": 1254
       },
       "portrait": {
-        "bytes": 18540,
+        "bytes": 28690,
         "height": 192,
-        "sha256": "31f75aa6bb9921f7287247e4c8c0bd7a50d2ef55c62e489e270456af01cc4fa6",
-        "src": "data/assets/runtime/characters/justiciar/justiciar_seq8.192.31f75aa6bb9921f7.webp",
+        "sha256": "c2adfb63667177074be679fc905083df6e079e07a0648bcada13453ed61e29b0",
+        "src": "data/assets/runtime/characters/justiciar/justiciar_seq8.192.c2adfb6366717707.webp",
         "width": 192
       },
       "source": {
@@ -4261,25 +4520,32 @@
       }
     },
     "data/assets/characters/justiciar/justiciar_seq9.png": {
+      "artwork": {
+        "bytes": 981863,
+        "height": 1254,
+        "sha256": "5d9557557585ddc0c74cb90fb3c061d3cbddf31aea80dc2116c9a9688e262381",
+        "src": "data/assets/revisions/justiciar/justiciar_seq9.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 52602,
+        "bytes": 93596,
         "height": 384,
-        "sha256": "aa33b17eff025ca4cfc5378a48f282cbad4b619345157d22ad9a68145d0ad530",
-        "src": "data/assets/runtime/characters/justiciar/justiciar_seq9.384.aa33b17eff025ca4.webp",
+        "sha256": "d2246972dbb849026f4f5b82cae1d66e60141bb396b34e30b0f682d535dfa4b0",
+        "src": "data/assets/runtime/characters/justiciar/justiciar_seq9.384.d2246972dbb84902.webp",
         "width": 384
       },
       "full": {
-        "bytes": 578897,
-        "height": 1230,
-        "sha256": "e3962b494438fb2807530644174cafdb131aa6589324e28f34d61ff7974da813",
-        "src": "data/assets/characters/justiciar/justiciar_seq9.png?v=e3962b494438fb28",
-        "width": 1278
+        "bytes": 981863,
+        "height": 1254,
+        "sha256": "5d9557557585ddc0c74cb90fb3c061d3cbddf31aea80dc2116c9a9688e262381",
+        "src": "data/assets/revisions/justiciar/justiciar_seq9.png?v=5d9557557585ddc0",
+        "width": 1254
       },
       "portrait": {
-        "bytes": 17078,
+        "bytes": 28448,
         "height": 192,
-        "sha256": "f8ebbeae809dfc419d7d06cc6eaa26d5fe97cae3dbd16d8821213d4f364c9d6d",
-        "src": "data/assets/runtime/characters/justiciar/justiciar_seq9.192.f8ebbeae809dfc41.webp",
+        "sha256": "1c48d6427c9c8749682c8b816117972323def12a8ae0ad4fa0cf24fdac009285",
+        "src": "data/assets/runtime/characters/justiciar/justiciar_seq9.192.1c48d6427c9c8749.webp",
         "width": 192
       },
       "source": {
@@ -4321,25 +4587,32 @@
       }
     },
     "data/assets/characters/moon/moon_seq0.png": {
+      "artwork": {
+        "bytes": 1771400,
+        "height": 1254,
+        "sha256": "4f9fa55b0ed1a931a1b91e1a55c9649edbcd2a5233c58f324d771d684df7f6bc",
+        "src": "data/assets/revisions/moon/moon_seq0.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 137150,
+        "bytes": 155726,
         "height": 384,
-        "sha256": "6165f5e8ab762ed54f2104f738a2f3b27b3a9c5cd35c39bd4ac82bda88848c12",
-        "src": "data/assets/runtime/characters/moon/moon_seq0.384.6165f5e8ab762ed5.webp",
+        "sha256": "481f0b7eac258c9b71ab7f3d194ca633f19ceead61babe501f78d38d5809dcef",
+        "src": "data/assets/runtime/characters/moon/moon_seq0.384.481f0b7eac258c9b.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1501721,
+        "bytes": 1771400,
         "height": 1254,
-        "sha256": "9d8dfc3e10ce2723239b9cfc05c2d3dd1bdffb1c4fd4b328f9fcd260f448be4f",
-        "src": "data/assets/characters/moon/moon_seq0.png?v=9d8dfc3e10ce2723",
+        "sha256": "4f9fa55b0ed1a931a1b91e1a55c9649edbcd2a5233c58f324d771d684df7f6bc",
+        "src": "data/assets/revisions/moon/moon_seq0.png?v=4f9fa55b0ed1a931",
         "width": 1254
       },
       "portrait": {
-        "bytes": 40844,
+        "bytes": 46522,
         "height": 192,
-        "sha256": "32b5e8647770bc2c927c7e9a98485f7cf86977b541a649b457087e16658af1d7",
-        "src": "data/assets/runtime/characters/moon/moon_seq0.192.32b5e8647770bc2c.webp",
+        "sha256": "47bfac81701632636978cf39537ca3fd5b64c2fc385ef76e06274495725b8ce5",
+        "src": "data/assets/runtime/characters/moon/moon_seq0.192.47bfac8170163263.webp",
         "width": 192
       },
       "source": {
@@ -4351,25 +4624,32 @@
       }
     },
     "data/assets/characters/moon/moon_seq1.png": {
+      "artwork": {
+        "bytes": 1598843,
+        "height": 1254,
+        "sha256": "ae1277572bfbf536e9efb2568567c3d150e0dad6a243746eae67e2539e7c09af",
+        "src": "data/assets/revisions/moon/moon_seq1.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 106156,
+        "bytes": 143680,
         "height": 384,
-        "sha256": "3bc06df94ad5badaad3130b20724cd9d936ec049f62ba635b6686296c821d8d6",
-        "src": "data/assets/runtime/characters/moon/moon_seq1.384.3bc06df94ad5bada.webp",
+        "sha256": "dbb2467ddb91fca03df475462291958e3413de2873fb36cfc2a0035f8796a6a6",
+        "src": "data/assets/runtime/characters/moon/moon_seq1.384.dbb2467ddb91fca0.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1155619,
+        "bytes": 1598843,
         "height": 1254,
-        "sha256": "430a445875ece0345f1129ef9e5a7de68c563db5f9805459f66d0fa1ca02fdde",
-        "src": "data/assets/characters/moon/moon_seq1.png?v=430a445875ece034",
+        "sha256": "ae1277572bfbf536e9efb2568567c3d150e0dad6a243746eae67e2539e7c09af",
+        "src": "data/assets/revisions/moon/moon_seq1.png?v=ae1277572bfbf536",
         "width": 1254
       },
       "portrait": {
-        "bytes": 33274,
+        "bytes": 43220,
         "height": 192,
-        "sha256": "ab46366506f1aaa07639b755298c0f4e65bf6d5653499776ded30aca80218e91",
-        "src": "data/assets/runtime/characters/moon/moon_seq1.192.ab46366506f1aaa0.webp",
+        "sha256": "1ce10309891a1db37330832ae3a2d961da11877100bf4017ea4991dc2318ca10",
+        "src": "data/assets/runtime/characters/moon/moon_seq1.192.1ce10309891a1db3.webp",
         "width": 192
       },
       "source": {
@@ -4651,25 +4931,32 @@
       }
     },
     "data/assets/characters/mother/mother_seq0.png": {
+      "artwork": {
+        "bytes": 1527577,
+        "height": 1254,
+        "sha256": "dabfd3f0d2a4e4f1435a30a64329dad371ad31f8b0410769ad26d7a50bc554ba",
+        "src": "data/assets/revisions/mother/mother_seq0.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 143232,
+        "bytes": 145590,
         "height": 384,
-        "sha256": "7704a746c4481b1543c13c740212bfd8490d96465bb57b9358ed48b58f454d66",
-        "src": "data/assets/runtime/characters/mother/mother_seq0.384.7704a746c4481b15.webp",
+        "sha256": "43ce90a26e644781738769b24b5610cf33b04fc32dfebef6d97f8b32b406c214",
+        "src": "data/assets/runtime/characters/mother/mother_seq0.384.43ce90a26e644781.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1439050,
+        "bytes": 1527577,
         "height": 1254,
-        "sha256": "ca04e4a7ea96f8d3c18fe789655f009a7e76f710bd29737dad2cd87c5e6319f4",
-        "src": "data/assets/characters/mother/mother_seq0.png?v=ca04e4a7ea96f8d3",
+        "sha256": "dabfd3f0d2a4e4f1435a30a64329dad371ad31f8b0410769ad26d7a50bc554ba",
+        "src": "data/assets/revisions/mother/mother_seq0.png?v=dabfd3f0d2a4e4f1",
         "width": 1254
       },
       "portrait": {
-        "bytes": 45654,
+        "bytes": 44326,
         "height": 192,
-        "sha256": "aab6e6aade3d3d6b44015395de1b17691b08cba9e6ccbe44388bf72b533f5656",
-        "src": "data/assets/runtime/characters/mother/mother_seq0.192.aab6e6aade3d3d6b.webp",
+        "sha256": "984982609e3fca7b2c247a53cbf06b38c369f0377d0571d689fc8661d23b0222",
+        "src": "data/assets/runtime/characters/mother/mother_seq0.192.984982609e3fca7b.webp",
         "width": 192
       },
       "source": {
@@ -4681,25 +4968,32 @@
       }
     },
     "data/assets/characters/mother/mother_seq1.png": {
+      "artwork": {
+        "bytes": 1606355,
+        "height": 1254,
+        "sha256": "c68b75ffbed8667590af5f70c29d891fd01aa505321a7c34a427a157a790d4c8",
+        "src": "data/assets/revisions/mother/mother_seq1.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 152916,
+        "bytes": 152280,
         "height": 384,
-        "sha256": "a9add2b4ebe915d41c0174f95ff2717f377b63d83879da31a3fb5b0d71a3da18",
-        "src": "data/assets/runtime/characters/mother/mother_seq1.384.a9add2b4ebe915d4.webp",
+        "sha256": "2ef2faed8c8dc243aa46dfb16e18a727c0bd6d69667b313d028b3edd484336e6",
+        "src": "data/assets/runtime/characters/mother/mother_seq1.384.2ef2faed8c8dc243.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1563246,
+        "bytes": 1606355,
         "height": 1254,
-        "sha256": "e11327816ed54f85e2a50229c5b7c998e01bba0cb895c1124ae8acb3c5c289c4",
-        "src": "data/assets/characters/mother/mother_seq1.png?v=e11327816ed54f85",
+        "sha256": "c68b75ffbed8667590af5f70c29d891fd01aa505321a7c34a427a157a790d4c8",
+        "src": "data/assets/revisions/mother/mother_seq1.png?v=c68b75ffbed86675",
         "width": 1254
       },
       "portrait": {
-        "bytes": 46992,
+        "bytes": 49296,
         "height": 192,
-        "sha256": "5bab72dda840107ca998d03084c9aa2e03685e0f6476b3ab603057f6f2aa38ad",
-        "src": "data/assets/runtime/characters/mother/mother_seq1.192.5bab72dda840107c.webp",
+        "sha256": "8ae3a3522e19a30b16e2dbc7ef0f591037269fdb1a82048e05ffc0e039dae6b1",
+        "src": "data/assets/runtime/characters/mother/mother_seq1.192.8ae3a3522e19a30b.webp",
         "width": 192
       },
       "source": {
@@ -4801,25 +5095,32 @@
       }
     },
     "data/assets/characters/mother/mother_seq5.png": {
+      "artwork": {
+        "bytes": 1285915,
+        "height": 1254,
+        "sha256": "3e14ad878f5861f7ec1735f5f79bc18a0d96781eae33b15d079c82e66ec456a9",
+        "src": "data/assets/revisions/mother/mother_seq5.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 114430,
+        "bytes": 122742,
         "height": 384,
-        "sha256": "cd7bf965a248a1bdb4933b34d8306dd4bd67b286ec0535ae9c578caf96b28502",
-        "src": "data/assets/runtime/characters/mother/mother_seq5.384.cd7bf965a248a1bd.webp",
+        "sha256": "5a40297c89f38e80f511d45f98d663701c85b7f6a64e04302c50b4dbed660f3d",
+        "src": "data/assets/runtime/characters/mother/mother_seq5.384.5a40297c89f38e80.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1220765,
+        "bytes": 1285915,
         "height": 1254,
-        "sha256": "a17a6a360620185633a96a3772552ec07b502baafd1ed64202a496c3cecee13e",
-        "src": "data/assets/characters/mother/mother_seq5.png?v=a17a6a3606201856",
+        "sha256": "3e14ad878f5861f7ec1735f5f79bc18a0d96781eae33b15d079c82e66ec456a9",
+        "src": "data/assets/revisions/mother/mother_seq5.png?v=3e14ad878f5861f7",
         "width": 1254
       },
       "portrait": {
-        "bytes": 36406,
+        "bytes": 40278,
         "height": 192,
-        "sha256": "cff4de51f0972a5fc7799de913efaaea14fdc9146d879da1059fef77b25daca3",
-        "src": "data/assets/runtime/characters/mother/mother_seq5.192.cff4de51f0972a5f.webp",
+        "sha256": "ed00d27d85192fc11f6a887284b29c9bc1226859907ed55dd6ac21b6f13d7b85",
+        "src": "data/assets/runtime/characters/mother/mother_seq5.192.ed00d27d85192fc1.webp",
         "width": 192
       },
       "source": {
@@ -5281,25 +5582,32 @@
       }
     },
     "data/assets/characters/redpriest/redpriest_mythical.png": {
+      "artwork": {
+        "bytes": 2371273,
+        "height": 1254,
+        "sha256": "52e6df74637a9153036a785f27b913127d88b6cba2a1b8a1b0bfdf4ec32ac77c",
+        "src": "data/assets/revisions/redpriest/redpriest_mythical.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 281330,
+        "bytes": 237116,
         "height": 384,
-        "sha256": "ae0dd08e1895e197ce59c7358135694c58d8ee4a146319b6982afe7e2f2789a5",
-        "src": "data/assets/runtime/characters/redpriest/redpriest_mythical.384.ae0dd08e1895e197.webp",
+        "sha256": "7bc13bb59cc03edd48b511bc98342e1699a6b084f91daafd718d059b58ef6896",
+        "src": "data/assets/runtime/characters/redpriest/redpriest_mythical.384.7bc13bb59cc03edd.webp",
         "width": 384
       },
       "full": {
-        "bytes": 3199180,
-        "height": 1282,
-        "sha256": "eb472e9de933faa8435a3d6e06218634bb8c3323af4a4705c3bbc8801e5e38bc",
-        "src": "data/assets/characters/redpriest/redpriest_mythical.png?v=eb472e9de933faa8",
-        "width": 1227
+        "bytes": 2371273,
+        "height": 1254,
+        "sha256": "52e6df74637a9153036a785f27b913127d88b6cba2a1b8a1b0bfdf4ec32ac77c",
+        "src": "data/assets/revisions/redpriest/redpriest_mythical.png?v=52e6df74637a9153",
+        "width": 1254
       },
       "portrait": {
-        "bytes": 81314,
+        "bytes": 67646,
         "height": 192,
-        "sha256": "52ec887dac239eb1e72e07b224021133e8e46ca31546bcc497ee6dcc2e1a738e",
-        "src": "data/assets/runtime/characters/redpriest/redpriest_mythical.192.52ec887dac239eb1.webp",
+        "sha256": "cad867f332a5c8b8f76dc552cc11050ffb3bb804de5dca19e5cedba7a2812d41",
+        "src": "data/assets/runtime/characters/redpriest/redpriest_mythical.192.cad867f332a5c8b8.webp",
         "width": 192
       },
       "source": {
@@ -5641,25 +5949,32 @@
       }
     },
     "data/assets/characters/sun/sun_seq0.png": {
+      "artwork": {
+        "bytes": 1564864,
+        "height": 1254,
+        "sha256": "62dd7cb1e22b228432b2f14f51dff6562018a3c1c639f402a0ce08ad95c12391",
+        "src": "data/assets/revisions/sun/sun_seq0.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 243154,
+        "bytes": 164714,
         "height": 384,
-        "sha256": "0648222bc4234a0b6bf6bc1074b584833a8dfb01e926b54fa1d643d7bebcef70",
-        "src": "data/assets/runtime/characters/sun/sun_seq0.384.0648222bc4234a0b.webp",
+        "sha256": "74dd562f0e9a889a8d4d97e64b14dc1a9900be5b16ebd800df6f21389c2c8061",
+        "src": "data/assets/runtime/characters/sun/sun_seq0.384.74dd562f0e9a889a.webp",
         "width": 384
       },
       "full": {
-        "bytes": 2290654,
+        "bytes": 1564864,
         "height": 1254,
-        "sha256": "31351affa492a86bd11d825ce034e98b7cd147fcacc0f885835450ead55b4dfa",
-        "src": "data/assets/characters/sun/sun_seq0.png?v=31351affa492a86b",
+        "sha256": "62dd7cb1e22b228432b2f14f51dff6562018a3c1c639f402a0ce08ad95c12391",
+        "src": "data/assets/revisions/sun/sun_seq0.png?v=62dd7cb1e22b2284",
         "width": 1254
       },
       "portrait": {
-        "bytes": 63672,
+        "bytes": 49092,
         "height": 192,
-        "sha256": "98e105fcbb17f943f78af866ce7bf93f87822d1c6a14242e2be9921d972bab96",
-        "src": "data/assets/runtime/characters/sun/sun_seq0.192.98e105fcbb17f943.webp",
+        "sha256": "bbbc36cafbf5b6d53e1b770b485c4c8c9f4b4d2448e68b0f25a8d902e75f4517",
+        "src": "data/assets/runtime/characters/sun/sun_seq0.192.bbbc36cafbf5b6d5.webp",
         "width": 192
       },
       "source": {
@@ -5671,25 +5986,32 @@
       }
     },
     "data/assets/characters/sun/sun_seq1.png": {
+      "artwork": {
+        "bytes": 2085792,
+        "height": 1254,
+        "sha256": "7e9d506620a593e605e6bea5173bdb336bb5724a6f5315632d41966a0ad1a7a3",
+        "src": "data/assets/revisions/sun/sun_seq1.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 229394,
+        "bytes": 210940,
         "height": 384,
-        "sha256": "dcdbdb0831bb8cc62b67ad4ad0e4df48eb37621341307f61282f74a9cc6f73c8",
-        "src": "data/assets/runtime/characters/sun/sun_seq1.384.dcdbdb0831bb8cc6.webp",
+        "sha256": "e4d251d080e8f0e2281c604268c8be4ce426cd736ae59ef5fe554e81dcd94ad9",
+        "src": "data/assets/runtime/characters/sun/sun_seq1.384.e4d251d080e8f0e2.webp",
         "width": 384
       },
       "full": {
-        "bytes": 2278943,
+        "bytes": 2085792,
         "height": 1254,
-        "sha256": "40ec90e86f731c7744d083ae3290809ae17c59526377f18d5c15ee175a40ddce",
-        "src": "data/assets/characters/sun/sun_seq1.png?v=40ec90e86f731c77",
+        "sha256": "7e9d506620a593e605e6bea5173bdb336bb5724a6f5315632d41966a0ad1a7a3",
+        "src": "data/assets/revisions/sun/sun_seq1.png?v=7e9d506620a593e6",
         "width": 1254
       },
       "portrait": {
-        "bytes": 65682,
+        "bytes": 59422,
         "height": 192,
-        "sha256": "b2f9141e6e1c41c99a180cc8801aeaa15f66d397664d52751d325f6eba837b50",
-        "src": "data/assets/runtime/characters/sun/sun_seq1.192.b2f9141e6e1c41c9.webp",
+        "sha256": "7fafea936ee2144c9ba360a8d9043713262dcfa6408d9df53cf6f7cb522f6852",
+        "src": "data/assets/runtime/characters/sun/sun_seq1.192.7fafea936ee2144c.webp",
         "width": 192
       },
       "source": {
@@ -5701,25 +6023,32 @@
       }
     },
     "data/assets/characters/sun/sun_seq2.png": {
+      "artwork": {
+        "bytes": 1969694,
+        "height": 1254,
+        "sha256": "fb4dfe59651132b02a383a6be90a6e74f3d00ecc78ef51b397b83649d7b18d0d",
+        "src": "data/assets/revisions/sun/sun_seq2.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 190708,
+        "bytes": 198986,
         "height": 384,
-        "sha256": "a48cc802c4c0248a3c05395a8d12080825d75612a5b6ad6a20bab5cee221fc28",
-        "src": "data/assets/runtime/characters/sun/sun_seq2.384.a48cc802c4c0248a.webp",
+        "sha256": "68a2741f0c488ea026dba275eb5386935147c2c35bb19c99dbada6e91dca4f0b",
+        "src": "data/assets/runtime/characters/sun/sun_seq2.384.68a2741f0c488ea0.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1857346,
+        "bytes": 1969694,
         "height": 1254,
-        "sha256": "ea21e526c92afe5b9e3127684fca81176f100f9f8f77c822178122108f4076b5",
-        "src": "data/assets/characters/sun/sun_seq2.png?v=ea21e526c92afe5b",
+        "sha256": "fb4dfe59651132b02a383a6be90a6e74f3d00ecc78ef51b397b83649d7b18d0d",
+        "src": "data/assets/revisions/sun/sun_seq2.png?v=fb4dfe59651132b0",
         "width": 1254
       },
       "portrait": {
-        "bytes": 55502,
+        "bytes": 55938,
         "height": 192,
-        "sha256": "71683753484f821502d2f754cf52339398472944034b85d58868fbe8cb7b7d37",
-        "src": "data/assets/runtime/characters/sun/sun_seq2.192.71683753484f8215.webp",
+        "sha256": "355d0f608aeeb6fc60e1f18ab75a9b94b4ebe9e477489c24f5f06eab8b1b07b1",
+        "src": "data/assets/runtime/characters/sun/sun_seq2.192.355d0f608aeeb6fc.webp",
         "width": 192
       },
       "source": {
@@ -6301,25 +6630,32 @@
       }
     },
     "data/assets/characters/visionary/visionary_seq0.png": {
+      "artwork": {
+        "bytes": 2133487,
+        "height": 1254,
+        "sha256": "a82bb72202601d13a6fcfa5b99f1913832d2c150cb1859d97b6d409dd796b7b9",
+        "src": "data/assets/revisions/visionary/visionary_seq0.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 185952,
+        "bytes": 200706,
         "height": 384,
-        "sha256": "39654e60ef0c0a9d7ddb7445e5dec1dbced86fba31717323658baea9576ac218",
-        "src": "data/assets/runtime/characters/visionary/visionary_seq0.384.39654e60ef0c0a9d.webp",
+        "sha256": "404d0c5240ee632cbbba53ddd4bbc0ecace77553e4cc886c4eae1fb70669f9d0",
+        "src": "data/assets/runtime/characters/visionary/visionary_seq0.384.404d0c5240ee632c.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1976671,
+        "bytes": 2133487,
         "height": 1254,
-        "sha256": "3345a2a582e1a769705e78177b868caffebd5fbb645066fec8d8cf2dabb8660f",
-        "src": "data/assets/characters/visionary/visionary_seq0.png?v=3345a2a582e1a769",
+        "sha256": "a82bb72202601d13a6fcfa5b99f1913832d2c150cb1859d97b6d409dd796b7b9",
+        "src": "data/assets/revisions/visionary/visionary_seq0.png?v=a82bb72202601d13",
         "width": 1254
       },
       "portrait": {
-        "bytes": 55694,
+        "bytes": 59802,
         "height": 192,
-        "sha256": "ad3acaa40d91138e01cb0054c7772956ef2219d437bc79ca94baccfe9d6759de",
-        "src": "data/assets/runtime/characters/visionary/visionary_seq0.192.ad3acaa40d91138e.webp",
+        "sha256": "976aa4928ea199d55c3869ae8103a375c78b13db1889780bbfa83af2764efa77",
+        "src": "data/assets/runtime/characters/visionary/visionary_seq0.192.976aa4928ea199d5.webp",
         "width": 192
       },
       "source": {
@@ -6331,25 +6667,32 @@
       }
     },
     "data/assets/characters/visionary/visionary_seq1.png": {
+      "artwork": {
+        "bytes": 2128885,
+        "height": 1254,
+        "sha256": "9d6b9a18a3601699c53f0f2db4b27daf25fd5134cc946a1f93446b7da10d1336",
+        "src": "data/assets/revisions/visionary/visionary_seq1.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 185164,
+        "bytes": 203394,
         "height": 384,
-        "sha256": "1f8f12d4587c1eb947353585e6212cbe34c88df9d9a0674fd5ae5ae5daa2269f",
-        "src": "data/assets/runtime/characters/visionary/visionary_seq1.384.1f8f12d4587c1eb9.webp",
+        "sha256": "5ece70a71e591d389a41c4a554a1a01341fc6efe3568a00be93394c5cb8d1305",
+        "src": "data/assets/runtime/characters/visionary/visionary_seq1.384.5ece70a71e591d38.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1996148,
+        "bytes": 2128885,
         "height": 1254,
-        "sha256": "6b5346923aef86b199fd5a9ac17067d8796260cd965591749a6062e28689cf7e",
-        "src": "data/assets/characters/visionary/visionary_seq1.png?v=6b5346923aef86b1",
+        "sha256": "9d6b9a18a3601699c53f0f2db4b27daf25fd5134cc946a1f93446b7da10d1336",
+        "src": "data/assets/revisions/visionary/visionary_seq1.png?v=9d6b9a18a3601699",
         "width": 1254
       },
       "portrait": {
-        "bytes": 55738,
+        "bytes": 61668,
         "height": 192,
-        "sha256": "235da03c96e355cb7ccabf078e3b0aea3739c4d182912c51c2f2cf7d41ced177",
-        "src": "data/assets/runtime/characters/visionary/visionary_seq1.192.235da03c96e355cb.webp",
+        "sha256": "14a6957f40d073443e276b4db63ece74a1b16421b58d02b454c012744c32a0be",
+        "src": "data/assets/runtime/characters/visionary/visionary_seq1.192.14a6957f40d07344.webp",
         "width": 192
       },
       "source": {
@@ -6361,25 +6704,32 @@
       }
     },
     "data/assets/characters/visionary/visionary_seq2.png": {
+      "artwork": {
+        "bytes": 1474474,
+        "height": 1254,
+        "sha256": "4a5c610c1867c36925ab087837c779ab3963cb762a640e90fcf3058c0bf9bda0",
+        "src": "data/assets/revisions/visionary/visionary_seq2.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 114810,
+        "bytes": 132664,
         "height": 384,
-        "sha256": "e7c684fa9ec956c2283cd9f03eba1c5e0b1b1f1b9e593cd2129d20e1e9a5a93f",
-        "src": "data/assets/runtime/characters/visionary/visionary_seq2.384.e7c684fa9ec956c2.webp",
+        "sha256": "925ebd7466be897d3bd664cd309a7b9d041aad99986c5cdbae4be3d5ec7e7bbc",
+        "src": "data/assets/runtime/characters/visionary/visionary_seq2.384.925ebd7466be897d.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1280106,
+        "bytes": 1474474,
         "height": 1254,
-        "sha256": "30c46b78a0c37ae1ce3ccb4a57d28358fcff77b4155e7d7e8cb7e3d0925aa817",
-        "src": "data/assets/characters/visionary/visionary_seq2.png?v=30c46b78a0c37ae1",
+        "sha256": "4a5c610c1867c36925ab087837c779ab3963cb762a640e90fcf3058c0bf9bda0",
+        "src": "data/assets/revisions/visionary/visionary_seq2.png?v=4a5c610c1867c369",
         "width": 1254
       },
       "portrait": {
-        "bytes": 35848,
+        "bytes": 41340,
         "height": 192,
-        "sha256": "12530c26c694e747d59b1e991dd0c38050a8891e25ef2504732ff30e5f396665",
-        "src": "data/assets/runtime/characters/visionary/visionary_seq2.192.12530c26c694e747.webp",
+        "sha256": "e4321a2ad56700d57bac8a26ce8aabc42dc64f2da784d80551b2b72f956dcb7b",
+        "src": "data/assets/runtime/characters/visionary/visionary_seq2.192.e4321a2ad56700d5.webp",
         "width": 192
       },
       "source": {
@@ -6391,25 +6741,32 @@
       }
     },
     "data/assets/characters/visionary/visionary_seq3.png": {
+      "artwork": {
+        "bytes": 1808142,
+        "height": 1254,
+        "sha256": "c650a01253951743f5eb034f209239fa56f8586178a5e0f721ad87a1560268db",
+        "src": "data/assets/revisions/visionary/visionary_seq3.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 144418,
+        "bytes": 172612,
         "height": 384,
-        "sha256": "702f18d92ba3146b800e2b056d824ddb5f62d7b3c25b83d2185d02a8fba2ae82",
-        "src": "data/assets/runtime/characters/visionary/visionary_seq3.384.702f18d92ba3146b.webp",
+        "sha256": "2ca19fc92bce43643201b1796a237387d363e912302d976bd5b56826a49a55a3",
+        "src": "data/assets/runtime/characters/visionary/visionary_seq3.384.2ca19fc92bce4364.webp",
         "width": 384
       },
       "full": {
-        "bytes": 1557344,
+        "bytes": 1808142,
         "height": 1254,
-        "sha256": "61f4c7b8f234ecc7db41df82a40bd433cea62e29f6e68eaa2f8bd8d8dc649f08",
-        "src": "data/assets/characters/visionary/visionary_seq3.png?v=61f4c7b8f234ecc7",
+        "sha256": "c650a01253951743f5eb034f209239fa56f8586178a5e0f721ad87a1560268db",
+        "src": "data/assets/revisions/visionary/visionary_seq3.png?v=c650a01253951743",
         "width": 1254
       },
       "portrait": {
-        "bytes": 44064,
+        "bytes": 53506,
         "height": 192,
-        "sha256": "31b84cf24bce16f70e5e9de59e47ff374f7587629c7327ac32db2580f95a67a4",
-        "src": "data/assets/runtime/characters/visionary/visionary_seq3.192.31b84cf24bce16f7.webp",
+        "sha256": "bc25131d7cb9fd60293a7dc185c793a398750e7494dd329874bca9e2a8388c1b",
+        "src": "data/assets/runtime/characters/visionary/visionary_seq3.192.bc25131d7cb9fd60.webp",
         "width": 192
       },
       "source": {
@@ -6421,25 +6778,32 @@
       }
     },
     "data/assets/characters/visionary/visionary_seq4.png": {
+      "artwork": {
+        "bytes": 1215275,
+        "height": 1254,
+        "sha256": "99f5e426d255af3578a66f830abe686455493b5ba467934a9bef94c26efc8f45",
+        "src": "data/assets/revisions/visionary/visionary_seq4.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 89740,
+        "bytes": 113404,
         "height": 384,
-        "sha256": "0dc953fc607f50a10dc34bba1155eeddef847ad0b8c5d6763be6687422263ba8",
-        "src": "data/assets/runtime/characters/visionary/visionary_seq4.384.0dc953fc607f50a1.webp",
+        "sha256": "1a22ebec90983c3041f43591b79714d2aa07b93627fc5df3ad1cd0a8f1cf72ab",
+        "src": "data/assets/runtime/characters/visionary/visionary_seq4.384.1a22ebec90983c30.webp",
         "width": 384
       },
       "full": {
-        "bytes": 994819,
+        "bytes": 1215275,
         "height": 1254,
-        "sha256": "02d4f8f18d9c305af719f266a11c19faf4e963ae21f4f779bf213d4cbdab0aca",
-        "src": "data/assets/characters/visionary/visionary_seq4.png?v=02d4f8f18d9c305a",
+        "sha256": "99f5e426d255af3578a66f830abe686455493b5ba467934a9bef94c26efc8f45",
+        "src": "data/assets/revisions/visionary/visionary_seq4.png?v=99f5e426d255af35",
         "width": 1254
       },
       "portrait": {
-        "bytes": 28562,
+        "bytes": 37428,
         "height": 192,
-        "sha256": "a5e54c8b428e3ec874bb912a68ac00edd20fe8aacc4c9a0ee63539fc83003935",
-        "src": "data/assets/runtime/characters/visionary/visionary_seq4.192.a5e54c8b428e3ec8.webp",
+        "sha256": "90cf5b395c7593aa0aaca8c9c28a89227871f31adf39137c267134b2cc1c2ba3",
+        "src": "data/assets/runtime/characters/visionary/visionary_seq4.192.90cf5b395c7593aa.webp",
         "width": 192
       },
       "source": {
@@ -6481,25 +6845,32 @@
       }
     },
     "data/assets/characters/visionary/visionary_seq6.png": {
+      "artwork": {
+        "bytes": 962134,
+        "height": 1254,
+        "sha256": "6834e35003c4b74b2b1a0956e0215746b49a549f57e4b7702b564d744a3c056d",
+        "src": "data/assets/revisions/visionary/visionary_seq6.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 69824,
+        "bytes": 89284,
         "height": 384,
-        "sha256": "eca7747dca737759ee84cc453843a0c2b356a5e41714b536c3670db9a31d08d1",
-        "src": "data/assets/runtime/characters/visionary/visionary_seq6.384.eca7747dca737759.webp",
+        "sha256": "06044e44536420d0b730be0ccbc0a0c970165df3fbc9c73e4e11c7c7a7902364",
+        "src": "data/assets/runtime/characters/visionary/visionary_seq6.384.06044e44536420d0.webp",
         "width": 384
       },
       "full": {
-        "bytes": 782371,
+        "bytes": 962134,
         "height": 1254,
-        "sha256": "11fdc3fa272bbdf018d24122ba704dda37a0935d6ef4c2e5f3ece7b2dbf8131e",
-        "src": "data/assets/characters/visionary/visionary_seq6.png?v=11fdc3fa272bbdf0",
+        "sha256": "6834e35003c4b74b2b1a0956e0215746b49a549f57e4b7702b564d744a3c056d",
+        "src": "data/assets/revisions/visionary/visionary_seq6.png?v=6834e35003c4b74b",
         "width": 1254
       },
       "portrait": {
-        "bytes": 23190,
+        "bytes": 29642,
         "height": 192,
-        "sha256": "95acc94240137adba0977fb4e47b963db877d1dde2c4d71749f5f4bef6276007",
-        "src": "data/assets/runtime/characters/visionary/visionary_seq6.192.95acc94240137adb.webp",
+        "sha256": "3322b081a79ac3d6515b9e3822dc0d4e6bb76e4aaa4c664894d2d4c6ffd91b88",
+        "src": "data/assets/runtime/characters/visionary/visionary_seq6.192.3322b081a79ac3d6.webp",
         "width": 192
       },
       "source": {
@@ -6511,25 +6882,32 @@
       }
     },
     "data/assets/characters/visionary/visionary_seq7.png": {
+      "artwork": {
+        "bytes": 968390,
+        "height": 1254,
+        "sha256": "a5838082e8e5904d53243788b0388f413976369d00d5bc60b1ef82c64c67d32f",
+        "src": "data/assets/revisions/visionary/visionary_seq7.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 67488,
+        "bytes": 89130,
         "height": 384,
-        "sha256": "b76d52d960cd5b2d3894b7b16fa249dde8c784b2ff0021b5e837f21d458c8aa5",
-        "src": "data/assets/runtime/characters/visionary/visionary_seq7.384.b76d52d960cd5b2d.webp",
+        "sha256": "3247e6320af979bdf3a9929923a6290cd7ba7d66d2cfe2c04bb6c2173a7d7f09",
+        "src": "data/assets/runtime/characters/visionary/visionary_seq7.384.3247e6320af979bd.webp",
         "width": 384
       },
       "full": {
-        "bytes": 771558,
+        "bytes": 968390,
         "height": 1254,
-        "sha256": "b84f63bf40b8975db9ce6e0e83c72c46fd450bddc9839da796c99cb7523208d1",
-        "src": "data/assets/characters/visionary/visionary_seq7.png?v=b84f63bf40b8975d",
+        "sha256": "a5838082e8e5904d53243788b0388f413976369d00d5bc60b1ef82c64c67d32f",
+        "src": "data/assets/revisions/visionary/visionary_seq7.png?v=a5838082e8e5904d",
         "width": 1254
       },
       "portrait": {
-        "bytes": 22486,
+        "bytes": 27314,
         "height": 192,
-        "sha256": "fef7f46825b1db4a08a9ed511dd6f0b77d21ac04b7606b1380b7ad33f23f3e9e",
-        "src": "data/assets/runtime/characters/visionary/visionary_seq7.192.fef7f46825b1db4a.webp",
+        "sha256": "62c9364efc9b17db08b058a06d99e236f69c0f15ef77e512659cce58fe78cb48",
+        "src": "data/assets/runtime/characters/visionary/visionary_seq7.192.62c9364efc9b17db.webp",
         "width": 192
       },
       "source": {
@@ -6541,25 +6919,32 @@
       }
     },
     "data/assets/characters/visionary/visionary_seq8.png": {
+      "artwork": {
+        "bytes": 1061255,
+        "height": 1254,
+        "sha256": "16c07c1d3428dfcaa2b7772e7a22b0d9368809229cc89473946ceeb779e15c20",
+        "src": "data/assets/revisions/visionary/visionary_seq8.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 68682,
+        "bytes": 98044,
         "height": 384,
-        "sha256": "61703007fafe32e0fa683264f07d300764ac632238d7e4db00c4ffe6476368e9",
-        "src": "data/assets/runtime/characters/visionary/visionary_seq8.384.61703007fafe32e0.webp",
+        "sha256": "f071da733d8a8413420ceeb29591c2e87cc30a3ce0544c73f39599444910bfbd",
+        "src": "data/assets/runtime/characters/visionary/visionary_seq8.384.f071da733d8a8413.webp",
         "width": 384
       },
       "full": {
-        "bytes": 760757,
+        "bytes": 1061255,
         "height": 1254,
-        "sha256": "78e896e44c230e5e0f22b00261248f7dc9d5ed4763c18448356cbeac57ec5614",
-        "src": "data/assets/characters/visionary/visionary_seq8.png?v=78e896e44c230e5e",
+        "sha256": "16c07c1d3428dfcaa2b7772e7a22b0d9368809229cc89473946ceeb779e15c20",
+        "src": "data/assets/revisions/visionary/visionary_seq8.png?v=16c07c1d3428dfca",
         "width": 1254
       },
       "portrait": {
-        "bytes": 22206,
+        "bytes": 30730,
         "height": 192,
-        "sha256": "daf978c75306228da3855eb5786abfc7209715ef2f551fe8a26c8415872f31e9",
-        "src": "data/assets/runtime/characters/visionary/visionary_seq8.192.daf978c75306228d.webp",
+        "sha256": "a1849077e81c91921918d2ad2507ef532467fe435fea5de91419d2c63d768f7c",
+        "src": "data/assets/runtime/characters/visionary/visionary_seq8.192.a1849077e81c9192.webp",
         "width": 192
       },
       "source": {
@@ -6571,25 +6956,32 @@
       }
     },
     "data/assets/characters/visionary/visionary_seq9.png": {
+      "artwork": {
+        "bytes": 759296,
+        "height": 1254,
+        "sha256": "67fc17ef2106a5371b0a9feb08cc83e3624e09faea354021e79fb345ac216710",
+        "src": "data/assets/revisions/visionary/visionary_seq9.png",
+        "width": 1254
+      },
       "dossier": {
-        "bytes": 47640,
+        "bytes": 68462,
         "height": 384,
-        "sha256": "68ae1a9184636b45930df4a90f7fec1f17c803b502a48b70b6d990e8b28cb39d",
-        "src": "data/assets/runtime/characters/visionary/visionary_seq9.384.68ae1a9184636b45.webp",
+        "sha256": "b07c9a344c3764c6082bd33913c0cf10def867e442e623adcf6236cbdaf1d309",
+        "src": "data/assets/runtime/characters/visionary/visionary_seq9.384.b07c9a344c3764c6.webp",
         "width": 384
       },
       "full": {
-        "bytes": 546058,
+        "bytes": 759296,
         "height": 1254,
-        "sha256": "904f67121038a5006d4702e0309b1d30b110a5e2aa41b2ba88da35fd81173e67",
-        "src": "data/assets/characters/visionary/visionary_seq9.png?v=904f67121038a500",
+        "sha256": "67fc17ef2106a5371b0a9feb08cc83e3624e09faea354021e79fb345ac216710",
+        "src": "data/assets/revisions/visionary/visionary_seq9.png?v=67fc17ef2106a537",
         "width": 1254
       },
       "portrait": {
-        "bytes": 15772,
+        "bytes": 22278,
         "height": 192,
-        "sha256": "559d67e5a7b1a8e4042b9f51ccdfe0d9b7524f032ab93e1d720e8e79df8259fe",
-        "src": "data/assets/runtime/characters/visionary/visionary_seq9.192.559d67e5a7b1a8e4.webp",
+        "sha256": "2caeb68665da8c6684d68fc043a5a6ce02bf067ca27d62e717b61375ffb41857",
+        "src": "data/assets/runtime/characters/visionary/visionary_seq9.192.2caeb68665da8c66.webp",
         "width": 192
       },
       "source": {
@@ -7262,5 +7654,5 @@
     }
   },
   "schemaVersion": 1,
-  "version": "5c9bd0cd5ef82ab5"
+  "version": "9c227728fb4c7539"
 }

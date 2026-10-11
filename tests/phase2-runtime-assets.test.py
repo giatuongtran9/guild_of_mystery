@@ -182,14 +182,16 @@ class RepositoryAssetCoverageTests(unittest.TestCase):
             with self.subTest(original=original.name):
                 entry = manifest['entries'][original.relative_to(ROOT).as_posix()]
                 self.assertEqual(entry['source']['sha256'], digest(original))
-                with Image.open(original) as source:
+                selected = ROOT / entry.get('artwork', entry['source'])['src']
+                self.assertEqual(entry.get('artwork', entry['source'])['sha256'], digest(selected))
+                with Image.open(selected) as source:
                     image = source.convert('RGBA')
                 for variant, side in [('portrait', 192), ('dossier', 384)]:
                     runtime = ROOT / entry[variant]['src']
                     self.assertTrue(runtime.is_file())
                     self.assertEqual(entry[variant]['sha256'], digest(runtime))
                     self.assertEqual(entry[variant]['bytes'], runtime.stat().st_size)
-                    self.assertLess(runtime.stat().st_size, original.stat().st_size)
+                    self.assertLess(runtime.stat().st_size, selected.stat().st_size)
                     scale = side / max(image.size)
                     resized = image.resize((max(1, round(image.width * scale)), max(1, round(image.height * scale))), Image.Resampling.NEAREST)
                     expected = Image.new('RGBA', (side, side), (0, 0, 0, 0))

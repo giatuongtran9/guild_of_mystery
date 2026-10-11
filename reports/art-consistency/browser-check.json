@@ -1,0 +1,119 @@
+{
+  "errors": [],
+  "viewports": [
+    {
+      "width": 390,
+      "documentWidth": 390,
+      "images": [
+        {
+          "src": "data/assets/revisions/fool/fool_seq8.png?v=f8a29d2530789c57",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "src": "data/assets/revisions/giant/giant_seq6.png?v=a964fa86ef7e8fa6",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "src": "data/assets/revisions/door/door_seq2.png?v=f1200352d616b2d1",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "src": "data/assets/revisions/mother/mother_seq5.png?v=3e14ad878f5861f7",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "src": "data/assets/revisions/justiciar/justiciar_seq9.png?v=5d9557557585ddc0",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "src": "data/assets/revisions/sun/sun_seq0.png?v=62dd7cb1e22b2284",
+          "width": 64,
+          "height": 64
+        }
+      ],
+      "enemies": [
+        {
+          "src": "data/assets/revisions/redpriest/redpriest_mythical.png?v=52e6df74637a9153",
+          "naturalWidth": 1254,
+          "width": 64,
+          "height": 64
+        },
+        {
+          "src": "data/assets/revisions/demoness/demoness_mythical.png?v=f8423db38a4173f9",
+          "naturalWidth": 1254,
+          "width": 64,
+          "height": 64
+        }
+      ],
+      "scrollable": true
+    },
+    {
+      "width": 1440,
+      "documentWidth": 1440,
+      "images": [
+        {
+          "src": "data/assets/revisions/fool/fool_seq8.png?v=f8a29d2530789c57",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "src": "data/assets/revisions/giant/giant_seq6.png?v=a964fa86ef7e8fa6",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "src": "data/assets/revisions/door/door_seq2.png?v=f1200352d616b2d1",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "src": "data/assets/revisions/mother/mother_seq5.png?v=3e14ad878f5861f7",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "src": "data/assets/revisions/justiciar/justiciar_seq9.png?v=5d9557557585ddc0",
+          "width": 64,
+          "height": 64
+        },
+        {
+          "src": "data/assets/revisions/sun/sun_seq0.png?v=62dd7cb1e22b2284",
+          "width": 64,
+          "height": 64
+        }
+      ],
+      "enemies": [
+        {
+          "src": "data/assets/revisions/redpriest/redpriest_mythical.png?v=52e6df74637a9153",
+          "naturalWidth": 1254,
+          "width": 64,
+          "height": 64
+        },
+        {
+          "src": "data/assets/revisions/demoness/demoness_mythical.png?v=f8423db38a4173f9",
+          "naturalWidth": 1254,
+          "width": 64,
+          "height": 64
+        }
+      ],
+      "scrollable": false
+    }
+  ],
+  "gallery": [
+    {
+      "width": 390,
+      "allDesigns": 242,
+      "justiciarRevisions": 10
+    },
+    {
+      "width": 1440,
+      "allDesigns": 242,
+      "justiciarRevisions": 10
+    }
+  ]
+}

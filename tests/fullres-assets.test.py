@@ -1,4 +1,4 @@
-"""Full-resolution delivery uses the original pixels and preserves old releases."""
+"""Full-resolution delivery uses selected source pixels and preserves originals and old releases."""
 import hashlib
 import importlib.util
 import json
@@ -54,13 +54,23 @@ class FullResolutionAssetsTests(unittest.TestCase):
                 digest = hashlib.sha256(data).hexdigest()
                 with Image.open(source) as image:
                     size = image.size
-                self.assertEqual(manifest['entries'][key].get('full'), {
-                    'src': f'{key}?v={digest[:16]}', 'width': size[0], 'height': size[1],
-                    'bytes': len(data), 'sha256': digest,
+                entry = manifest['entries'][key]
+                self.assertEqual(entry['source'], {
+                    'src': key, 'width': size[0], 'height': size[1], 'bytes': len(data), 'sha256': digest,
                 })
+                selected = entry.get('artwork', entry['source'])
+                selected_data = (ROOT / selected['src']).read_bytes()
+                self.assertEqual(selected['sha256'], hashlib.sha256(selected_data).hexdigest())
+                self.assertEqual(selected['bytes'], len(selected_data))
+                with Image.open(ROOT / selected['src']) as image:
+                    self.assertEqual((selected['width'], selected['height']), image.size)
+                self.assertEqual(entry.get('full'), {**selected, 'src': f"{selected['src']}?v={selected['sha256'][:16]}"})
                 self.assertEqual(old['entries'][key]['source']['sha256'], digest)
                 for variant in ['portrait', 'dossier']:
-                    self.assertEqual(old['entries'][key][variant], manifest['entries'][key][variant])
+                    previous = old['entries'][key][variant]
+                    self.assertEqual(hashlib.sha256((ROOT / previous['src']).read_bytes()).hexdigest(), previous['sha256'])
+                    if 'artwork' not in entry:
+                        self.assertEqual(previous, entry[variant])
 
 
 if __name__ == '__main__':
