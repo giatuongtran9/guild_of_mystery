@@ -9,6 +9,7 @@ import hashlib
 from io import BytesIO
 import json
 import os
+import re
 from pathlib import Path
 import tempfile
 from PIL import Image, features
@@ -90,11 +91,14 @@ def build_assets(repo_root):
     if not isinstance(overrides, dict) or set(overrides) - source_keys:
         raise ValueError('Artwork overrides must map existing character source paths')
     for key, revised in overrides.items():
-        if revised != key.replace('/characters/', '/revisions/'):
+        identity = key.replace('/characters/', '/revisions/')
+        if not isinstance(revised, str) or (revised != identity and not re.fullmatch(re.escape(identity[:-4]) + r'\.[a-f0-9]{16}\.png', revised)):
             raise ValueError('Revised artwork must retain the original character identity')
         safe_path(repo, repo / revised)
         if not (repo / revised).is_file():
             raise ValueError(f'Missing revised artwork: {revised}')
+        if revised != identity and revised != identity[:-4] + '.' + sha256((repo / revised).read_bytes())[:16] + '.png':
+            raise ValueError('Revised artwork filename must match its content hash')
     entries = {}
     for source in sources:
         safe_path(repo, source)

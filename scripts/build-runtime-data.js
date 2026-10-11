@@ -25,8 +25,10 @@ function compactRuntimeAssets(assets) {
       const validSource = value => value && /^[a-f0-9]{64}$/.test(value.sha256 || '')
         && Number.isSafeInteger(value.bytes) && value.bytes > 0
         && Number.isSafeInteger(value.width) && value.width > 0 && Number.isSafeInteger(value.height) && value.height > 0;
-      if (!validSource(original) || original.src !== source || !validSource(selected) || selected.src !== selectedPath
-        || image?.src !== `${selectedPath}?v=${selected.sha256.slice(0, 16)}` || image.width !== selected.width || image.height !== selected.height
+      if (!validSource(original) || original.src !== source || !validSource(selected)) throw new Error('Invalid full-resolution original or revised portrait');
+      const selectedPaths = entry.artwork === undefined ? [selectedPath] : [selectedPath, selectedPath.replace(/\.png$/, `.${selected.sha256.slice(0, 16)}.png`)];
+      if (!selectedPaths.includes(selected.src)
+        || image?.src !== `${selected.src}?v=${selected.sha256.slice(0, 16)}` || image.width !== selected.width || image.height !== selected.height
         || image.bytes !== selected.bytes || image.sha256 !== selected.sha256) throw new Error('Invalid full-resolution original or revised portrait');
       versions.full = { src: image.src, width: image.width, height: image.height };
     }
