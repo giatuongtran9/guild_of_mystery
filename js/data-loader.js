@@ -113,6 +113,7 @@
     return {
       type: a.kind || 'passive', id: a.id, effectId: a.id, name: a.name, text: a.description || '',
       costSP: Number(a.spCost) || 0, cooldown: a.cooldown ?? 0, tag: a.tag ?? null,
+      utilityStrike: Number(a.utilityStrike) || 0,
       damage, effects
     };
   }

@@ -4,6 +4,7 @@
 global.localStorage = { setItem() {}, getItem() { return null; }, removeItem() {} };
 const fs = require('fs'), path = require('path');
 const g = require('../js/node-loader.js');
+require('./mechanics-fixture')(g);
 const root = path.join(__dirname, '..');
 
 let pass = 0, fail = 0;

@@ -1,6 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict');
 const g=require('../js/node-loader');
+require('./mechanics-fixture')(g);
 let passed=0;
 function test(name,fn){try{fn();passed++;console.log('PASS '+name);}catch(e){console.error('FAIL '+name);throw e;}}
 function agent(id,traitId=null,path='paragon',sequence=9){

@@ -30,6 +30,7 @@ async function main() {
   agent.id = 'test-agent'; g.restatAgent(agent);
   fixture.roster = [agent];
   fixture.quests = [{ id: 'test-contract', name: 'The Chapel Below', encounter: true, objective: 'combat', difficultySequence: 9, rewards: { funds: 0, reputation: 0, materials: {} }, tags: ['occult'] }];
+  require('./pool-fixture')(g,fixture);
   w.localStorage.setItem('guild-rpg-browser-v9', JSON.stringify(fixture));
   w.eval(['paths', 'v15', 'generate', 'traits', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'].map(name => fs.readFileSync(path.join(root, `js/${name}.js`), 'utf8')).join('\n'));
   // A deliberately long battle exercises the former 70-event collapsing boundary.

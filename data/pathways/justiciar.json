@@ -100,7 +100,8 @@
             "maxHpRatio": 0.2,
             "fullHp": false
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -127,7 +128,8 @@
             "duration": 2,
             "amount": 0.5
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -205,7 +207,8 @@
             "status": "silenced",
             "duration": 1
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -236,7 +239,8 @@
             "amount": 0.3,
             "duration": 2
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {

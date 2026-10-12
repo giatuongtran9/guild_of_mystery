@@ -116,7 +116,8 @@
             "status": "possession_phase",
             "duration": 1
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -166,7 +167,8 @@
             "chance": 1,
             "duration": 1
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -223,7 +225,8 @@
             "maxHpRatio": 0.25,
             "fullHp": false
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {

@@ -59,7 +59,8 @@ function campaignStart(s,missionId,agentIds=[],choice=null,seed=Date.now()){
   if(c.preparation==='ward'){enemy.stats.atk=Math.round(enemy.stats.atk*.75);enemy.stats.int=Math.round(enemy.stats.int*.75);}
   initialAllies=members.map(a=>{const hp=Math.round(effectiveStats(a).hp*(passiveCombatModifier(a).hp||1));return {id:a.id,name:a.name,team:'ally',path:a.path,sequence:a.sequence,unitType:a.unitType,maxHp:hp,hp};});
   result=resolveQuest(members,quest,fixedSeed,{individual:members.length===1,authoredOpponents:[enemy]});
-  initialEnemies=[{id:'enemy_0',name:enemy.name,team:'enemy',path:enemy.path,sequence:enemy.sequence,campaignEnemy:true,maxHp:enemy.stats.hp,hp:enemy.stats.hp}];
+  initialAllies=result.battleSnapshot.initialUnits.filter(u=>u.team==='ally');
+  initialEnemies=result.battleSnapshot.initialUnits.filter(u=>u.team==='enemy').map(u=>({...u,campaignEnemy:true}));
   // Engine consequences can contain death, stat buffs and battle cooldowns.
   // This protected chapter deliberately settles its own experience only.
   result.consequences=[];result.marionettes=[];result.rewards=result.success?rewards:{funds:0,reputation:0,materials:{},digestion:0};

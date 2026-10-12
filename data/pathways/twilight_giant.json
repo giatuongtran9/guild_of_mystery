@@ -105,7 +105,8 @@
             "maxHpRatio": 0.2,
             "fullHp": false
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -171,7 +172,8 @@
             "amount": 0.2,
             "duration": 2
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -201,7 +203,8 @@
             "type": "shield",
             "maxHpRatio": 0.2
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {

@@ -16,7 +16,7 @@ async function main(){
  let f=await fixture();assert(f.saved());const first=f.saved();f.dom.window.close();f=await fixture(first);assert.deepEqual(f.saved().recruitPool.map(a=>a.id),first.recruitPool.map(a=>a.id));f.dom.window.close();
  const s=g.newGame(),ordinary=g.makeAgent(()=>.5,{sequence:10,traitId:'hardy'}),a=actor('a'),b=actor('b','tyrant'),c=actor('c','mother');
  s.roster=[ordinary,a,b,c];s.funds=10000;s.reputation=10;a.digest=100;a.injuries=30;g.maintainGuildBoards(s);
- const actions=[w=>w.G9.choosePath(ordinary.id,'door'),w=>w.G9.advance(a.id),w=>w.G9.heal(a.id),w=>w.G9.buyMaterial('fool'),w=>w.G9.setWeapon(a.id,'sword'),w=>w.G9.decline(s.quests[0].id),w=>w.G9.declineWanted(s.wanted[0].id),w=>w.G9.reset()];
+ const actions=[w=>w.G9.refreshContracts(),w=>w.G9.choosePath(ordinary.id,'door'),w=>w.G9.advance(a.id),w=>w.G9.heal(a.id),w=>w.G9.buyMaterial('fool'),w=>w.G9.setWeapon(a.id,'sword'),w=>w.G9.decline(s.quests[0].id),w=>w.G9.declineWanted(s.wanted[0].id),w=>w.G9.reset()];
  for(const action of actions){f=await fixture(s);const before=f.w.localStorage.getItem(key);f.deny();action(f.w);assert.equal(f.w.localStorage.getItem(key),before);assert.match(f.w.document.body.textContent,/could not be saved/);f.dom.window.close();}
  f=await fixture(s,true);assert.equal(f.w.localStorage.getItem(key),'broken save');f.w.G9.buyMaterial('fool');assert.equal(f.w.localStorage.getItem(key),'broken save');f.w.G9.reset();assert.equal(f.saved().funds,1000);f.dom.window.close();
  const day=copy(s);day.day=7;day.recruitRefreshDay=8;f=await fixture(day);const pool=f.saved().recruitPool.map(a=>a.id);f.w.G9.choosePath(ordinary.id,'door');assert.equal(f.saved().day,8);assert(f.saved().recruitPool.every(a=>!pool.includes(a.id)));assert.equal(f.saved().recruitRefreshDay,15);f.dom.window.close();
@@ -27,6 +27,6 @@ async function main(){
  const returned=f.saved().roster.find(x=>x.id===b.id),synced=pending.result.consequences.find(x=>x.type==='syncAgent'&&x.agentId===b.id);if(returned&&synced)assert.equal(returned.digest,synced.agent.digest,'no UI-only digestion bonus');
  const once=f.w.localStorage.getItem(key);f.w.G9.closeQuest();assert.equal(f.w.localStorage.getItem(key),once);f.dom.window.close();
  f=await fixture(s);f.w.G9.planWanted(s.wanted[0].id);f.w.G9.toggleAssign(b.id);f.w.G9.launch();assert(!f.saved().pendingContract);assert.match(f.w.document.body.textContent,/three awakened Beyonders/);f.dom.window.close();
- console.log('Persistence UI checks passed: initial save, reload, eight denied mutations, corrupt-save protection, atomic reset, day refresh, pending battle reload, repeat-safe settlement, correct digestion and boss party gate.');
+ console.log('Persistence UI checks passed: initial save, reload, nine denied mutations, corrupt-save protection, atomic reset, day refresh, pending battle reload, repeat-safe settlement, correct digestion and boss party gate.');
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});

@@ -40,12 +40,10 @@ function rosterProfile(roster=[]){
  return {paths,agents,bestSequence:agents.length?Math.min(...agents.map(a=>a.sequence)):9};
 }
 function contractSequenceWeights(rep,roster=[]){
- const profile=rosterProfile(roster),best=profile.bestSequence,weights={},ranks=[...new Set(profile.agents.map(a=>a.sequence))];if(!ranks.length)ranks.push(best);
- const add=(seq,w)=>{seq=Math.max(0,Math.min(9,seq));weights[seq]=(weights[seq]||0)+w;};
- const rules=G9D.system.contracts.roster_sequence_weights;for(const rank of ranks){add(rank,rules.matching/ranks.length);add(rank+1,rules.one_easier/ranks.length);}add(9,rules.beginner);
- if(best>0&&maxContractSequence(rep)<best){add(best-1,rules.harder);weights[best]=Math.max(1,weights[best]-rules.harder);}
- return weights;
+ return {...reputationRank(rep).sequenceOdds};
 }
+function reputationRank(rep=0){return G9D.system.contracts.reputation_ranks.filter(rank=>rep>=rank.minimumReputation).at(-1)||G9D.system.contracts.reputation_ranks[0];}
+function nextReputationRank(rep=0){return G9D.system.contracts.reputation_ranks.find(rank=>rank.minimumReputation>rep)||null;}
 function weightedSequence(r,rep,roster=[]){
  const arr=Object.entries(contractSequenceWeights(rep,roster)).map(([seq,w])=>[Number(seq),w]),total=arr.reduce((a,x)=>a+x[1],0);let n=r()*total;
  for(const [seq,w] of arr){n-=w;if(n<0)return seq;}return arr.at(-1)[0];

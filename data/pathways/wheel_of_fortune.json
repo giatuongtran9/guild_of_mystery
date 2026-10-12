@@ -79,7 +79,8 @@
             "type": "next_crit_fail",
             "chance": 1
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -109,7 +110,8 @@
             "chargeCost": 100,
             "uses": 1
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -146,7 +148,8 @@
             "amount": 1.5,
             "duration": 3
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -206,7 +209,8 @@
             "amount": 0.2,
             "duration": 2
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -235,7 +239,8 @@
             "chance": 0.4,
             "duration": 2
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -261,7 +266,8 @@
             "chargeCost": 100,
             "amount": 2
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {

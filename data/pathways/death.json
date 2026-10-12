@@ -112,7 +112,8 @@
             "duration": 4,
             "slots": 1
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -224,7 +225,8 @@
             "stat": "speed",
             "duration": 2
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -247,7 +249,7 @@
           {
             "type": "status",
             "status": "freeze",
-            "duration": 3
+            "duration": 1
           }
         ]
       }

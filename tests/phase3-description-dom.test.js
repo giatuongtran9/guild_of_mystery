@@ -36,6 +36,7 @@ async function fixture(agents = [agent()], saved = null) {
   const state = g.newGame();
   state.roster = agents;
   state.funds = 10000;
+  require('./pool-fixture')(g,state);
   w.localStorage.setItem(saveKey, saved || JSON.stringify(state));
   w.eval(['paths','v15','generate','traits','signatures','mythical','engine','state','campaign','ui'].map(n => fs.readFileSync(path.join(root, `js/${n}.js`), 'utf8')).join('\n'));
   // Inspect the same lexical definitions used by the UI, without replacing its renderer.
@@ -219,6 +220,7 @@ async function test(label, fn) {
     state.roster = [a];
     state.quests = [{id:'vigor-contract', name:'Vigor Contract', encounter:true, objective:'combat', difficultySequence:9,
       rewards:{funds:0, reputation:0, materials:{}}}];
+    require('./pool-fixture')(g,state);
     const {dom, w, read} = await fixture([], JSON.stringify(state));
     try {
       const resolve = w.resolveQuest;
@@ -228,7 +230,7 @@ async function test(label, fn) {
       w.G9.toggleAssign(a.id);
       w.G9.launch();
       const snapshot = result.battleSnapshot.allies.find(unit => unit.id === a.id);
-      assert.equal(snapshot.maxHp, 11500, 'Iron Blood Vigor is present in the actual battle');
+      assert.equal(snapshot.maxHp, Math.round(g.effectiveStats(a).hp*1.15), 'Iron Blood Vigor is present in the actual battle');
       const unit = w.document.querySelector('.gm-rank-allies .gm-arena-unit');
       assert(unit, 'Actual launch must render the allied unit');
       assert.equal(unit.querySelector('.gm-float-gauge.hp .gm-float-num').textContent,

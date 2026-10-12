@@ -1,0 +1,44 @@
+{
+  "saveSchema": 14,
+  "suites": 47,
+  "pvp": {
+    "battles": 30360,
+    "drawRate": 0.022990777338603427,
+    "meanRounds": 7.862911725955204,
+    "completedBefore15": 0.9634387351778656,
+    "completedBy12": 0.9261528326745718,
+    "parityFailures": 0,
+    "histogram": {
+      "1": 52,
+      "2": 146,
+      "3": 892,
+      "4": 2152,
+      "5": 3280,
+      "6": 3374,
+      "7": 4990,
+      "8": 4480,
+      "9": 3530,
+      "10": 2338,
+      "11": 1806,
+      "12": 1118,
+      "13": 648,
+      "14": 490,
+      "15": 1064
+    }
+  },
+  "pvpAggregateBandPassed": 16,
+  "pvpSequenceBandPassed": 90,
+  "pvpStrictFairnessMet": false,
+  "soloBattles": 44000,
+  "soloMinimum": 0.89,
+  "soloBelow80": 0,
+  "bossBattles": 1440,
+  "sourceHashes": {
+    "js/engine.js": "5bbaec98bcc4e385d986d8715e529fc42fcb8d65e4a9a2ad6447af3aa109351c",
+    "js/state.js": "cd39ba462dfbc9bd1fb1f38b6fad695b7f7f6e5decae1b3e77084b1e577a1025",
+    "js/mythical.js": "44d8982fa8d0e80fa3289a567c450d202befef2a57319e885e43f71955d22f13",
+    "js/campaign.js": "6ecbf2aedff566d051e1089dda1e3f68c365ec9eef7aea8726886791b875a1b6",
+    "data/balance.json": "115b32120e0b951203ffe12834e1d950c276f33c93f75ec14f9aaefc402c45ed",
+    "data/contracts.json": "585a5060490ae9fc91b5fc493a6c553bff8ae56ae390ee3efed6d258f68ee1d2"
+  }
+}
