@@ -9,7 +9,7 @@ const root = path.resolve(__dirname, '..');
 const source = fs.readFileSync(path.join(root, 'js/data-loader.js'), 'utf8');
 const read = name => JSON.parse(fs.readFileSync(path.join(root, 'data', name), 'utf8'));
 const manifest = read('pathways/index.json');
-const names = ['items', 'enemies', 'contracts', 'formulas', 'balance', 'campaign'];
+const names = ['items', 'enemies', 'contracts', 'formulas', 'balance', 'campaign', 'traits'];
 const rawBundle = () => ({
   schema: 'guild.runtime-data.v1', manifest,
   pathwayFiles: Object.fromEntries(manifest.order.map(key => [key, read(`pathways/${key}.json`)])),
@@ -18,7 +18,7 @@ const rawBundle = () => ({
 function release(bundle = rawBundle()) {
   const text = JSON.stringify(bundle);
   const version = crypto.createHash('sha256').update(text).digest('hex').slice(0, 16);
-  const scriptVersions = Object.fromEntries(['paths', 'v15', 'generate', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'].map(name => [`js/${name}.js`, '0123456789abcdef']));
+  const scriptVersions = Object.fromEntries(['paths', 'v15', 'generate', 'traits', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'].map(name => [`js/${name}.js`, '0123456789abcdef']));
   return { manifest: { schema: 'guild.runtime-manifest.v1', version, bundle: `data/runtime/data.${version}.json`, scriptVersions }, text };
 }
 function memoryCache() {

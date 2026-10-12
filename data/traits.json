@@ -1,0 +1,372 @@
+{
+  "schema": "guild.traits.v1",
+  "activationSequence": 9,
+  "refreshCost": 50,
+  "hireCost": 150,
+  "poolSize": 4,
+  "weights": {
+    "normal": 74,
+    "rare": 20,
+    "epic": 5,
+    "legendary": 1
+  },
+  "entries": {
+    "hardy": {
+      "name": "Hardy",
+      "tier": "normal",
+      "effect": "hardy",
+      "modifiers": {
+        "hp_mult": 1.08
+      },
+      "params": {},
+      "benefit": "",
+      "drawback": ""
+    },
+    "strong": {
+      "name": "Strong",
+      "tier": "normal",
+      "effect": "strong",
+      "modifiers": {
+        "atk_mult": 1.05
+      },
+      "params": {},
+      "benefit": "",
+      "drawback": ""
+    },
+    "resilient": {
+      "name": "Resilient",
+      "tier": "normal",
+      "effect": "resilient",
+      "modifiers": {
+        "def_mult": 1.08
+      },
+      "params": {},
+      "benefit": "",
+      "drawback": ""
+    },
+    "keen_mind": {
+      "name": "Keen Mind",
+      "tier": "normal",
+      "effect": "keen_mind",
+      "modifiers": {
+        "int_mult": 1.05
+      },
+      "params": {},
+      "benefit": "",
+      "drawback": ""
+    },
+    "quick": {
+      "name": "Quick",
+      "tier": "normal",
+      "effect": "quick",
+      "modifiers": {
+        "spd_mult": 1.05
+      },
+      "params": {},
+      "benefit": "",
+      "drawback": ""
+    },
+    "glass_cannon": {
+      "name": "Glass Cannon",
+      "tier": "rare",
+      "effect": "glass_cannon",
+      "modifiers": {
+        "atk_mult": 1.2,
+        "hp_mult": 0.9
+      },
+      "params": {},
+      "benefit": "",
+      "drawback": ""
+    },
+    "ironclad": {
+      "name": "Ironclad",
+      "tier": "rare",
+      "effect": "ironclad",
+      "modifiers": {
+        "def_mult": 1.18,
+        "spd_mult": 0.95
+      },
+      "params": {},
+      "benefit": "",
+      "drawback": ""
+    },
+    "swiftfoot": {
+      "name": "Swiftfoot",
+      "tier": "rare",
+      "effect": "swiftfoot",
+      "modifiers": {
+        "spd_mult": 1.18,
+        "def_mult": 0.95
+      },
+      "params": {},
+      "benefit": "",
+      "drawback": ""
+    },
+    "fervent_spirit": {
+      "name": "Fervent Spirit",
+      "tier": "rare",
+      "effect": "fervent_spirit",
+      "modifiers": {
+        "int_mult": 1.2,
+        "sp_mult": 1.15,
+        "def_mult": 0.9
+      },
+      "params": {},
+      "benefit": "",
+      "drawback": ""
+    },
+    "wardbreaker": {
+      "name": "Wardbreaker",
+      "tier": "epic",
+      "effect": "wardbreaker",
+      "modifiers": {
+        "hp_mult": 0.9
+      },
+      "params": {
+        "refundSP": 10
+      },
+      "benefit": "Breaking an enemy shield restores {refundSP}% Max SP; once per round.",
+      "drawback": ""
+    },
+    "vengeful_echo": {
+      "name": "Vengeful Echo",
+      "tier": "epic",
+      "effect": "vengeful_echo",
+      "modifiers": {
+        "healingReceived": 0.75
+      },
+      "params": {
+        "damageBonus": 20
+      },
+      "benefit": "Enemy HP damage empowers your next damaging action by {damageBonus}%; once per round, no stacking.",
+      "drawback": ""
+    },
+    "runic_carapace": {
+      "name": "Runic Carapace",
+      "tier": "epic",
+      "effect": "runic_carapace",
+      "modifiers": {
+        "spSurcharge": 0.2
+      },
+      "params": {
+        "shieldHP": 8
+      },
+      "benefit": "Completing a paid pathway skill grants a {shieldHP}% Max HP shield; once per round.",
+      "drawback": ""
+    },
+    "cinder_touch": {
+      "name": "Cinder Touch",
+      "tier": "epic",
+      "effect": "cinder_touch",
+      "modifiers": {
+        "def_mult": 0.9
+      },
+      "params": {
+        "chance": 50,
+        "turns": 2
+      },
+      "benefit": "Basic HP hits have a {chance}% chance to apply Burn for {turns} target turns; one attempt per round.",
+      "drawback": ""
+    },
+    "nerve_pin": {
+      "name": "Nerve Pin",
+      "tier": "epic",
+      "effect": "nerve_pin",
+      "modifiers": {
+        "atk_mult": 0.92
+      },
+      "params": {
+        "slow": 20,
+        "turns": 2
+      },
+      "benefit": "A critical hit slows its primary target by {slow}% for {turns} target turns; once per round.",
+      "drawback": ""
+    },
+    "merciful_touch": {
+      "name": "Merciful Touch",
+      "tier": "epic",
+      "effect": "merciful_touch",
+      "modifiers": {
+        "healingOutput": 0.8
+      },
+      "params": {},
+      "benefit": "Restoring a teammate’s HP also cleanses one damage-over-time status; once per round.",
+      "drawback": ""
+    },
+    "spiteful_shell": {
+      "name": "Spiteful Shell",
+      "tier": "epic",
+      "effect": "spiteful_shell",
+      "modifiers": {
+        "shieldReceived": 0.75
+      },
+      "params": {
+        "retaliationHP": 10
+      },
+      "benefit": "An enemy breaking your shield triggers physical retaliation worth {retaliationHP}% Max HP; once per round.",
+      "drawback": ""
+    },
+    "break_the_chain": {
+      "name": "Break the Chain",
+      "tier": "epic",
+      "effect": "break_the_chain",
+      "modifiers": {
+        "spd_mult": 0.9
+      },
+      "params": {},
+      "benefit": "After losing an action to crowd control, cleanse one remaining action-blocking status; once per round.",
+      "drawback": ""
+    },
+    "hunters_opening": {
+      "name": "Hunter's Opening",
+      "tier": "epic",
+      "effect": "hunters_opening",
+      "modifiers": {
+        "def_mult": 0.92
+      },
+      "params": {},
+      "benefit": "Your first attempted basic attack against each full-HP enemy critically hits if it connects; forced failure still applies.",
+      "drawback": ""
+    },
+    "fractured_moment": {
+      "name": "Fractured Moment",
+      "tier": "epic",
+      "effect": "fractured_moment",
+      "modifiers": {
+        "spSurcharge": 0.25
+      },
+      "params": {},
+      "benefit": "After your first successful damaging normal action, take one bonus action; once per battle.",
+      "drawback": ""
+    },
+    "fates_debt": {
+      "name": "Fate's Debt",
+      "tier": "legendary",
+      "effect": "fates_debt",
+      "modifiers": {},
+      "params": {},
+      "benefit": "Survive one otherwise lethal direct enemy hit at 1 HP; once per battle, excluding executions.",
+      "drawback": "Lose all SP; healing is blocked through the end of your next scheduled turn."
+    },
+    "martyrs_mantle": {
+      "name": "Martyr's Mantle",
+      "tier": "legendary",
+      "effect": "martyrs_mantle",
+      "modifiers": {
+        "hp_mult": 0.8,
+        "noShield": true
+      },
+      "params": {
+        "share": 30,
+        "roundCap": 20
+      },
+      "benefit": "Redirect {share}% of teammates’ direct HP damage to yourself, capped at {roundCap}% of your Max HP per round.",
+      "drawback": "Transferred damage bypasses your defenses and can kill you."
+    },
+    "blood_script": {
+      "name": "Blood Script",
+      "tier": "legendary",
+      "effect": "blood_script",
+      "modifiers": {
+        "noHealing": true
+      },
+      "params": {
+        "hpCost": 30
+      },
+      "benefit": "Paid pathway skills spend HP instead of SP: {hpCost}% Max HP × normal SP cost / Max SP.",
+      "drawback": "Casting must leave at least 1 HP; cooldowns and unlocks still apply."
+    },
+    "hollow_saint": {
+      "name": "Hollow Saint",
+      "tier": "legendary",
+      "effect": "hollow_saint",
+      "modifiers": {
+        "hp_mult": 0.85
+      },
+      "params": {
+        "conversion": 125,
+        "roundCap": 25
+      },
+      "benefit": "All healing you produce becomes shields at {conversion}% value, capped at {roundCap}% recipient Max HP per round.",
+      "drawback": "Your healing cannot restore HP; resurrection is unchanged."
+    },
+    "unbroken_will": {
+      "name": "Unbroken Will",
+      "tier": "legendary",
+      "effect": "unbroken_will",
+      "modifiers": {
+        "spRegen": 0.5
+      },
+      "params": {
+        "controlCost": 20
+      },
+      "benefit": "Spend {controlCost}% Max SP to act through Stun, Freeze, Bound, Sleep or Polymorph for this scheduled turn.",
+      "drawback": "Insufficient SP leaves control in force; banishment and Madness are unchanged."
+    },
+    "lone_sovereign": {
+      "name": "Lone Sovereign",
+      "tier": "legendary",
+      "effect": "lone_sovereign",
+      "modifiers": {
+        "hp_mult": 0.7
+      },
+      "params": {},
+      "benefit": "When originally deployed alone, take two normal actions per scheduled turn.",
+      "drawback": "A teammate removes the extra action; becoming the last survivor does not activate it."
+    },
+    "unbound_canticle": {
+      "name": "Unbound Canticle",
+      "tier": "legendary",
+      "effect": "unbound_canticle",
+      "modifiers": {},
+      "params": {
+        "damage": 60,
+        "surcharge": 75
+      },
+      "benefit": "Paid single-target damaging pathway skills hit all eligible foes for {damage}% damage each; utility stays on the primary target.",
+      "drawback": "Converted skills cost {surcharge}% more SP and lose damage against a lone enemy."
+    },
+    "spell_eater": {
+      "name": "Spell Eater",
+      "tier": "legendary",
+      "effect": "spell_eater",
+      "modifiers": {
+        "atk_mult": 0.85
+      },
+      "params": {
+        "drain": 10,
+        "drainCap": 20,
+        "healCap": 5
+      },
+      "benefit": "Basic hits burn {drain}% enemy Max SP and heal from actual SP removed, capped at {healCap}% of your Max HP per round.",
+      "drawback": "Active pathway skills are disabled; zero-SP targets give no drain healing."
+    },
+    "chronal_engine": {
+      "name": "Chronal Engine",
+      "tier": "legendary",
+      "effect": "chronal_engine",
+      "modifiers": {
+        "spRegen": 0.5
+      },
+      "params": {
+        "surcharge": 40
+      },
+      "benefit": "Eligible damaging skills can be reused while cooling down; each remaining turn adds {surcharge}% SP cost.",
+      "drawback": "Control, execution, copying, revival, extra-action and signature skills keep normal cooldowns."
+    },
+    "spirit_bastion": {
+      "name": "Spirit Bastion",
+      "tier": "legendary",
+      "effect": "spirit_bastion",
+      "modifiers": {
+        "noShield": true,
+        "spRegen": 0.5
+      },
+      "params": {
+        "absorption": 50
+      },
+      "benefit": "SP absorbs direct enemy HP damage; a full SP pool absorbs {absorption}% Max HP.",
+      "drawback": "Casting spends the same protection resource; executions and indirect damage are excluded."
+    }
+  }
+}

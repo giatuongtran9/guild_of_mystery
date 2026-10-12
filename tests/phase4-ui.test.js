@@ -40,7 +40,7 @@ async function browserFixture(outcome) {
   save.roster = [agent];
   save.quests = [{ id: 'test', name: 'Test', encounter: true, objective: 'combat', difficultySequence: 5, rewards: { funds: 0, reputation: 0, materials: {} } }];
   w.localStorage.setItem('guild-rpg-browser-v9', JSON.stringify(save));
-  w.eval(['paths','v15','generate','signatures','mythical','engine','state','campaign','ui'].map(name => fs.readFileSync(path.join(root, `js/${name}.js`), 'utf8')).join('\n'));
+  w.eval(['paths','v15','generate','traits','signatures','mythical','engine','state','campaign','ui'].map(name => fs.readFileSync(path.join(root, `js/${name}.js`), 'utf8')).join('\n'));
   if (outcome) {
     const resolve = w.resolveQuest;
     w.resolveQuest = (...args) => { const result = resolve(...args); result.success = false; result.battleOutcome = outcome; result.battleSnapshot.outcome = outcome; return result; };

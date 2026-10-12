@@ -7,7 +7,7 @@ const OCCUPATIONS = G9D.characters.OCCUPATIONS;
 const QUEST_TEMPLATES = G9D.contracts.QUEST_TEMPLATES;
 const tags = G9D.contracts.tags;
 const WANTED_TARGETS = G9D.contracts.WANTED_TARGETS;
-function traitData(agent){return TRAITS[agent?.trait]||TRAITS["Stout Vitality"];}
+function traitData(agent){return typeof resolvedTraitModifiers==='function'?resolvedTraitModifiers(agent):TRAITS[agent?.trait]||TRAITS["Stout Vitality"];}
 function randomTrait(rng=Math.random){return pick(rng,TRAIT_NAMES);}
 let counter=0;
 const newId=(prefix="u")=>`${prefix}_${Date.now().toString(36)}_${(counter++).toString(36)}`;
@@ -15,10 +15,13 @@ const pick=(rng,a)=>a[Math.floor(rng()*a.length)];
 const randRange=(rng,min,max)=>Math.floor(rng()*(max-min+1))+min;
 function humanStats(rng=Math.random){return {hp:randRange(rng,5,10),atk:randRange(rng,5,10),def:randRange(rng,5,10),int:randRange(rng,5,10)};}
 function makeAgent(rng=Math.random,options={}){
-  const trait=options.trait||randomTrait(rng),statVariance=rollVariance(rng),sequence=options.sequence??10;
+  const forced=options.traitId&&TRAIT_DATA.entries[options.traitId];
+  if(options.traitId&&!forced)throw new Error('Unknown trait ID: '+options.traitId);
+  const catalog=forced?{traitId:options.traitId,traitTier:forced.tier,traitSource:'catalog_v1',trait:forced.name}:options.catalog?rollCatalogTrait(rng):null;
+  const trait=catalog?.trait||options.trait||randomTrait(rng),statVariance=rollVariance(rng),sequence=options.sequence??10;
   const path=sequence<10?(options.path||pick(rng,PATH_KEYS)):null,human=humanStats(rng),recommended=options.recommendedPath||path||pick(rng,PATH_KEYS);
   return {
-    id:newId("ag"),name:`${pick(rng,FIRST)} ${pick(rng,LAST)}`,occupation:pick(rng,OCCUPATIONS),trait,traits:{name:trait,desc:TRAITS[trait].desc},
+    ...(catalog||{}),id:newId("ag"),name:`${pick(rng,FIRST)} ${pick(rng,LAST)}`,occupation:pick(rng,OCCUPATIONS),trait,traits:{name:trait,desc:catalog?traitDescription(catalog):TRAITS[trait].desc},
     stats:{...human},baseStats:{...human},humanStats:{...human},statVariance,speedVariance:statVariance.speed,basePathSpeed:null,
     recommendedPath:recommended,path:path||recommended,sequence,awakened:sequence<10,
     abilities:sequence<10?[tierFor(path||recommended,sequence).ability]:[],
@@ -29,7 +32,7 @@ function makeAgent(rng=Math.random,options={}){
   };
 }
 function rollRecruitSequence(){return 10;}
-function makeRecruitPool(size=4,seed=Date.now(),guildReputation=0){const rng=(()=>{let x=seed>>>0;return()=>((x=Math.imul(1664525,x)+1013904223)>>>0)/4294967296;})();return Array.from({length:size},()=>makeAgent(rng,{sequence:10}));}
+function makeRecruitPool(size=4,seed=Date.now(),guildReputation=0){const rng=(()=>{let x=seed>>>0;return()=>((x=Math.imul(1664525,x)+1013904223)>>>0)/4294967296;})();return Array.from({length:size},()=>makeAgent(rng,{sequence:10,catalog:true}));}
 function maxContractSequence(rep){const rows=G9D.system.contracts.max_sequence_by_reputation;return rows.filter(x=>rep>=x.min).sort((a,b)=>b.min-a.min)[0]?.max||9;}
 function contractSequenceWeights(rep){const rows=G9D.system.contracts.sequence_odds_by_reputation||[];return rows.filter(x=>rep>=x.min).sort((a,b)=>b.min-a.min)[0]?.weights||{'9':100,'8':0,'7':0,'6':0,'5':0};}
 function weightedSequence(r,rep){const weights=contractSequenceWeights(rep);const arr=Object.entries(weights).map(([seq,w])=>[Number(seq),Number(w)||0]).filter(([,w])=>w>0);const total=arr.reduce((a,x)=>a+x[1],0);if(!total)return 9;let n=r()*total;for(const [seq,w] of arr){n-=w;if(n<=0)return seq;}return arr[arr.length-1][0];}

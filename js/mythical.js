@@ -31,7 +31,7 @@ function mythicalNote(owner,target,state,lines,text,type='status',extra={}){
  lines?.push({text,kind:type==='damage'?'quirk':'status'});
  emitCombatEvent(state,{round:state?.currentRound||1,type,subtype:'mythical_authority',actorId:owner?.id,actorName:owner?.name,actorTeam:teamOf(owner,state),targetId:target?.id,targetName:target?.name,targetTeam:target?teamOf(target,state):undefined,text,...extra});
 }
-function mythicalHeal(owner,target,amount,state,lines){const restored=recoverHP(target,amount);if(restored>0)mythicalNote(owner,target,state,lines,`${owner.name}'s ${MYTHICAL_AUTHORITIES[mythicalAgent(owner).path].name} restores ${restored} HP to ${target.name}.`,'heal',{amount:restored,hpAfter:target.hp,maxHp:target.maxHp});return restored;}
+function mythicalHeal(owner,target,amount,state,lines){const beforeShield=target.shield||0;const restored=recoverHP(target,amount,{source:owner,state,lines,kind:'heal'});if(restored>0)mythicalNote(owner,target,state,lines,`${owner.name}'s ${MYTHICAL_AUTHORITIES[mythicalAgent(owner).path].name} restores ${restored} HP to ${target.name}.`,'heal',{amount:restored,hpAfter:target.hp,maxHp:target.maxHp});return restored+Math.max(0,(target.shield||0)-beforeShield);}
 function mythicalSpellDamage(owner,target,multiplier,element){return v15Damage('pure_caster_ability',{agent:mythicalAgent(owner),actor:owner,target,abilityMult:multiplier,damageSpec:{scaling:'INT',type:'elemental',element,multiplier}});}
 function mythicalHit(owner,target,amount,state,lines,r,damageType='physical'){
  if(!target?.alive||amount<=0)return null;

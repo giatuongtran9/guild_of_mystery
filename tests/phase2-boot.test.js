@@ -4,7 +4,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
 const source = fs.readFileSync(path.join(root, 'js/boot.js'), 'utf8');
-const scripts = ['paths', 'v15', 'generate', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'].map(name => `js/${name}.js`);
+const scripts = ['paths', 'v15', 'generate', 'traits', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'].map(name => `js/${name}.js`);
 const flush = () => new Promise(resolve => setImmediate(resolve));
 function bootstrap({ reject, registration } = {}) {
   const app = { innerHTML: '' }, appended = [], registrations = [], listeners = new Map();
