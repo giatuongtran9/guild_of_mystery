@@ -11,3 +11,7 @@ if (typeof module !== 'undefined' && module.exports) Object.assign(module.export
 
 if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { TRAIT_DATA, TRAIT_TIERS, validateTraitCatalog, traitDefinition, traitActive, traitRarity, traitBadge, traitName, traitDescription, normalizeTrait, rollCatalogTrait, resolvedTraitModifiers, traitRuntime, traitBeginAction, traitFinishAction, traitAbilityQuote, traitAbilityDescription, traitTurnEnd, refreshRecruitmentOffice, hireRecruitmentCandidate, grantShield, bindBattle });
 if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { startRoundCombatResources, spTableFor, traitCanActThroughControl, traitScheduledActions, traitAfterHit, traitEnemyHit });
+
+if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { reputationRank, nextReputationRank, contractSequenceWeights, contractPoolStock, validateContractPool, maintainContractPool, declineContract, refreshContracts, reserveContractDispatch, CONTRACT_POOL });
+
+if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { GLOBAL_COMBAT, balancedStats });

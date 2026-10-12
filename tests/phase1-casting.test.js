@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 
 function loadGame() {
   delete require.cache[require.resolve('../js/node-loader.js')];
-  return require('../js/node-loader.js');
+  return require('./mechanics-fixture')(require('../js/node-loader.js'));
 }
 
 function agent(g, path, sequence, id) {

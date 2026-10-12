@@ -142,7 +142,8 @@
             "chargeCost": 100,
             "multiplier": 1
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -170,7 +171,7 @@
             "type": "status",
             "status": "evade",
             "duration": 1,
-            "dodgeRate": 1
+            "dodgeRate": 0.4
           }
         ]
       }
@@ -223,7 +224,8 @@
             "status": "untargetable",
             "duration": 1
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -248,7 +250,8 @@
             "status": "banished",
             "duration": 1
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {

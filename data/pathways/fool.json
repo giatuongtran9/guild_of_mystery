@@ -113,7 +113,8 @@
             "element": "fire",
             "duration": "next_turn"
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -139,7 +140,8 @@
             "stat": "def",
             "duration": 2
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -230,7 +232,8 @@
               }
             ]
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -254,7 +257,7 @@
             "type": "status",
             "status": "evade",
             "duration": 1,
-            "dodgeRate": 0.5
+            "dodgeRate": 0.4
           }
         ]
       }
@@ -281,7 +284,8 @@
             "maxHpRatio": 0.25,
             "fullHp": false
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {

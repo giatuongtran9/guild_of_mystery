@@ -108,7 +108,8 @@
             "amount": 0.2,
             "duration": 2
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -245,7 +246,8 @@
             "element": "lightning",
             "duration": "next_turn"
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {

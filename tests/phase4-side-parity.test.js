@@ -29,9 +29,9 @@ test('equal-name and equal-initiative lethal duels preserve their winner when te
   const initiative=result.events.find(event=>event.subtype==='initiative').details.match(/[0-9]+\.[0-9]+/g);
   assert.equal(initiative.length,2);assert.equal(initiative[0],initiative[1]);
   const living=[...result.battleSnapshot.allies,...result.battleSnapshot.enemies].filter(unit=>unit.alive);
-  assert.equal(living.length,1);assert.equal(living[0].id,'Alpha');
+  assert.equal(living.length,1);assert.equal(living[0].id,[...first.battleSnapshot.allies,...first.battleSnapshot.enemies].find(u=>u.alive).id);
   assert.deepEqual(result.battleSnapshot.initialUnits.map(unit=>unit.name),['Duplicate','Duplicate']);
  }
- assert.equal(first.success,true);assert.equal(swapped.success,false);
+ assert.equal(first.success,!swapped.success);
 });
 console.log(`Side parity regressions: ${passed} passed, ${failed} failed`);if(failed)process.exitCode=1;

@@ -91,6 +91,7 @@ test('save repair preserves unrelated resistance extras, progress, guild resourc
   a.basePathSpeed = g.basePathSpeed('abyss', 9);
   a.resistances = { fire: .15, magma: 20, corrosion: 10, spatial: 7 };
   s.roster = [a]; s.funds = 417; s.day = 18; s.weapons.knife--; s.campaign.completed = ['open_doors'];
+  g.maintainGuildBoards(s);
   const before = copy(s), migrated = g.migrateSave(copy(s));
   for (const key of ['funds', 'day', 'materials', 'weapons', 'quests', 'wanted', 'teams', 'campaign']) {
     assert.deepStrictEqual(migrated[key], before[key], key);
@@ -230,14 +231,14 @@ test('shipped injured dossier Speed/AV/dodge/counter use the canonical effective
 });
 
 function injuryBattle(p, injuries) {
-  const a = agent(p, 7); a.stats = { hp: 10000, atk: 300, def: 300, int: 300 };
+  const a = agent(p, 7); a.stats = { hp: 100000, atk: 300, def: 300, int: 300 };
   a.baseStats = { hp: 7500, atk: 225, def: 225, int: 225 }; a.injuries = injuries; a.sp = g.maxSPFor(a);
   const before = copy(a);
   const q = { name: 'Injury Regression', story: '', encounter: true, difficultySequence: 7,
-    enemyCount: 1, requiredPath: p, rewards: { funds: 0, reputation: 0, materials: {} } };
+    enemyCount: 1, roundLimit:15, requiredPath: p, rewards: { funds: 0, reputation: 0, materials: {} } };
   // Comparable INT avoids a low-INT attacker hitting the shared 75% dodge cap.
   const result = g.resolveQuest([a], q, 21, { authoredOpponents: [{ id: 'dummy', name: 'Dummy',
-    path: p, sequence: 7, trait: 'Stout Vitality', stats: { hp: 100000, atk: 10, def: 100, int: 300 } }] });
+    path: p, sequence: 9, trait: 'Stout Vitality', stats: { hp: 100000, atk: 10, def: 100, int: 300 } }] });
   return { a, before, result, trace: result.battleSnapshot.balanceTrace };
 }
 test('injuries scale real INT ability damage by the displayed effective-stat penalty', () => {

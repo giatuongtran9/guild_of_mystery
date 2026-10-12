@@ -53,7 +53,8 @@
             "amount": 0.15,
             "maxHpRatio": 0.12
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -136,7 +137,8 @@
             "maxHpRatio": 0.2,
             "fullHp": false
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -167,7 +169,8 @@
             "amount": 0.15,
             "duration": 2
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -228,7 +231,8 @@
             "stat": "int",
             "duration": 2
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {

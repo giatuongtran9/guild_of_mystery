@@ -112,7 +112,8 @@
             "fullHp": false,
             "incomingCategory": "magic"
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -175,7 +176,8 @@
             "chance": 1,
             "duration": 1
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -225,7 +227,8 @@
             "amount": 0.2,
             "duration": 2
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {

@@ -2,6 +2,7 @@
 'use strict';
 const assert=require('node:assert/strict');
 const g=require('../js/node-loader.js');
+require('./mechanics-fixture')(g);
 let pass=0,fail=0;
 function test(name,fn){try{fn();pass++;console.log(`PASS ${name}`);}catch(e){fail++;console.log(`FAIL ${name}: ${e.message}`);}}
 const R=()=>.99;

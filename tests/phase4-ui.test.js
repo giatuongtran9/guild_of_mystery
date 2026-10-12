@@ -39,6 +39,7 @@ async function browserFixture(outcome) {
   agent.id = unit.id; agent.name = unit.name; g.restatAgent(agent);
   save.roster = [agent];
   save.quests = [{ id: 'test', name: 'Test', encounter: true, objective: 'combat', difficultySequence: 5, rewards: { funds: 0, reputation: 0, materials: {} } }];
+  require('./pool-fixture')(g,save);
   w.localStorage.setItem('guild-rpg-browser-v9', JSON.stringify(save));
   w.eval(['paths','v15','generate','traits','signatures','mythical','engine','state','campaign','ui'].map(name => fs.readFileSync(path.join(root, `js/${name}.js`), 'utf8')).join('\n'));
   if (outcome) {

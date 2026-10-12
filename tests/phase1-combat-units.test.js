@@ -2,6 +2,7 @@
 // Plain Node + assert; no dependencies, browser storage or source instrumentation.
 const assert = require('assert');
 const g = require('../js/node-loader.js');
+require('./mechanics-fixture')(g);
 const balance = require('../data/balance.json');
 let passed = 0, failed = 0;
 function test(name, fn) {
@@ -220,14 +221,14 @@ test('real Bizarro Transformation fractional evasion permits a strike above its 
   const { ua, ub, state } = world(a, b);
   const spec = clone(g.activeSpecs(ub.agent).find(s => s.effectId === 'bizarro_transformation'));
   g.applyStructuredAbility(ub.agent, ub, ua, state, [], () => .99, spec);
-  assert.strictEqual(ub.statusMeta.evade.dodgeRate, .5, 'actual skill must grant its authored fractional rate');
+  assert.strictEqual(ub.statusMeta.evade.dodgeRate, .4, 'actual skill must grant its authored fractional rate');
   const before = ub.hp;
   g.attackOnce(ua.agent, ua, ub, state, [], () => .99);
   assert(ub.hp < before, 'fractional evasion must allow a high-roll attack to land');
 });
 
 for (const [path, id] of [['door', 'blink_strike'], ['white_tower', 'prophetic_evade']]) {
-  test(`${path}: full or unspecified evasion retains complete avoidance`, () => {
+  test(`${path}: authored evasion remains fractional and permits high-roll hits`, () => {
     const a = agent('fool', 5), b = agent(path, 5, 'B');
     const { ua, ub, state } = world(a, b);
     const spec = clone(g.activeSpecs(ub.agent).find(s => s.effectId === id));
@@ -235,7 +236,7 @@ for (const [path, id] of [['door', 'blink_strike'], ['white_tower', 'prophetic_e
     assert(g.hasStatus(ub, 'evade'));
     const before = ub.hp;
     g.attackOnce(ua.agent, ua, ub, state, [], () => .99);
-    assert.strictEqual(ub.hp, before);
+    assert(ub.hp<before);
   });
 }
 
@@ -355,6 +356,7 @@ test('schema9 reload repairs legacy timed combat caches before dossier rates wit
     _buffs: { atk: 1.6, speed: 1.15 }, _partyPassiveEffects: [{ type: 'initiative', amount: 50 }],
     _spCostMultiplier: .5, _cooldownPenalty: 2 });
   const guild = g.newGame();guild.roster = [a];guild.funds = 417;guild.day = 18;
+  g.maintainGuildBoards(guild);
   const before = clone(guild),loaded = g.migrateSave(JSON.parse(JSON.stringify(guild))),saved = loaded.roster[0];
   const clean = clone(saved);delete clean._buffs;delete clean._partyPassiveEffects;
   assert.strictEqual(g.speedFor(saved), g.speedFor(clean), 'dossier Speed retained a timerless15% stance');

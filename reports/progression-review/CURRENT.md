@@ -1,3 +1,5 @@
+The latest implementation and measurements are in [reputation-combat/CURRENT.md](../reputation-combat/CURRENT.md). The measurements below describe the previous release.
+
 # Implemented progression and contract update
 
 Ordinary recruits hide combat stats until awakening. Pathway recommendations and their 7% bonus are removed for future awakening; existing awakened saved stats and individual variance are preserved. Recruitment remains £50 to replace all four candidates, £150 to hire the chosen candidate, and 74% Normal / 20% Rare / 5% Epic / 1% Legendary. The existing 29 traits activate after awakening.

@@ -136,7 +136,8 @@
             "observations": 2,
             "multiplier": 1
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -159,9 +160,11 @@
           {
             "type": "status",
             "status": "evade",
-            "duration": 1
+            "duration": 1,
+            "dodgeRate": 0.4
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -190,7 +193,8 @@
             "negate": true,
             "duration": "next_turn"
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -249,7 +253,8 @@
             "fullHp": false,
             "incomingCategory": "magic"
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -274,7 +279,8 @@
             "scaling": "INT",
             "multiplier": 2.8
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {

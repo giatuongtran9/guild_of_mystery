@@ -1,6 +1,7 @@
 'use strict';
 // Real cast regressions: production target selection, SP payment and damage pipeline.
 const {g,assert,world,record}=require('./phase3-test-helpers');
+require('./mechanics-fixture')(g);
 const fs=require('node:fs'),path=require('node:path');
 let failed=0,passed=0;
 function check(name,fn){try{fn();passed++;console.log('PASS '+name);}catch(e){failed++;console.error('FAIL '+name+': '+e.message);}}

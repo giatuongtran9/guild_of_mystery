@@ -121,7 +121,8 @@
             "chargeCost": 100,
             "amount": 1
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -145,7 +146,8 @@
             "type": "nullify_buffs",
             "duration": 1
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
