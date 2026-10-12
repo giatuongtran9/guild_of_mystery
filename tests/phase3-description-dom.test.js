@@ -37,7 +37,7 @@ async function fixture(agents = [agent()], saved = null) {
   state.roster = agents;
   state.funds = 10000;
   w.localStorage.setItem(saveKey, saved || JSON.stringify(state));
-  w.eval(['paths','v15','generate','signatures','mythical','engine','state','campaign','ui'].map(n => fs.readFileSync(path.join(root, `js/${n}.js`), 'utf8')).join('\n'));
+  w.eval(['paths','v15','generate','traits','signatures','mythical','engine','state','campaign','ui'].map(n => fs.readFileSync(path.join(root, `js/${n}.js`), 'utf8')).join('\n'));
   // Inspect the same lexical definitions used by the UI, without replacing its renderer.
   w.eval(`window.G9_PHASE3 = {
     tier: tierFor,

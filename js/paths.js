@@ -32,7 +32,7 @@ function baseStatsFor(path, sequence=9, rng=Math.random){
 }
 function rollVariance(rng=Math.random){return {hp:.90+rng()*.20,atk:.90+rng()*.20,def:.90+rng()*.20,int:.90+rng()*.20,speed:.90+rng()*.20};}
 function statsFromVariance(agent,path,sequence=9){
-  const base=tableStats(path,sequence),t=TRAITS[agent.trait]||TRAITS["Stout Vitality"],v=agent.statVariance||{hp:1,atk:1,def:1,int:1,speed:1};
+  const base=tableStats(path,sequence),t=traitData(agent),v=agent.statVariance||{hp:1,atk:1,def:1,int:1,speed:1};
   const stats={hp:Math.max(8,Math.round(base.hp*v.hp*(t.hp_mult||1))),atk:Math.max(5,Math.round(base.atk*v.atk*(t.atk_mult||1))),def:Math.max(5,Math.round(base.def*v.def*(t.def_mult||1))),int:Math.max(5,Math.round(base.int*v.int*(t.int_mult||1)))};
   if(agent.recommendedPath===path){
     const dominantInt=['visionary','hermit','door','fool'].includes(path),dominantBody=['twilight_giant','tyrant','red_priest'].includes(path);

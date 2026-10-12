@@ -111,3 +111,17 @@ To change a duration later, edit that one number (and the number in the descript
 status / status_chance / sp_cost_increase / cooldown_increase / no_heal / movement_block already used their own duration field.
 
 Incoming damage pipeline (engine.js resolveIncoming): reflect-buff negate -> shield absorbs -> damage reduction (passive and active) applies to the remainder -> HP loss -> reflect. Basic attacks, abilities, counters and mind-control hits all use it.
+
+Trait rarity and paid recruitment refresh
+---------------------------------------
+Refresh all four visible recruits for £50, then choose whom to hire for £150.
+Each new candidate rolls Normal 74%, Rare 20%, Epic 5%, or Legendary 1%.
+Free seven-day refresh and empty-office refill remain. Paid refresh costs no day.
+New traits are revealed before awakening and activate at Sequence 9.
+Normal buffs are 5–8%; Rare advantages are 15–20% with existing drawbacks.
+Epic traits add tactical triggers; Legendary traits change combat rules.
+The 29 definitions and rates live in data/traits.json; details and validation
+are documented in TRAITS_IMPLEMENTATION.md. Old agents keep their old effects.
+Run node tests/traits.test.js and the documented DOM trait-ui test.
+After changing data or code, run node scripts/build-runtime-data.js and
+node scripts/build-runtime-data.js --check before publishing.

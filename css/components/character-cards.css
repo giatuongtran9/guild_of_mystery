@@ -210,3 +210,15 @@
   opacity: .55;
   font-weight: 500;
 }
+/* Trait identity is written as well as colored. */
+.trait-badge{display:inline-block;padding:3px 8px;border:1px solid currentColor;border-radius:999px;font-size:12px;font-weight:700;line-height:1.4}
+.trait-normal{color:#d5d7df}.trait-rare{color:#8ebcff}.trait-epic{color:#d3a3ff}.trait-legendary{color:#f5cf74}.trait-legacy{color:#b5b2a9}
+.trait-details{margin:12px 0;min-width:0;overflow-wrap:anywhere}.trait-details p{margin:7px 0;font-size:13px;line-height:1.6}.trait-details small{color:var(--muted)}
+.recruit[data-trait-tier="rare"]{border-color:#688fce}.recruit[data-trait-tier="epic"]{border-color:#af79d4}.recruit[data-trait-tier="legendary"]{border-color:#d5ae56}
+.recruit-odds{font-size:13px;line-height:1.8;overflow-wrap:anywhere}.recruit-odds span{white-space:nowrap}
+.recruitment-office .section-head{flex-wrap:wrap;gap:12px}.recruitment-office button:disabled{opacity:.45;cursor:not-allowed}
+@keyframes recruit-arrive{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.recruit-reveal .recruit{animation:recruit-arrive .35s ease both}.recruit-reveal .recruit:nth-child(2){animation-delay:.08s}.recruit-reveal .recruit:nth-child(3){animation-delay:.16s}.recruit-reveal .recruit:nth-child(4){animation-delay:.24s}
+@media(prefers-reduced-motion:reduce){.recruit-reveal .recruit{animation:none}}
+.recruitment-office .recruit { display:flex; flex-direction:column; align-items:center; }
+.recruitment-office .recruit > button { margin-top:auto; }

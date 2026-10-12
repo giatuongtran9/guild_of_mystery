@@ -551,3 +551,4 @@
   font-family: monospace;
   font-weight: bold;
 }
+.battle-toolbar button[hidden] { display: none; }
