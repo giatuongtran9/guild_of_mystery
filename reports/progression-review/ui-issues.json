@@ -1,0 +1,50 @@
+{
+  "issues": {
+    "freshGuildNotPersisted": {
+      "savePresent": false,
+      "recruitCount": 4
+    },
+    "dayRefreshOnlyOnContractSettlement": {
+      "day": 8,
+      "scheduledDay": 8,
+      "poolReplaced": false
+    },
+    "awakeningSaveFailure": {
+      "savedAwakened": false,
+      "displayedAwakened": true,
+      "saveFailureReported": false
+    },
+    "wantedLabels": [
+      {
+        "name": "The Red Knife",
+        "target": "Elias Vane"
+      },
+      {
+        "name": "The Red Knife",
+        "target": "Mara Quill"
+      },
+      {
+        "name": "The Red Knife",
+        "target": "Jonas Rook"
+      }
+    ],
+    "failedMundaneRewardPolicy": {
+      "seed": 1972,
+      "success": false,
+      "funds": 100,
+      "materials": {
+        "Spirit Thread": 3
+      },
+      "digestion": 17,
+      "mastery": {
+        "unarmed": 2
+      }
+    }
+  },
+  "ruledOut": {
+    "unaffordableAdvancement": {
+      "saveUnchanged": true,
+      "reasonDisplayed": true
+    }
+  }
+}

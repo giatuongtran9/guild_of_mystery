@@ -118,6 +118,10 @@ Refresh all four visible recruits for £50, then choose whom to hire for £150.
 Each new candidate rolls Normal 74%, Rare 20%, Epic 5%, or Legendary 1%.
 Free seven-day refresh and empty-office refill remain. Paid refresh costs no day.
 New traits are revealed before awakening and activate at Sequence 9.
+Ordinary candidates and agents hide combat stats until awakening. Choose any
+Pathway: there are no recommendations or recommended-Pathway stat bonuses.
+Individual stat variation remains +/-10% at awakening. Existing awakened agents
+keep their saved stats when loading older saves.
 Normal buffs are 5–8%; Rare advantages are 15–20% with existing drawbacks.
 Epic traits add tactical triggers; Legendary traits change combat rules.
 The 29 definitions and rates live in data/traits.json; details and validation

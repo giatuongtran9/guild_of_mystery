@@ -1,8 +1,12 @@
 // ===== state.js =====
-const SAVE_VERSION=11;
+const SAVE_VERSION=12;
 const KEY="guild-rpg-browser-v9";
 const cloneS=x=>JSON.parse(JSON.stringify(x));
 function ensureAgentSchema(a){
+ // Recommendations are retired. Saved awakened stats remain untouched.
+ delete a.recommendedPath;
+ if(!a.awakened)a.path=null;
+ if(Array.isArray(a.history))a.history=a.history.map(h=>({...h,text:typeof h.text==='string'?h.text.replace(/ Recommended Pathway: [^.]+\.$/,''):h.text}));
  // The old Demoness meter shared corruption's storage. Preserve that value
  // as corruption and copy its charge once into the separate Affliction field.
  if(a.path==='demoness'&&!Number.isFinite(a.affliction))a.affliction=Math.max(0,Math.min(100,Number(a.corruption)||0));

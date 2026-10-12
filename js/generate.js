@@ -19,16 +19,16 @@ function makeAgent(rng=Math.random,options={}){
   if(options.traitId&&!forced)throw new Error('Unknown trait ID: '+options.traitId);
   const catalog=forced?{traitId:options.traitId,traitTier:forced.tier,traitSource:'catalog_v1',trait:forced.name}:options.catalog?rollCatalogTrait(rng):null;
   const trait=catalog?.trait||options.trait||randomTrait(rng),statVariance=rollVariance(rng),sequence=options.sequence??10;
-  const path=sequence<10?(options.path||pick(rng,PATH_KEYS)):null,human=humanStats(rng),recommended=options.recommendedPath||path||pick(rng,PATH_KEYS);
+  const path=sequence<10?(options.path||pick(rng,PATH_KEYS)):null,human=humanStats(rng);
   return {
     ...(catalog||{}),id:newId("ag"),name:`${pick(rng,FIRST)} ${pick(rng,LAST)}`,occupation:pick(rng,OCCUPATIONS),trait,traits:{name:trait,desc:catalog?traitDescription(catalog):TRAITS[trait].desc},
     stats:{...human},baseStats:{...human},humanStats:{...human},statVariance,speedVariance:statVariance.speed,basePathSpeed:null,
-    recommendedPath:recommended,path:path||recommended,sequence,awakened:sequence<10,
-    abilities:sequence<10?[tierFor(path||recommended,sequence).ability]:[],
-    abilityHistory:sequence<10?[{sequence,name:tierFor(path||recommended,sequence).name,ability:tierFor(path||recommended,sequence).ability}]:[],
+    path,sequence,awakened:sequence<10,
+    abilities:sequence<10?[tierFor(path,sequence).ability]:[],
+    abilityHistory:sequence<10?[{sequence,name:tierFor(path,sequence).name,ability:tierFor(path,sequence).ability}]:[],
     introduction:`Born into an ordinary ${pick(rng,OCCUPATIONS).toLowerCase()} life, ${pick(rng,["they kept their head down and worked","they learned to read people quickly","they developed a reputation for reliability","they were fascinated by things others ignored"])}. Their combat characteristic is ${trait}, which shapes how they survive and fight.`,
     status:"active",unitType:"agent",digest:0,sp:0,maxSP:0,cooldowns:{},madness:0,corruption:0,fear:0,fortune:0,wrath:0,radiance:0,insight:0,knowledge:0,mystery:0,resolve:0,warMomentum:0,activeThreads:0,threadTargets:[],injuries:0,recorded:[],permanentTraits:[],weaponId:"none",originEvent:null,
-    history:[{day:0,text:`Joined the recruitment office as an ordinary ${pick(rng,OCCUPATIONS).toLowerCase()}. Recommended Pathway: ${pathOf(recommended).name}.`}]
+    history:[{day:0,text:`Joined the recruitment office as an ordinary ${pick(rng,OCCUPATIONS).toLowerCase()}.`}]
   };
 }
 function rollRecruitSequence(){return 10;}

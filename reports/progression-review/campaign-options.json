@@ -1,0 +1,141 @@
+[
+  {
+    "bossHP": 500,
+    "samplesPerPathway": 20,
+    "wins": {
+      "fool": 20,
+      "door": 19,
+      "error": 13,
+      "visionary": 20,
+      "sun": 20,
+      "tyrant": 20,
+      "white_tower": 20,
+      "hanged_man": 20,
+      "darkness": 20,
+      "death": 20,
+      "twilight_giant": 20,
+      "red_priest": 20,
+      "demoness": 20,
+      "hermit": 20,
+      "paragon": 20,
+      "wheel_of_fortune": 19,
+      "mother": 20,
+      "moon": 14,
+      "abyss": 20,
+      "chained": 20,
+      "black_emperor": 13,
+      "justiciar": 20
+    },
+    "belowTarget": [
+      [
+        "error",
+        13
+      ],
+      [
+        "black_emperor",
+        13
+      ]
+    ]
+  },
+  {
+    "bossHP": 490,
+    "samplesPerPathway": 20,
+    "wins": {
+      "fool": 20,
+      "door": 19,
+      "error": 13,
+      "visionary": 20,
+      "sun": 20,
+      "tyrant": 20,
+      "white_tower": 20,
+      "hanged_man": 20,
+      "darkness": 20,
+      "death": 20,
+      "twilight_giant": 20,
+      "red_priest": 20,
+      "demoness": 20,
+      "hermit": 20,
+      "paragon": 20,
+      "wheel_of_fortune": 19,
+      "mother": 20,
+      "moon": 15,
+      "abyss": 20,
+      "chained": 20,
+      "black_emperor": 13,
+      "justiciar": 20
+    },
+    "belowTarget": [
+      [
+        "error",
+        13
+      ],
+      [
+        "black_emperor",
+        13
+      ]
+    ]
+  },
+  {
+    "bossHP": 480,
+    "samplesPerPathway": 20,
+    "wins": {
+      "fool": 20,
+      "door": 19,
+      "error": 14,
+      "visionary": 20,
+      "sun": 20,
+      "tyrant": 20,
+      "white_tower": 20,
+      "hanged_man": 20,
+      "darkness": 20,
+      "death": 20,
+      "twilight_giant": 20,
+      "red_priest": 20,
+      "demoness": 20,
+      "hermit": 20,
+      "paragon": 20,
+      "wheel_of_fortune": 20,
+      "mother": 20,
+      "moon": 17,
+      "abyss": 20,
+      "chained": 20,
+      "black_emperor": 13,
+      "justiciar": 20
+    },
+    "belowTarget": [
+      [
+        "black_emperor",
+        13
+      ]
+    ]
+  },
+  {
+    "bossHP": 475,
+    "samplesPerPathway": 20,
+    "wins": {
+      "fool": 20,
+      "door": 19,
+      "error": 16,
+      "visionary": 20,
+      "sun": 20,
+      "tyrant": 20,
+      "white_tower": 20,
+      "hanged_man": 20,
+      "darkness": 20,
+      "death": 20,
+      "twilight_giant": 20,
+      "red_priest": 20,
+      "demoness": 20,
+      "hermit": 20,
+      "paragon": 20,
+      "wheel_of_fortune": 20,
+      "mother": 20,
+      "moon": 17,
+      "abyss": 20,
+      "chained": 20,
+      "black_emperor": 15,
+      "justiciar": 20
+    },
+    "belowTarget": []
+  }
+]

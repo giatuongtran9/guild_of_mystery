@@ -856,7 +856,7 @@
   },
   "system": {
     "version": "v17.0",
-    "save_version": 9,
+    "save_version": 12,
     "save_key": "guild-rpg-browser-v9",
     "digestion": {
       "contract_base_by_difficulty": {
