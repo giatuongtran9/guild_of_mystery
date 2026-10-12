@@ -856,30 +856,57 @@
   },
   "system": {
     "version": "v17.0",
-    "save_version": 9,
+    "save_version": 13,
     "save_key": "guild-rpg-browser-v9",
     "digestion": {
-      "contract_base_by_difficulty": {
-        "sequence_9": 24,
-        "sequence_8": 22,
-        "sequence_7": 20,
-        "sequence_6": 18,
-        "sequence_5_or_lower": 16
+      "base_by_sequence": {
+        "9": 20,
+        "8": 18,
+        "7": 15,
+        "6": 12,
+        "5": 10,
+        "4": 8,
+        "3": 7,
+        "2": 6,
+        "1": 5,
+        "0": 0
       },
       "individual_multiplier": 1.45,
-      "lower_sequence_bonus_per_step": 0.22
+      "boss_multiplier": 2.5,
+      "easier_rank_multipliers": [
+        1,
+        0.6,
+        0.35,
+        0.15
+      ],
+      "harder_rank_bonus": 0.2,
+      "harder_rank_cap": 1.4
     },
     "weapon_mastery": {
       "per_completed_contract": 2,
       "max_level": 10
     },
-    "combat": "json-driven-elemental-pipeline"
+    "combat": "json-driven-elemental-pipeline",
+    "advancement": {
+      "success_by_target_sequence": {
+        "9": 1,
+        "8": 0.98,
+        "7": 0.96,
+        "6": 0.94,
+        "5": 0.92,
+        "4": 0.9,
+        "3": 0.88,
+        "2": 0.86,
+        "1": 0.84,
+        "0": 0.8
+      }
+    }
   },
   "pathway_advancement_costs": {
     "fool": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -920,8 +947,8 @@
     },
     "door": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -962,8 +989,8 @@
     },
     "error": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -1004,8 +1031,8 @@
     },
     "visionary": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -1046,8 +1073,8 @@
     },
     "sun": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -1088,8 +1115,8 @@
     },
     "tyrant": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -1130,8 +1157,8 @@
     },
     "darkness": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -1172,8 +1199,8 @@
     },
     "death": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -1214,8 +1241,8 @@
     },
     "twilight_giant": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -1256,8 +1283,8 @@
     },
     "red_priest": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -1298,8 +1325,8 @@
     },
     "demoness": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -1340,8 +1367,8 @@
     },
     "black_emperor": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -1382,8 +1409,8 @@
     },
     "justiciar": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -1424,8 +1451,8 @@
     },
     "white_tower": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -1466,8 +1493,8 @@
     },
     "hanged_man": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -1508,8 +1535,8 @@
     },
     "hermit": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -1550,8 +1577,8 @@
     },
     "paragon": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -1592,8 +1619,8 @@
     },
     "wheel_of_fortune": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -1634,8 +1661,8 @@
     },
     "mother": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -1676,8 +1703,8 @@
     },
     "moon": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -1718,8 +1745,8 @@
     },
     "abyss": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -1760,8 +1787,8 @@
     },
     "chained": {
       "9": {
-        "funds": 120,
-        "material": 0
+        "funds": 0,
+        "material": 1
       },
       "8": {
         "funds": 166,
@@ -1814,5 +1841,22 @@
     "taunt": 2,
     "defense_penetration": 2,
     "debuff_hit": 1
+  },
+  "contract_encounters": {
+    "round_limit": 45,
+    "enemy_stat_multiplier_by_sequence": {
+      "9": 0.86,
+      "8": 0.6,
+      "7": 0.45,
+      "6": 0.4,
+      "5": 0.45,
+      "4": 0.4,
+      "3": 0.3,
+      "2": 0.25,
+      "1": 0.22,
+      "0": 0.3
+    },
+    "enemy_damage_multiplier": 1,
+    "boss_round_limit": 45
   }
 }

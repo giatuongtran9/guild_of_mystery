@@ -21,14 +21,14 @@ for(const seq of [5,4]){let c=0;for(let i=0;i<1000;i++){const a=agent('fool',seq
 check('thread slots modest',JSON.stringify([5,4,3,2,1,0].map(g.threadSlots))===JSON.stringify([1,1,2,2,3,4]));
 // 7 Every Path meter gains and persists.
 for(const path of g.PATH_KEYS){let a=agent(path,9,55);let state={...g.newGame(),roster:[a]};const before=g.getMeterValue(a,path);const r=g.resolveQuest([a],{name:'Meter Trial',story:'',difficultySequence:10,encounter:false,objective:'investigation',mundane:true,rewards:{funds:1,reputation:0,materials:{}}},55,{individual:true});g.applyConsequences(state,r.consequences);const after=g.getMeterValue(state.roster[0],path);check(`meter ${path}`,after>before&&g.getMeterValue(state.roster[0],path)===after,`${before}→${after}`);}
-// 8 Advancement chance floors.
-let chanceOK=true;for(const seq of [9,8,7,6,5,4,3,2,1]){const a=agent('door',seq,9);a.digest=100;const info=g.canTrain({...g.newGame(),funds:999999,materials:{'Traveler\'s Ink':99}},a);if(!info||info.successChance<.05||info.successChance>.95)chanceOK=false;}check('advancement probability floor/ceiling',chanceOK,'5%–95%');
+// 8 Advancement previews use the confirmed target-Sequence curve.
+let chanceOK=true;const targetChances={8:.98,7:.96,6:.94,5:.92,4:.90,3:.88,2:.86,1:.84,0:.80};for(const seq of [9,8,7,6,5,4,3,2,1]){const a=agent('door',seq,9);a.digest=100;const info=g.canTrain({...g.newGame(),funds:999999,materials:{'Traveler\'s Ink':99}},a);if(!info||info.successChance!==targetChances[seq-1])chanceOK=false;}check('advancement target-Sequence curve',chanceOK,'98% to Sequence 8 through 80% to Sequence 0');
 // 9 Reputation gates + rarity.
-for(const [rep,target] of [[30,7],[50,6],[80,5]]){let reachable=false;for(let k=0;k<20&&!reachable;k++){const b=g.makeQuestBoard(null,rep+123+k*977,rep,['fool']);reachable=b.some(q=>q.difficultySequence===target);}check(`reputation gate ${rep}`,reachable,`target Seq${target} reachable within 20 boards`);}
-// 10 Mundane free-farm reduction/complications.
-let totalFunds=0,comp=0;for(let i=0;i<1000;i++){const q=g.makeQuest(()=>.01,9,10,0,[]);totalFunds+=q.rewards.funds;const a=agent('fool',9,i);const r=g.resolveQuest([a],q,i+40000,{individual:true});if(!r.success)comp++;}check('mundane contracts are not free farm',totalFunds/1000<100&&comp>0,`avg reward £${(totalFunds/1000).toFixed(1)}, complications ${(comp/10).toFixed(1)}%`);
-// 11 Rarity weights: stronger (lower sequence) should be less common.
-let counts={};for(let i=0;i<5000;i++){const q=g.makeQuest(rng(i),9,10,30,['fool']);counts[q.difficultySequence]=(counts[q.difficultySequence]||0)+1;}check('rarity weights favor lower difficulty less often',(counts[5]||0)<(counts[6]||0)&&(counts[6]||0)<(counts[7]||0),JSON.stringify(counts));
+for(const [rep,target] of [[30,7],[50,6],[80,5]]){const b=g.makeQuestBoard(null,rep+123,rep,[agent('fool',target)]);check(`reputation gate ${rep}`,b.some(q=>q.difficultySequence===target)&&b.some(q=>q.difficultySequence===9),`matching Seq${target} and beginner work available`);}
+// 10 Generated work is supernatural combat; ordinary errands cannot be farmed.
+let supernatural=true;for(let i=0;i<1000;i++){const q=g.makeQuest(rng(i),9,10,0,[]);if(!q.encounter||q.mundane||q.difficultySequence>9||q.kind!=='contract')supernatural=false;}check('ordinary errands retired',supernatural,'every generated job requires a supernatural encounter');
+// 11 Matching rank dominates, with optional easier and harder work.
+let counts={};const rankFive=[agent('fool',5)];for(let i=0;i<5000;i++){const q=g.makeQuest(rng(i),9,10,120,rankFive);counts[q.difficultySequence]=(counts[q.difficultySequence]||0)+1;}check('contract weights favor roster rank',(counts[5]||0)>(counts[6]||0)&&(counts[6]||0)>(counts[9]||0)&&(counts[4]||0)>0,JSON.stringify(counts));
 
 // 12 Enemy and agent use the same stat construction at the same Sequence.
 for(const path of g.PATH_KEYS){const r=()=>.5;const a=g.makeAgent(r,{path,sequence:10});a.path=path;a.sequence=9;a.awakened=true;a.stats=g.awakenStats(a,path,r);const e=g.makeEnemy(9,r,0,path);const ratio=Object.keys(a.stats).map(k=>Math.abs(a.stats[k]-e.stats[k])/Math.max(1,a.stats[k]));check(`same-scale enemy ${path}`,Math.max(...ratio)<.20,`max stat delta ${(Math.max(...ratio)*100).toFixed(1)}%`);}
@@ -46,7 +46,7 @@ check('individual stat variance',varianceOK,'HP/ATK/DEF/INT/Speed each roll 0.90
 const fs=g.makeAgent(()=>.5,{sequence:10,trait:'Fervent Spirit'});fs.path='fool';fs.sequence=9;fs.awakened=true;fs.stats=g.awakenStats(fs,'fool',()=>.5);check('trait stat modifiers',fs.stats.int>0&&g.maxSPFor(fs)>100,'Fervent Spirit increases INT and Max SP');
 
 // 16 Wanted board is represented separately from normal contracts.
-const ng=g.newGame();check('wanted board exists',Array.isArray(ng.wanted)&&ng.wanted.length>=1,'separate wanted queue');
+const ng=g.newGame();check('wanted board starts locked',Array.isArray(ng.wanted)&&ng.wanted.length===0,'no warrants before a three-agent Beyonder party');ng.roster=['fool','tyrant','mother'].map((p,i)=>agent(p,9,i));ng.reputation=10;g.maintainGuildBoards(ng);check('wanted board unlocks with a prepared party',ng.wanted.length===1&&ng.wanted[0].requiredPartySize===3,'named boss, three agents required');
 
 // 17 Speed / Action Value formula and INT-based dodge regression.
 const speedTest={path:'fool',sequence:9,stats:{hp:100,atk:50,def:40,int:60}};
@@ -106,6 +106,6 @@ check('archetype mapping covers every Pathway',g.PATH_KEYS.every(p=>['Physical',
 console.log(results.join('\n'));check('22 Pathways consolidated',g.PATH_KEYS.length===22&&Object.keys(g.PATHS).length===22&&Object.keys(g.PATH_COUNTERS).length===22,'all pathways and counters loaded from JSON');
 check('all Pathway previews have 10 sequences',g.PATH_KEYS.every(p=>g.PATHS[p].sequences.length===10),'Sequence 9 through 0 available');
 check('weapon mastery is contract-based',g.WEAPONS.knife&&g.WEAPONS.pistol,'weapon definitions loaded from JSON');
-{const q9=g.makeQuest(()=>.01,9,10,9,['fool']),q10=g.makeQuest(()=>.01,9,10,10,['fool']);check('normal contracts stop after reputation 10',q9.mundane===true&&q10.mundane===false,'rep 9 may roll normal; rep 10 cannot');}
-{const a9=agent('fool',9,71),a5=agent('fool',5,72),q={difficultySequence:8};check('lower Sequences digest faster',g.digestGain(q,false,a5)>g.digestGain(q,false,a9),`${g.digestGain(q,false,a9)} vs ${g.digestGain(q,false,a5)}`);}
+{const q9=g.makeQuest(()=>.01,9,10,9,['fool']),q10=g.makeQuest(()=>.01,9,10,10,['fool']);check('ordinary contracts absent at every reputation',!q9.mundane&&!q10.mundane&&q9.encounter&&q10.encounter,'supernatural work below and above reputation 10');}
+{const a9=agent('fool',9,71),a5=agent('fool',5,72),early={difficultySequence:9},later={difficultySequence:5};check('higher-rank potions digest more slowly',g.digestGain(later,false,a5)<g.digestGain(early,false,a9),`${g.digestGain(early,false,a9)} vs ${g.digestGain(later,false,a5)}`);check('easy farming reduces higher-rank digestion',g.digestGain(early,false,a5)<g.digestGain(later,false,a5));}
 console.log(`\n${pass} passed, ${fail} failed`);process.exitCode=fail?1:0;

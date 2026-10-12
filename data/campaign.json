@@ -46,7 +46,7 @@
       "story": "Below the bell house, Cantor Vale conducts a procession around a sealed, stolen bell. Its echoes keep the captives moving in circles. Your evidence and preparations weaken the rite before the agents close in.",
       "objective": "Defeat Cantor Vale, a Sequence 9 Sleepless of the Darkness pathway.",
       "choices": [],
-      "enemy": { "id": "cantor_vale", "name": "Cantor Vale", "path": "darkness", "sequence": 9, "trait": "Stout Vitality", "stats": { "hp": 500, "atk": 48, "def": 28, "int": 42 }, "weaponId": "none" },
+      "enemy": { "id": "cantor_vale", "name": "Cantor Vale", "path": "darkness", "sequence": 9, "trait": "Stout Vitality", "stats": { "hp": 475, "atk": 48, "def": 28, "int": 42 }, "weaponId": "none" },
       "rewards": { "funds": 240, "reputation": 4, "materialPerPath": 1, "digestion": 18 },
       "successText": "Vale falls and the sealed bell goes silent. The missing residents wake from the procession. Your agents escort them up the cellar steps while Mara takes custody of the bell.",
       "failureText": "The escape route holds. Mara's district wardens recover every agent, restore their strength and secure the entrance. The case remains open: retry without losing agents, funds, materials or chapter progress."
@@ -57,7 +57,7 @@
       "story": "The residents return home. The bell is sealed in the district archive, and Mara invites your agents to record what they learned. Your guild has its first completed case.",
       "objective": "File the report and receive the Whispering District case-file badge.",
       "choices": [], "rewards": { "funds": 180, "reputation": 3, "materialPerPath": 1, "digestion": 25 },
-      "successText": "Case closed: The Whispering District. Your commission, pathway materials and potion digestion prepare the guild for Sequence 8. Normal contracts remain available to finish digestion and earn further supplies."
+      "successText": "Case closed: The Whispering District. Your commission, pathway materials and potion digestion prepare the guild for Sequence 8. Supernatural contracts remain available to finish digestion and earn further supplies."
     }
   ]
 }

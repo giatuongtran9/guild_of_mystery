@@ -17,6 +17,9 @@ async function main(){
  assert.equal(w.document.querySelectorAll('.recruit').length,4);assert.equal(w.document.querySelectorAll('.trait-badge').length,4);
  assert.match(w.document.body.textContent,/Normal 74%/);assert.match(w.document.body.textContent,/Rare 20%/);assert.match(w.document.body.textContent,/Epic 5%/);assert.match(w.document.body.textContent,/Legendary 1%/);
  assert.match(w.document.body.textContent,/Refresh · £50/);assert.match(w.document.body.textContent,/Activates after awakening/);assert(!('hireRandom' in w.G9));
+ assert.equal(w.document.querySelectorAll('.recruit .stats').length,0);
+ assert(!/Recommended/i.test(w.document.body.textContent));
+ w.G9.recruitInfo(fixture.recruitPool[0].id);assert(!/Recommended/i.test(w.document.body.textContent));
  const saved=()=>JSON.parse(w.localStorage.getItem('guild-rpg-browser-v9'));
  const before=saved(),originalSet=w.Storage.prototype.setItem;
  w.Storage.prototype.setItem=function(){throw new Error('storage denied');};w.G9.refreshRecruit();assert.deepEqual(saved(),before);assert.equal(w.document.querySelectorAll('.recruit')[0].querySelector('h3').textContent,before.recruitPool[0].name);
@@ -24,6 +27,20 @@ async function main(){
  w.G9.refreshRecruit();assert.equal(saved().funds,950,'repeated activation during reveal cannot double-charge');
  w.G9.skipRecruitReveal();assert.equal(saved().funds,950);const selected=saved().recruitPool[2];w.G9.hire(selected.id);const hired=saved();assert.equal(hired.funds,800);assert.equal(hired.roster[0].traitId,selected.traitId);assert.equal(hired.recruitPool.length,3);
  w.G9.hire(selected.id);assert.equal(saved().funds,800);w.G9.tab('hall');assert(w.document.querySelector('.agent .trait-badge'));
+ assert.equal(w.document.querySelectorAll('.agent .stats').length,0);
+ assert(!/Recommended/i.test(w.document.body.textContent));
+ w.G9.dossier(selected.id);
+ assert.equal(w.document.querySelectorAll('.dossier-stats').length,0);
+ assert.equal(w.document.querySelectorAll('.dossier-equipment').length,0);
+ assert.equal(w.document.querySelectorAll('.path-choice').length,22);
+ assert.equal(w.document.querySelectorAll('.path-choice.recommended').length,0);
+ assert(!/Recommended|Current ATK/i.test(w.document.querySelector('.character-dossier').textContent));
+ w.G9.choosePath(selected.id,'door');
+ const awakened=saved().roster[0];assert.equal(awakened.path,'door');assert.equal(awakened.awakened,true);
+ assert(!('recommendedPath' in awakened));
+ assert(w.document.querySelector('.dossier-stats'));assert(w.document.querySelector('.dossier-equipment'));assert(w.document.querySelector('.variance-box'));
+ for(const value of Object.values(awakened.statVariance))assert(value>=.9&&value<=1.1);
+ w.G9.closeDossier();assert(w.document.querySelector('.agent .stats'));
  w.G9.tab('simulator');
  // The actual simulator tab name is exposed by the existing navigation.
  if(!w.document.querySelector('.battle-simulator')){const button=[...w.document.querySelectorAll('nav button')].find(b=>/Simulat/.test(b.textContent));assert(button);button.click();}

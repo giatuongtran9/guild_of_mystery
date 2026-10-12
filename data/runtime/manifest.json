@@ -1,18 +1,18 @@
 {
   "schema": "guild.runtime-manifest.v1",
-  "version": "d1771f406fe8c3a5",
-  "bundle": "data/runtime/data.d1771f406fe8c3a5.json",
+  "version": "cebb9aaf9bd41c3b",
+  "bundle": "data/runtime/data.cebb9aaf9bd41c3b.json",
   "scriptVersions": {
-    "js/paths.js": "01f02731012b77bd",
+    "js/paths.js": "b60af89f80be1c5e",
     "js/v15.js": "f2491511aa109499",
-    "js/generate.js": "da9f97d427c7cdc4",
+    "js/generate.js": "eece715b541e58b8",
     "js/traits.js": "327577f510752256",
     "js/signatures.js": "2203f27acff0bb1f",
     "js/mythical.js": "777293a2ed16d0dc",
-    "js/engine.js": "df888b8630f3dfb5",
-    "js/state.js": "f632c4bac0ad57e8",
-    "js/campaign.js": "69ba6cd9cdb34c4e",
-    "js/ui.js": "641cd9fce3941498"
+    "js/engine.js": "c85c5ea95542ea07",
+    "js/state.js": "17dbf4e7ff8730e2",
+    "js/campaign.js": "cb37d195116ffeaa",
+    "js/ui.js": "d8fb4145ce9a82d3"
   },
   "serviceWorkerVersion": "e64dda1a98929f3d"
 }

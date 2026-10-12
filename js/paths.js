@@ -34,10 +34,6 @@ function rollVariance(rng=Math.random){return {hp:.90+rng()*.20,atk:.90+rng()*.2
 function statsFromVariance(agent,path,sequence=9){
   const base=tableStats(path,sequence),t=traitData(agent),v=agent.statVariance||{hp:1,atk:1,def:1,int:1,speed:1};
   const stats={hp:Math.max(8,Math.round(base.hp*v.hp*(t.hp_mult||1))),atk:Math.max(5,Math.round(base.atk*v.atk*(t.atk_mult||1))),def:Math.max(5,Math.round(base.def*v.def*(t.def_mult||1))),int:Math.max(5,Math.round(base.int*v.int*(t.int_mult||1)))};
-  if(agent.recommendedPath===path){
-    const dominantInt=['visionary','hermit','door','fool'].includes(path),dominantBody=['twilight_giant','tyrant','red_priest'].includes(path);
-    if(dominantBody)stats.atk=Math.round(stats.atk*1.07); else if(dominantInt)stats.int=Math.round(stats.int*1.07); else stats.atk=Math.round(stats.atk*1.07);
-  }
   return stats;
 }
 function awakenStats(agent,path,rng=Math.random){const variance=rollVariance(rng);agent.statVariance=variance;agent.speedVariance=variance.speed;agent.basePathSpeed=basePathSpeed(path,9);return statsFromVariance(agent,path,9);}

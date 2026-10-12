@@ -378,12 +378,8 @@ function tierPower(sequence) {
   return 10 - sequence;
 }
 
-/**
- * Advancement is intentionally reliable at low Sequences and increasingly risky
- * as the character approaches the divine tiers. Failure creates Madness instead
- * of silently deleting resources.
- */
-function attemptTraining(agent,seed=Date.now()){const r=rand(seed);const by={9:.94,8:.90,7:.86,6:.81,5:.75,4:.68,3:.58,2:.48,1:.36};const chance=Math.min(.95,Math.max(.05,by[agent.sequence]||.5));if(r()<chance)return {ok:true,line:`The advancement succeeds. ${agent.name} becomes Sequence ${agent.sequence-1} ${tierFor(agent.path,agent.sequence-1).name}.`};return {ok:false,line:`The advancement fails. ${agent.name} loses control, becomes a corrupted monster, and is permanently lost.`,consequence:{type:'corruptedDeath',agentId:agent.id,text:`${agent.name} failed advancement and was permanently lost to corruption.`}};}
+/** Preview and roll use the chance for the Sequence being reached. */
+function attemptTraining(agent,seed=Date.now()){const r=rand(seed),chance=advancementChance(agent.sequence-1);if(r()<chance)return {ok:true,line:`The advancement succeeds. ${agent.name} becomes Sequence ${agent.sequence-1} ${tierFor(agent.path,agent.sequence-1).name}.`};return {ok:false,line:`The advancement fails. ${agent.name} loses control, becomes a corrupted monster, and is permanently lost.`,consequence:{type:'corruptedDeath',agentId:agent.id,text:`${agent.name} failed advancement and was permanently lost to corruption.`}};}
 
 const enemyNames = G9D.system.enemy_names;
 const COMBAT_BALANCE = G9D.balance.combat_balance;
@@ -472,6 +468,25 @@ function makeAuthoredEnemy(spec,r,i){
  if(spec.startingHp!==undefined){if(!Number.isFinite(spec.startingHp)||spec.startingHp<=0||spec.startingHp>e.maxHp)throw new Error('Invalid authored enemy starting HP');e.hp=Math.round(spec.startingHp);}
  e.resistances=combatResistances(e.agent);
  return e;
+}
+
+function makeBossEnemy(quest,r,index=0){
+ const definition=bossDefinition(quest.bossId);if(!definition)throw new Error('Unknown wanted boss');
+ const table=tableStats(definition.path,definition.sequence),stats={};
+ for(const key of ['hp','atk','def','int'])stats[key]=Math.max(1,Math.round(table[key]*definition.statMultipliers[key]));
+ const u=makeAuthoredEnemy({id:'boss_'+definition.id,name:definition.target,path:definition.path,sequence:definition.sequence,trait:'Stout Vitality',stats,weaponId:definition.weaponId},r,index);
+ u.sp=u.maxSP;u.bossDefinition=definition;u.agent.bossId=definition.id;return u;
+}
+function bossPhaseStart(u,state,lines){
+ if(!u.bossDefinition||u.bossPhaseUsed||u.hp>u.maxHp*.5)return;
+ u.bossPhaseUsed=true;const phase=u.bossDefinition.phase;
+ u.agent._teamDamageMultiplier*=phase.damageMultiplier||1;
+ if(phase.shieldRatio&&canGainShield(u))u.shield=(u.shield||0)+Math.round(u.maxHp*phase.shieldRatio);
+ const foes=foesOf(u,state).filter(t=>t.alive);
+ if(phase.type==='drain')for(const t of foes)t.sp=Math.max(0,t.sp-Math.ceil(t.maxSP*phase.spRatio));
+ if(phase.type==='fear')for(const t of foes)if(canAffect(u.sequence,t.sequence)&&!statusImmune(t,'fear')&&state.rng()>=statusResistChance(t,'fear'))addStatus(t,'fear',1,u.name);
+ const text=`${u.name} enters their second phase. ${u.bossDefinition.mechanic}`;
+ lines.push({text,kind:'status'});emitCombatEvent(state,{round:state.currentRound,type:'status',subtype:'boss_phase',actorId:u.id,actorName:u.name,actorTeam:teamOf(u,state),text});
 }
 
 function damageMultiplier(attackerSeq, defenderSeq, attackerPath = null, defenderPath = null) {
@@ -1194,11 +1209,13 @@ function chooseStructuredAbility(agent,actor,enemy,state){
  const isDamage=x=>(x.damage?.multiplier||x.scale||0)>0||abilityEffects(x).some(e=>e.type==='damage_component')||signatureDamaging(x,actor,enemy);
  const isAutomaticRevival=x=>{const effects=abilityEffects(x).filter(e=>e.type!=='targeting');return effects.length&&effects.every(e=>e.type==='revive'&&e.self);};
  const useful=x=>{if(isDamage(x))return true;const effects=abilityEffects(x),types=effects.map(e=>e.type);const only=k=>types.length&&types.every(y=>k.includes(y)||y==='targeting');
+  if(only(['damage_taken','reflect'])&&hpRatio>=.85)return false;
   if(!signatureUseful(actor,x,enemy,state))return false;
   if(only(['heal']))return hasTrait(actor,'hollow_saint')?sameSideOf(actor,state).some(u=>canGainShield(u)&&(u.shield||0)<u.maxHp*.25):!traitHealingBlocked(actor)&&!hasStatus(actor,'no_heal')&&hpRatio<.85;
   if(only(['shield']))return canGainShield(actor)&&effects.some(e=>e.type==='shield'&&(e.fullHp?actor.maxHp:Math.round(actor.maxHp*Number(e.maxHpRatio||0)))>(actor.shield||0));
   if(only(['buff']))return effects.some(e=>e.type==='buff'&&(e.stat==='all'?['atk','def','int']:[e.stat]).some(stat=>(actor._buffs?.[stat]||1)<1+Number(e.amount||0)));
   if(only(['cleanse']))return (actor.status||[]).length>0;
+  if(only(['cleanse','buff']))return (actor.status||[]).length>0||effects.some(e=>e.type==='buff'&&(actor._buffs?.[e.stat]||1)<1+Number(e.amount||0));
   if(only(['debuff','steal_stat'])){const need=effects.filter(e=>e.type==='debuff'||(e.type==='steal_stat'&&e.stat!=='hp'));return !need.length||need.some(e=>e.stat==='speed'?!(enemy._speedDebuff<1):!(enemy._debuffs?.[e.stat]<1));}
   if(only(['heal','cleanse']))return hpRatio<.85||(actor.status||[]).length>0;
   if(only(['status','status_chance','silence','skip','banish']))return effects.some(e=>e.type==='targeting'?false:e.type==='status'||e.type==='status_chance'?!(SELF_STATUSES.includes(e.status)?hasStatus(actor,e.status):hasStatus(enemy,e.status)||statusImmune(enemy,e.status)):e.type==='silence'?!hasStatus(enemy,'silenced'):true);
@@ -1246,6 +1263,8 @@ function chooseStructuredAbility(agent,actor,enemy,state){
   
  const survival=specs.find(x=>x.tag==='Heal'||x.tag==='Defense'||x.tag==='Escape');
  if(hpRatio<.50&&survival)return survival;
+ // Finish an injured foe instead of repeatedly renewing utility signatures.
+ if(hpRatio>=.5&&enemy.hp<=enemy.maxHp*.5)return specs.find(isDamage)||null;
  const signature=specs.find(s=>s._signatureOwned||abilityEffects(s).some(e=>e.type==='signature'));
  if(signature)return signature;
  const control=specs.find(x=>abilityEffects(x).some(e=>['skip','banish','silence'].includes(e.type)||(['status','status_chance'].includes(e.type)&&!SELF_STATUSES.includes(e.status)&&!statusImmune(enemy,e.status))));
@@ -1575,26 +1594,29 @@ function tickCombatEffectDurations(units){
 
 function resolveQuest(...args){try{return resolveQuestBattle(...args);}finally{bindBattle(null);}}
 function resolveQuestBattle(members,quest,seed=Date.now(),decisions={}){
+ if(quest.requiredPartySize&&(members.length!==quest.requiredPartySize||new Set(members.map(a=>getCombatAgent(a).id)).size!==quest.requiredPartySize||members.some(a=>getCombatAgent(a).unitType==='marionette'||!getCombatAgent(a).awakened)))throw new Error('Wanted bosses require three awakened Beyonders.');
  const r=rand(seed),lines=[],consequences=[],allies=members.map(a=>makeCombatUnit(a));
+ const maxRounds=Math.max(1,Math.min(60,Number(quest.roundLimit)||(['contract','wanted'].includes(quest.kind)?G9D.balance.contract_encounters.round_limit:15)));
  const authoredOpponents=Array.isArray(decisions.authoredOpponents)&&decisions.authoredOpponents.length?decisions.authoredOpponents:null;
- const simulationOpponents=Array.isArray(decisions.simulationOpponents)?decisions.simulationOpponents:null; const enemyCount=simulationOpponents?.length || quest.enemyCount|| (allies.length===1?1:(allies.length>=3 && quest.difficultySequence>=7?2:(quest.difficultySequence>=5?2:3))); const enemies=quest.encounter?(authoredOpponents?authoredOpponents.map((spec,i)=>makeAuthoredEnemy(spec,r,i)):simulationOpponents?simulationOpponents.map((spec,i)=>spec.traitId?makeAuthoredEnemy(spec,r,i):makeEnemy(spec.sequence,r,i,spec.path)):Array.from({length:enemyCount},(_,i)=>makeEnemy(quest.difficultySequence,r,i,quest.requiredPath))):[];
+ const simulationOpponents=Array.isArray(decisions.simulationOpponents)?decisions.simulationOpponents:null; const enemyCount=simulationOpponents?.length || quest.enemyCount|| (quest.kind==='contract'?1:0)|| (allies.length===1?1:(allies.length>=3 && quest.difficultySequence>=7?2:(quest.difficultySequence>=5?2:3))); const enemies=quest.encounter?(quest.bossId?[makeBossEnemy(quest,r)]:authoredOpponents?authoredOpponents.map((spec,i)=>makeAuthoredEnemy(spec,r,i)):simulationOpponents?simulationOpponents.map((spec,i)=>spec.traitId?makeAuthoredEnemy(spec,r,i):makeEnemy(spec.sequence,r,i,spec.path)):Array.from({length:enemyCount},(_,i)=>makeEnemy(quest.difficultySequence,r,i,quest.requiredPath))):[];
+ if(quest.kind==='contract'&&!authoredOpponents&&!simulationOpponents){for(const u of enemies){const mult=G9D.balance.contract_encounters.enemy_stat_multiplier_by_sequence[quest.difficultySequence]||1;for(const key of ['hp','atk','def','int'])u.stats[key]=Math.max(1,Math.round(u.stats[key]*mult));u._originalStats={...u.stats};u.resistanceInt=u.stats.int;u.hp=u.maxHp=Math.round(u.stats.hp*(passiveCombatModifier(u.agent).hp||1));u.resistances=combatResistances(u.agent);ensureCombatResource(u.agent);}}
  const individual=!!decisions.individual; const state={allies,enemies,individual,createdMarionettes:[],battleMarionettes:[],rng:r,weaponUsage:{},combatStatsShown:false,balanceTrace:[],events:[]};
  bindBattle(state,lines);
  state.traitDeployment={ally:allies.filter(u=>!u.summoned).length,enemy:enemies.filter(u=>!u.summoned).length};
  for(const unit of [...allies,...enemies])delete getCombatAgent(unit)._traitState;
  for(const u of allies)u.agent._teamDamageMultiplier=1;
- for(const u of enemies)u.agent._teamDamageMultiplier=individual?COMBAT_BALANCE.enemyDamageIndividual:COMBAT_BALANCE.enemyDamageParty;
+ for(const u of enemies)u.agent._teamDamageMultiplier=quest.bossId?1:quest.kind==='contract'?G9D.balance.contract_encounters.enemy_damage_multiplier:individual?COMBAT_BALANCE.enemyDamageIndividual:COMBAT_BALANCE.enemyDamageParty;
  const initialUnits=[...allies,...enemies].map(u=>combatResourceSnapshot(u,state));
  lines.push({text:`Contract: ${quest.name}`,kind:'system'},{text:quest.story||quest.brief,kind:'story'});
  if(!quest.encounter){
    if(quest.objective==='rescue'){lines.push({text:'The guild searches the neighborhood rather than hunting for a fight. Clues lead through an alley, beneath a bakery awning, and into a coal shed.',kind:'system'},{text:'The missing cat is found frightened but unharmed and returned to its owner.',kind:'victory'});}
    else {lines.push({text:'The party works through interviews, records and ordinary observation. No hostile confrontation is necessary.',kind:'victory'});}
    const complication=r()<(quest.mundane?.08:.03); const success=!complication;
-   for(const u of allies){const a=u.agent;const gain=digestGain(quest,individual,a);a.digest=Math.min(100,(a.digest||0)+gain);
-   const equipped=weaponFor(a); gainWeaponMastery(a,equipped.kind,G9D.system.weapon_mastery.per_completed_contract||2);
+   for(const u of allies){const a=u.agent;const gain=success?digestGain(quest,individual,a):0;a.digest=Math.min(100,(a.digest||0)+gain);
+   const equipped=weaponFor(a);if(success)gainWeaponMastery(a,equipped.kind,G9D.system.weapon_mastery.per_completed_contract||2);
    changeMeter(a,a.path,3);restoreCombatAgentStats(u);consequences.push({type:'syncAgent',agentId:a.id,agent:a,text:`${a.name} digests ${gain}% of the current potion.`});}
    if(complication){lines.push({text:'A complication delays the work: a witness gives a false statement and the guild loses time.',kind:'status'});for(const u of allies)consequences.push({type:'injury',agentId:u.id,amount:4,text:'A mundane contract complication caused a minor injury.'});}
-   return {lines,success,consequences,marionettes:[],rewards:{...quest.rewards,reputation:success?quest.rewards.reputation:0},weaponUsage:state.weaponUsage,dayCost:quest.dayCost};
+   return {lines,success,consequences,marionettes:[],rewards:success?cloneE(quest.rewards):{funds:Math.round(quest.rewards.funds*.35),reputation:0,materials:{}},weaponUsage:state.weaponUsage,dayCost:quest.dayCost};
  }
  lines.push({text:`Threat: ${quest.difficultySequence===10?'Ordinary Human':`Sequence ${quest.difficultySequence}`}. ${enemies.length} hostile unit(s) emerge.`,kind:'system'});
  for(const e of enemies)lines.push({text:`${e.name} — ${e.sequence===10?`Ordinary Human · ${e.occupation}`:`${pathOf(e.path).name} · Sequence ${e.sequence}`}.`,kind:'system'});
@@ -1604,7 +1626,7 @@ function resolveQuestBattle(members,quest,seed=Date.now(),decisions={}){
 
  for(const a of allies)lines.push({text:`${a.name} — ${a.agent.path?`${pathOf(a.agent.path).name} · Sequence ${a.agent.sequence}`:'Unawakened'}.`,kind:'system'});
  let round=0;
- while(allies.some(x=>x.alive)&&enemies.some(x=>x.alive)&&round<15){round++;state.currentRound=round;startRoundCombatResources([...allies,...enemies],lines);lines.push({text:`· Round ${round} ·`,kind:'system'}); emitCombatEvent(state, {round, type: 'round_start'});emitCombatResources(state);
+ while(allies.some(x=>x.alive)&&enemies.some(x=>x.alive)&&round<maxRounds){round++;state.currentRound=round;startRoundCombatResources([...allies,...enemies],lines);lines.push({text:`· Round ${round} ·`,kind:'system'}); emitCombatEvent(state, {round, type: 'round_start'});emitCombatResources(state);
    for (const u of [...allies, ...enemies]) u._actedThisRound = false;                                                                
    const initiativeOrder=(a,b)=>unitInitiative(b)-unitInitiative(a)||a.name.localeCompare(b.name)||a.id.localeCompare(b.id);
    const initiativeLine=[...allies.filter(x=>x.alive),...enemies.filter(x=>x.alive)].sort(initiativeOrder).map(x=>`${x.name} ${unitInitiative(x).toFixed(1)}`).join(' → '); lines.push({text:`Initiative: ${initiativeLine}`,kind:'system'}); emitCombatEvent(state, {round, type: 'system', subtype: 'initiative', details: initiativeLine, text: `Initiative: ${initiativeLine}`});
@@ -1612,7 +1634,7 @@ function resolveQuestBattle(members,quest,seed=Date.now(),decisions={}){
    applyPassiveAuras([...allies,...enemies],state);
    const order=[...allies.filter(x=>x.alive),...enemies.filter(x=>x.alive)].sort(initiativeOrder);
    const actors=order;
-   for(const c of actors){let completed=false,lostControl=false;try{if(!c.alive||c.inCombat===false)continue;state.currentTurn=(state.currentTurn||0)+1;c._acting = true;beginTurn(c);signatureTurnStart(c,state,lines,r);mythicalTurnStart(c,state,lines,r);processStatuses(c,t=>lines.push({text:t,kind:'status'}),state,false);c._actedThisRound = true;if(!c.alive)continue;
+   for(const c of actors){let completed=false,lostControl=false;try{if(!c.alive||c.inCombat===false)continue;state.currentTurn=(state.currentTurn||0)+1;c._acting = true;beginTurn(c);bossPhaseStart(c,state,lines);signatureTurnStart(c,state,lines,r);mythicalTurnStart(c,state,lines,r);processStatuses(c,t=>lines.push({text:t,kind:'status'}),state,false);c._actedThisRound = true;if(!c.alive)continue;
        if(c.thread){tickSpiritThread(c,state,lines);if(!c.alive)continue;} // Spirit Threads advance on the victim's own turn
        if(mythicalTryAction(c,state,lines,r)||signatureTryAction(c,state,lines,r))continue;
        if(c._skipTurns>0||hasStatus(c,'banished')){if(c._skipTurns>0)c._skipTurns--;lines.push({text:`${c.name} is banished in a spatial fold and cannot act.`,kind:'status'});if(!c._skipTurns||c._skipTurns<=0){removeStatus(c,'banished');removeStatus(c,'untargetable');}continue;}
@@ -1639,10 +1661,11 @@ function resolveQuestBattle(members,quest,seed=Date.now(),decisions={}){
        if(!state.combatStatsShown)state.combatStatsShown={};if(!state.combatStatsShown[enemy.id]){lines.push({text:`Combat begins: ${enemy.name} · HP ${enemy.maxHp} · ATK ${enemy.atk} · DEF ${enemy.def} · INT ${enemy.int} · Speed ${speedFor(enemy).toFixed(1)} · AV ${actionValueFor(enemy).toFixed(1)}.`,kind:'system'});state.combatStatsShown[enemy.id]=true;}
        syncUnitToAgent(c);completed=powerEffect(c.agent,c,enemy,state,lines,r);
        const normalExtra=traitScheduledActions(c,state)-1;
-       const nativeExtra=c._extraTurns>0?1:0;if(nativeExtra)c._extraTurns--;
+       const bossExtra=c.bossPhaseUsed?(c.bossDefinition?.phase.extraActions||0):0;
+       const nativeExtra=(c._extraTurns>0?1:0)+bossExtra;if(c._extraTurns>0)c._extraTurns--;
        const traitExtra=traitHasBonus(c)?1:0;
        for(let extra=0;extra<normalExtra+nativeExtra+traitExtra;extra++){
-        if(!c.alive)break;const traitAction=extra<normalExtra||extra>=normalExtra+nativeExtra;if(traitAction&&actionDisabled(c))break;const remaining=(isConfused?sameSideOf(c,state):foesOf(c,state)).filter(t=>t.alive&&t.inCombat!==false&&!hasStatus(t,'untargetable'));if(!remaining.length)break;
+        if(!c.alive||(c.bossDefinition&&actionDisabled(c)))break;const traitAction=extra<normalExtra||extra>=normalExtra+nativeExtra;if(traitAction&&actionDisabled(c))break;const remaining=(isConfused?sameSideOf(c,state):foesOf(c,state)).filter(t=>t.alive&&t.inCombat!==false&&!hasStatus(t,'untargetable'));if(!remaining.length)break;
         const next=remaining.includes(enemy)?enemy:pickR(r,tauntFilter(c,remaining));
         traitBeginAction(c,state,extra>=normalExtra);try{powerEffect(c.agent,c,next,state,lines,r);}finally{traitFinishAction(c,state,lines);}
        }
@@ -1650,7 +1673,7 @@ function resolveQuestBattle(members,quest,seed=Date.now(),decisions={}){
    }
  }
  const guildSurvives=allies.some(x=>x.alive&&x.inCombat),hostilesRemain=enemies.some(x=>x.alive);
- const success=guildSurvives&&!hostilesRemain,battleOutcome=success?'victory':guildSurvives&&hostilesRemain&&round>=15?'timeout':!guildSurvives&&!hostilesRemain?'mutual_defeat':'defeat';
+ const success=guildSurvives&&!hostilesRemain,battleOutcome=success?'victory':guildSurvives&&hostilesRemain&&round>=maxRounds?'timeout':!guildSurvives&&!hostilesRemain?'mutual_defeat':'defeat';
  if(success)lines.push({text:'The hostile force is defeated and the guild completes the contract.',kind:'victory'});else lines.push({text:battleOutcome==='timeout'?'The round limit is reached with hostiles remaining; the contract is incomplete.':battleOutcome==='mutual_defeat'?'Neither force survives; the contract is incomplete.':'The guild is defeated in the encounter.',kind:'failure'});
  const snapshotUnit=x=>({...combatResourceSnapshot(x,state),stats:cloneE(x.stats),summoned:!!x.summoned,initiative:unitInitiative(x)});
  const battleSnapshot={outcome:battleOutcome,initialUnits,allies:allies.map(snapshotUnit),enemies:enemies.map(snapshotUnit),balanceTrace:state.balanceTrace,events:state.events||[]};
@@ -1660,7 +1683,7 @@ function resolveQuestBattle(members,quest,seed=Date.now(),decisions={}){
   gainWeaponMastery(a,equipped.kind,masteryAmount);
 }
 a.injuries=Math.min(100,(a.injuries||0)+(u.alive?Math.max(0,Math.round((u.maxHp-u.hp)/u.maxHp*25)):30));a.madness=Math.max(0,Math.min(100,(a.madness||0)+(success?-3:12)));changeMeter(a,a.path,success?12:6);restoreCombatAgentStats(u);if(!u.alive){consequences.push({type:'death',agentId:a.id,text:`${a.name} dies during the contract and is removed from the roster.`});}else{consequences.push({type:'syncAgent',agentId:a.id,agent:a,text:success?`${a.name} returns with new experience and ${gain}% digestion.`:`${a.name} returns shaken from the failed contract.`});}if(a.madness>=100)consequences.push({type:'corruptedDeath',agentId:a.id,text:`${a.name} reaches 100 Madness and becomes a corrupted monster.`});}
- const rewards=cloneE(quest.rewards);if(!success){rewards.funds=Math.round(rewards.funds*.35);rewards.reputation=0;}
+ const rewards=cloneE(quest.rewards);if(!success){rewards.funds=quest.kind==='wanted'?0:Math.round(rewards.funds*.35);rewards.reputation=0;rewards.materials={};}
  return {lines,events:state.events||[],success,battleOutcome,consequences,marionettes:[],marionettesCreated:(state.battleMarionettes||[]).filter(m=>m.side==='ally').length,enemyMarionettesCreated:(state.battleMarionettes||[]).filter(m=>m.side==='enemy').length,weaponUsage:state.weaponUsage,rewards,dayCost:1,battleSnapshot};
 }
 

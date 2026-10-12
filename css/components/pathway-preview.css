@@ -21,8 +21,7 @@
   cursor: pointer;
 }
 
-.path-choice:hover,
-.path-choice.recommended {
+.path-choice:hover {
   border-color: #b9985d;
 }
 

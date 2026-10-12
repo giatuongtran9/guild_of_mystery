@@ -128,11 +128,11 @@
         "label": "Active",
         "spCost": 35,
         "cooldown": 2,
-        "description": "Distort Impact — Distorts strike vector, reducing incoming attack damage by 40%.",
-        "stat": "INT",
-        "scale": 0,
-        "damageType": "physical",
-        "formula": "pure_caster_ability",
+        "description": "Distort Impact — Counter the strike vector with 110% ATK Disorder DMG and reduce incoming attack damage by 40% until your next turn ends.",
+        "stat": "ATK",
+        "scale": 1.1,
+        "damageType": "disorder",
+        "formula": "empowered_hybrid_agility",
         "tag": "Defense",
         "effects": [
           {

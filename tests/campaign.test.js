@@ -44,8 +44,8 @@ test('investigation and preparation alter the actual boss profile or party reser
  const ward=prepare(fixture(),'interviews','ward'),supplies=prepare(fixture(),'ledger','supplies');
  const w=g.campaignStart(ward,'last_bell',['agent_0'],null,42).pending,p=g.campaignStart(supplies,'last_bell',['agent_0'],null,42).pending;
  assert.strictEqual(ward.campaign.clues[0].id,'counter_chant');assert.strictEqual(supplies.campaign.clues[0].id,'hidden_anchor');
- assert.strictEqual(w.initialEnemies[0].maxHp,500);assert.strictEqual(p.initialEnemies[0].maxHp,425);
- assert(w.result.lines.some(l=>l.text.includes('Cantor Vale · HP 500 · ATK 31')));
+ assert.strictEqual(w.initialEnemies[0].maxHp,475);assert.strictEqual(p.initialEnemies[0].maxHp,404);
+ assert(w.result.lines.some(l=>l.text.includes('Cantor Vale · HP 475 · ATK 31')));
  assert.strictEqual(p.initialAllies[0].maxHp,Math.round(supplies.roster[0].stats.hp*1.25));
  assert.strictEqual(w.initialEnemies[0].path,'darkness');assert.strictEqual(w.initialEnemies[0].sequence,9);
 });
