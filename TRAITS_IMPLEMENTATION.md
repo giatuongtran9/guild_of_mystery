@@ -42,7 +42,7 @@ Important limits include one round-capped refund or tactical proc, one Fate's De
 
 ## Compatibility and presentation
 
-The save schema is 11, using the existing `guild-rpg-browser-v9` storage key. Old agents and candidates retain their old effects, stats, variance, and progress. New catalog IDs and source metadata survive load, awakening, and advancement. Unsupported future IDs are preserved rather than randomly replaced. Existing enemies and summons do not receive new rolled traits automatically.
+The save schema is 13, using the existing `guild-rpg-browser-v9` storage key. Old agents and candidates retain their old effects, stats, variance, and progress. New catalog IDs and source metadata survive load, awakening, and advancement. Unsupported future IDs are preserved rather than randomly replaced. Existing enemies and summons do not receive new rolled traits automatically.
 
 Recruit cards, the roster, dossiers, and both simulator teams expose the catalog. Costs in replay distinguish HP from SP; conversions and protective payments produce recorded outcomes. Refresh results are saved before the short card reveal. A reveal-time repeat-click guard prevents an accidental second charge. Reduced motion disables the reveal animation. Navigation and recruitment fit a 320px viewport.
 

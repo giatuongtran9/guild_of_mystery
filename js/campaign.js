@@ -21,8 +21,9 @@ function campaignStatus(s){
 function campaignEligibility(s,missionId,agentIds=[],choice=null){
  const st=campaignStatus(s),m=st.current;
  const fail=reason=>({ok:false,reason,agents:[],choice:null});
+ if(s.pendingContract)return fail('Record the saved contract outcome before starting another mission.');
  if(st.pending)return fail('Finish the saved chapter result before starting another mission.');
- if(!m)return fail('This chapter is already complete. Normal contracts remain available.');
+ if(!m)return fail('This chapter is already complete. Supernatural contracts remain available.');
  if(m.id!==missionId)return fail('Complete the current chapter mission first.');
  if(!st.requirements.every(r=>r.done))return fail('Recruit, awaken and equip one active agent before accepting the case.');
  if(!Array.isArray(agentIds)||new Set(agentIds).size!==agentIds.length||agentIds.length>3)return fail('Assign one to three different agents.');
@@ -82,7 +83,7 @@ function campaignSettle(s){
   c.completed.push(m.id);
   if(c.completed.length===CAMPAIGN.missions.length)c.caseFile={id:CAMPAIGN.id,title:CAMPAIGN.title,badge:'Case Closed',completedDay:s.day+(pending.result.dayCost||0),clues:cloneS(c.clues)};
  }
- s.day+=pending.result.dayCost||0;
+ advanceGuildDay(s,pending.result.dayCost||0);
  c.lastAttempt={missionId:m.id,success,attempt:c.attempts[m.id],day:s.day};c.pending=null;
  chronicle(s,success?`${m.title}: ${m.successText}`:`${m.title}: agents recovered safely; the case remains open.`);
  return {ok:true,reason:'',success,missionId:m.id,complete:c.completed.length===CAMPAIGN.missions.length,rewards};

@@ -6,7 +6,7 @@ Opening campaign: The Whispering District
   Existing guild recruits and equipment count. Investigation clues and preparation
   change the actual boss encounter. Choose 1–3 active, awakened agents per mission.
   Chapter battles use rested copies: defeat never kills or injures persistent agents.
-  Saved pending outcomes resume after reload and settle once. Normal contracts and
+  Saved pending outcomes resume after reload and settle once. Supernatural contracts and
   advancement keep their existing risks. Finishing grants a case-file badge and
   supplies toward Sequence 8; advancement still requires full potion digestion.
   Story and rewards: data/campaign.json. Runtime: js/campaign.js.
@@ -67,12 +67,9 @@ Tests:
   node tests/effects-behavior.js   (runs every effect type through the real engine)
   node tests/balance.js
 
-The structural split does not intentionally change combat, progression,
-contract, digestion, mastery or balance behavior. Existing regression tests
-are retained; the v17 baseline already contains three pre-existing balance
-regression failures, so those failures are expected until their unrelated
-balance issues are fixed. After the v17.1 fixes the only remaining failures are the
-two same-path balance spread checks (Seq 9 and Seq 5), which are deliberate balance work.
+Current progression, combat measurements and known 1v1 balance limitations are
+documented in reports/progression-review/CURRENT.md. The balance regression
+script also checks the current advancement and supernatural-board rules.
 
 Ability data ownership:
   Pathway ability definitions, including active/passive modifiers and secondary
@@ -129,3 +126,28 @@ are documented in TRAITS_IMPLEMENTATION.md. Old agents keep their old effects.
 Run node tests/traits.test.js and the documented DOM trait-ui test.
 After changing data or code, run node scripts/build-runtime-data.js and
 node scripts/build-runtime-data.js --check before publishing.
+
+Progression and wanted bosses
+----------------------------
+Awakening to Sequence 9 is guaranteed. Success when reaching Sequences
+8/7/6/5/4/3/2/1/0 is 98/96/94/92/90/88/86/84/80 percent.
+On-rank solo digestion takes 4/4/5/6/7/9/10/12/15 successful contracts
+for potions 9 through 1. Easier jobs grant less digestion.
+Ordinary errands are retired. Boards retain beginner work and jobs matching
+the strongest active agent, with optional harder threats as reputation grows.
+Six named wanted bosses require three awakened Beyonders and award greater
+funds, materials and 2.5x base digestion to each survivor. Each boss can be
+defeated once; declining hides the warrant until the next game day.
+Failed jobs grant no materials or reputation. Routine failures retain 35%
+of funds; failed boss hunts pay nothing.
+Guild changes take effect only after the save succeeds. A saved battle resumes
+after reload and settles once. Free recruitment refresh checks every day change.
+
+Verification:
+  node tests/progression-contracts.test.js
+  NODE_PATH=<jsdom installation> node tests/persistence-contracts-ui.test.js
+  node scripts/measure-contract-balance.js --samples=200 --seed=1719381
+  node scripts/measure-wanted-balance.js --samples=50
+  node tests/phase4-balance.js --phase=pvp-after --seeds=3 --charges=0 --sizes=1 --modes=normal
+Full results, benchmark conditions and the 22-pathway overview are in
+reports/progression-review/CURRENT.md.

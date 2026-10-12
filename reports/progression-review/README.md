@@ -1,3 +1,5 @@
+> Historical assessment of PR #3 before the requested fixes. See [CURRENT.md](CURRENT.md) for implemented rules, final validation and the pathway overview.
+
 # Recruitment and progression review
 
 The recruitment change hides ordinary characters' combat stats in recruitment, the roster and dossiers until awakening. It removes pathway recommendations and the 7% recommended-path ATK/INT bonus. Individual variation remains, and already-awakened agents retain their saved stats. Save schema 12 retires the recommendation metadata without recalculating those stats.
@@ -146,7 +148,7 @@ Recheck equipped mixed parties, low SP after consecutive contracts, injuries, su
 - Runtime data generation and its consistency check passed. Save metadata and the runtime are both schema 12; the storage key remains compatible.
 - Browser layout verification is recorded separately when available. The full-browser layout runner was blocked on this session's network permission, so no new Chromium layout pass is claimed.
 
-Files: `assessment.json` contains measured generation, progression and battle rows; `ui-issues.json` contains real runtime issue reproductions; `campaign-options.json` records the chapter HP experiments; `verification.json` records suite outcomes.
+Files: `assessment.json` contains measured generation, progression and battle rows; `ui-issues.json` contains real runtime issue reproductions; `campaign-options.json` records the chapter HP experiments; `verification-before.json` records suite outcomes.
 
 Reproduce with:
 

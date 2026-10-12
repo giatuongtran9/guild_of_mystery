@@ -26,7 +26,7 @@ awakened.history=[{day:1,text:'Joined the recruitment office as an ordinary cler
 recruit.recommendedPath='fool';recruit.path='fool';
 save.roster=[awakened,copy(recruit)];save.recruitPool=[copy(recruit)];
 const migrated=g.migrateSave(copy(save));
-assert.equal(migrated.schema,12);
+assert.equal(migrated.schema,13);
 for(const field of ['stats','baseStats','statVariance','speedVariance','digest','injuries'])assert.deepEqual(migrated.roster[0][field],awakened[field],field);
 assert.equal(migrated.roster[0].path,'door');
 assert.equal(migrated.roster[0].history[0].text,'Joined the recruitment office as an ordinary clerk.');

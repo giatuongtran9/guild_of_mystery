@@ -1,16 +1,6 @@
 {
   "QUEST_TEMPLATES": [
     [
-      "A Missing Cat",
-      "Mrs. Eliza Bell, a seamstress in Whitechapel, arrives at the guild office in tears. Her black cat, Morrow, vanished before dawn. She cannot afford a private detective and asks the guild to search the alleys, courtyards and coal sheds nearby. The cat is frightened, not dangerous; this is a search and rescue contract.",
-      "normal"
-    ],
-    [
-      "The Stolen Heirloom",
-      "A respectable family claims a silver locket was stolen from a locked room. The owner suspects a servant, but the room shows signs of something stranger.",
-      "normal"
-    ],
-    [
       "Murder at Bell House",
       "A local constable asks the guild to discreetly investigate a murder before panic spreads. The victim's final note mentions a person who should not have been there.",
       "mystery"
@@ -48,38 +38,164 @@
   ],
   "WANTED_TARGETS": [
     {
+      "id": "red_knife",
+      "title": "The Red Knife",
       "target": "Elias Vane",
-      "path": "Unknown",
-      "threat": "★★★★☆",
+      "path": "red_priest",
+      "sequence": 9,
+      "minReputation": 10,
       "lastSeen": "South Wharf",
-      "story": "Three merchants have disappeared over the past two weeks. Their bodies were eventually discovered along the old canal, each bearing a single red cut across the throat. Witnesses describe a man wearing a dark travelling coat who asks merchants about their family before following them. The authorities believe Elias Vane is responsible for at least six murders. Yesterday, a dockworker survived an encounter with him and reported seeing supernatural abilities. The guild has been offered a substantial reward for his capture.",
-      "rewardFunds": 1250,
+      "story": "Elias once escorted dockworkers home through the fog. When the canal syndicate abandoned his brother after an accident, he turned that duty into a private war. Merchants now vanish along the towpath, marked with the same red cut. He has learned to provoke a crowd into fighting itself. Three agents must corner him before another shift ends.",
+      "mechanic": "Below half health, his frenzy grants a second action and 15% more damage.",
+      "phase": {
+        "type": "frenzy",
+        "damageMultiplier": 1.15,
+        "extraActions": 1
+      },
+      "statMultipliers": {
+        "hp": 5,
+        "atk": 1.05,
+        "def": 0.8,
+        "int": 1
+      },
+      "weaponId": "knife",
+      "rewardFunds": 1100,
+      "rewardRep": 10,
+      "rewardMaterials": 2
+    },
+    {
+      "id": "black_mirror",
+      "title": "The Black Mirror",
+      "target": "Mara Quill",
+      "path": "demoness",
+      "sequence": 7,
+      "minReputation": 30,
+      "lastSeen": "Old Market",
+      "story": "A celebrated portrait restorer, Mara promised grieving families one final glimpse of the dead. Her black mirrors began keeping those families instead. She now moves between abandoned shop windows while poison spreads through their rooms. The guild has traced every mirror to her workshop; three agents are needed to break the escape routes and face her together.",
+      "mechanic": "At half health, she raises a shield worth 25% of maximum HP and deals 15% more damage.",
+      "phase": {
+        "type": "ward",
+        "shieldRatio": 0.25,
+        "damageMultiplier": 1.15
+      },
+      "statMultipliers": {
+        "hp": 3.5,
+        "atk": 1.1,
+        "def": 0.8,
+        "int": 1.05
+      },
+      "weaponId": "knife",
+      "rewardFunds": 1900,
+      "rewardRep": 14,
+      "rewardMaterials": 3
+    },
+    {
+      "id": "broken_hour",
+      "title": "The Broken Hour",
+      "target": "Jonas Rook",
+      "path": "error",
+      "sequence": 5,
+      "minReputation": 80,
+      "lastSeen": "Clockmakers Row",
+      "story": "Jonas repaired the district clocks until a guild patron erased his name from the commission ledger. Now the clocks lose an hour whenever he steals, and witnesses cannot agree which doors were open. His stolen records hold entire households in debt. A three-agent warrant team must force him into the same moment long enough to end the thefts.",
+      "mechanic": "At half health, he drains 15% of each agent’s maximum SP and deals 20% more damage.",
+      "phase": {
+        "type": "drain",
+        "spRatio": 0.15,
+        "damageMultiplier": 1.2
+      },
+      "statMultipliers": {
+        "hp": 3.6,
+        "atk": 1,
+        "def": 0.8,
+        "int": 1.05
+      },
+      "weaponId": "sword",
+      "rewardFunds": 2900,
       "rewardRep": 18,
       "rewardMaterials": 3
     },
     {
-      "target": "Mara Quill",
-      "path": "Demoness",
-      "threat": "★★★★★",
-      "lastSeen": "Old Market",
-      "story": "Several disappearances have been linked to a woman who leaves black mirrors at the scene. Survivors report charms, poison and impossible reflections. The guild is asked to bring her in before another district is affected.",
-      "rewardFunds": 1600,
+      "id": "ashen_choir",
+      "title": "The Ashen Choir",
+      "target": "Sister Agatha Bell",
+      "path": "darkness",
+      "sequence": 3,
+      "minReputation": 170,
+      "lastSeen": "Saint Brigid’s Hospice",
+      "story": "Agatha kept vigil over patients no physician could save. She found a hymn that eased their fear, but the choir it awakened never stopped singing. The hospice now sleeps through every sunrise and its lost patients walk in shared dreams. Three agents must enter the vigil, protect one another from its lullaby, and bring the waking bell back to the ward.",
+      "mechanic": "At half health, her nightmare frightens every agent for one turn and increases damage by 20%.",
+      "phase": {
+        "type": "fear",
+        "damageMultiplier": 1.2
+      },
+      "statMultipliers": {
+        "hp": 2.8,
+        "atk": 1.05,
+        "def": 0.8,
+        "int": 1.1
+      },
+      "weaponId": "none",
+      "rewardFunds": 4300,
       "rewardRep": 22,
-      "rewardMaterials": 3
+      "rewardMaterials": 4
     },
     {
-      "target": "Jonas Rook",
-      "path": "Error",
-      "threat": "★★★★☆",
-      "lastSeen": "Clockmaker’s Row",
-      "story": "A string of impossible thefts has left locked rooms empty without signs of entry. Witnesses describe a man who seems to make attacks and doors behave incorrectly. The authorities suspect supernatural interference.",
-      "rewardFunds": 1450,
-      "rewardRep": 20,
-      "rewardMaterials": 3
+      "id": "vacant_crown",
+      "title": "The Vacant Crown",
+      "target": "Lord Edran Voss",
+      "path": "black_emperor",
+      "sequence": 1,
+      "minReputation": 300,
+      "lastSeen": "The Court of Empty Seats",
+      "story": "Voss bought the courts that stripped his family of its title. He then changed the meaning of every oath sworn inside them. Petitioners arrive seeking justice and leave owing him their names. His vacant crown still commands guards who no longer remember him. A three-agent party must withstand the court’s decrees and break his authority together.",
+      "mechanic": "At half health, his decree drains 20% of maximum SP from every agent and increases damage by 20%.",
+      "phase": {
+        "type": "drain",
+        "spRatio": 0.2,
+        "damageMultiplier": 1.2
+      },
+      "statMultipliers": {
+        "hp": 3.7,
+        "atk": 1.05,
+        "def": 0.85,
+        "int": 1.1
+      },
+      "weaponId": "sword",
+      "rewardFunds": 6200,
+      "rewardRep": 28,
+      "rewardMaterials": 4
+    },
+    {
+      "id": "last_hour",
+      "title": "The Last Hour",
+      "target": "Archivist Ione Vale",
+      "path": "wheel_of_fortune",
+      "sequence": 0,
+      "minReputation": 400,
+      "lastSeen": "The Unfinished Observatory",
+      "story": "Ione catalogued disasters that had not happened yet. When she tried to spare the city its final calamity, she bound herself to an hour that never arrives. The observatory now repeats the deaths of everyone who crosses its threshold. Three agents must share the burden of that hour and confront its keeper before the city becomes another entry.",
+      "mechanic": "At half health, she gains a second action and a shield worth 20% of maximum HP.",
+      "phase": {
+        "type": "ward",
+        "shieldRatio": 0.2,
+        "extraActions": 1,
+        "damageMultiplier": 1.15
+      },
+      "statMultipliers": {
+        "hp": 2.2,
+        "atk": 1.05,
+        "def": 0.8,
+        "int": 1.1
+      },
+      "weaponId": "none",
+      "rewardFunds": 8500,
+      "rewardRep": 35,
+      "rewardMaterials": 5
     }
   ],
   "system": {
-    "mundane_max_reputation": 9,
+    "mundane_max_reputation": -1,
     "max_sequence_by_reputation": [
       {
         "min": 0,
@@ -100,64 +216,38 @@
       {
         "min": 80,
         "max": 5
+      },
+      {
+        "min": 120,
+        "max": 4
+      },
+      {
+        "min": 170,
+        "max": 3
+      },
+      {
+        "min": 230,
+        "max": 2
+      },
+      {
+        "min": 300,
+        "max": 1
+      },
+      {
+        "min": 400,
+        "max": 0
       }
     ],
-    "mundane_base_chance": 0.48,
+    "mundane_base_chance": 0,
     "lower_contract_weight": 0.5,
-    "sequence_odds_by_reputation": [
-      {
-        "min": 0,
-        "weights": {
-          "9": 70,
-          "8": 20,
-          "7": 8,
-          "6": 2,
-          "5": 0
-        }
-      },
-      {
-        "min": 15,
-        "weights": {
-          "9": 45,
-          "8": 35,
-          "7": 15,
-          "6": 5,
-          "5": 0
-        }
-      },
-      {
-        "min": 30,
-        "weights": {
-          "9": 25,
-          "8": 35,
-          "7": 25,
-          "6": 12,
-          "5": 3
-        }
-      },
-      {
-        "min": 50,
-        "weights": {
-          "9": 12,
-          "8": 28,
-          "7": 30,
-          "6": 22,
-          "5": 8
-        }
-      },
-      {
-        "min": 80,
-        "weights": {
-          "9": 7,
-          "8": 20,
-          "7": 28,
-          "6": 28,
-          "5": 17
-        }
-      }
-    ],
-    "sequence_odds_note": "Higher-reputation guilds shift contract-board weight toward higher-difficulty contracts, but Sequence 9 remains available at every reputation because low-sequence agents still need contracts for digestion and advancement. Odds are analogous to TFT tier odds: higher tiers become more common rather than lower tiers being hard-disabled.",
-    "sequence_9_always_available": true
+    "sequence_odds_note": "Boards retain a Sequence 9 contract and a contract matching the strongest awakened agent. Most jobs match the roster, with weaker work and occasional explicitly stronger threats. Ordinary errands are not generated.",
+    "sequence_9_always_available": true,
+    "roster_sequence_weights": {
+      "matching": 70,
+      "one_easier": 20,
+      "beginner": 10,
+      "harder": 8
+    }
   },
   "battlefields": {
     "defaultImage": null,

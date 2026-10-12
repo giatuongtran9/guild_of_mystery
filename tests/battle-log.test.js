@@ -90,8 +90,8 @@ for (let i = 0; i < res2v2.events.length; i++) {
     let hasDamage = false;
     for (let j = i + 1; j < res2v2.events.length; j++) {
       const next = res2v2.events[j];
-      if (next.type === 'cast' || next.type === 'round_start') break;
-      if (next.type === 'damage' && next.actorId === ev.actorId) {
+      if (next.type === 'cast' || next.type === 'round_start' || next.type === 'resources') break;
+      if (next.type === 'damage' && !next.isDot && next.actorId === ev.actorId) {
         hasDamage = true;
         break;
       }
@@ -116,6 +116,15 @@ for (const gr of grouped) {
 assert.strictEqual(mergedRowsFound, castEventsWithDamage,
   `Merged rows (${mergedRowsFound}) must match cast events with damage (${castEventsWithDamage})`);
 console.log(`✓ Verified ${mergedRowsFound} cast-with-damage actions each produced exactly one merged row`);
+
+// A poison tick owned by the buffer is still independent of the completed cast.
+const periodicRows=g.groupEventsToRows([
+ {round:1,type:'cast',actorId:'buffer',actorName:'Buffer',ability:'War Command',costSP:65},
+ {round:1,type:'resources',units:[]},
+ {round:1,type:'damage',actorId:'buffer',actorName:'Buffer',ability:'Poison',targetId:'target',amount:10,isDot:true}
+]).flatMap(r=>r.rows);
+assert.strictEqual(periodicRows.find(r=>r.ability==='War Command').damages.length,0);
+assert.strictEqual(periodicRows.find(r=>r.ability==='Poison').damages[0].amount,10);
 
 // 6. Test Structured Round & Action Continuity
 console.log('Checking structured round and action continuity...');
