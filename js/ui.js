@@ -27,7 +27,7 @@ function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
   for (const row of shownRows) {
     if (row.shields) {
       for (const s of row.shields) {
-        const target = hpMap[s.targetId] || hpMap[s.targetName];
+        const target = (s.targetId ? hpMap[s.targetId] : hpMap[s.targetName]);
         if (target) {
           target.curShield = (target.curShield || 0) + (s.amount || 0);
         }
@@ -35,7 +35,7 @@ function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
     }
     if (row.damages || row.reflects || row.reactions) {
       for (const d of [...(row.damages || []), ...(row.reflects || []), ...(row.reactions || [])]) {
-        const target = hpMap[d.targetId] || hpMap[d.targetName];
+        const target = (d.targetId ? hpMap[d.targetId] : hpMap[d.targetName]);
         if (target) {
           if (d.absorbed) {
             target.curShield = Math.max(0, (target.curShield || 0) - (d.absorbed || 0));
@@ -50,7 +50,7 @@ function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
     }
     if (row.heals) {
       for (const h of row.heals) {
-        const target = hpMap[h.targetId] || hpMap[h.targetName];
+        const target = (h.targetId ? hpMap[h.targetId] : hpMap[h.targetName]);
         if (target) {
           if (h.hpAfter !== undefined) target.curHp = h.hpAfter;
           else target.curHp = Math.min(target.maxHp, target.curHp + (h.amount || 0));
@@ -59,22 +59,22 @@ function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
     }
     if (row.deaths) {
       for (const d of row.deaths) {
-        const target = hpMap[d.targetId] || hpMap[d.targetName];
+        const target = (d.targetId ? hpMap[d.targetId] : hpMap[d.targetName]);
         if (target) { target.curHp = 0; target.curShield = 0; }
       }
     }
     if (row.revives) {
       for (const rv of row.revives) {
-        const target = hpMap[rv.targetId] || hpMap[rv.targetName];
+        const target = (rv.targetId ? hpMap[rv.targetId] : hpMap[rv.targetName]);
         if (target) { target.curHp = rv.hpAfter !== undefined ? rv.hpAfter : (rv.amount || 1); }
       }
     }
     if (row.type === 'death' && (row.targetId || row.targetName)) {
-      const target = hpMap[row.targetId] || hpMap[row.targetName];
+      const target = (row.targetId ? hpMap[row.targetId] : hpMap[row.targetName]);
       if (target) { target.curHp = 0; target.curShield = 0; }
     }
     for (const resource of row.resources || []) {
-      const target = hpMap[resource.id] || hpMap[resource.name] || {};
+      const target = (resource.id ? hpMap[resource.id] : hpMap[resource.name]) || {};
       Object.assign(target, resource);
       if (resource.hp !== undefined) target.curHp = resource.hp;
       if (resource.shield !== undefined) target.curShield = resource.shield;
@@ -434,6 +434,8 @@ function renderBattleLogComponent({
 }) {
   const visible = flattenedRows.slice(0, shownCount);
   const hpMap = calculateCurrentHp(allies, enemies, visible);
+  const known=new Set([...allies,...enemies].map(u=>u.id)),added=[...new Set(Object.values(hpMap))].filter(u=>u.id&&!known.has(u.id));
+  const shownAllies=[...allies,...added.filter(u=>u.team==='ally')],shownEnemies=[...enemies,...added.filter(u=>u.team==='enemy')];
 
   // Keep earlier turns in place so incoming events cannot collapse the text being read.
   const contentHtml = visible.map(r => renderTurnRowHtml(r, showDetails)).join('');
@@ -455,7 +457,7 @@ function renderBattleLogComponent({
         </button>
       </div>
     </div>
-    ${renderHpStrip(hpMap, allies, enemies, battlefieldImage)}
+    ${renderHpStrip(hpMap, shownAllies, shownEnemies, battlefieldImage)}
     <div class="battle-ticker-viewport" id="${isSim ? 'sim-viewport' : 'battle-viewport'}">
       ${contentHtml}
       ${!isDone ? `<div class="typing" style="padding:6px 8px;font-style:italic;color:var(--muted)">${paused ? 'Paused · Step to read the next action.' : 'Battling…'}</div>` : ''}
@@ -595,7 +597,7 @@ if (typeof document !== 'undefined') (() => {
     try{const draft=clone(state),outcome=fn(draft);if(!outcome.ok){toast(outcome.reason);return null;}if(!saveGame(draft)){toast('Recruitment could not be saved. Free browser storage and try again.');return null;}state=draft;return outcome;}finally{recruitmentBusy=false;}
   }
   function commit(fn){
-    const draft=clone(state),outcome=fn(draft);if(outcome?.ok===false){toast(outcome.reason);return false;}refreshRecruitmentIfDue(draft);maintainGuildBoards(draft);
+    const draft=clone(state),outcome=fn(draft);if(outcome?.ok===false){toast(outcome.reason);return false;}refreshRecruitmentIfDue(draft);maintainPathwayInventories(draft);maintainGuildBoards(draft);
     if(!saveGame(draft)){toast(saveError()||'The guild could not be saved. Free browser storage and retry; the action was not applied.');return false;}
     state=draft;render();return true;
   }
@@ -811,6 +813,29 @@ function inventory(){const entries=Object.entries(state.materials);return `<sect
 function statPair(label,final,base){return `<span>${label} <b>${final}</b> <small>(${base})</small></span>`;}
 
 function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id==='none'||w.id===a.weaponId||(state.weapons[w.id]||0)>0).map(w=>`<option value="${w.id}" ${a.weaponId===w.id?'selected':''}>${esc(w.name)} (+${w.atk} ATK) · ${state.weapons[w.id]||0} available</option>`).join('');return `<label class="equipment-select"><span>Equip Weapon</span><select onchange="window.G9.setWeapon(${esc(JSON.stringify(a.id))},this.value)">${options}</select></label>`}
+  function pathwayInventoryPanel(a){
+    const c=pathwayCollection(a);if(!c)return '';
+    const view=clone(a),inv=ensurePathwayInventory(view),actionId=esc(JSON.stringify(a.id)),cap=pathwayAssetCapacity(a),limit=pathwayPreparationLimit(a),busy=!!(state.pendingContract||state.campaign?.pending);
+    const acquisition={marionette:'Surviving conversions become owned marionettes. Deployment takes a paid action and shares your thread capacity. Destroyed marionettes are lost.',record:'Witness eligible enemy spells. Unspent records survive between battles; replay consumes one record. One slot at Sequence 6, four from Sequence 5.',soul:'Your kills grant one soul with one random compatible ability. Five soul slots at every Sequence. Active powers are paid casts; passive powers require a two-turn manifestation.',spirit:'Your kills grant bound spirits, including damage-over-time and owned-companion kills. Prepare one spirit; defeated vessels recover in three game days.',device:'Successful contracts with a Paragon have a 50% device drop chance; Wanted victories guarantee a drop. One prepared device. Wrecked devices cost £50 to repair.',beast:'Successful contracts with a Moon agent have a 50% beast drop chance; Wanted victories guarantee a drop. One prepared beast. Defeated beasts recover in three game days.',formula:'Learn one formula every three successful contracts at your Sequence or one easier, from Sequence 6. Prepare one ritual that modifies your own spells.',doctrine:'Learn one doctrine every three successful contracts at your Sequence or one easier. Prepare one researched tactic; Spell Imitation remains local to its battle.',conditioning:'Learn Aggression Pattern after three encounters with successful hypnosis. Prepared conditioning replaces the charged command with one turn of offensive preference.'}[c.kind];
+    const label=c.kind==='soul'?'Souls':c.kind==='record'?'Records':'Collection';
+    const cards=inv.assets.map(asset=>{
+      const d=pathwayAssetDefinition(asset),spec=pathwayAssetSpec(asset),isPrepared=inv.prepared.includes(asset.id),usable=pathwayAssetUsable(a,asset),arg=esc(JSON.stringify(asset.id)),power=spec?abilityDescription(spec,asset.sourcePath,asset.sequence):d?.description||'A retained character profile with its own native abilities.';
+      const title=pathwayAssetName(asset),condition=asset.condition==='wounded'?`Recovering until day ${asset.readyDay}`:asset.condition==='wrecked'?'Wrecked':a.sequence>asset.sequence?`Sealed until Sequence ${asset.sequence}`:a.sequence>c.unlock?`Deployment unlocks at Sequence ${c.unlock}`:isPrepared?'Prepared':'Stored';
+      const cost=c.kind==='soul'?(spec.type==='passive'?`Base invocation: ${PATHWAY_ASSET_RULES.passiveSP} SP · 100 Depravity · ${PATHWAY_ASSET_RULES.passiveCooldown}-turn cooldown · ${PATHWAY_ASSET_RULES.passiveTurns} turns; one manifested passive at a time.`:`Base invocation: ${spec.costSP} SP · 100 Depravity · ${spec.cooldown}-turn cooldown. Soul ownership is retained.`):c.kind==='record'?`Base replay: ${spec.costSP} SP · 100 Records · ${spec.cooldown}-turn cooldown. One stored record is consumed.`:['device','beast','spirit','marionette'].includes(c.kind)?'Paid deployment uses the native skill cost. Character traits may modify resource costs.':'';
+      const recovery=['device','marionette'].includes(c.kind)&&(asset.condition==='wrecked'||(asset.hpRatio??1)<1)?`<button type="button" ${busy?'disabled':''} onclick="window.G9.restoreAsset(${actionId},${arg})">Restore · £${PATHWAY_ASSET_RULES.repairCost}</button>`:['beast','spirit'].includes(c.kind)&&asset.condition==='ready'&&(asset.hpRatio??1)<1?`<button type="button" ${busy?'disabled':''} onclick="window.G9.restoreAsset(${actionId},${arg})">Rest · ${PATHWAY_ASSET_RULES.recoveryDays} days</button>`:'';
+      return `<article class="pathway-asset ${isPrepared?'is-prepared':''}" data-asset-id="${esc(asset.id)}" data-asset-tier="${esc(asset.tier||'none')}"><header><h4>${esc(title)}</h4>${asset.tier?`<span class="trait-badge trait-${esc(asset.tier)}">${esc(asset.tier[0].toUpperCase()+asset.tier.slice(1))}</span>`:''}</header><p class="pathway-asset-status">Sequence ${asset.sequence} · ${esc(condition)}</p>${spec?`<p class="muted">${esc(pathName(asset.sourcePath))} · ${spec.type==='passive'?'Paid passive manifestation':'Active power'}</p>`:''}<p>${esc(power)}</p>${d?.drawback?`<p class="pathway-asset-drawback">${esc(d.drawback)}</p>`:''}${cost?`<small>${esc(cost)} Your combat trait still applies.</small>`:''}${asset.hpRatio!=null?`<small>Vessel health: ${Math.round(asset.hpRatio*100)}%</small>`:''}<small>Acquired: ${esc(asset.sourceContract||'Previous encounter')}${asset.sourceName?` · ${esc(asset.sourceName)}`:''}${asset.acquiredDay?` · Day ${asset.acquiredDay}`:''}</small><div class="pathway-asset-actions"><button type="button" ${busy||(!usable&&!isPrepared)?'disabled':''} onclick="window.G9.prepareAsset(${actionId},${arg})">${isPrepared?'Unprepare':'Prepare'}</button>${recovery}${['formula','doctrine','conditioning'].includes(c.kind)?'':`<button type="button" class="small danger-btn" ${busy?'disabled':''} onclick="window.G9.releaseAsset(${actionId},${arg})">Release</button>`}</div></article>`;
+    }).join('');
+    const learned=['formula','doctrine','conditioning'].includes(c.kind),progress=c.kind==='conditioning'?inv.progress.hypnosis:inv.progress.contracts,next=learned&&inv.assets.length<(PATHWAY_LEARNING_ORDER[c.kind]?.length||0)?`<p class="muted">Learning: ${progress} qualifying ${c.kind==='conditioning'?'hypnosis encounters':'contract victories'} · next unlock at ${(Math.floor(progress/PATHWAY_ASSET_RULES.learningContracts)+1)*PATHWAY_ASSET_RULES.learningContracts}.</p>`:'';
+    const policy=!learned?`<label class="pathway-asset-policy">Automatic use<select ${busy?'disabled':''} onchange="window.G9.assetPolicy(${actionId},this.value)">${[['auto','Use prepared assets'],['wanted','Wanted battles only'],['hold','Hold assets']].map(([v,t])=>`<option value="${v}" ${inv.policy===v?'selected':''}>${t}</option>`).join('')}</select></label>`:'';
+    const loot=['device','beast'].includes(c.kind)?`<details class="pathway-loot-reference"><summary>Possible drops · one per tier</summary><p>Among drops: Normal 74% · Rare 20% · Epic 5% · Legendary 1%. Contract Sequence sets the vessel's power ceiling.</p>${Object.values(PATHWAY_ASSET_DEFINITIONS).filter(d=>d.kind===c.kind).map(d=>`<div><b>${esc(d.tier[0].toUpperCase()+d.tier.slice(1))} — ${esc(d.name)}</b><p>${esc(d.description)}</p><small>${esc(d.drawback)}</small></div>`).join('')}</details>`:'';
+    return `<section class="dossier-skill-panel pathway-inventory" id="dossier-skill-panel" role="tabpanel" tabindex="0" aria-labelledby="dossier-tab-inventory"><div class="section-head"><h3>${esc(c.name)}</h3><b>${label}: ${inv.assets.length}/${cap}</b></div><p>${esc(acquisition)}</p>${a.sequence>c.unlock?`<p class="gold-note">Combat use unlocks at Sequence ${c.unlock}.</p>`:''}<p class="muted">Prepared: ${inv.prepared.length}/${limit}. Stored assets provide no automatic stat bonuses.</p>${next}${policy}${busy?'<p class="muted">Record the saved battle outcome before changing your collection.</p>':''}<div class="pathway-asset-grid">${cards||'<p class="muted">This collection is empty. Earn assets through real encounters; simulations and the protected opening chapter do not grant them.</p>'}</div>${loot}</section>`;
+  }
+  function pathwayOutcomeMarkup(){
+    if(run?.isCampaign)return '';
+    const result=state.pendingContract?.result||run?.result;if(!result)return '';
+    const gains=result.assetGains||[],offers=result.assetOffers||[];if(!gains.length&&!offers.length)return '';
+    return `<section class="pathway-outcome"><h3>Pathway acquisitions</h3>${gains.map(g=>`<p><b>${esc(state.roster.find(a=>a.id===g.ownerId)?.name||'Returning agent')}</b> · ${esc(pathwayAssetName(g.asset))}${g.asset.tier?` · ${esc(g.asset.tier)}`:''} · Sequence ${g.asset.sequence}</p>`).join('')}${offers.map(o=>{const a=result.consequences.find(c=>c.type==='syncAgent'&&c.agentId===o.ownerId)?.agent,inv=a?.pathwayInventory,needsReplacement=(inv?.assets.length||0)>=pathwayAssetCapacity(a),arg=esc(JSON.stringify(o.id));return `<article class="pathway-asset-offer" data-offer-id="${esc(o.id)}"><h4>${esc(a?.name||'Returning agent')} · ${esc(pathwayAssetName(o.asset))}</h4><p>${esc(o.asset.tier||o.asset.kind)} · Sequence ${o.asset.sequence}</p>${o.choice===null?`${needsReplacement?`<label>Replace an existing asset<select onchange="if(this.value)window.G9.chooseAssetOffer(${arg},this.value)"><option value="">Choose which asset to release</option>${(inv?.assets||[]).map(x=>`<option value="${esc(x.id)}">${esc(pathwayAssetName(x))} · Sequence ${x.sequence}</option>`).join('')}</select></label>`:`<button type="button" onclick="window.G9.chooseAssetOffer(${arg},null)">Keep asset</button>`}<button type="button" class="small" onclick="window.G9.chooseAssetOffer(${arg},'decline')">Decline acquisition</button>`:`<p class="muted">${o.choice==='accepted'?'Added to the collection.':'Acquisition declined.'}</p>`}</article>`;}).join('')}</section>`;
+  }
   function dossier(){
     const a=state.roster.find(x=>x.id===selected); if(!a)return '';
     const actionId=esc(JSON.stringify(a.id));
@@ -828,6 +853,7 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
     const pathButtons=PATH_KEYS.map(p=>`<button class="path-choice" onclick="window.G9.choosePath(${actionId},'${p}')"><b>${esc(pathName(p))}</b><span>${esc(pathOf(p).role)}</span></button>`).join('');
     const title=x=>(x.text||x.name).split(/\s[—–]\s/)[0];
     const tabMarkup=type=>{
+      if(type==='inventory'){const active=skillType==='inventory';return `<button type="button" role="tab" id="dossier-tab-inventory" aria-controls="dossier-skill-panel" aria-selected="${active}" tabindex="${active?'0':'-1'}" class="${active?'active':''}" onclick="window.G9.dossierSkillTab('inventory')"><b>Pathway Inventory</b><span>${esc(pathwayCollection(a).name)}</span></button>`;}
       const first=abilities.find(x=>x.type===type),active=type===skillType;
       return `<button type="button" role="tab" id="dossier-tab-${type}" aria-controls="dossier-skill-panel" aria-selected="${active}" tabindex="${active?'0':'-1'}" class="${active?'active':''}" onclick="window.G9.dossierSkillTab('${type}')"><b>${type==='active'?'Active Skill':'Passive Skill'}</b><span>${esc(active&&skill?title(skill):first?title(first):'None unlocked')}</span></button>`;
     };
@@ -836,9 +862,9 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
       <div class="eyebrow">CHARACTER DOSSIER</div><h2 id="dossier-title" tabindex="-1">${esc(a.name)}</h2>
       <div class="dossier-identity"><div class="dossier-portrait">${portrait}</div><div class="dossier-progression"><p class="dossier-path">${a.awakened?esc(pathName(a.path)):'Ordinary person'}</p><p class="dossier-rank">${a.awakened?`Sequence ${a.sequence} — ${esc(tier.name)}`:'Unawakened'}</p><p class="muted">${esc(a.occupation||'Ordinary person')}</p>${a.awakened?statusBar('Digesting',a.digest):'<p class="muted">Choose a Pathway to begin.</p>'}</div></div>
       ${a.awakened?`<section class="dossier-equipment" aria-label="Equipment"><div class="dossier-equipment-slot" title="${esc(weapon.name)}"><span aria-hidden="true">${weapon.kind==='gun'?'⌁':weapon.kind==='unarmed'?'◇':'†'}</span><small>Weapon</small></div><div class="dossier-equipment-copy"><b>${esc(weapon.name)}</b><small>Weapon ATK: +${weapon.atk} · ${weapon.kind==='gun'?'Gun':weapon.kind==='unarmed'?'Bare Hand':'Melee'} Mastery Lv.${weaponStats(a).mastery}</small>${equipmentPicker(a)}</div></section>`:''}
-      <div class="dossier-skill-tabs" role="tablist" aria-label="Sequence abilities">${tabMarkup('active')}${tabMarkup('passive')}</div>
+      <div class="dossier-skill-tabs ${pathwayCollection(a)?'has-inventory':''}" role="tablist" aria-label="Sequence abilities">${tabMarkup('active')}${tabMarkup('passive')}${pathwayCollection(a)?tabMarkup('inventory'):''}</div>
       ${a.awakened?`<div class="big-stats dossier-stats">${[['HP',eff.hp],['SP',Math.round(a.sp??maxSPFor(a))],['ATK',eff.atk],['DEF',eff.def],['INT',eff.int],['Speed',cr?cr.speed.toFixed(1):eff.spd||'—']].map(x=>`<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div>`:'<p class="muted">Combat stats are revealed after awakening.</p>'}
-      <section class="dossier-skill-panel" id="dossier-skill-panel" role="tabpanel" tabindex="0" aria-labelledby="dossier-tab-${skillType}">${skill?`<label class="dossier-rank-picker">Unlocked ${skillType} ability<select onchange="window.G9.dossierSkillSequence(Number(this.value))">${skills.map(x=>`<option value="${x.sequence}" ${x===skill?'selected':''}>Sequence ${x.sequence} — ${esc(x.name)} · ${esc(title(x))}</option>`).join('')}</select></label><h3>Sequence ${skill.sequence} — ${esc(skill.name)}</h3><p>${esc(skill.text)}</p><small>${skill.type==='active'?(abilityEffects(skill).some(e=>e.type==='signature'&&['door_record','tower_imitation'].includes(e.rule))?'Stored skill SP and cooldown':`${a.traitSource==='catalog_v1'?'Trait-adjusted cost shown above':`SP ${skill.costSP||0}`} · Cooldown ${skill.cooldown||0} turns`):'Always active'}${skillDamage?` · ${esc(skillDamage)}`:''}</small>`:`<p class="muted">No ${skillType} abilities yet.${a.awakened?'':' Awaken to Sequence 9.'}</p>`}</section>
+      ${skillType==='inventory'?pathwayInventoryPanel(a):`<section class="dossier-skill-panel" id="dossier-skill-panel" role="tabpanel" tabindex="0" aria-labelledby="dossier-tab-${skillType}">${skill?`<label class="dossier-rank-picker">Unlocked ${skillType} ability<select onchange="window.G9.dossierSkillSequence(Number(this.value))">${skills.map(x=>`<option value="${x.sequence}" ${x===skill?'selected':''}>Sequence ${x.sequence} — ${esc(x.name)} · ${esc(title(x))}</option>`).join('')}</select></label><h3>Sequence ${skill.sequence} — ${esc(skill.name)}</h3><p>${esc(skill.text)}</p><small>${skill.type==='active'?(abilityEffects(skill).some(e=>e.type==='signature'&&['door_record','tower_imitation'].includes(e.rule))?'Stored skill SP and cooldown':`${a.traitSource==='catalog_v1'?'Trait-adjusted cost shown above':`SP ${skill.costSP||0}`} · Cooldown ${skill.cooldown||0} turns`):'Always active'}${skillDamage?` · ${esc(skillDamage)}`:''}</small>`:`<p class="muted">No ${skillType} abilities yet.${a.awakened?'':' Awaken to Sequence 9.'}</p>`}</section>`}
       ${!a.awakened?`<details class="dossier-details" open><summary>Awakening — Sequence 9</summary><p>This character is an ordinary human. Sequence 9 begins their supernatural pathway; it is not an ordinary-human tier. Choose any Pathway; combat stats and individual variation are revealed after awakening.</p><div class="path-grid">${pathButtons}</div></details>`:''}
       <details class="dossier-details"><summary>Condition & combat details</summary>${statusBar('Madness',a.madness)}${statusBar('Corruption',a.corruption)}${statusBar('Injuries',a.injuries)}${a.injuries>0?'<p class="muted">Injuries reduce effective HP and other stats by up to 30% until treated.</p>':''}${a.madness>=50?'<p class="warning">Madness above 50 causes action loss; at 100 the character becomes a corrupted monster and is permanently lost.</p>':''}${cr?`<div class="combat-rates"><span>Crit ${Math.round(cr.crit*100)}%</span><span>Crit Damage +${Math.round(cr.critDamage*100)}%</span><span>Dodge ${Math.round(cr.dodge*100)}%</span><span>Counter ${Math.round(cr.counter*100)}%</span><span>Speed ${cr.speed.toFixed(1)} · AV ${cr.av.toFixed(1)}</span><span>Archetype ${archetypeOf(a.path)}</span><span>Max SP ${maxSPFor(a)}</span><span>Element Resistance: ${Object.entries(cr.resistances||{}).map(([k,v])=>`${esc(k)} ${v>0?'+':''}${Math.round(v)}%`).join(' · ')||'None'}</span>${cr.passives?.length?`<span>Passives: ${cr.passives.map(esc).join(' · ')}</span>`:''}</div><div class="special-meter"><b>${esc(specialStatFor(a.path,a.sequence,a).name)} ${Math.round(specialStatFor(a.path,a.sequence,a).value)}/100</b><small>Gain: ${esc(specialStatFor(a.path,a.sequence,a).gain)} · Spend: ${esc(specialStatFor(a.path,a.sequence,a).spend)}</small></div>`:''}<p class="muted">Weapon Mastery: Gun ${weaponMasteryValue(a,'gun')} · Melee ${weaponMasteryValue(a,'weapon')} · Bare Hand ${weaponMasteryValue(a,'unarmed')}. Mastery is permanently attached to this character; changing weapons does not reset it.</p>${weapon.kind==='gun'?`<p class="muted">Gun Accuracy: ${Math.round((1-weaponStats(a).masteryMiss)*100)}%</p>`:''}${weapon.bleed?`<p class="muted">Bleed: ${Math.round(weapon.bleed*100)}% if target survives</p>`:''}${a.awakened?`<p class="muted">Current ATK: ${eff.atk} (base ${a.stats.atk})</p>`:''}${a.status==='active'&&a.injuries>0?`<button type="button" onclick="window.G9.heal(${actionId})">Treat injuries</button>`:''}</details>
       ${next?`<details class="dossier-details"><summary>Advancement</summary><p>Next: <b>Sequence ${a.sequence-1} — ${esc(next.next.name)}</b>. Digesting: ${Math.round(a.digest||0)}%.</p><div class="requirement-box"><b>Requirements</b><span>Digesting: ${next.ready?'Complete':'Not complete'}</span><span>${esc(next.mat)}: ${state.materials[next.mat]||0}/${next.materialCost}</span><span>Funds: £${state.funds.toLocaleString()}/£${next.fundsCost}</span></div><button type="button" class="primary full" onclick="window.G9.advance(${actionId})">Review Advancement</button></details>`:''}
@@ -879,11 +905,17 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
       ${logHtml}
       <div class="battle-completion" ${isDone ? '' : 'hidden'}>
       ${run.isCampaign?`<p>${esc(run.result.lines.at(-1)?.text||'')}</p>${run.result.success?campaignRewardMarkup(CAMPAIGN.missions[3].rewards):''}`:''}
-      <div class="result ${run.result.success?'success':'failure'}">${run.isCampaign?(run.result.success?'RESIDENTS RESCUED':'AGENTS RECOVERED · RETRY AVAILABLE'):run.result.success?(wanted?'TARGET ELIMINATED':'CONTRACT FULFILLED'):((run.result.battleOutcome||run.result.battleSnapshot?.outcome)==='timeout'?'ROUND LIMIT · CONTRACT INCOMPLETE':wanted?'HUNT FAILED':'CONTRACT FAILED')}</div><button class="primary full" onclick="window.G9.closeQuest()">${run.isCampaign?(run.result.success?'Record victory & continue':'Return and retry'):'Return to Guild'}</button>
+      ${pathwayOutcomeMarkup()}
+      <div class="result ${run.result.success?'success':'failure'}">${run.isCampaign?(run.result.success?'RESIDENTS RESCUED':'AGENTS RECOVERED · RETRY AVAILABLE'):run.result.success?(wanted?'TARGET ELIMINATED':'CONTRACT FULFILLED'):((run.result.battleOutcome||run.result.battleSnapshot?.outcome)==='timeout'?'ROUND LIMIT · CONTRACT INCOMPLETE':wanted?'HUNT FAILED':'CONTRACT FAILED')}</div><button class="primary full" ${(state.pendingContract?.result?.assetOffers||[]).some(o=>o.choice==null)?'disabled':''} onclick="window.G9.closeQuest()">${run.isCampaign?(run.result.success?'Record victory & continue':'Return and retry'):'Return to Guild'}</button>
       </div>
     </div></div>`;
   }
   window.G9={
+    prepareAsset:(agentId,assetId)=>{commit(d=>changePathwayPreparation(d,agentId,assetId));},
+    restoreAsset:(agentId,assetId)=>{commit(d=>restorePathwayAsset(d,agentId,assetId));},
+    assetPolicy:(agentId,policy)=>{commit(d=>setPathwayAssetPolicy(d,agentId,policy));},
+    releaseAsset:(agentId,assetId)=>{if(chapterBlocked())return;const a=state.roster.find(x=>x.id===agentId),asset=a?.pathwayInventory?.assets.find(x=>x.id===assetId);if(!asset)return;if(!window.confirm(`Release ${pathwayAssetName(asset)} permanently?`))return;commit(d=>releasePathwayAsset(d,agentId,assetId));},
+    chooseAssetOffer:(offerId,replaceId)=>{if(!run||run.isCampaign||run.currentTurn<run.turnRows.length)return;if(!commit(d=>choosePathwayAssetOffer(d,offerId,replaceId)))return;run.result=clone(state.pendingContract.result);render();},
     openPortrait,closePortrait,portraitZoom:percent=>portraitViewer?.zoom(Number(percent)/100),
     chapterAgent:id=>{
       const i=chapterAgentIds.indexOf(id);
@@ -961,7 +993,7 @@ teamB: opponents.map((o, i) => ({
   alive: snap.enemies[i]?.alive ?? true
 })),balanceTrace:snap.balanceTrace||[]};render()},fastTicker:()=>{if(!run)return;run.currentTurn=Math.min(run.turnRows.length,run.currentTurn+5);refreshBattle();},skipTicker:(isSim=false)=>{const playing=isSim?simResult:run;if(!playing)return;playing.currentTurn=playing.turnRows.length;clearTimeout(tickerTimer);tickerTimer=null;refreshBattle();},dossier:id=>{dossierReturnFocus={id:document.activeElement?.id,action:document.activeElement?.getAttribute('onclick')};selected=id;dossierSkillType='active';dossierSkillSequence=null;render();document.getElementById('dossier-title')?.focus()},
     closeDossier:()=>{selected=null;render();const previous=dossierReturnFocus;const opener=previous?.id?document.getElementById(previous.id):previous?.action?Array.from(app.querySelectorAll('[onclick]')).find(el=>el.getAttribute('onclick')===previous.action):null;(opener||app.querySelector('.tabs [aria-current="page"]'))?.focus();dossierReturnFocus=null},
-    dossierSkillTab:type=>{if(!selected||!['active','passive'].includes(type))return;dossierSkillType=type;dossierSkillSequence=null;render();document.getElementById(`dossier-tab-${type}`)?.focus()},
+    dossierSkillTab:type=>{if(!selected||!['active','passive','inventory'].includes(type)||type==='inventory'&&!pathwayCollection(state.roster.find(x=>x.id===selected)))return;dossierSkillType=type;dossierSkillSequence=null;render();document.getElementById(`dossier-tab-${type}`)?.focus()},
     dossierSkillSequence:sequence=>{if(!selected||!Number.isInteger(sequence)||sequence<0||sequence>9)return;dossierSkillSequence=sequence;render();app.querySelector('.dossier-rank-picker select')?.focus()},recruitInfo:id=>{const a=state.recruitPool.find(x=>x.id===id);if(a){toast(`${a.name}: ${a.occupation}. ${traitRarity(a)} — ${traitName(a)}. ${traitDescription(a)}`)}},
     hire:id=>{if(chapterBlocked())return;const outcome=recruitmentCommit(d=>hireRecruitmentCandidate(d,id));if(outcome){clearTimeout(recruitRevealTimer);recruitReveal=false;render();}},
     refreshRecruit:()=>{if(chapterBlocked()||recruitReveal)return;const outcome=recruitmentCommit(d=>refreshRecruitmentOffice(d));if(outcome){recruitReveal=true;render();clearTimeout(recruitRevealTimer);recruitRevealTimer=setTimeout(()=>{if(recruitReveal){recruitReveal=false;render();}},650);}},
@@ -980,7 +1012,7 @@ teamB: opponents.map((o, i) => ({
     clearSelection:()=>{window.G9.selectedIds=[];render()},
     saveTeam:()=>{if(!planning||window.G9.selectedIds.length<1)return toast('Select at least one character.');const id=planning.id;if(commit(d=>{d.teams[id]=[...window.G9.selectedIds];chronicle(d,`A team was saved for ${planning.name}.`);})){planning=state.quests.find(q=>q.id===id)||state.wanted.find(q=>q.id===id);render();}},
     cancelPlan:()=>{planning=null;render()},
-    launch:()=>{if(chapterBlocked())return;if(!planning)return;const ids=window.G9.selectedIds||[];if(ids.length<1)return toast('Assign at least one character.');const members=state.roster.filter(a=>ids.includes(a.id)&&a.status==='active'&&a.awakened);if(!members.length)return toast('At least one awakened character is required.');if(planning.requiredPartySize&&(members.length!==planning.requiredPartySize||members.some(a=>a.unitType==='marionette')))return toast('Wanted bosses require three awakened Beyonders.');const owners=new Set(members.filter(a=>a.unitType!=='marionette').map(a=>a.id));for(const m of members.filter(a=>a.unitType==='marionette')){if(!owners.has(m.ownerId))return toast('A Marionette can only deploy while its owner is in the party.');const owner=state.roster.find(a=>a.id===m.ownerId);const count=members.filter(a=>a.unitType==='marionette'&&a.ownerId===m.ownerId).length;if(count>threadSlots(owner.sequence))return toast(`The owner can deploy only ${threadSlots(owner.sequence)} Marionette(s) at this Sequence.`);}const q=planning;const individual=members.length===1;const result=resolveQuest(clone(members),q,Date.now()%2147483647,{individual});planning=null;const initialAllies = result.battleSnapshot?.initialUnits?.filter(u=>u.team==='ally') || clone(members).map(m=>{const hp=Math.round(effectiveStats(m).hp*(passiveCombatModifier(m).hp||1));return {id:m.id,name:m.name,team:'ally',path:m.path,sequence:m.sequence,unitType:m.unitType,maxHp:hp,hp,sp:m.sp??maxSPFor(m),maxSP:maxSPFor(m)};});
+    launch:()=>{if(chapterBlocked())return;if(!planning)return;const ids=window.G9.selectedIds||[];if(ids.length<1)return toast('Assign at least one character.');const members=state.roster.filter(a=>ids.includes(a.id)&&a.status==='active'&&a.awakened);if(!members.length)return toast('At least one awakened character is required.');if(planning.requiredPartySize&&(members.length!==planning.requiredPartySize||members.some(a=>a.unitType==='marionette')))return toast('Wanted bosses require three awakened Beyonders.');const owners=new Set(members.filter(a=>a.unitType!=='marionette').map(a=>a.id));for(const m of members.filter(a=>a.unitType==='marionette')){if(!owners.has(m.ownerId))return toast('A Marionette can only deploy while its owner is in the party.');const owner=state.roster.find(a=>a.id===m.ownerId);const count=members.filter(a=>a.unitType==='marionette'&&a.ownerId===m.ownerId).length;if(count>threadSlots(owner.sequence))return toast(`The owner can deploy only ${threadSlots(owner.sequence)} Marionette(s) at this Sequence.`);}const q=planning;const individual=members.length===1;const result=resolveQuest(clone(members),q,Date.now()%2147483647,{individual,day:state.day});planning=null;const initialAllies = result.battleSnapshot?.initialUnits?.filter(u=>u.team==='ally') || clone(members).map(m=>{const hp=Math.round(effectiveStats(m).hp*(passiveCombatModifier(m).hp||1));return {id:m.id,name:m.name,team:'ally',path:m.path,sequence:m.sequence,unitType:m.unitType,maxHp:hp,hp,sp:m.sp??maxSPFor(m),maxSP:maxSPFor(m)};});
     const initialEnemies = result.battleSnapshot?.initialUnits?.filter(u=>u.team==='enemy') || (result.battleSnapshot?.enemies||[]).map(e=>({...e,team:'enemy',hp:e.maxHp,sp:0}));
     const turnRows = flattenTurnRows(groupEventsToRows(result.events||[]));
     const pending={quest:q,result,initialAllies,initialEnemies,turnRows,currentTurn:0,isSolo:individual};if(!commit(d=>{const outcome=reserveContractDispatch(d,q);if(!outcome.ok)return outcome;d.pendingContract=pending;})){planning=q;render();return;}run=clone(state.pendingContract);render()},
@@ -993,7 +1025,7 @@ teamB: opponents.map((o, i) => ({
     const dialog=portraitViewer?.dialog||(selected&&app.querySelector('.character-dossier'));if(!dialog)return;
     if(event.key==='Escape'){event.preventDefault();portraitViewer?closePortrait():window.G9.closeDossier();return;}
     if(!portraitViewer&&event.target?.getAttribute('role')==='tab'&&['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){
-      event.preventDefault();window.G9.dossierSkillTab(event.key==='Home'?'active':event.key==='End'?'passive':dossierSkillType==='active'?'passive':'active');return;
+      event.preventDefault();const tabs=['active','passive'];if(pathwayCollection(state.roster.find(a=>a.id===selected)))tabs.push('inventory');const i=tabs.indexOf(dossierSkillType),next=event.key==='Home'?0:event.key==='End'?tabs.length-1:(i+(event.key==='ArrowLeft'?-1:1)+tabs.length)%tabs.length;window.G9.dossierSkillTab(tabs[next]);return;
     }
     if(event.key==='Tab'){
       const controls=Array.from(dialog.querySelectorAll('button,input,select,summary,[tabindex="0"]')).filter(el=>!el.disabled&&el.getAttribute('tabindex')!=='-1'&&el.getClientRects().length);

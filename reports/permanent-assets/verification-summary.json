@@ -1,0 +1,88 @@
+{
+  "regressionSuites": 51,
+  "regressionFailures": 0,
+  "browserViews": 36,
+  "browserWidths": [
+    320,
+    390,
+    560,
+    1440
+  ],
+  "effectBehaviorChecks": 147,
+  "pvpRare": {
+    "battles": 20240,
+    "drawRate": 0.018972332015810278,
+    "meanRounds": 7.827272727272727,
+    "completedBefore15": 0.9701581027667984,
+    "completedBy12": 0.9292490118577075,
+    "parityFailures": 0,
+    "histogram": {
+      "1": 32,
+      "2": 118,
+      "3": 648,
+      "4": 1358,
+      "5": 2046,
+      "6": 2228,
+      "7": 3536,
+      "8": 3052,
+      "9": 2404,
+      "10": 1612,
+      "11": 1112,
+      "12": 690,
+      "13": 486,
+      "14": 342,
+      "15": 576
+    }
+  },
+  "pvpLegendary": {
+    "battles": 10120,
+    "drawRate": 0.018379446640316207,
+    "meanRounds": 7.8069169960474305,
+    "completedBefore15": 0.9675889328063241,
+    "completedBy12": 0.9282608695652174,
+    "parityFailures": 0,
+    "histogram": {
+      "1": 16,
+      "2": 86,
+      "3": 336,
+      "4": 708,
+      "5": 990,
+      "6": 1176,
+      "7": 1722,
+      "8": 1438,
+      "9": 1244,
+      "10": 808,
+      "11": 542,
+      "12": 336,
+      "13": 228,
+      "14": 170,
+      "15": 320
+    }
+  },
+  "solo": {
+    "solo-empty": {
+      "battles": 22000,
+      "minGroupWin": 0.91,
+      "meanWin": 0.9966818181818182,
+      "groupsBelow80": 0,
+      "errors": 0
+    },
+    "solo-rare": {
+      "battles": 22000,
+      "minGroupWin": 0.91,
+      "meanWin": 0.9966363636363637,
+      "groupsBelow80": 0,
+      "errors": 0
+    }
+  },
+  "wanted": {
+    "battles": 1440,
+    "minPartyWin": 0.625,
+    "maxPartyWin": 1,
+    "timeouts": 0
+  },
+  "legacyBalanceChecks": 154,
+  "legacyBalanceFailures": 0,
+  "nodeManifestChecks": 2,
+  "authoredEffectTypesAudited": 53
+}

@@ -7,7 +7,7 @@ async function fixture(save,corrupt=false){
  w.fetch=async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(path.join(root,new URL(url).pathname.replace('/guild_of_mystery/',''))))});w.eval(fs.readFileSync(path.join(root,'js/data-loader.js'),'utf8'));w.G9_DATA=await w.G9DataLoader.load();
  w.scrollTo=()=>{};w.confirm=()=>true;w.matchMedia=()=>({matches:false});w.setTimeout=()=>1;w.clearTimeout=()=>{};
  if(save)w.localStorage.setItem(key,JSON.stringify(save));if(corrupt)w.localStorage.setItem(key,'broken save');
- w.eval(['paths','v15','generate','traits','signatures','mythical','engine','state','campaign','ui'].map(n=>fs.readFileSync(path.join(root,`js/${n}.js`),'utf8')).join('\n'));
+ w.eval(['paths','v15','generate','traits','pathway-assets','signatures','mythical','engine','state','campaign','ui'].map(n=>fs.readFileSync(path.join(root,`js/${n}.js`),'utf8')).join('\n'));
  const original=w.Storage.prototype.setItem;
  return {dom,w,saved:()=>JSON.parse(w.localStorage.getItem(key)),deny:()=>{w.Storage.prototype.setItem=()=>{throw new Error('storage denied');};},allow:()=>{w.Storage.prototype.setItem=original;}};
 }

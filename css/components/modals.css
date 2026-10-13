@@ -212,6 +212,10 @@
   gap: 8px;
 }
 
+.dossier-skill-tabs.has-inventory {
+  grid-template-columns: repeat(3,minmax(0,1fr));
+}
+
 .dossier-skill-tabs button {
   display: flex;
   flex-direction: column;

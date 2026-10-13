@@ -1,0 +1,579 @@
+{
+  "samples": 40,
+  "assets": "rare",
+  "teams": [
+    [
+      "fool",
+      "tyrant",
+      "mother"
+    ],
+    [
+      "door",
+      "visionary",
+      "fool"
+    ],
+    [
+      "red_priest",
+      "sun",
+      "moon"
+    ],
+    [
+      "error",
+      "white_tower",
+      "twilight_giant"
+    ],
+    [
+      "paragon",
+      "demoness",
+      "death"
+    ],
+    [
+      "chained",
+      "wheel_of_fortune",
+      "black_emperor"
+    ]
+  ],
+  "battles": 1440,
+  "rows": [
+    {
+      "bossId": "red_knife",
+      "sequence": 9,
+      "paths": [
+        "fool",
+        "tyrant",
+        "mother"
+      ],
+      "samples": 40,
+      "wins": 37,
+      "winRate": 0.925,
+      "timeouts": 0,
+      "deaths": 34,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "red_knife",
+      "sequence": 9,
+      "paths": [
+        "door",
+        "visionary",
+        "fool"
+      ],
+      "samples": 40,
+      "wins": 39,
+      "winRate": 0.975,
+      "timeouts": 0,
+      "deaths": 24,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "red_knife",
+      "sequence": 9,
+      "paths": [
+        "red_priest",
+        "sun",
+        "moon"
+      ],
+      "samples": 40,
+      "wins": 40,
+      "winRate": 1,
+      "timeouts": 0,
+      "deaths": 10,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "red_knife",
+      "sequence": 9,
+      "paths": [
+        "error",
+        "white_tower",
+        "twilight_giant"
+      ],
+      "samples": 40,
+      "wins": 34,
+      "winRate": 0.85,
+      "timeouts": 0,
+      "deaths": 43,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "red_knife",
+      "sequence": 9,
+      "paths": [
+        "paragon",
+        "demoness",
+        "death"
+      ],
+      "samples": 40,
+      "wins": 38,
+      "winRate": 0.95,
+      "timeouts": 0,
+      "deaths": 31,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "red_knife",
+      "sequence": 9,
+      "paths": [
+        "chained",
+        "wheel_of_fortune",
+        "black_emperor"
+      ],
+      "samples": 40,
+      "wins": 33,
+      "winRate": 0.825,
+      "timeouts": 0,
+      "deaths": 38,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "black_mirror",
+      "sequence": 7,
+      "paths": [
+        "fool",
+        "tyrant",
+        "mother"
+      ],
+      "samples": 40,
+      "wins": 37,
+      "winRate": 0.925,
+      "timeouts": 0,
+      "deaths": 28,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "black_mirror",
+      "sequence": 7,
+      "paths": [
+        "door",
+        "visionary",
+        "fool"
+      ],
+      "samples": 40,
+      "wins": 39,
+      "winRate": 0.975,
+      "timeouts": 0,
+      "deaths": 19,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "black_mirror",
+      "sequence": 7,
+      "paths": [
+        "red_priest",
+        "sun",
+        "moon"
+      ],
+      "samples": 40,
+      "wins": 39,
+      "winRate": 0.975,
+      "timeouts": 0,
+      "deaths": 17,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "black_mirror",
+      "sequence": 7,
+      "paths": [
+        "error",
+        "white_tower",
+        "twilight_giant"
+      ],
+      "samples": 40,
+      "wins": 40,
+      "winRate": 1,
+      "timeouts": 0,
+      "deaths": 6,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "black_mirror",
+      "sequence": 7,
+      "paths": [
+        "paragon",
+        "demoness",
+        "death"
+      ],
+      "samples": 40,
+      "wins": 40,
+      "winRate": 1,
+      "timeouts": 0,
+      "deaths": 6,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "black_mirror",
+      "sequence": 7,
+      "paths": [
+        "chained",
+        "wheel_of_fortune",
+        "black_emperor"
+      ],
+      "samples": 40,
+      "wins": 40,
+      "winRate": 1,
+      "timeouts": 0,
+      "deaths": 14,
+      "phaseEvents": 38
+    },
+    {
+      "bossId": "broken_hour",
+      "sequence": 5,
+      "paths": [
+        "fool",
+        "tyrant",
+        "mother"
+      ],
+      "samples": 40,
+      "wins": 40,
+      "winRate": 1,
+      "timeouts": 0,
+      "deaths": 2,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "broken_hour",
+      "sequence": 5,
+      "paths": [
+        "door",
+        "visionary",
+        "fool"
+      ],
+      "samples": 40,
+      "wins": 40,
+      "winRate": 1,
+      "timeouts": 0,
+      "deaths": 2,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "broken_hour",
+      "sequence": 5,
+      "paths": [
+        "red_priest",
+        "sun",
+        "moon"
+      ],
+      "samples": 40,
+      "wins": 40,
+      "winRate": 1,
+      "timeouts": 0,
+      "deaths": 8,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "broken_hour",
+      "sequence": 5,
+      "paths": [
+        "error",
+        "white_tower",
+        "twilight_giant"
+      ],
+      "samples": 40,
+      "wins": 40,
+      "winRate": 1,
+      "timeouts": 0,
+      "deaths": 5,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "broken_hour",
+      "sequence": 5,
+      "paths": [
+        "paragon",
+        "demoness",
+        "death"
+      ],
+      "samples": 40,
+      "wins": 40,
+      "winRate": 1,
+      "timeouts": 0,
+      "deaths": 3,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "broken_hour",
+      "sequence": 5,
+      "paths": [
+        "chained",
+        "wheel_of_fortune",
+        "black_emperor"
+      ],
+      "samples": 40,
+      "wins": 40,
+      "winRate": 1,
+      "timeouts": 0,
+      "deaths": 0,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "ashen_choir",
+      "sequence": 3,
+      "paths": [
+        "fool",
+        "tyrant",
+        "mother"
+      ],
+      "samples": 40,
+      "wins": 37,
+      "winRate": 0.925,
+      "timeouts": 0,
+      "deaths": 22,
+      "phaseEvents": 39
+    },
+    {
+      "bossId": "ashen_choir",
+      "sequence": 3,
+      "paths": [
+        "door",
+        "visionary",
+        "fool"
+      ],
+      "samples": 40,
+      "wins": 36,
+      "winRate": 0.9,
+      "timeouts": 0,
+      "deaths": 30,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "ashen_choir",
+      "sequence": 3,
+      "paths": [
+        "red_priest",
+        "sun",
+        "moon"
+      ],
+      "samples": 40,
+      "wins": 37,
+      "winRate": 0.925,
+      "timeouts": 0,
+      "deaths": 17,
+      "phaseEvents": 39
+    },
+    {
+      "bossId": "ashen_choir",
+      "sequence": 3,
+      "paths": [
+        "error",
+        "white_tower",
+        "twilight_giant"
+      ],
+      "samples": 40,
+      "wins": 38,
+      "winRate": 0.95,
+      "timeouts": 0,
+      "deaths": 24,
+      "phaseEvents": 39
+    },
+    {
+      "bossId": "ashen_choir",
+      "sequence": 3,
+      "paths": [
+        "paragon",
+        "demoness",
+        "death"
+      ],
+      "samples": 40,
+      "wins": 37,
+      "winRate": 0.925,
+      "timeouts": 0,
+      "deaths": 25,
+      "phaseEvents": 39
+    },
+    {
+      "bossId": "ashen_choir",
+      "sequence": 3,
+      "paths": [
+        "chained",
+        "wheel_of_fortune",
+        "black_emperor"
+      ],
+      "samples": 40,
+      "wins": 40,
+      "winRate": 1,
+      "timeouts": 0,
+      "deaths": 9,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "vacant_crown",
+      "sequence": 1,
+      "paths": [
+        "fool",
+        "tyrant",
+        "mother"
+      ],
+      "samples": 40,
+      "wins": 40,
+      "winRate": 1,
+      "timeouts": 0,
+      "deaths": 1,
+      "phaseEvents": 37
+    },
+    {
+      "bossId": "vacant_crown",
+      "sequence": 1,
+      "paths": [
+        "door",
+        "visionary",
+        "fool"
+      ],
+      "samples": 40,
+      "wins": 40,
+      "winRate": 1,
+      "timeouts": 0,
+      "deaths": 6,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "vacant_crown",
+      "sequence": 1,
+      "paths": [
+        "red_priest",
+        "sun",
+        "moon"
+      ],
+      "samples": 40,
+      "wins": 40,
+      "winRate": 1,
+      "timeouts": 0,
+      "deaths": 6,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "vacant_crown",
+      "sequence": 1,
+      "paths": [
+        "error",
+        "white_tower",
+        "twilight_giant"
+      ],
+      "samples": 40,
+      "wins": 40,
+      "winRate": 1,
+      "timeouts": 0,
+      "deaths": 12,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "vacant_crown",
+      "sequence": 1,
+      "paths": [
+        "paragon",
+        "demoness",
+        "death"
+      ],
+      "samples": 40,
+      "wins": 40,
+      "winRate": 1,
+      "timeouts": 0,
+      "deaths": 3,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "vacant_crown",
+      "sequence": 1,
+      "paths": [
+        "chained",
+        "wheel_of_fortune",
+        "black_emperor"
+      ],
+      "samples": 40,
+      "wins": 39,
+      "winRate": 0.975,
+      "timeouts": 0,
+      "deaths": 20,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "last_hour",
+      "sequence": 0,
+      "paths": [
+        "fool",
+        "tyrant",
+        "mother"
+      ],
+      "samples": 40,
+      "wins": 35,
+      "winRate": 0.875,
+      "timeouts": 0,
+      "deaths": 18,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "last_hour",
+      "sequence": 0,
+      "paths": [
+        "door",
+        "visionary",
+        "fool"
+      ],
+      "samples": 40,
+      "wins": 37,
+      "winRate": 0.925,
+      "timeouts": 0,
+      "deaths": 30,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "last_hour",
+      "sequence": 0,
+      "paths": [
+        "red_priest",
+        "sun",
+        "moon"
+      ],
+      "samples": 40,
+      "wins": 38,
+      "winRate": 0.95,
+      "timeouts": 0,
+      "deaths": 11,
+      "phaseEvents": 38
+    },
+    {
+      "bossId": "last_hour",
+      "sequence": 0,
+      "paths": [
+        "error",
+        "white_tower",
+        "twilight_giant"
+      ],
+      "samples": 40,
+      "wins": 25,
+      "winRate": 0.625,
+      "timeouts": 0,
+      "deaths": 59,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "last_hour",
+      "sequence": 0,
+      "paths": [
+        "paragon",
+        "demoness",
+        "death"
+      ],
+      "samples": 40,
+      "wins": 38,
+      "winRate": 0.95,
+      "timeouts": 0,
+      "deaths": 18,
+      "phaseEvents": 40
+    },
+    {
+      "bossId": "last_hour",
+      "sequence": 0,
+      "paths": [
+        "chained",
+        "wheel_of_fortune",
+        "black_emperor"
+      ],
+      "samples": 40,
+      "wins": 36,
+      "winRate": 0.9,
+      "timeouts": 0,
+      "deaths": 34,
+      "phaseEvents": 40
+    }
+  ]
+}

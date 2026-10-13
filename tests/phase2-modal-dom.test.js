@@ -21,7 +21,7 @@ async function fixture(unsafeId = false) {
   a.id=unsafeId?"modal');alert('unsafe');//":'modal_dom';a.name='Mara Vale';a.injuries=31;a.digest=63;a.weaponId='knife';g.restatAgent(a);
   state.roster=[a];state.funds=10000;state.materials[g.pathOf(a.path).material]=10;state.weapons.revolver=1;
   w.localStorage.setItem('guild-rpg-browser-v9',JSON.stringify(state));
-  w.eval(['paths','v15','generate','traits','signatures','mythical','engine','state','campaign'].map(n=>fs.readFileSync(path.join(root,`js/${n}.js`),'utf8')).join('\n')+'\n'+fs.readFileSync(uiPath,'utf8'));
+  w.eval(['paths','v15','generate','traits','pathway-assets','signatures','mythical','engine','state','campaign'].map(n=>fs.readFileSync(path.join(root,`js/${n}.js`),'utf8')).join('\n')+'\n'+fs.readFileSync(uiPath,'utf8'));
   w.G9.tab('hall');
   return {dom,w,a,read:()=>JSON.parse(w.localStorage.getItem('guild-rpg-browser-v9'))};
 }
@@ -49,7 +49,7 @@ async function test(label, fn){try{await fn();passed++;console.log(`PASS ${label
     const {dom,w,a}=await fixture();try{
       const opener=w.document.querySelector('.tabs [aria-current="page"]');opener.focus();w.G9.dossier(a.id);
       w.document.getElementById('dossier-tab-active').focus();
-      for(const [key,expected] of [['ArrowRight','passive'],['ArrowLeft','active'],['End','passive'],['Home','active']]){
+      for(const [key,expected] of [['ArrowRight','passive'],['ArrowLeft','active'],['End','inventory'],['Home','active']]){
         w.document.activeElement.dispatchEvent(new w.KeyboardEvent('keydown',{key,bubbles:true,cancelable:true}));assert.equal(w.document.activeElement.id,`dossier-tab-${expected}`);
       }
       w.document.activeElement.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));

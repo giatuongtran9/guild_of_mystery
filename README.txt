@@ -151,3 +151,13 @@ Verification:
   node tests/phase4-balance.js --phase=pvp-after --seeds=3 --charges=0 --sizes=1 --modes=normal
 Full results, benchmark conditions and the 22-pathway overview are in
 reports/progression-review/CURRENT.md.
+
+Permanent character collections
+------------------------------
+Fool, Door, Hanged Man, Death, Hermit, White Tower, Paragon, Moon and Visionary
+now have a Pathway Inventory tab in the character dossier. Assets come from
+credited kills, witnessed spells, contract drops or earned learning milestones.
+Hanged Man stores five souls at every Sequence. Devices and beasts have one
+Normal/Rare/Epic/Legendary definition per tier and retain their own drawbacks.
+Preparation, paid combat use, saved replacement choices and companion recovery
+are documented with measured balance limits in reports/permanent-assets/CURRENT.md.

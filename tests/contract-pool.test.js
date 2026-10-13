@@ -39,7 +39,7 @@ for(let guild=1;guild<=30;guild++){
 }
 const legacy=g.newGame();legacy.schema=13;delete legacy.contractPool;legacy.reputation=400;legacy.roster=[actor(0)];
 legacy.quests=[{id:'stale',kind:'contract',difficultySequence:0,encounter:true,rewards:{}}];
-const migrated=g.migrateSave(copy(legacy));assert.equal(migrated.schema,14);conserve(migrated);
+const migrated=g.migrateSave(copy(legacy));assert.equal(migrated.schema,g.SAVE_VERSION);conserve(migrated);
 legacy.pendingContract={quest:legacy.quests[0],result:{success:true,consequences:[],marionettes:[],rewards:{funds:100,reputation:0,materials:{}},dayCost:1}};
 const pending=g.migrateSave(copy(legacy));assert.deepEqual(pending.pendingContract,legacy.pendingContract);conserve(pending);
 const funds=pending.funds;assert(g.settleContract(pending).ok);assert.equal(pending.funds,funds+100);assert(!g.settleContract(pending).ok);conserve(pending);
