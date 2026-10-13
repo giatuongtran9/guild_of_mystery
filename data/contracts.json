@@ -171,7 +171,7 @@
       "rewardFunds": 6200,
       "rewardRep": 28,
       "rewardMaterials": 4,
-      "damageMultiplier": 0.25
+      "damageMultiplier": 0.2
     },
     {
       "id": "last_hour",
@@ -199,7 +199,7 @@
       "rewardFunds": 8500,
       "rewardRep": 35,
       "rewardMaterials": 5,
-      "damageMultiplier": 0.128
+      "damageMultiplier": 0.08
     }
   ],
   "system": {

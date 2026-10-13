@@ -1,0 +1,810 @@
+{
+  "nodeSuites": [
+    {
+      "file": "automatic-companions-ui.test.js",
+      "code": 0
+    },
+    {
+      "file": "automatic-companions.test.js",
+      "code": 0
+    },
+    {
+      "file": "battle-log.test.js",
+      "code": 0
+    },
+    {
+      "file": "battle-ui.test.js",
+      "code": 0
+    },
+    {
+      "file": "campaign.test.js",
+      "code": 0
+    },
+    {
+      "file": "combat-sprite.test.js",
+      "code": 0
+    },
+    {
+      "file": "contract-pool.test.js",
+      "code": 0
+    },
+    {
+      "file": "effects-behavior.js",
+      "code": 0
+    },
+    {
+      "file": "encounter-feedback-ui.test.js",
+      "code": 0
+    },
+    {
+      "file": "encounter-state.test.js",
+      "code": 0
+    },
+    {
+      "file": "fullres-cache-data.test.js",
+      "code": 0
+    },
+    {
+      "file": "fullres-portraits.test.js",
+      "code": 0
+    },
+    {
+      "file": "generic-effects.js",
+      "code": 0
+    },
+    {
+      "file": "global-combat.test.js",
+      "code": 0
+    },
+    {
+      "file": "market-calendar.test.js",
+      "code": 0
+    },
+    {
+      "file": "market-ui.test.js",
+      "code": 0
+    },
+    {
+      "file": "market-weapons.test.js",
+      "code": 0
+    },
+    {
+      "file": "mythical-order.test.js",
+      "code": 0
+    },
+    {
+      "file": "permanent-asset-combat.test.js",
+      "code": 0
+    },
+    {
+      "file": "permanent-assets-ui.test.js",
+      "code": 0
+    },
+    {
+      "file": "permanent-assets.test.js",
+      "code": 0
+    },
+    {
+      "file": "persistence-contracts-ui.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase1-ai.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase1-casting.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase1-combat-units.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase1-damage-pipeline.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase1-lifecycle.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase1-progression-resistance.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase2-battle.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase2-boot.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase2-cache.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase2-modal-dom.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase2-modal.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase2-portraits.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase2-runtime-data.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase2-startup.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase3-actual-casts.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase3-description-dom.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase3-descriptions.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase3-existing-rules.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase3-thread-damage.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase4-balance.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase4-core.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase4-data.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase4-fixes.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase4-mythical.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase4-saves.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase4-side-parity.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase4-signatures.test.js",
+      "code": 0
+    },
+    {
+      "file": "phase4-ui.test.js",
+      "code": 0
+    },
+    {
+      "file": "progression-contracts.test.js",
+      "code": 0
+    },
+    {
+      "file": "recruitment-choice.test.js",
+      "code": 0
+    },
+    {
+      "file": "reflect-order.test.js",
+      "code": 0
+    },
+    {
+      "file": "retreat.test.js",
+      "code": 0
+    },
+    {
+      "file": "thread-cc-interrupt.test.js",
+      "code": 0
+    },
+    {
+      "file": "thread-marionette.js",
+      "code": 0
+    },
+    {
+      "file": "trait-ui.test.js",
+      "code": 0
+    },
+    {
+      "file": "traits.test.js",
+      "code": 0
+    }
+  ],
+  "runtimeBuildCheck": "passed",
+  "syntaxChecks": "passed",
+  "diffWhitespaceCheck": "passed",
+  "automaticBrowser": {
+    "url": "http://127.0.0.1:34497/",
+    "results": [
+      {
+        "width": 320,
+        "documentWidth": 320,
+        "rowWidth": 212,
+        "rowScroll": 736,
+        "units": 7,
+        "companions": 4,
+        "settled": true
+      },
+      {
+        "width": 390,
+        "documentWidth": 390,
+        "rowWidth": 282,
+        "rowScroll": 736,
+        "units": 7,
+        "companions": 4,
+        "settled": true
+      },
+      {
+        "width": 1440,
+        "documentWidth": 1440,
+        "rowWidth": 608,
+        "rowScroll": 768,
+        "units": 7,
+        "companions": 4,
+        "settled": true
+      }
+    ]
+  },
+  "inventoryBrowser": {
+    "url": "http://127.0.0.1:34635/",
+    "views": 36,
+    "results": [
+      {
+        "width": 320,
+        "pathway": "fool",
+        "documentWidth": 320,
+        "modalWidth": 298,
+        "modalScroll": 298,
+        "panelWidth": 264,
+        "panelScroll": 264,
+        "tabsWidth": 266,
+        "tabsScroll": 266,
+        "cards": 20,
+        "inside": true
+      },
+      {
+        "width": 320,
+        "pathway": "door",
+        "documentWidth": 320,
+        "modalWidth": 298,
+        "modalScroll": 298,
+        "panelWidth": 264,
+        "panelScroll": 264,
+        "tabsWidth": 266,
+        "tabsScroll": 266,
+        "cards": 3,
+        "inside": true
+      },
+      {
+        "width": 320,
+        "pathway": "hanged_man",
+        "documentWidth": 320,
+        "modalWidth": 298,
+        "modalScroll": 298,
+        "panelWidth": 264,
+        "panelScroll": 264,
+        "tabsWidth": 266,
+        "tabsScroll": 266,
+        "cards": 5,
+        "inside": true
+      },
+      {
+        "width": 320,
+        "pathway": "death",
+        "documentWidth": 320,
+        "modalWidth": 298,
+        "modalScroll": 298,
+        "panelWidth": 264,
+        "panelScroll": 264,
+        "tabsWidth": 266,
+        "tabsScroll": 266,
+        "cards": 4,
+        "inside": true
+      },
+      {
+        "width": 320,
+        "pathway": "hermit",
+        "documentWidth": 320,
+        "modalWidth": 298,
+        "modalScroll": 298,
+        "panelWidth": 264,
+        "panelScroll": 264,
+        "tabsWidth": 266,
+        "tabsScroll": 266,
+        "cards": 4,
+        "inside": true
+      },
+      {
+        "width": 320,
+        "pathway": "white_tower",
+        "documentWidth": 320,
+        "modalWidth": 298,
+        "modalScroll": 298,
+        "panelWidth": 264,
+        "panelScroll": 264,
+        "tabsWidth": 266,
+        "tabsScroll": 266,
+        "cards": 4,
+        "inside": true
+      },
+      {
+        "width": 320,
+        "pathway": "paragon",
+        "documentWidth": 320,
+        "modalWidth": 298,
+        "modalScroll": 298,
+        "panelWidth": 264,
+        "panelScroll": 264,
+        "tabsWidth": 266,
+        "tabsScroll": 266,
+        "cards": 4,
+        "inside": true
+      },
+      {
+        "width": 320,
+        "pathway": "moon",
+        "documentWidth": 320,
+        "modalWidth": 298,
+        "modalScroll": 298,
+        "panelWidth": 264,
+        "panelScroll": 264,
+        "tabsWidth": 266,
+        "tabsScroll": 266,
+        "cards": 4,
+        "inside": true
+      },
+      {
+        "width": 320,
+        "pathway": "visionary",
+        "documentWidth": 320,
+        "modalWidth": 298,
+        "modalScroll": 298,
+        "panelWidth": 264,
+        "panelScroll": 264,
+        "tabsWidth": 266,
+        "tabsScroll": 266,
+        "cards": 1,
+        "inside": true
+      },
+      {
+        "width": 390,
+        "pathway": "fool",
+        "documentWidth": 390,
+        "modalWidth": 368,
+        "modalScroll": 368,
+        "panelWidth": 334,
+        "panelScroll": 334,
+        "tabsWidth": 336,
+        "tabsScroll": 336,
+        "cards": 20,
+        "inside": true
+      },
+      {
+        "width": 390,
+        "pathway": "door",
+        "documentWidth": 390,
+        "modalWidth": 368,
+        "modalScroll": 368,
+        "panelWidth": 334,
+        "panelScroll": 334,
+        "tabsWidth": 336,
+        "tabsScroll": 336,
+        "cards": 3,
+        "inside": true
+      },
+      {
+        "width": 390,
+        "pathway": "hanged_man",
+        "documentWidth": 390,
+        "modalWidth": 368,
+        "modalScroll": 368,
+        "panelWidth": 334,
+        "panelScroll": 334,
+        "tabsWidth": 336,
+        "tabsScroll": 336,
+        "cards": 5,
+        "inside": true
+      },
+      {
+        "width": 390,
+        "pathway": "death",
+        "documentWidth": 390,
+        "modalWidth": 368,
+        "modalScroll": 368,
+        "panelWidth": 334,
+        "panelScroll": 334,
+        "tabsWidth": 336,
+        "tabsScroll": 336,
+        "cards": 4,
+        "inside": true
+      },
+      {
+        "width": 390,
+        "pathway": "hermit",
+        "documentWidth": 390,
+        "modalWidth": 368,
+        "modalScroll": 368,
+        "panelWidth": 334,
+        "panelScroll": 334,
+        "tabsWidth": 336,
+        "tabsScroll": 336,
+        "cards": 4,
+        "inside": true
+      },
+      {
+        "width": 390,
+        "pathway": "white_tower",
+        "documentWidth": 390,
+        "modalWidth": 368,
+        "modalScroll": 368,
+        "panelWidth": 334,
+        "panelScroll": 334,
+        "tabsWidth": 336,
+        "tabsScroll": 336,
+        "cards": 4,
+        "inside": true
+      },
+      {
+        "width": 390,
+        "pathway": "paragon",
+        "documentWidth": 390,
+        "modalWidth": 368,
+        "modalScroll": 368,
+        "panelWidth": 334,
+        "panelScroll": 334,
+        "tabsWidth": 336,
+        "tabsScroll": 336,
+        "cards": 4,
+        "inside": true
+      },
+      {
+        "width": 390,
+        "pathway": "moon",
+        "documentWidth": 390,
+        "modalWidth": 368,
+        "modalScroll": 368,
+        "panelWidth": 334,
+        "panelScroll": 334,
+        "tabsWidth": 336,
+        "tabsScroll": 336,
+        "cards": 4,
+        "inside": true
+      },
+      {
+        "width": 390,
+        "pathway": "visionary",
+        "documentWidth": 390,
+        "modalWidth": 368,
+        "modalScroll": 368,
+        "panelWidth": 334,
+        "panelScroll": 334,
+        "tabsWidth": 336,
+        "tabsScroll": 336,
+        "cards": 1,
+        "inside": true
+      },
+      {
+        "width": 560,
+        "pathway": "fool",
+        "documentWidth": 560,
+        "modalWidth": 498,
+        "modalScroll": 498,
+        "panelWidth": 456,
+        "panelScroll": 456,
+        "tabsWidth": 458,
+        "tabsScroll": 458,
+        "cards": 20,
+        "inside": true
+      },
+      {
+        "width": 560,
+        "pathway": "door",
+        "documentWidth": 560,
+        "modalWidth": 498,
+        "modalScroll": 498,
+        "panelWidth": 456,
+        "panelScroll": 456,
+        "tabsWidth": 458,
+        "tabsScroll": 458,
+        "cards": 3,
+        "inside": true
+      },
+      {
+        "width": 560,
+        "pathway": "hanged_man",
+        "documentWidth": 560,
+        "modalWidth": 498,
+        "modalScroll": 498,
+        "panelWidth": 456,
+        "panelScroll": 456,
+        "tabsWidth": 458,
+        "tabsScroll": 458,
+        "cards": 5,
+        "inside": true
+      },
+      {
+        "width": 560,
+        "pathway": "death",
+        "documentWidth": 560,
+        "modalWidth": 498,
+        "modalScroll": 498,
+        "panelWidth": 456,
+        "panelScroll": 456,
+        "tabsWidth": 458,
+        "tabsScroll": 458,
+        "cards": 4,
+        "inside": true
+      },
+      {
+        "width": 560,
+        "pathway": "hermit",
+        "documentWidth": 560,
+        "modalWidth": 498,
+        "modalScroll": 498,
+        "panelWidth": 456,
+        "panelScroll": 456,
+        "tabsWidth": 458,
+        "tabsScroll": 458,
+        "cards": 4,
+        "inside": true
+      },
+      {
+        "width": 560,
+        "pathway": "white_tower",
+        "documentWidth": 560,
+        "modalWidth": 498,
+        "modalScroll": 498,
+        "panelWidth": 456,
+        "panelScroll": 456,
+        "tabsWidth": 458,
+        "tabsScroll": 458,
+        "cards": 4,
+        "inside": true
+      },
+      {
+        "width": 560,
+        "pathway": "paragon",
+        "documentWidth": 560,
+        "modalWidth": 498,
+        "modalScroll": 498,
+        "panelWidth": 456,
+        "panelScroll": 456,
+        "tabsWidth": 458,
+        "tabsScroll": 458,
+        "cards": 4,
+        "inside": true
+      },
+      {
+        "width": 560,
+        "pathway": "moon",
+        "documentWidth": 560,
+        "modalWidth": 498,
+        "modalScroll": 498,
+        "panelWidth": 456,
+        "panelScroll": 456,
+        "tabsWidth": 458,
+        "tabsScroll": 458,
+        "cards": 4,
+        "inside": true
+      },
+      {
+        "width": 560,
+        "pathway": "visionary",
+        "documentWidth": 560,
+        "modalWidth": 498,
+        "modalScroll": 498,
+        "panelWidth": 456,
+        "panelScroll": 456,
+        "tabsWidth": 458,
+        "tabsScroll": 458,
+        "cards": 1,
+        "inside": true
+      },
+      {
+        "width": 1440,
+        "pathway": "fool",
+        "documentWidth": 1440,
+        "modalWidth": 498,
+        "modalScroll": 498,
+        "panelWidth": 456,
+        "panelScroll": 456,
+        "tabsWidth": 458,
+        "tabsScroll": 458,
+        "cards": 20,
+        "inside": true
+      },
+      {
+        "width": 1440,
+        "pathway": "door",
+        "documentWidth": 1440,
+        "modalWidth": 498,
+        "modalScroll": 498,
+        "panelWidth": 456,
+        "panelScroll": 456,
+        "tabsWidth": 458,
+        "tabsScroll": 458,
+        "cards": 3,
+        "inside": true
+      },
+      {
+        "width": 1440,
+        "pathway": "hanged_man",
+        "documentWidth": 1440,
+        "modalWidth": 498,
+        "modalScroll": 498,
+        "panelWidth": 456,
+        "panelScroll": 456,
+        "tabsWidth": 458,
+        "tabsScroll": 458,
+        "cards": 5,
+        "inside": true
+      },
+      {
+        "width": 1440,
+        "pathway": "death",
+        "documentWidth": 1440,
+        "modalWidth": 498,
+        "modalScroll": 498,
+        "panelWidth": 456,
+        "panelScroll": 456,
+        "tabsWidth": 458,
+        "tabsScroll": 458,
+        "cards": 4,
+        "inside": true
+      },
+      {
+        "width": 1440,
+        "pathway": "hermit",
+        "documentWidth": 1440,
+        "modalWidth": 498,
+        "modalScroll": 498,
+        "panelWidth": 456,
+        "panelScroll": 456,
+        "tabsWidth": 458,
+        "tabsScroll": 458,
+        "cards": 4,
+        "inside": true
+      },
+      {
+        "width": 1440,
+        "pathway": "white_tower",
+        "documentWidth": 1440,
+        "modalWidth": 498,
+        "modalScroll": 498,
+        "panelWidth": 456,
+        "panelScroll": 456,
+        "tabsWidth": 458,
+        "tabsScroll": 458,
+        "cards": 4,
+        "inside": true
+      },
+      {
+        "width": 1440,
+        "pathway": "paragon",
+        "documentWidth": 1440,
+        "modalWidth": 498,
+        "modalScroll": 498,
+        "panelWidth": 456,
+        "panelScroll": 456,
+        "tabsWidth": 458,
+        "tabsScroll": 458,
+        "cards": 4,
+        "inside": true
+      },
+      {
+        "width": 1440,
+        "pathway": "moon",
+        "documentWidth": 1440,
+        "modalWidth": 498,
+        "modalScroll": 498,
+        "panelWidth": 456,
+        "panelScroll": 456,
+        "tabsWidth": 458,
+        "tabsScroll": 458,
+        "cards": 4,
+        "inside": true
+      },
+      {
+        "width": 1440,
+        "pathway": "visionary",
+        "documentWidth": 1440,
+        "modalWidth": 498,
+        "modalScroll": 498,
+        "panelWidth": 456,
+        "panelScroll": 456,
+        "tabsWidth": 458,
+        "tabsScroll": 458,
+        "cards": 1,
+        "inside": true
+      }
+    ]
+  },
+  "sourceSha256": {
+    "js/engine.js": "4cd9954fd27ee0d985c27f40e2e5692b6e9305c38e7f909dfafe3bb1eb5e2aa0",
+    "js/pathway-assets.js": "e143ea0f421470573775bf530969f09d2291e5617ab3bb283bc7d6420b6ab80f",
+    "js/signatures.js": "41aa6e51c0b4700bbe07ad64571ca0cad8813ff389c097908890ba611db21d56",
+    "js/mythical.js": "3dd8aaf90a9c9665e89fc83775f4bb5e37ddf7120c84b29e55323af0ba356854",
+    "js/ui.js": "2098d16a489a8f0ffa752c70767bc95027dae2ab302a4e2913faa6876bebda62",
+    "data/balance.json": "97f6038b3eeed54fcd598e3cd84ba6ec9cca06f40599bc594fe47e6325069ac2",
+    "data/contracts.json": "b00142be74d820fda0d9c672e75029cd17fa62549fbee80e4fef6c484ebe17b7",
+    "data/pathways/moon.json": "eed3c47e0dd6f0cf5fad443cc1123a1ddeda1cbbc6bd4b83bba6e9dc8500c06f",
+    "data/pathways/paragon.json": "0ef34e5ea785e977c30043f736e8a0f98e6c8b9e20a47592353f25e60167d50d"
+  },
+  "runtimeManifest": {
+    "schema": "guild.runtime-manifest.v1",
+    "version": "13212aca3eef5896",
+    "bundle": "data/runtime/data.13212aca3eef5896.json",
+    "scriptVersions": {
+      "js/vendor/dayjs.min.js": "9cfdb93f38afcf2d",
+      "js/paths.js": "0d440daddbbd53de",
+      "js/v15.js": "01f187c339a69441",
+      "js/generate.js": "3b89a553e2211423",
+      "js/traits.js": "53d1ad0961c30a15",
+      "js/market.js": "507fb36b01097000",
+      "js/pathway-assets.js": "e143ea0f42147057",
+      "js/signatures.js": "41aa6e51c0b4700b",
+      "js/mythical.js": "3dd8aaf90a9c9665",
+      "js/engine.js": "4cd9954fd27ee0d9",
+      "js/state.js": "06b4d9cd538f377d",
+      "js/campaign.js": "cc4a4e65446ccee4",
+      "js/ui.js": "2098d16a489a8f0f"
+    },
+    "serviceWorkerVersion": "2ab548a46a5be0be"
+  },
+  "emptySoloMethod": {
+    "samples": 100,
+    "sequences": [
+      9,
+      8,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1,
+      0
+    ],
+    "assets": "empty",
+    "variants": "live",
+    "weapon": "knife",
+    "startingSP": "full",
+    "injuries": 0,
+    "mastery": 0,
+    "traitGeneration": "live rarity odds",
+    "roundLimit": 45,
+    "seedBase": 710019,
+    "updatedSequences": [
+      8,
+      7,
+      6,
+      3,
+      1,
+      0
+    ],
+    "note": "Final changed Sequences rerun with identical seeds; other Sequences retain their unaffected measured results."
+  }
+}

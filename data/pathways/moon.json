@@ -65,22 +65,22 @@
         "name": "Beast Command",
         "kind": "active",
         "label": "Active",
-        "spCost": 20,
+        "spCost": 15,
         "cooldown": 1,
-        "description": "Beast Command — Direct a tamed beast. Full charge empowers the command; vampiric blood powers begin at Sequence 7.",
-        "stat": "INT",
-        "scale": 1.35,
-        "damageType": "blood",
-        "formula": "pure_caster_ability",
+        "description": "Beast Command — Empower a prepared beast’s next attack. Full Blood Moon charge heals the beast; without a living beast, make an empowered basic attack.",
+        "stat": "ATK",
+        "scale": 0,
+        "damageType": "physical",
+        "formula": "basic_physical_attack",
         "tag": null,
         "effects": [
           {
             "type": "signature",
             "rule": "moon_beast",
             "chargeCost": 100,
-            "amount": 0.5,
-            "duration": 3,
-            "slots": 1
+            "commandBonus": 1.5,
+            "fallbackMultiplier": 2.5,
+            "healRatio": 0.25
           }
         ]
       }
@@ -302,7 +302,7 @@
         "cooldown": 5,
         "description": "Goddess of Crimson — Unleashes crimson moon authority dealing 400% INT True DMG.",
         "stat": "INT",
-        "scale": 4,
+        "scale": 3.2,
         "damageType": "true",
         "formula": "pure_caster_ability",
         "tag": null,

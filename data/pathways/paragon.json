@@ -118,9 +118,9 @@
         "name": "Alchemical Fire",
         "kind": "active",
         "label": "Active",
-        "spCost": 35,
-        "cooldown": 2,
-        "description": "Alchemical Fire — Fires alchemical flames dealing 160% INT Fire DMG.",
+        "spCost": 45,
+        "cooldown": 3,
+        "description": "Alchemical Fire — Deal Fire damage and mark the target for a living turret’s next shot. Full Innovation charge also shields the owner.",
         "stat": "INT",
         "scale": 1.6,
         "damageType": "fire",
@@ -131,9 +131,8 @@
             "type": "signature",
             "rule": "paragon_device",
             "chargeCost": 100,
-            "amount": 0.5,
-            "duration": 3,
-            "slots": 1
+            "penetration": 0.2,
+            "shieldRatio": 0.1
           }
         ]
       }

@@ -1,0 +1,2289 @@
+{
+  "method": {
+    "samples": 100,
+    "sequences": [
+      9,
+      8,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1,
+      0
+    ],
+    "assets": "rare",
+    "variants": "live",
+    "weapon": "knife",
+    "startingSP": "full",
+    "injuries": 0,
+    "mastery": 0,
+    "traitGeneration": "live rarity odds",
+    "roundLimit": 45,
+    "seedBase": 710019
+  },
+  "results": [
+    {
+      "strength": "live",
+      "sequence": 9,
+      "rows": [
+        {
+          "pathway": "fool",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 90,
+          "winRate": 0.9,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "door",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "error",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "visionary",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "sun",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 94,
+          "winRate": 0.94,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "tyrant",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 86,
+          "winRate": 0.86,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        },
+        {
+          "pathway": "white_tower",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 93,
+          "winRate": 0.93,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "hanged_man",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 95,
+          "winRate": 0.95,
+          "timeouts": 0,
+          "deaths": 3,
+          "errors": []
+        },
+        {
+          "pathway": "darkness",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 87,
+          "winRate": 0.87,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "death",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "twilight_giant",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 83,
+          "winRate": 0.83,
+          "timeouts": 0,
+          "deaths": 12,
+          "errors": []
+        },
+        {
+          "pathway": "red_priest",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 93,
+          "winRate": 0.93,
+          "timeouts": 0,
+          "deaths": 4,
+          "errors": []
+        },
+        {
+          "pathway": "demoness",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 84,
+          "winRate": 0.84,
+          "timeouts": 0,
+          "deaths": 12,
+          "errors": []
+        },
+        {
+          "pathway": "hermit",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        },
+        {
+          "pathway": "paragon",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 95,
+          "winRate": 0.95,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "wheel_of_fortune",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 92,
+          "winRate": 0.92,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "mother",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 90,
+          "winRate": 0.9,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "moon",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 85,
+          "winRate": 0.85,
+          "timeouts": 0,
+          "deaths": 10,
+          "errors": []
+        },
+        {
+          "pathway": "abyss",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 66,
+          "winRate": 0.66,
+          "timeouts": 0,
+          "deaths": 19,
+          "errors": []
+        },
+        {
+          "pathway": "chained",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 86,
+          "winRate": 0.86,
+          "timeouts": 0,
+          "deaths": 11,
+          "errors": []
+        },
+        {
+          "pathway": "black_emperor",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 82,
+          "winRate": 0.82,
+          "timeouts": 0,
+          "deaths": 15,
+          "errors": []
+        },
+        {
+          "pathway": "justiciar",
+          "sequence": 9,
+          "samples": 100,
+          "wins": 85,
+          "winRate": 0.85,
+          "timeouts": 0,
+          "deaths": 11,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "strength": "live",
+      "sequence": 8,
+      "rows": [
+        {
+          "pathway": "fool",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        },
+        {
+          "pathway": "door",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 87,
+          "winRate": 0.87,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "error",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 84,
+          "winRate": 0.84,
+          "timeouts": 0,
+          "deaths": 12,
+          "errors": []
+        },
+        {
+          "pathway": "visionary",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 92,
+          "winRate": 0.92,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "sun",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 84,
+          "winRate": 0.84,
+          "timeouts": 0,
+          "deaths": 13,
+          "errors": []
+        },
+        {
+          "pathway": "tyrant",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 86,
+          "winRate": 0.86,
+          "timeouts": 0,
+          "deaths": 10,
+          "errors": []
+        },
+        {
+          "pathway": "white_tower",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 81,
+          "winRate": 0.81,
+          "timeouts": 0,
+          "deaths": 13,
+          "errors": []
+        },
+        {
+          "pathway": "hanged_man",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        },
+        {
+          "pathway": "darkness",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 91,
+          "winRate": 0.91,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "death",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 92,
+          "winRate": 0.92,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "twilight_giant",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 82,
+          "winRate": 0.82,
+          "timeouts": 0,
+          "deaths": 15,
+          "errors": []
+        },
+        {
+          "pathway": "red_priest",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 98,
+          "winRate": 0.98,
+          "timeouts": 0,
+          "deaths": 1,
+          "errors": []
+        },
+        {
+          "pathway": "demoness",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        },
+        {
+          "pathway": "hermit",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 83,
+          "winRate": 0.83,
+          "timeouts": 0,
+          "deaths": 12,
+          "errors": []
+        },
+        {
+          "pathway": "paragon",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 96,
+          "winRate": 0.96,
+          "timeouts": 0,
+          "deaths": 4,
+          "errors": []
+        },
+        {
+          "pathway": "wheel_of_fortune",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 91,
+          "winRate": 0.91,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "mother",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 91,
+          "winRate": 0.91,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "moon",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 92,
+          "winRate": 0.92,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "abyss",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 76,
+          "winRate": 0.76,
+          "timeouts": 0,
+          "deaths": 12,
+          "errors": []
+        },
+        {
+          "pathway": "chained",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 4,
+          "errors": []
+        },
+        {
+          "pathway": "black_emperor",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 97,
+          "winRate": 0.97,
+          "timeouts": 0,
+          "deaths": 3,
+          "errors": []
+        },
+        {
+          "pathway": "justiciar",
+          "sequence": 8,
+          "samples": 100,
+          "wins": 93,
+          "winRate": 0.93,
+          "timeouts": 0,
+          "deaths": 3,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "strength": "live",
+      "sequence": 7,
+      "rows": [
+        {
+          "pathway": "fool",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 81,
+          "winRate": 0.81,
+          "timeouts": 0,
+          "deaths": 17,
+          "errors": []
+        },
+        {
+          "pathway": "door",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 10,
+          "errors": []
+        },
+        {
+          "pathway": "error",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "visionary",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "sun",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 86,
+          "winRate": 0.86,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        },
+        {
+          "pathway": "tyrant",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 87,
+          "winRate": 0.87,
+          "timeouts": 0,
+          "deaths": 11,
+          "errors": []
+        },
+        {
+          "pathway": "white_tower",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 94,
+          "winRate": 0.94,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "hanged_man",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 86,
+          "winRate": 0.86,
+          "timeouts": 0,
+          "deaths": 12,
+          "errors": []
+        },
+        {
+          "pathway": "darkness",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "death",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 87,
+          "winRate": 0.87,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "twilight_giant",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 87,
+          "winRate": 0.87,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "red_priest",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "demoness",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 85,
+          "winRate": 0.85,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "hermit",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 84,
+          "winRate": 0.84,
+          "timeouts": 0,
+          "deaths": 12,
+          "errors": []
+        },
+        {
+          "pathway": "paragon",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 91,
+          "winRate": 0.91,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "wheel_of_fortune",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 95,
+          "winRate": 0.95,
+          "timeouts": 0,
+          "deaths": 4,
+          "errors": []
+        },
+        {
+          "pathway": "mother",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 92,
+          "winRate": 0.92,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "moon",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 82,
+          "winRate": 0.82,
+          "timeouts": 0,
+          "deaths": 15,
+          "errors": []
+        },
+        {
+          "pathway": "abyss",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 86,
+          "winRate": 0.86,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        },
+        {
+          "pathway": "chained",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 76,
+          "winRate": 0.76,
+          "timeouts": 0,
+          "deaths": 14,
+          "errors": []
+        },
+        {
+          "pathway": "black_emperor",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 94,
+          "winRate": 0.94,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "justiciar",
+          "sequence": 7,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "strength": "live",
+      "sequence": 6,
+      "rows": [
+        {
+          "pathway": "fool",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        },
+        {
+          "pathway": "door",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 95,
+          "winRate": 0.95,
+          "timeouts": 0,
+          "deaths": 3,
+          "errors": []
+        },
+        {
+          "pathway": "error",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "visionary",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 90,
+          "winRate": 0.9,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "sun",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 93,
+          "winRate": 0.93,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "tyrant",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 91,
+          "winRate": 0.91,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "white_tower",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 84,
+          "winRate": 0.84,
+          "timeouts": 0,
+          "deaths": 10,
+          "errors": []
+        },
+        {
+          "pathway": "hanged_man",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 92,
+          "winRate": 0.92,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "darkness",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 91,
+          "winRate": 0.91,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "death",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 91,
+          "winRate": 0.91,
+          "timeouts": 0,
+          "deaths": 2,
+          "errors": []
+        },
+        {
+          "pathway": "twilight_giant",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "red_priest",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "demoness",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 80,
+          "winRate": 0.8,
+          "timeouts": 0,
+          "deaths": 14,
+          "errors": []
+        },
+        {
+          "pathway": "hermit",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "paragon",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 94,
+          "winRate": 0.94,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "wheel_of_fortune",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 81,
+          "winRate": 0.81,
+          "timeouts": 0,
+          "deaths": 14,
+          "errors": []
+        },
+        {
+          "pathway": "mother",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 91,
+          "winRate": 0.91,
+          "timeouts": 0,
+          "deaths": 4,
+          "errors": []
+        },
+        {
+          "pathway": "moon",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 93,
+          "winRate": 0.93,
+          "timeouts": 0,
+          "deaths": 4,
+          "errors": []
+        },
+        {
+          "pathway": "abyss",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 93,
+          "winRate": 0.93,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "chained",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "black_emperor",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 90,
+          "winRate": 0.9,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "justiciar",
+          "sequence": 6,
+          "samples": 100,
+          "wins": 95,
+          "winRate": 0.95,
+          "timeouts": 0,
+          "deaths": 4,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "strength": "live",
+      "sequence": 5,
+      "rows": [
+        {
+          "pathway": "fool",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 90,
+          "winRate": 0.9,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "door",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 92,
+          "winRate": 0.92,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "error",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 87,
+          "winRate": 0.87,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "visionary",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 90,
+          "winRate": 0.9,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "sun",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 84,
+          "winRate": 0.84,
+          "timeouts": 0,
+          "deaths": 13,
+          "errors": []
+        },
+        {
+          "pathway": "tyrant",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 92,
+          "winRate": 0.92,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "white_tower",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 84,
+          "winRate": 0.84,
+          "timeouts": 0,
+          "deaths": 11,
+          "errors": []
+        },
+        {
+          "pathway": "hanged_man",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 85,
+          "winRate": 0.85,
+          "timeouts": 0,
+          "deaths": 12,
+          "errors": []
+        },
+        {
+          "pathway": "darkness",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 87,
+          "winRate": 0.87,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        },
+        {
+          "pathway": "death",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 92,
+          "winRate": 0.92,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "twilight_giant",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 91,
+          "winRate": 0.91,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "red_priest",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 94,
+          "winRate": 0.94,
+          "timeouts": 0,
+          "deaths": 4,
+          "errors": []
+        },
+        {
+          "pathway": "demoness",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 82,
+          "winRate": 0.82,
+          "timeouts": 0,
+          "deaths": 15,
+          "errors": []
+        },
+        {
+          "pathway": "hermit",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 90,
+          "winRate": 0.9,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        },
+        {
+          "pathway": "paragon",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 95,
+          "winRate": 0.95,
+          "timeouts": 0,
+          "deaths": 2,
+          "errors": []
+        },
+        {
+          "pathway": "wheel_of_fortune",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 87,
+          "winRate": 0.87,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "mother",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        },
+        {
+          "pathway": "moon",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 95,
+          "winRate": 0.95,
+          "timeouts": 0,
+          "deaths": 2,
+          "errors": []
+        },
+        {
+          "pathway": "abyss",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 92,
+          "winRate": 0.92,
+          "timeouts": 0,
+          "deaths": 4,
+          "errors": []
+        },
+        {
+          "pathway": "chained",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 76,
+          "winRate": 0.76,
+          "timeouts": 0,
+          "deaths": 18,
+          "errors": []
+        },
+        {
+          "pathway": "black_emperor",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 91,
+          "winRate": 0.91,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "justiciar",
+          "sequence": 5,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "strength": "live",
+      "sequence": 4,
+      "rows": [
+        {
+          "pathway": "fool",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 84,
+          "winRate": 0.84,
+          "timeouts": 0,
+          "deaths": 11,
+          "errors": []
+        },
+        {
+          "pathway": "door",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 82,
+          "winRate": 0.82,
+          "timeouts": 0,
+          "deaths": 14,
+          "errors": []
+        },
+        {
+          "pathway": "error",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 84,
+          "winRate": 0.84,
+          "timeouts": 0,
+          "deaths": 15,
+          "errors": []
+        },
+        {
+          "pathway": "visionary",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 87,
+          "winRate": 0.87,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        },
+        {
+          "pathway": "sun",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 90,
+          "winRate": 0.9,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "tyrant",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 92,
+          "winRate": 0.92,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "white_tower",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 74,
+          "winRate": 0.74,
+          "timeouts": 0,
+          "deaths": 19,
+          "errors": []
+        },
+        {
+          "pathway": "hanged_man",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 91,
+          "winRate": 0.91,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "darkness",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 77,
+          "winRate": 0.77,
+          "timeouts": 0,
+          "deaths": 19,
+          "errors": []
+        },
+        {
+          "pathway": "death",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 90,
+          "winRate": 0.9,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "twilight_giant",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "red_priest",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 79,
+          "winRate": 0.79,
+          "timeouts": 0,
+          "deaths": 17,
+          "errors": []
+        },
+        {
+          "pathway": "demoness",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 91,
+          "winRate": 0.91,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "hermit",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 87,
+          "winRate": 0.87,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "paragon",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 90,
+          "winRate": 0.9,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        },
+        {
+          "pathway": "wheel_of_fortune",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        },
+        {
+          "pathway": "mother",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 93,
+          "winRate": 0.93,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "moon",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 92,
+          "winRate": 0.92,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "abyss",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 97,
+          "winRate": 0.97,
+          "timeouts": 0,
+          "deaths": 3,
+          "errors": []
+        },
+        {
+          "pathway": "chained",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 85,
+          "winRate": 0.85,
+          "timeouts": 0,
+          "deaths": 12,
+          "errors": []
+        },
+        {
+          "pathway": "black_emperor",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 87,
+          "winRate": 0.87,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        },
+        {
+          "pathway": "justiciar",
+          "sequence": 4,
+          "samples": 100,
+          "wins": 94,
+          "winRate": 0.94,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "strength": "live",
+      "sequence": 3,
+      "rows": [
+        {
+          "pathway": "fool",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 85,
+          "winRate": 0.85,
+          "timeouts": 0,
+          "deaths": 12,
+          "errors": []
+        },
+        {
+          "pathway": "door",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 76,
+          "winRate": 0.76,
+          "timeouts": 0,
+          "deaths": 17,
+          "errors": []
+        },
+        {
+          "pathway": "error",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "visionary",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "sun",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 95,
+          "winRate": 0.95,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "tyrant",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 94,
+          "winRate": 0.94,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "white_tower",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 79,
+          "winRate": 0.79,
+          "timeouts": 0,
+          "deaths": 13,
+          "errors": []
+        },
+        {
+          "pathway": "hanged_man",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "darkness",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 91,
+          "winRate": 0.91,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "death",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 87,
+          "winRate": 0.87,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "twilight_giant",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 98,
+          "winRate": 0.98,
+          "timeouts": 0,
+          "deaths": 2,
+          "errors": []
+        },
+        {
+          "pathway": "red_priest",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "demoness",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 10,
+          "errors": []
+        },
+        {
+          "pathway": "hermit",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 87,
+          "winRate": 0.87,
+          "timeouts": 0,
+          "deaths": 11,
+          "errors": []
+        },
+        {
+          "pathway": "paragon",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 93,
+          "winRate": 0.93,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "wheel_of_fortune",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 92,
+          "winRate": 0.92,
+          "timeouts": 0,
+          "deaths": 4,
+          "errors": []
+        },
+        {
+          "pathway": "mother",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 10,
+          "errors": []
+        },
+        {
+          "pathway": "moon",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        },
+        {
+          "pathway": "abyss",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 94,
+          "winRate": 0.94,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "chained",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 81,
+          "winRate": 0.81,
+          "timeouts": 0,
+          "deaths": 17,
+          "errors": []
+        },
+        {
+          "pathway": "black_emperor",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 90,
+          "winRate": 0.9,
+          "timeouts": 0,
+          "deaths": 4,
+          "errors": []
+        },
+        {
+          "pathway": "justiciar",
+          "sequence": 3,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "strength": "live",
+      "sequence": 2,
+      "rows": [
+        {
+          "pathway": "fool",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 86,
+          "winRate": 0.86,
+          "timeouts": 0,
+          "deaths": 11,
+          "errors": []
+        },
+        {
+          "pathway": "door",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 84,
+          "winRate": 0.84,
+          "timeouts": 0,
+          "deaths": 10,
+          "errors": []
+        },
+        {
+          "pathway": "error",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 87,
+          "winRate": 0.87,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        },
+        {
+          "pathway": "visionary",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "sun",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "tyrant",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 95,
+          "winRate": 0.95,
+          "timeouts": 0,
+          "deaths": 2,
+          "errors": []
+        },
+        {
+          "pathway": "white_tower",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 93,
+          "winRate": 0.93,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "hanged_man",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 97,
+          "winRate": 0.97,
+          "timeouts": 0,
+          "deaths": 2,
+          "errors": []
+        },
+        {
+          "pathway": "darkness",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 82,
+          "winRate": 0.82,
+          "timeouts": 0,
+          "deaths": 10,
+          "errors": []
+        },
+        {
+          "pathway": "death",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "twilight_giant",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "red_priest",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "demoness",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 86,
+          "winRate": 0.86,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "hermit",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 90,
+          "winRate": 0.9,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "paragon",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 92,
+          "winRate": 0.92,
+          "timeouts": 0,
+          "deaths": 4,
+          "errors": []
+        },
+        {
+          "pathway": "wheel_of_fortune",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 94,
+          "winRate": 0.94,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "mother",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 92,
+          "winRate": 0.92,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "moon",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 94,
+          "winRate": 0.94,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "abyss",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 93,
+          "winRate": 0.93,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "chained",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "black_emperor",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 86,
+          "winRate": 0.86,
+          "timeouts": 0,
+          "deaths": 12,
+          "errors": []
+        },
+        {
+          "pathway": "justiciar",
+          "sequence": 2,
+          "samples": 100,
+          "wins": 97,
+          "winRate": 0.97,
+          "timeouts": 0,
+          "deaths": 3,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "strength": "live",
+      "sequence": 1,
+      "rows": [
+        {
+          "pathway": "fool",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "door",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 77,
+          "winRate": 0.77,
+          "timeouts": 0,
+          "deaths": 19,
+          "errors": []
+        },
+        {
+          "pathway": "error",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 90,
+          "winRate": 0.9,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        },
+        {
+          "pathway": "visionary",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 80,
+          "winRate": 0.8,
+          "timeouts": 0,
+          "deaths": 11,
+          "errors": []
+        },
+        {
+          "pathway": "sun",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 85,
+          "winRate": 0.85,
+          "timeouts": 0,
+          "deaths": 10,
+          "errors": []
+        },
+        {
+          "pathway": "tyrant",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 91,
+          "winRate": 0.91,
+          "timeouts": 0,
+          "deaths": 3,
+          "errors": []
+        },
+        {
+          "pathway": "white_tower",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "hanged_man",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 85,
+          "winRate": 0.85,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "darkness",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 91,
+          "winRate": 0.91,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "death",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 93,
+          "winRate": 0.93,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "twilight_giant",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 10,
+          "errors": []
+        },
+        {
+          "pathway": "red_priest",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 84,
+          "winRate": 0.84,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "demoness",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 82,
+          "winRate": 0.82,
+          "timeouts": 0,
+          "deaths": 12,
+          "errors": []
+        },
+        {
+          "pathway": "hermit",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 91,
+          "winRate": 0.91,
+          "timeouts": 0,
+          "deaths": 4,
+          "errors": []
+        },
+        {
+          "pathway": "paragon",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 99,
+          "winRate": 0.99,
+          "timeouts": 0,
+          "deaths": 1,
+          "errors": []
+        },
+        {
+          "pathway": "wheel_of_fortune",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 97,
+          "winRate": 0.97,
+          "timeouts": 0,
+          "deaths": 2,
+          "errors": []
+        },
+        {
+          "pathway": "mother",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 90,
+          "winRate": 0.9,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "moon",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 94,
+          "winRate": 0.94,
+          "timeouts": 0,
+          "deaths": 4,
+          "errors": []
+        },
+        {
+          "pathway": "abyss",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 93,
+          "winRate": 0.93,
+          "timeouts": 0,
+          "deaths": 3,
+          "errors": []
+        },
+        {
+          "pathway": "chained",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 84,
+          "winRate": 0.84,
+          "timeouts": 0,
+          "deaths": 10,
+          "errors": []
+        },
+        {
+          "pathway": "black_emperor",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        },
+        {
+          "pathway": "justiciar",
+          "sequence": 1,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "strength": "live",
+      "sequence": 0,
+      "rows": [
+        {
+          "pathway": "fool",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 8,
+          "errors": []
+        },
+        {
+          "pathway": "door",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 83,
+          "winRate": 0.83,
+          "timeouts": 0,
+          "deaths": 10,
+          "errors": []
+        },
+        {
+          "pathway": "error",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 87,
+          "winRate": 0.87,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "visionary",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 82,
+          "winRate": 0.82,
+          "timeouts": 0,
+          "deaths": 14,
+          "errors": []
+        },
+        {
+          "pathway": "sun",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "tyrant",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 10,
+          "errors": []
+        },
+        {
+          "pathway": "white_tower",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 92,
+          "winRate": 0.92,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "hanged_man",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 83,
+          "winRate": 0.83,
+          "timeouts": 0,
+          "deaths": 12,
+          "errors": []
+        },
+        {
+          "pathway": "darkness",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 84,
+          "winRate": 0.84,
+          "timeouts": 0,
+          "deaths": 13,
+          "errors": []
+        },
+        {
+          "pathway": "death",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 87,
+          "winRate": 0.87,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "twilight_giant",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 93,
+          "winRate": 0.93,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "red_priest",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 79,
+          "winRate": 0.79,
+          "timeouts": 0,
+          "deaths": 15,
+          "errors": []
+        },
+        {
+          "pathway": "demoness",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 86,
+          "winRate": 0.86,
+          "timeouts": 0,
+          "deaths": 6,
+          "errors": []
+        },
+        {
+          "pathway": "hermit",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 93,
+          "winRate": 0.93,
+          "timeouts": 0,
+          "deaths": 4,
+          "errors": []
+        },
+        {
+          "pathway": "paragon",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 97,
+          "winRate": 0.97,
+          "timeouts": 0,
+          "deaths": 3,
+          "errors": []
+        },
+        {
+          "pathway": "wheel_of_fortune",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "mother",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 89,
+          "winRate": 0.89,
+          "timeouts": 0,
+          "deaths": 9,
+          "errors": []
+        },
+        {
+          "pathway": "moon",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 93,
+          "winRate": 0.93,
+          "timeouts": 0,
+          "deaths": 5,
+          "errors": []
+        },
+        {
+          "pathway": "abyss",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 87,
+          "winRate": 0.87,
+          "timeouts": 0,
+          "deaths": 10,
+          "errors": []
+        },
+        {
+          "pathway": "chained",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 88,
+          "winRate": 0.88,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "black_emperor",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 87,
+          "winRate": 0.87,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        },
+        {
+          "pathway": "justiciar",
+          "sequence": 0,
+          "samples": 100,
+          "wins": 91,
+          "winRate": 0.91,
+          "timeouts": 0,
+          "deaths": 7,
+          "errors": []
+        }
+      ]
+    }
+  ],
+  "battles": 22000
+}

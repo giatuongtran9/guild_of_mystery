@@ -212,7 +212,17 @@ function exerciseSignature(key,rank,team,e,text) {
       equal(hp-w.v.hp,wanted+directLoss,'nightmare signature and newly added direct damage each match configured INT scaling');check(g.hasStatus(w.v,'sleep'),'indirect dream damage preserves sleep');chargeSpent();
       tooltipNumber(text,percent(e.amount),'dream damage');break;
     }
-    case 'death_summon':case 'paragon_device':case 'moon_beast': {
+    case 'paragon_device':case 'moon_beast': {
+      g.initializePathwayBattle(w.state,{kind:'contract',name:'Prepared collection'},17,{day:1});
+      const kind=e.rule==='moon_beast'?'beast':'device',definitionId=kind==='beast'?'grey_hound':'copper_turret';
+      const asset=g.newPathwayAsset(w.u,w.state,{kind,definitionId,sequence:w.a.sequence,hpRatio:1});g.addPathwayAsset(w.u,w.state,asset,[]);
+      const sp=w.a.sp;g.deployPreparedPathwayCompanions(w.state,[]);equal(w.a.sp,sp,'battle entry is free');
+      const companion=w.state[team].find(u=>u._assetId===asset.id);check(companion?.alive,'prepared companion enters on its owner side');check(!companion._signatureLifetime,'automatic vessel has no expiry');
+      if(kind==='beast'){companion.hp=Math.round(companion.maxHp*.5);full();run();near(companion._assetBeastCommand,e.commandBonus,'next landed beast strike bonus');check(companion.hp>companion.maxHp*.5,'full charge heals a wounded beast');tooltipNumber(text,percent(e.commandBonus),'command bonus');}
+      else{full();run();equal(companion._assetFireCommand.targetId,w.v.id,'turret marks the real target');near(companion._assetFireCommand.penetration,e.penetration,'next marked shot penetration');check(w.u.shield>0,'full charge shields owner');tooltipNumber(text,percent(e.penetration),'turret penetration');}
+      chargeSpent();for(let i=0;i<6;i++)g.signatureTurnEnd(companion,w.state,[],high);check(companion.alive,'owned beast/device persists beyond three turns');break;
+    }
+    case 'death_summon': {
       run();const units=[...w.state.allies,...w.state.enemies],companion=units.find(u=>u.id===w.u._signatureCompanionId);
       check(companion?.alive&&companion.summoned,'actual temporary companion joins the caster side');
       check(w.state[team].includes(companion),'companion belongs to the casting side');
