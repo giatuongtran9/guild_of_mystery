@@ -17,7 +17,7 @@ Command bonuses do not stack, are consumed by a successful scheduled attack, and
 
 Eclipse Serpent retains two nonlethal HP-paid uses and a 25% offensive bonus; Beast Command can now use this bonus for its commanded strike. Chronometric Regulator still overclocks one qualifying native cooldown once per owner per encounter. A historical machine temporarily recalls an automatic turret; the surviving turret can return with its remaining HP, without refreshing its overclock allowance.
 
-Destroyed marionettes are permanently lost. Wrecked devices require £50 repair. Defeated beasts recover after three real days. Recall or battle end preserves surviving ownership and remaining HP. Owner loss, shared retreat and captured-kill attribution retain their existing rules.
+Destroyed marionettes are permanently lost. Wrecked devices require £50 repair. Defeated beasts recover after three real days. Recall or battle end preserves surviving ownership and remaining HP, including recall when an owner falls and subsequently retreats. Marionette SP is retained too. Owner loss, shared retreat and captured-kill attribution retain their existing rules.
 
 ## Scaling and global tuning
 
@@ -79,4 +79,4 @@ Solo tests use live trait rarity/variation, a Normal knife, matching Sequence an
 
 The strict 45–55% target at every Sequence is still incomplete. The weakest measured cohort is Hanged Man 0 (38.86%); strongest is Door 7 (58.70%). Individual matchups, party compositions, historical captures and equipment can differ substantially from the aggregate figures. The per-Sequence PvP matrix and all individual solo and Wanted rows are included for review.
 
-Verification: 58 Node suites pass, including all 220 authored abilities and 15 new automatic-companion regressions. Browser tests cover opening companion formations and reload/settlement at 320, 390 and 1440 px, plus all nine dossier inventories at four widths. Runtime data, syntax and whitespace checks pass.
+Verification: 58 Node suites pass, including all 220 authored abilities and 16 new automatic-companion regressions. Browser tests cover opening companion formations and reload/settlement at 320, 390 and 1440 px, plus all nine dossier inventories at four widths. Runtime data, syntax and whitespace checks pass.

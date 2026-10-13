@@ -142,7 +142,7 @@ function pathwayVesselDestroyed(unit,state){
  else {asset.condition='wounded';asset.readyDay=(state.assetContext?.day||1)+PATHWAY_ASSET_RULES.recoveryDays;}
 }
 function recallPathwayVessel(unit,state){const {asset}=pathwayVesselAsset(unit,state);if(asset&&unit.alive){asset.hpRatio=Math.max(0,Math.min(1,unit.hp/unit.maxHp));if(asset.kind==='marionette')asset.sp=unit.sp;}unit._assetRecalled=true;}
-function dismissPathwayOwnedUnits(owner,state){for(const u of signatureUnits(state))if(u!==owner&&(u._assetOwnerId===owner.id||u._signatureOwnerId===owner.id||u.ownerId===owner.id)){u.alive=false;u.inCombat=false;u._assetRecalled=true;}}
+function dismissPathwayOwnedUnits(owner,state){for(const u of signatureUnits(state))if(u!==owner&&(u._assetOwnerId===owner.id||u._signatureOwnerId===owner.id||u.ownerId===owner.id)){if(u.alive)recallPathwayVessel(u,state);u.alive=false;u.inCombat=false;u._assetRecalled=true;}}
 function finalizePathwayBattle(state,quest,success,lines=[]){
  for(const u of signatureUnits(state).filter(x=>x._assetId&&x.alive))recallPathwayVessel(u,state);
  for(const owner of state.allies.filter(x=>!x.summoned&&(x.alive||state.retreatedOwners?.has(x.id)))){const inv=owner.agent.pathwayInventory;if(!inv)continue;inv.assets=inv.assets.filter(x=>x.condition!=='lost');inv.prepared=inv.prepared.filter(id=>inv.assets.some(x=>x.id===id));}
