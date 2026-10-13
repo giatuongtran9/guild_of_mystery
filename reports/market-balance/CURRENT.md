@@ -1,5 +1,7 @@
 # Market, real calendar and global balance release
 
+Latest companion behavior and measurements: [automatic companions](../automatic-companions/CURRENT.md). This report records the preceding market release.
+
 The Market replenishes lost equipment and supplies any advancement material. One game day is now one real local calendar day, changing at midnight, with offline catch-up through Day.js 1.11.13. Contracts, awakening, advancement and treatment consume no days. Save schema 16 keeps the existing storage key, saved raw stats, individual variation, earned assets and unresolved outcomes. Old saves start the calendar at their existing day, preserving remaining timers.
 
 ## Purchases and resources

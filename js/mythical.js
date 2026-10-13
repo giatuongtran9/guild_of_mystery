@@ -96,6 +96,7 @@ function mythicalExpire(unit,state,lines=[]){
   for(const status of ['poison','curse'])if(ally._mythicalProtectionOwners?.[status]){ally._mythicalProtectionOwners[status]=ally._mythicalProtectionOwners[status].filter(id=>id!==unit.id);ally._mythicalStatusProtection[status]=ally._mythicalProtectionOwners[status].length>0;}
   if(authority.path==='paragon'&&ally._signatureOwnerId===unit.id&&ally._signatureCompanionKind==='historical_machine'){ally.alive=false;ally.inCombat=false;}
  }
+ if(authority.path==='paragon')returnRecalledPathwayDevice(unit,state,lines);
  mythicalNote(unit,unit,state,lines,`${unit.name}'s ${MYTHICAL_AUTHORITIES[authority.path].name} ends${unit.alive?'; the mythical form remains active':''}.`);
 }
 function mythicalTurnEnd(unit,state,lines=[]){

@@ -17,7 +17,7 @@ function emitCombatEvent(state, ev) {
 }
 function combatResourceSnapshot(unit,state){
  const a=getCombatAgent(unit),cfg=PATH_METERS[a.path];
- return {id:unit.id,name:unit.name,team:teamOf(unit,state),path:a.path,sequence:a.sequence,
+ return {id:unit.id,name:unit.name,team:teamOf(unit,state),path:a.path,sequence:a.sequence,summoned:!!unit.summoned,unitType:a.unitType||null,
   traitId:a.traitId??null,traitTier:traitRarity(a),traitName:traitName(a),hp:unit.hp,maxHp:unit.maxHp,shield:unit.shield||0,sp:a.sp,maxSP:a.maxSP,alive:unit.alive,
   meter:cfg?{name:cfg.name,value:getMeterValue(a,a.path),max:cfg.max}:null,inForm:!!unit._inForm,
   threadSlots:a.path==='fool'?{used:threadUsage(state,a),max:threadSlots(a.sequence)}:null,
@@ -521,11 +521,13 @@ function matchesIncomingCategory(category,damageType){
  if(category==='physical')return physical;
  return type===canonicalResistanceElement(category);
 }
+function pathwayIncomingDamageScale(unit){const a=getCombatAgent(unit);if(unit.summoned||a.unitType==='marionette'||!a.awakened)return 1;const profile=Number(GLOBAL_COMBAT.incoming_by_pathway_sequence?.[a.path]?.[a.sequence]??1);return a.path==='fool'?1+(profile-1)*Math.min(1,(unit._assetStartingMarionettes||0)/Math.max(1,threadSlots(a.sequence))):profile;}
 function incomingMultiplier(u,damageType='physical'){
  let passive=1;try{const pm=passiveCombatModifier(u.agent||u);passive=pm.damageTaken||1;for(const [category,value] of Object.entries(pm.damageTakenByCategory||{}))if(matchesIncomingCategory(category,damageType))passive*=value;}catch(e){}
  let active=Number(u._damageTakenMultiplier||1);
  for(const [category,value] of Object.entries(u._damageTakenByCategory||{}))if(matchesIncomingCategory(category,damageType)&&Math.abs(value-1)>Math.abs(active-1))active=value;
- return passive*active;
+ const profile=pathwayIncomingDamageScale(u);
+ return passive*active*profile;
 }
 function recoverHP(unit,amount,context={}){
  if(!unit||!unit.alive)return 0;
@@ -1074,7 +1076,7 @@ function attackHit(agent,actor,target,state,lines=[],r,{forcedMiss=false,weaponA
  if(r()<missChance&&!signatureRetryContest(actor,state,lines,r,missChance,true,false))return miss(weaponAttack?`${actor.name} misses with ${weapon.name}. ${weapon.kind==='gun'?`Gun Mastery Lv.${weapon.mastery} gives ${Math.round((1-missChance)*100)}% accuracy.`:'The attack misses.'}`:`${actor.name}'s ${ability} misses.`);
  return true;
 }
-function attackOnce(agent,actor,enemy,state,lines=[],r,mult=1){if(!lines)lines=[];
+function attackOnce(agent,actor,enemy,state,lines=[],r,mult=1,options={}){if(!lines)lines=[];
  const ownTraitAction=traitActive(actor)&&!traitRuntime(actor).actionOpen;if(ownTraitAction)traitBeginAction(actor,state,false);
  try {
  const forcedMiss=consumeAttackMiss(actor,r),critFailure=consumeCritFailure(actor);
@@ -1104,7 +1106,7 @@ function attackOnce(agent,actor,enemy,state,lines=[],r,mult=1){if(!lines)lines=[
  trace.final=dmg;
  if(state?.balanceTrace) state.balanceTrace.push(trace);
  // Open the attack row BEFORE the hit resolves: reflect / Mythical Form events fired inside resolveIncoming belong to this attack.
- emitCombatEvent(state, {
+ if(options.emitCast!==false)emitCombatEvent(state, {
    round: state?.currentRound || 1,
    type: 'cast',
    actorId: actor.id,
@@ -1141,6 +1143,12 @@ function attackOnce(agent,actor,enemy,state,lines=[],r,mult=1){if(!lines)lines=[
 }
 function sameSideOf(actor,state){return state.allies.includes(actor)?state.allies:state.enemies;}
 function foesOf(actor,state){return state.allies.includes(actor)?state.enemies:state.allies;}
+function combatTargetPool(actor,candidates,state){
+ const eligible=tauntFilter(actor,candidates),marked=eligible.find(u=>u.id===actor._assetFireCommand?.targetId);
+ if(marked)return [marked];
+ const controllers=eligible.filter(u=>signatureUnits(state).some(v=>v.alive&&v.inCombat!==false&&v._assetOwnerId===u.id&&getCombatAgent(v).unitType==='marionette'));
+ return controllers.length?controllers:eligible;
+}
 function runActiveAbility(agent,actor,enemy,state,lines,r,effectId){
  const pm=passiveCombatModifier(agent);
  switch(effectId){
@@ -1234,7 +1242,7 @@ function chooseStructuredAbility(agent,actor,enemy,state){
  // relevant newly unlocked ability within each role instead of the first
  // (oldest) entry in the Sequence 9 -> 0 content order.
  const ranks=new Map(unlockedTiers(agent).flatMap(t=>(t.abilities||[]).map(a=>[a.effectId||a.id,t.sequence])));
- const isDamage=x=>(x.damage?.multiplier||x.scale||0)>0||abilityEffects(x).some(e=>e.type==='damage_component')||signatureDamaging(x,actor,enemy);
+ const isDamage=x=>(x.damage?.multiplier||x.scale||0)>0||abilityEffects(x).some(e=>e.type==='damage_component')||signatureDamaging(x,actor,enemy,state);
  const isAutomaticRevival=x=>{const effects=abilityEffects(x).filter(e=>e.type!=='targeting');return effects.length&&effects.every(e=>e.type==='revive'&&e.self);};
  const useful=x=>{if(isDamage(x))return true;const effects=abilityEffects(x),types=effects.map(e=>e.type);const only=k=>types.length&&types.every(y=>k.includes(y)||y==='targeting');
   if(only(['damage_taken','reflect'])&&hpRatio>=.85)return false;
@@ -1294,7 +1302,7 @@ function chooseStructuredAbility(agent,actor,enemy,state){
  if(hpRatio<.50&&survival)return survival;
  // Finish an injured foe instead of repeatedly renewing utility signatures.
  if(hpRatio>=.5&&enemy.hp<=enemy.maxHp*.5)return specs.find(isDamage)||null;
- const signature=specs.find(s=>s._signatureOwned||abilityEffects(s).some(e=>e.type==='signature'));
+ const signature=specs.find(s=>s._signatureOwned||abilityEffects(s).some(e=>e.type==='signature'&&(e.rule!=='moon_beast'||!specs.some(x=>x!==s&&isDamage(x)))));
  if(signature)return signature;
  const control=specs.find(x=>abilityEffects(x).some(e=>['skip','banish','silence'].includes(e.type)||(['status','status_chance'].includes(e.type)&&!SELF_STATUSES.includes(e.status)&&!statusImmune(enemy,e.status))));
  if(control&&!(enemy.status||[]).some(s=>['stunned','frozen','freeze','sleep','silenced','banished','polymorphed','bound','unconscious'].includes(s)))return control;
@@ -1415,6 +1423,11 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
    emitCombatEvent(state,{round:state?.currentRound||1,type:'status',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),text});
  }
  if(state){if(!state._abilityHistoryByUnit||Object.getPrototypeOf(state._abilityHistoryByUnit)!==null)state._abilityHistoryByUnit=Object.assign(Object.create(null),state._abilityHistoryByUnit||{});(state._abilityHistoryByUnit[actor.id]=state._abilityHistoryByUnit[actor.id]||[]).push({spec:cloneE(spec),sequence:signatureSourceRank(spec,agent),round:state.currentRound||1});}
+ if(spec._assetBeastFallback){
+  const target=spec._signatureOffensiveTarget?signatureUnits(state).find(u=>u.id===spec._signatureOffensiveTarget):enemy;
+  const hit=target?.alive&&attackOnce(agent,actor,target,state,lines,r,spec.damage.multiplier,{emitCast:false});
+  signatureAfterCast(agent,actor,enemy,state,lines,r,spec,hit?[target]:[]);mythicalAfterCast(actor,enemy,state,lines,r,spec);return true;
+ }
  const effects=abilityEffects(spec),allies=sameSideOf(actor,state);
  const durationText=d=>d==='next_turn'?'until their next turn':`for ${d} turn${Number(d)===1?'':'s'}`;
  const targeting=effects.find(e=>e.type==='targeting');
@@ -1423,7 +1436,7 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
  const componentEffects=effects.filter(e=>e.type==='damage_component');
  const effectiveDamageSpec=componentEffects.length?{...(spec.damage||{}),components:componentEffects.map(e=>({stat:e.stat,multiplier:Number(e.multiplier||0)}))}:(spec.damage||null);
  const primaryDamaging=Number(effectiveDamageSpec?.multiplier||spec.scale||0)>0||componentEffects.length>0;
- const damaging=primaryDamaging||signatureDamaging(spec,actor,enemy);
+ const damaging=primaryDamaging||signatureDamaging(spec,actor,enemy,state);
  const forcedMiss=damaging?consumeAttackMiss(actor,r):false;
  const critFailed=damaging?consumeCritFailure(actor):false;
  const hitName=copiedName||castName;
@@ -1566,7 +1579,6 @@ function powerEffect(a,actor,enemy,state,lines=[],r){if(!lines)lines=[];
  const ownTraitAction=traitActive(actor)&&!traitRuntime(actor).actionOpen;if(ownTraitAction)traitBeginAction(actor,state,false);
  try {
   ensureCombatResource(a); a._hpRatio=actor.hp/Math.max(1,actor.maxHp); tryMythicalForm(a,actor,state,lines,r);
-  const retained=pathwayMarionetteAbility(a,actor,state);if(retained&&traitAbilityQuote(a,retained,actor).ready&&applyStructuredAbility(a,actor,enemy,state,lines,r,retained))return true;
   if(!actor.summoned&&!hasTrait(actor,'spell_eater')&&a.path==='fool'&&a.sequence<=5&&!hasStatus(actor,'silenced')&&!hasStatus(a,'silenced')&&abilityAvailable(a,'thread_binding')){
     const threadSpec = unlockedAbilities(a).find(x => x.effectId === 'thread_binding' || x.id === 'thread_binding');
     const threadQuote=traitAbilityQuote(a,threadSpec||{effectId:'thread_binding',costSP:45},actor);
@@ -1643,7 +1655,6 @@ function resolveQuestBattle(members,quest,seed=Date.now(),decisions={}){
  for(const unit of [...allies,...enemies])delete getCombatAgent(unit)._traitState;
  for(const u of allies)u.agent._teamDamageMultiplier=1;
  for(const u of enemies)u.agent._teamDamageMultiplier=quest.bossId?Number(bossDefinition(quest.bossId)?.damageMultiplier??1):quest.kind==='contract'?G9D.balance.contract_encounters.enemy_damage_multiplier*Number(quest.encounterVariant?.damageMultiplier||1):individual?COMBAT_BALANCE.enemyDamageIndividual:COMBAT_BALANCE.enemyDamageParty;
- const initialUnits=[...allies,...enemies].map(u=>combatResourceSnapshot(u,state));
  lines.push({text:`Contract: ${quest.name}`,kind:'system'},{text:quest.story||quest.brief,kind:'story'});if(quest.encounterVariant){const text=`${quest.encounterVariant.name}: ${quest.encounterVariant.description}`;lines.push({text,kind:'story'});emitCombatEvent(state,{round:1,type:'status',subtype:'encounter_variant',text});}
  if(!quest.encounter){
    if(quest.objective==='rescue'){lines.push({text:'The guild searches the neighborhood rather than hunting for a fight. Clues lead through an alley, beneath a bakery awning, and into a coal shed.',kind:'system'},{text:'The missing cat is found frightened but unharmed and returned to its owner.',kind:'victory'});}
@@ -1659,6 +1670,10 @@ function resolveQuestBattle(members,quest,seed=Date.now(),decisions={}){
  for(const e of enemies)lines.push({text:`${e.name} — ${e.sequence===10?`Ordinary Human · ${e.occupation}`:`${pathOf(e.path).name} · Sequence ${e.sequence}`}.`,kind:'system'});
  applyPartyPassiveEffects(allies);
  applyPartyPassiveEffects(enemies);
+ deployPreparedPathwayCompanions(state,lines);
+ applyPartyPassiveEffects(allies);
+ applyPartyPassiveEffects(enemies);
+ const initialUnits=[...allies,...enemies].map(u=>combatResourceSnapshot(u,state));
 
 
  for(const a of allies)lines.push({text:`${a.name} — ${a.agent.path?`${pathOf(a.agent.path).name} · Sequence ${a.agent.sequence}`:'Unawakened'}.`,kind:'system'});
@@ -1696,7 +1711,7 @@ function resolveQuestBattle(members,quest,seed=Date.now(),decisions={}){
        const targetPool=(isConfused?sameSideOf(c,state):foesOf(c,state)).filter(x=>x.alive&&x.inCombat!==false);
        if(!targetPool.length)continue;
        const targetable=targetPool.filter(x=>!hasStatus(x,'untargetable'));
-       const enemy=pickR(r,tauntFilter(c,targetable.length?targetable:targetPool));
+       const enemy=pickR(r,combatTargetPool(c,targetable.length?targetable:targetPool,state));
        if(!state.combatStatsShown)state.combatStatsShown={};if(!state.combatStatsShown[enemy.id]){lines.push({text:`Combat begins: ${enemy.name} · HP ${enemy.maxHp} · ATK ${enemy.atk} · DEF ${enemy.def} · INT ${enemy.int} · Speed ${speedFor(enemy).toFixed(1)} · AV ${actionValueFor(enemy).toFixed(1)}.`,kind:'system'});state.combatStatsShown[enemy.id]=true;}
        syncUnitToAgent(c);completed=powerEffect(c.agent,c,enemy,state,lines,r);
        const normalExtra=traitScheduledActions(c,state)-1;
@@ -1705,7 +1720,7 @@ function resolveQuestBattle(members,quest,seed=Date.now(),decisions={}){
        const traitExtra=traitHasBonus(c)?1:0;
        for(let extra=0;extra<normalExtra+nativeExtra+traitExtra;extra++){
         if(!c.alive||(c.bossDefinition&&actionDisabled(c)))break;const traitAction=extra<normalExtra||extra>=normalExtra+nativeExtra;if(traitAction&&actionDisabled(c))break;const remaining=(isConfused?sameSideOf(c,state):foesOf(c,state)).filter(t=>t.alive&&t.inCombat!==false&&!hasStatus(t,'untargetable'));if(!remaining.length)break;
-        const next=remaining.includes(enemy)?enemy:pickR(r,tauntFilter(c,remaining));
+        const next=remaining.includes(enemy)?enemy:pickR(r,combatTargetPool(c,remaining,state));
         traitBeginAction(c,state,extra>=normalExtra);try{powerEffect(c.agent,c,next,state,lines,r);}finally{traitFinishAction(c,state,lines);}
        }
    }finally{if(completed)signatureActionFinished(c,state,lines,r);c._acting = false;tickUnitStatuses(c);tickCombatEffectDurations([c]);traitTurnEnd(c,state,lines,lostControl);signatureTurnEnd(c,state,lines,r);pathwayTurnEnd(c,state,lines);mythicalTurnEnd(c,state,lines,r);emitCombatResources(state);}

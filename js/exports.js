@@ -19,7 +19,7 @@ if (typeof module !== 'undefined' && module.exports) Object.assign(module.export
 
 if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { PATHWAY_COLLECTIONS, PATHWAY_ASSET_DEFINITIONS, PATHWAY_LOOT_TIERS, pathwayCollection, pathwayAssetCapacity, pathwayPreparationLimit, pathwayAssetSpec, pathwayAssetDefinition, pathwayAssetName, pathwayAssetUsable, ensurePathwayInventory, preparedPathwayAssets, rollPathwayLootTier, pathwayLootDefinition, maintainPathwayInventories, changePathwayPreparation, releasePathwayAsset });
 
-if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { PATHWAY_ASSET_RULES, PATHWAY_LEARNING_ORDER, initializePathwayBattle, newPathwayAsset, addPathwayAsset, soulAbilityEligible, capturePathwayKill, pathwayKillOwner, capturePermanentMarionette, recordPermanentDoorAbility, pathwayVesselDestroyed, recallPathwayVessel, finalizePathwayBattle, choosePathwayAssetOffer, restorePathwayAsset, setPathwayAssetPolicy, pathwayAssetAbilities, pathwayAbilityReady, deployPermanentMarionette, createOwnedPathwayCompanion, pathwayAfterCast, pathwayTurnEnd, pathwayTurnStart, pathwayBeforeBasicAttack, pathwayAfterDamage, removeStatus, preparePathwayCast, pathwayPassiveEffects });
+if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { PATHWAY_ASSET_RULES, PATHWAY_LEARNING_ORDER, initializePathwayBattle, deployPreparedPathwayCompanions, newPathwayAsset, addPathwayAsset, soulAbilityEligible, capturePathwayKill, pathwayKillOwner, capturePermanentMarionette, recordPermanentDoorAbility, pathwayVesselDestroyed, recallPathwayVessel, finalizePathwayBattle, choosePathwayAssetOffer, restorePathwayAsset, setPathwayAssetPolicy, pathwayAssetAbilities, pathwayAbilityReady, deployPermanentMarionette, createOwnedPathwayCompanion, pathwayAfterCast, pathwayTurnEnd, pathwayTurnStart, pathwayBeforeBasicAttack, pathwayAfterDamage, removeStatus, preparePathwayCast, pathwayPassiveEffects });
 
 if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { dayjs, MARKET, marketWeaponOdds, maintainMarket, refreshWeaponMarket, buyMarketWeapon, buyMarketMaterial, weaponOpeningStrike, weaponAfterBasic, weaponBeforeIncoming });
 
@@ -28,3 +28,5 @@ if (typeof module !== 'undefined' && module.exports) Object.assign(module.export
 if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { makeRecruitPool });
 
 if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { CONTRACT_ENCOUNTERS:G9D.balance.contract_encounters });
+
+if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { pathwayIncomingDamageScale });
