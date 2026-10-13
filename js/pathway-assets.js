@@ -103,7 +103,7 @@ function addPathwayAsset(owner,state,asset,lines=[]){
  pathwayAssetNote(owner,state,lines,`${owner.name} acquires ${pathwayAssetName(asset)}.`);return true;
 }
 function soulAbilityEligible(spec){
- if(!spec||spec._signatureOwned||spec._signatureCopied||!['active','passive'].includes(spec.type))return false;
+ if(!spec||spec._signatureOwned||spec._signatureCopied||spec._assetOwned||!['active','passive'].includes(spec.type))return false;
  const effects=abilityEffects(spec),blocked=['copy_ability','copy_highest','revive','extra_turn','form','reset_state','combat_rule','targeting'];
  if(effects.some(e=>blocked.includes(e.type)||(e.type==='signature'&&e.rule!=='moon_medicine')))return false;
  if(spec.type==='active')return true;
