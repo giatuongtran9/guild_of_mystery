@@ -42,6 +42,12 @@ async function startServer(){
     assert.equal(await page.locator('.dossier-abilities[open], .dossier-inventory[open]').count(),0);assert.equal(await page.locator('#dossier-tab-active').isVisible(),false);
     if(output&&[390,1440].includes(width)&&p==='hanged_man'){fs.mkdirSync(output,{recursive:true});await page.waitForFunction(()=>{const image=document.querySelector('.dossier-portrait img');return image?.complete&&image.naturalWidth>0;});await page.screenshot({path:path.join(output,'dossier-collapsed-'+width+'.png')});}
     await page.locator('.dossier-abilities > summary').click();await page.locator('.dossier-inventory > summary').click();
+    for(const type of ['passive','active']){
+     await page.locator('#dossier-tab-'+type).click();
+     const abilities=await page.locator('#dossier-skill-panel').evaluate(panel=>({selectors:panel.querySelectorAll('select').length,cards:[...panel.querySelectorAll('.dossier-ability')].map(card=>({sequence:Number(card.dataset.sequence),type:card.dataset.abilityType}))}));
+     const expected=g.pathOf(p).sequences.filter(t=>t.sequence>=5&&t.abilities[0].type===type).map(t=>({sequence:t.sequence,type})).sort((x,y)=>x.sequence-y.sequence);
+     assert.equal(abilities.selectors,0);assert.deepEqual(abilities.cards,expected,`${p} ${type} abilities at ${width}px`);
+    }
     const dimensions=await page.evaluate(()=>{
      const panel=document.querySelector('.pathway-inventory'),modal=document.querySelector('.character-dossier'),tabs=document.querySelector('.dossier-skill-tabs'),box=panel.getBoundingClientRect();
      return {documentWidth:document.documentElement.scrollWidth,modalWidth:modal.clientWidth,modalScroll:modal.scrollWidth,panelWidth:panel.clientWidth,panelScroll:panel.scrollWidth,tabsWidth:tabs.clientWidth,tabsScroll:tabs.scrollWidth,cards:panel.querySelectorAll('[data-asset-id]').length,inside:[...panel.querySelectorAll('[data-asset-id]')].every(el=>{const r=el.getBoundingClientRect();return r.left>=box.left-1&&r.right<=box.right+1;})};
@@ -51,7 +57,7 @@ async function startServer(){
     assert(dimensions.panelScroll<=dimensions.panelWidth+1&&dimensions.inside,`${p} inventory cards overflow at ${width}px`);
     assert(dimensions.tabsScroll<=dimensions.tabsWidth+1,`ability tabs overflow at ${width}px`);assert(dimensions.cards>0);
     results.push({width,pathway:p,...dimensions});
-    if(output&&width===390&&['hanged_man','paragon'].includes(p)){fs.mkdirSync(output,{recursive:true});await page.screenshot({path:path.join(output,p+'-390.png')});}
+    if(output&&width===390&&['hanged_man','paragon'].includes(p)){fs.mkdirSync(output,{recursive:true});await page.locator('#dossier-skill-panel').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(output,p+'-390.png')});}
    }
    await page.evaluate(()=>{window.G9.dossier('layout_hanged_man');window.G9.dossierSkillTab('active');});
    await page.locator('#dossier-tab-active').focus();await page.keyboard.press('End');assert.equal(await page.locator('#dossier-tab-passive').getAttribute('aria-selected'),'true');
