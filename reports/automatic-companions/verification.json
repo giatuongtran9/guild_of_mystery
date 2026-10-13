@@ -744,7 +744,7 @@
   },
   "sourceSha256": {
     "js/engine.js": "4cd9954fd27ee0d985c27f40e2e5692b6e9305c38e7f909dfafe3bb1eb5e2aa0",
-    "js/pathway-assets.js": "e143ea0f421470573775bf530969f09d2291e5617ab3bb283bc7d6420b6ab80f",
+    "js/pathway-assets.js": "1de8295f457cb330828eb2f6ad373b8e33b6fb5dce46d2b7e4d305e2b4e0d2af",
     "js/signatures.js": "41aa6e51c0b4700bbe07ad64571ca0cad8813ff389c097908890ba611db21d56",
     "js/mythical.js": "3dd8aaf90a9c9665e89fc83775f4bb5e37ddf7120c84b29e55323af0ba356854",
     "js/ui.js": "2098d16a489a8f0ffa752c70767bc95027dae2ab302a4e2913faa6876bebda62",
@@ -764,7 +764,7 @@
       "js/generate.js": "3b89a553e2211423",
       "js/traits.js": "53d1ad0961c30a15",
       "js/market.js": "507fb36b01097000",
-      "js/pathway-assets.js": "e143ea0f42147057",
+      "js/pathway-assets.js": "1de8295f457cb330",
       "js/signatures.js": "41aa6e51c0b4700b",
       "js/mythical.js": "3dd8aaf90a9c9665",
       "js/engine.js": "4cd9954fd27ee0d9",
