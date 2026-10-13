@@ -94,7 +94,7 @@ function traitAbilityQuote(agent,spec,actor=null,baseCost=null){
  if(hasTrait(a,'blood_script')&&normalSP>0){resource='hp';amount=Math.max(1,Math.ceil(maxHP*d.params.hpCost/100*normalSP/Math.max(1,maxSPFor(a))));}
  const funds=resource==='hp'?hp:Number(a.sp||0);
  const affordable=resource==='hp'?funds>amount:funds>=amount;
- return {amount,resource,normalSP,cooldownReady,affordable,ready:cooldownReady&&affordable};
+ return pathwayAbilityQuote(a,spec,actor,{amount,resource,normalSP,cooldownReady,affordable,ready:cooldownReady&&affordable});
 }
 function traitAbilityDescription(agent,spec,path,sequence){
  const base=abilityDescription(spec,path,sequence);

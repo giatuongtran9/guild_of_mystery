@@ -156,7 +156,7 @@ function mythicalFinalDeath(unit,source,state,lines=[],r=state?.rng){
  for(const owner of mythicalUnits(state).filter(u=>mythicalActive(u,'hanged_man')&&!u._mythicalAuthority.used&&!sameSideOf(u,state).includes(unit))){
   if(!unit.path||!Number.isInteger(unit.sequence)||unit.sequence>9)continue;
   owner._mythicalAuthority.used=true;mythicalHeal(owner,owner,Math.round(owner.maxHp*MYTHICAL_AUTHORITIES.hanged_man.healRatio),state,lines);
-  if(typeof signatureCaptureSoul==='function')signatureCaptureSoul(owner,unit,state,lines);
+  // Soul acquisition is settled once by the final-death kill-credit hook.
  }
 }
 function mythicalBeforeCast(agent,actor,enemy,state,lines=[],r=state?.rng,spec){
@@ -188,7 +188,7 @@ function mythicalDescription(path,sequence){
   sun:`Cleanses living allies, then protects them against Poison and Curse for ${turns} owner turns.`,
   tyrant:`Deals ${c.multiplier*100}% INT Lightning damage to every eligible enemy at each of the next ${turns} owner turn starts.`,
   white_tower:`Within ${turns} owner turns, decodes and cancels one direct nonphysical, non-true hit and stores an eligible spell for one paid imitation.`,
-  hanged_man:`Devours one final enemy Beyonder death: restores ${c.healRatio*100}% Max HP and replaces the existing soul slot. Summons and allies are excluded.`,
+  hanged_man:`Devours one final enemy Beyonder death: restores ${c.healRatio*100}% Max HP. Permanent souls follow credited kills and the fixed five-soul cap. Summons and allies are excluded.`,
   darkness:`Conceals living allies against targeted direct damage for ${turns} owner turns; each ally is revealed when dealing direct damage. Area damage and damage over time still hit.`,
   death:`Within ${turns} owner turns, recalls one fallen nonsummoned ally at ${c.reviveRatio*100}% Max HP without resetting its survival counters.`,
   twilight_giant:`Intercepts ${c.intercept*100}% of direct single-target damage aimed at another ally for ${turns} owner turns.`,

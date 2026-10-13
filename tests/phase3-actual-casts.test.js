@@ -293,8 +293,8 @@ function exerciseSignature(key,rank,team,e,text) {
     case 'hanged_graze': {
       w.v.path=w.b.path='door';w.b.awakened=true;w.v.awakened=true;run();witnessed();w.v.hp=1;
       g.resolveIncoming(w.u,w.v,100,w.state,[],high,{damageType:'true',trueDamage:true});check(w.a._signatureSoul,'one final defeated soul is retained');
-      equal(w.a._signatureSoul.sourceId,w.v.id,'soul belongs to the defeated enemy');full();const before=w.a.sp;
-      check(cast(w,spec,high,w.u,w.other),'grazed skill is paid and cast on a living foe');equal(before-w.a.sp,source.costSP,'grazed use pays source cost');check(!w.a._signatureSoul,'grazed skill is released once');chargeSpent();break;
+      equal(w.a._signatureSoul.sourceId,w.v.id,'soul belongs to the defeated enemy');full();const before=w.a.sp,capturedCost=w.a._signatureSoul.spec.costSP;
+      check(cast(w,spec,high,w.u,w.other),'grazed skill is paid and cast on a living foe');equal(before-w.a.sp,capturedCost,'grazed use pays the randomly captured source cost');check(!w.a._signatureSoul,'grazed skill is released once');chargeSpent();break;
     }
     case 'hermit_scroll': {
       check(cast(w,shipped('hermit',8)),'own learned spell prepares a scroll');check(w.a._signatureScroll,'one owned scroll exists');full();w.a.cooldowns.mystic_spell=5;

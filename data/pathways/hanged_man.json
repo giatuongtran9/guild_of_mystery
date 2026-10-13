@@ -155,7 +155,7 @@
             "type": "signature",
             "rule": "hanged_graze",
             "chargeCost": 100,
-            "slots": 1,
+            "slots": 5,
             "multiplier": 1
           }
         ]

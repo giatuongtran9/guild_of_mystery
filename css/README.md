@@ -18,7 +18,7 @@ The root `style.css` remains a compatibility entry point with the same ordered i
 | `components/meters.css` | Progress and special meters | `.meter`, `.special-meter` |
 | `components/ability-list.css` | Character ability lists | `.ability-list` |
 | `components/contract-cards.css` | Contracts, warrants and requirements | `.quest`, `.wanted-card`, `.requirement-box`, `.deploy-row` |
-| `components/inventory.css` | Material cards, inventory totals and equipment | `.material`, `.inventory-summary`, `.equipment-card` |
+| `components/inventory.css` | Material cards, equipment and character collections | `.material`, `.inventory-summary`, `.equipment-card`, `.pathway-inventory` |
 | `components/modals.css` | Overlay, modal shell, close button and modal form defaults | `.overlay`, `.modal`, `.close` |
 | `components/party-selector.css` | Assignment rows, choices and solo bonus | `.assign-row`, `.choice`, `.party-solo-bonus` |
 | `components/pathway-preview.css` | Pathway picker, introductions and sequence previews | `.pathway-picker`, `.preview-ability`, `.path-choice` |
