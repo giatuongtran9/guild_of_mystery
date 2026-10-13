@@ -51,6 +51,7 @@ async function fixture(agents = [agent()], saved = null) {
 
 function panel(w) { return w.document.getElementById('dossier-skill-panel'); }
 function selectRank(w, type, rank) {
+  w.document.querySelector('.dossier-abilities').open=true;
   if (w.document.getElementById(`dossier-tab-${type}`).getAttribute('aria-selected') !== 'true') {
     w.document.getElementById(`dossier-tab-${type}`).click();
   }
@@ -190,7 +191,7 @@ async function test(label, fn) {
     }
   });
 
-  await test('live generated names are escaped in dossier tabs, rank options and preview', async () => {
+  await test('live generated names are escaped in dossier descriptions, rank options and preview', async () => {
     const a = agent('door', 8), {dom, w} = await fixture([a]);
     try {
       const spec = w.G9_PHASE3.tier(a.path, 8).abilities[0];
@@ -200,7 +201,7 @@ async function test(label, fn) {
       assert(expected && expected.includes(unsafe), 'Explicit live ability name must be generated');
       w.G9.dossier(a.id);
       assert.equal(panel(w).querySelector('p').textContent, expected);
-      assert(w.document.getElementById('dossier-tab-active').textContent.includes(unsafe));
+      assert(w.document.querySelector('.dossier-rank-picker select').textContent.includes(unsafe));
       assert(panel(w).querySelector('option').textContent.includes(unsafe));
       assert.equal(panel(w).querySelector('img'), null);
       w.G9.closeDossier();

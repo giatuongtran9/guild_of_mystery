@@ -30,14 +30,14 @@ async function test(label, fn){try{await fn();passed++;console.log(`PASS ${label
   await test('opening focuses a labeled compact dialog and uses a fixed-size dossier portrait',async()=>{
     const {dom,w,a}=await fixture();try{
       w.G9.dossier(a.id);const dialog=w.document.querySelector('[role="dialog"]');assert(dialog);
-      assert.equal(dialog.getAttribute('aria-labelledby'),'dossier-title');assert.equal(w.document.activeElement.id,'dossier-title');
+      assert.equal(dialog.querySelector('.dossier-abilities').open,false);assert.equal(dialog.querySelector('.dossier-inventory').open,false);assert.equal(dialog.querySelectorAll('.dossier-abilities [role=tab]').length,2);assert.equal(dialog.getAttribute('aria-labelledby'),'dossier-title');assert.equal(w.document.activeElement.id,'dossier-title');
       assert.equal(Number(dialog.querySelector('.dossier-portrait img').getAttribute('width')),w.G9_DATA.runtimeAssets.entries['data/assets/characters/white_tower/white_tower_seq5.png'].full.width);
       assert.equal(dialog.querySelector('.dossier-portrait img').getAttribute('decoding'),'async');
     }finally{dom.window.close();}
   });
   await test('tabs and rank selector update the actual visible skill description and focus',async()=>{
     const {dom,w,a}=await fixture();try{
-      w.G9.dossier(a.id);w.document.getElementById('dossier-tab-passive').click();
+      w.G9.dossier(a.id);w.document.querySelector('.dossier-abilities').open=true;w.document.getElementById('dossier-tab-passive').click();assert(w.document.querySelector('.dossier-abilities').open);
       assert.equal(w.document.activeElement.id,'dossier-tab-passive');assert.equal(w.document.activeElement.getAttribute('aria-selected'),'true');
       assert(w.document.getElementById('dossier-skill-panel').textContent.includes('Predictive Guard'));
       const ranks=w.document.querySelector('.dossier-rank-picker select');ranks.value='9';ranks.dispatchEvent(new w.Event('change',{bubbles:true}));
@@ -48,8 +48,8 @@ async function test(label, fn){try{await fn();passed++;console.log(`PASS ${label
   await test('arrow, Home and End keys select tabs; Escape closes and restores opener focus',async()=>{
     const {dom,w,a}=await fixture();try{
       const opener=w.document.querySelector('.tabs [aria-current="page"]');opener.focus();w.G9.dossier(a.id);
-      w.document.getElementById('dossier-tab-active').focus();
-      for(const [key,expected] of [['ArrowRight','passive'],['ArrowLeft','active'],['End','inventory'],['Home','active']]){
+      w.document.querySelector('.dossier-abilities').open=true;w.document.getElementById('dossier-tab-active').focus();
+      for(const [key,expected] of [['ArrowRight','passive'],['ArrowLeft','active'],['End','passive'],['Home','active']]){
         w.document.activeElement.dispatchEvent(new w.KeyboardEvent('keydown',{key,bubbles:true,cancelable:true}));assert.equal(w.document.activeElement.id,`dossier-tab-${expected}`);
       }
       w.document.activeElement.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
@@ -63,11 +63,21 @@ async function test(label, fn){try{await fn();passed++;console.log(`PASS ${label
       w.document.activeElement.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Tab',shiftKey:true,bubbles:true,cancelable:true}));assert(w.document.activeElement.matches('.dossier-footer button'));
     }finally{dom.window.close();}
   });
+  await test('Hall hides variance while dossier navigation preserves saved character data',async()=>{
+    const {dom,w,a,read}=await fixture();try{
+      assert.equal(w.document.querySelector('.agent .variance-box'),null);const before=read();
+      w.G9.dossier(a.id);assert(w.document.querySelector('[data-dossier-section=biography] .variance-box'));
+      w.document.querySelector('[data-dossier-section=condition]').open=true;w.G9.dossierSkillTab('passive');
+      assert(w.document.querySelector('.dossier-abilities').open);assert(w.document.querySelector('[data-dossier-section=condition]').open);
+      w.G9.dossierSkillTab('inventory');assert(w.document.querySelector('.dossier-inventory').open);assert(w.document.querySelector('.dossier-abilities').open);
+      assert.deepEqual(read(),before);w.G9.closeDossier();w.G9.dossier(a.id);assert.equal(w.document.querySelector('.dossier-abilities').open,false);assert.equal(w.document.querySelector('.dossier-inventory').open,false);
+    }finally{dom.window.close();}
+  });
   await test('equipment and injury treatment still run the original mutations and preserve progression',async()=>{
     const {dom,w,a,read}=await fixture();try{
       w.G9.dossier(a.id);const before=read();const picker=w.document.querySelector('.equipment-select select');picker.value='revolver';picker.dispatchEvent(new w.Event('change',{bubbles:true}));
       assert.equal(read().roster[0].weaponId,'revolver');assert.equal(read().roster[0].digest,before.roster[0].digest);
-      w.document.querySelector('.dossier-details').open=true;const heal=Array.from(w.document.querySelectorAll('.character-dossier button')).find(x=>x.textContent==='Treat injuries');assert(heal);heal.click();
+      w.document.querySelector('[data-dossier-section=condition]').open=true;const heal=Array.from(w.document.querySelectorAll('.character-dossier button')).find(x=>x.textContent==='Treat injuries');assert(heal);heal.click();
       assert.equal(read().roster[0].injuries,0);assert(read().funds<before.funds);assert.equal(read().roster[0].sequence,5);assert.equal(read().roster[0].digest,63);
     }finally{dom.window.close();}
   });

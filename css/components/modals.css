@@ -212,10 +212,6 @@
   gap: 8px;
 }
 
-.dossier-skill-tabs.has-inventory {
-  grid-template-columns: repeat(3,minmax(0,1fr));
-}
-
 .dossier-skill-tabs button {
   display: flex;
   flex-direction: column;
@@ -306,6 +302,25 @@
   cursor: pointer;
   color: var(--gold);
   font-size: 13px;
+}
+
+.dossier-details[open] > summary {
+  margin-bottom: 12px;
+}
+
+.dossier-section-count {
+  float: right;
+  margin-left: 8px;
+  color: var(--muted);
+  font: 11px system-ui;
+}
+
+.dossier-abilities .dossier-skill-tabs {
+  margin-bottom: 10px;
+}
+
+.dossier-abilities .dossier-skill-tabs button {
+  padding: 8px 6px;
 }
 
 .dossier-restriction {
