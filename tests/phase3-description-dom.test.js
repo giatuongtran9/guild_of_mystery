@@ -29,7 +29,7 @@ async function fixture(agents = [agent()], saved = null) {
   w.fetch = async url => ({ok:true, json:async () => JSON.parse(fs.readFileSync(path.join(root, new URL(url).pathname.replace('/guild_of_mystery/', '')), 'utf8'))});
   w.eval(fs.readFileSync(path.join(root, 'js/data-loader.js'), 'utf8'));
   w.G9_DATA = await w.G9DataLoader.load();
-  w.scrollTo = () => {};
+  w.setInterval=()=>1;w.clearInterval=()=>{};w.scrollTo = () => {};
   w.setTimeout = () => 1;
   w.clearTimeout = () => {};
   w.confirm = () => false;
@@ -38,7 +38,7 @@ async function fixture(agents = [agent()], saved = null) {
   state.funds = 10000;
   require('./pool-fixture')(g,state);
   w.localStorage.setItem(saveKey, saved || JSON.stringify(state));
-  w.eval(['paths','v15','generate','traits','pathway-assets','signatures','mythical','engine','state','campaign','ui'].map(n => fs.readFileSync(path.join(root, `js/${n}.js`), 'utf8')).join('\n'));
+  w.eval(['vendor/dayjs.min','paths','v15','generate','traits','market','pathway-assets','signatures','mythical','engine','state','campaign','ui'].map(n => fs.readFileSync(path.join(root, `js/${n}.js`), 'utf8')).join('\n'));
   // Inspect the same lexical definitions used by the UI, without replacing its renderer.
   w.eval(`window.G9_PHASE3 = {
     tier: tierFor,

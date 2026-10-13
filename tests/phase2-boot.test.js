@@ -4,7 +4,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
 const source = fs.readFileSync(path.join(root, 'js/boot.js'), 'utf8');
-const scripts = ['paths', 'v15', 'generate', 'traits', 'pathway-assets', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'].map(name => `js/${name}.js`);
+const scripts = ['vendor/dayjs.min', 'paths', 'v15', 'generate', 'traits', 'market', 'pathway-assets', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'].map(name => `js/${name}.js`);
 const flush = () => new Promise(resolve => setImmediate(resolve));
 function bootstrap({ reject, registration } = {}) {
   const app = { innerHTML: '' }, appended = [], registrations = [], listeners = new Map();
@@ -45,12 +45,12 @@ async function test(name, body) {
     const links = b.appended.filter(node => node.tagName === 'LINK');
     assert.equal(links.length, scripts.length, 'all fetch hints must be appended before the first module executes');
     assert(links.every(node => node.rel === 'preload' && node.as === 'script'));
-    assert.deepEqual(links.map(node => new URL(node.href).pathname.split('/').slice(-2).join('/')), scripts);
+    assert.deepEqual(links.map(node => new URL(node.href).pathname.replace('/guild_of_mystery/','')), scripts);
     assert.equal(b.appended.filter(node => node.tagName === 'SCRIPT').length, 1);
     for (let i = 0; i < scripts.length; i++) {
       const modules = b.appended.filter(node => node.tagName === 'SCRIPT');
       assert.equal(modules.length, i + 1);
-      assert.equal(new URL(modules[i].src).pathname.split('/').slice(-2).join('/'), scripts[i]);
+      assert.equal(new URL(modules[i].src).pathname.replace('/guild_of_mystery/',''), scripts[i]);
       assert.equal(modules[i].async, false);
       modules[i].onload(); await flush();
     }
@@ -88,7 +88,7 @@ async function test(name, body) {
   await test('an engine download failure retains the readable retry/error screen', async () => {
     const b = bootstrap(); await flush();
     b.appended.find(node => node.tagName === 'SCRIPT').onerror(); await flush();
-    assert(b.app.innerHTML.includes('Could not load js/paths.js'));
+    assert(b.app.innerHTML.includes('Could not load js/vendor/dayjs.min.js'));
     assert(b.app.innerHTML.includes('The ledger could not be opened'));
   });
   await test('module execution errors retain a readable failure and stop later game modules', async () => {

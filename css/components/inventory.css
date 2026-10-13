@@ -204,3 +204,11 @@
   grid-column: 1/-1;
   justify-self: start;
 }
+
+.market-weapon { display: flex; flex-direction: column; }
+.market-weapon .primary { margin-top: auto; }
+.market-material label { display: block; margin: 10px 0; }
+.market-material select { display: block; width: 100%; margin-top: 5px; }
+.encounter-modifier { padding: 10px 12px; border-left: 2px solid var(--gold); background: rgba(213,174,86,.06); }
+.encounter-feedback { padding: 14px; margin-top: 16px; border: 1px solid var(--line); }
+.encounter-feedback h3 { margin-top: 0; }

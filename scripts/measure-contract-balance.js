@@ -17,6 +17,10 @@ for(const strength of strengths)for(const sequence of sequences){
    const a=g.makeAgent(r,{sequence:10,catalog:true});a.id='solo_agent';a.name='Solo agent';a.path=pathway;a.sequence=sequence;a.awakened=true;
    a.stats=g.statsAtSequence(g.awakenStats(a,pathway,r),sequence,pathway);a.baseStats={...a.stats};a.weaponId=weapon;a.weaponMastery={};a.sp=g.maxSPFor(a);a.maxSP=a.sp;if(options.assets&&options.assets!=='empty')require('./permanent-asset-loadouts')(g,a,options.assets);
    const quest={name:'Solo contract verification',kind:'contract',difficultySequence:sequence,objective:'combat',encounter:true,roundLimit,rewards:{funds:200,reputation:3,materials:{}},dayCost:1};
+   if(options.variants==='live'){
+    const definitions=g.CONTRACT_POOL.definitions.filter(d=>d.sequence===sequence),definition=definitions[sample%definitions.length],encounterRng=seeded(seed+33179);
+    quest.poolDefinitionId=definition.id;quest.encounterVariant=g.contractEncounterVariant(definition.id,encounterRng);quest.enemySeed=seed+11939;quest.enemyPath=g.PATH_KEYS[Math.floor(encounterRng()*g.PATH_KEYS.length)];
+   }
    const decisions={individual:true};
    if(strength!=='live'){
     const foe=g.makeEnemy(sequence,seeded(seed+19319),0);
@@ -30,4 +34,4 @@ for(const strength of strengths)for(const sequence of sequences){
  results.push({strength,sequence,rows});
  console.log(JSON.stringify({strength,sequence,meanWinRate:rows.reduce((sum,x)=>sum+x.winRate,0)/rows.length,below80:rows.filter(x=>x.winRate<.8).map(x=>[x.pathway,x.winRate,x.timeouts]),battles}));
 }
-fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify({method:{samples,sequences,assets:options.assets||'empty',weapon,startingSP:'full',injuries:0,mastery:0,traitGeneration:'live rarity odds',roundLimit,seedBase},results,battles},null,2)+'\n');
+fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify({method:{samples,sequences,assets:options.assets||'empty',variants:options.variants||'none',weapon,startingSP:'full',injuries:0,mastery:0,traitGeneration:'live rarity odds',roundLimit,seedBase},results,battles},null,2)+'\n');

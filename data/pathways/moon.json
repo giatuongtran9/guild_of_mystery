@@ -149,9 +149,9 @@
         "name": "Vampire Transformation",
         "kind": "active",
         "label": "Active Stance",
-        "spCost": 45,
+        "spCost": 30,
         "cooldown": 3,
-        "description": "Vampire Transformation — +15% Speed, +20% Lifesteal on all strikes for 2 rounds.",
+        "description": "Vampire Transformation — +20% Speed and +28% Lifesteal for three rounds.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -160,14 +160,14 @@
         "effects": [
           {
             "type": "lifesteal",
-            "ratio": 0.2,
-            "duration": 2
+            "ratio": 0.28,
+            "duration": 3
           },
           {
             "type": "buff",
             "stat": "speed",
-            "amount": 0.15,
-            "duration": 2
+            "amount": 0.2,
+            "duration": 3
           }
         ],
         "utilityStrike": 0.35
@@ -181,11 +181,11 @@
         "name": "Scarlet Blood Domain",
         "kind": "active",
         "label": "Active",
-        "spCost": 50,
+        "spCost": 42,
         "cooldown": 3,
-        "description": "Scarlet Blood Domain — Crimson moonlight zone dealing 160% INT Blood DMG to all enemies and siphoning SP (+15 SP per enemy).",
+        "description": "Scarlet Blood Domain — Deals 210% INT Crimson damage; its listed secondary effects remain active.",
         "stat": "INT",
-        "scale": 1.6,
+        "scale": 2.1,
         "damageType": "crimson",
         "formula": "pure_caster_ability",
         "tag": null,
@@ -210,9 +210,9 @@
         "name": "Lunar Blessing",
         "kind": "active",
         "label": "Active",
-        "spCost": 70,
+        "spCost": 50,
         "cooldown": 4,
-        "description": "Lunar Blessing — Heals 25% Max HP and grants +20% INT for 2 rounds.",
+        "description": "Lunar Blessing — Restore 30% Max HP and gain +25% INT for two rounds.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -221,13 +221,13 @@
         "effects": [
           {
             "type": "heal",
-            "maxHpRatio": 0.25,
+            "maxHpRatio": 0.3,
             "scaling": "INT",
             "multiplier": 0
           },
           {
             "type": "buff",
-            "amount": 0.2,
+            "amount": 0.25,
             "stat": "int",
             "duration": 2
           }

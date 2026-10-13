@@ -50,7 +50,7 @@ function campaignStart(s,missionId,agentIds=[],choice=null,seed=Date.now()){
  const eligible=campaignEligibility(s,missionId,agentIds,choice);if(!eligible.ok)return eligible;
  const c=s.campaign,m=CAMPAIGN.missions.find(x=>x.id===missionId),agents=eligible.agents,rewards=campaignRewards(m,agents),attempt=(Number(c.attempts[m.id])||0)+1;
  const fixedSeed=Number.isFinite(seed)?Math.trunc(seed):Date.now();
- const quest={id:`campaign_${m.id}`,name:m.title,brief:m.brief,story:m.story,objective:m.kind==='combat'?'combat':'investigation',difficultySequence:9,encounter:m.kind==='combat',mundane:false,enemyCount:1,requiredPath:'darkness',rewards:{funds:0,reputation:0,materials:{}},dayCost:m.kind==='combat'?1:0,campaign:true};
+ const quest={id:`campaign_${m.id}`,name:m.title,brief:m.brief,story:m.story,objective:m.kind==='combat'?'combat':'investigation',difficultySequence:9,encounter:m.kind==='combat',mundane:false,enemyCount:1,requiredPath:'darkness',rewards:{funds:0,reputation:0,materials:{}},dayCost:0,campaign:true};
  let result,initialAllies=[],initialEnemies=[];
  if(m.kind==='combat'){
   const members=agents.map(a=>campaignCombatCopy(a,c.preparation)),enemy=cloneS(m.enemy);
@@ -82,7 +82,7 @@ function campaignSettle(s){
   for(const id of pending.agentIds){const a=(s.roster||[]).find(x=>x.id===id&&x.status==='active');if(!a)continue;a.digest=Math.min(100,(a.digest||0)+rewards.digestion);if(m.kind==='combat')gainWeaponMastery(a,weaponFor(a).kind,G9D.system.weapon_mastery.per_completed_contract||2);noteAgent(a,s.day,`${m.title}: +${rewards.digestion}% potion digestion.`);}
   if(pending.choice){c.choices[m.id]=pending.choice;const selected=m.choices.find(x=>x.id===pending.choice);if(selected?.clue&&!c.clues.some(x=>x.id===selected.clue))c.clues.push({id:selected.clue,title:selected.clueTitle,description:selected.benefit});if(m.kind==='preparation')c.preparation=pending.choice;}
   c.completed.push(m.id);
-  if(c.completed.length===CAMPAIGN.missions.length)c.caseFile={id:CAMPAIGN.id,title:CAMPAIGN.title,badge:'Case Closed',completedDay:s.day+(pending.result.dayCost||0),clues:cloneS(c.clues)};
+  if(c.completed.length===CAMPAIGN.missions.length)c.caseFile={id:CAMPAIGN.id,title:CAMPAIGN.title,badge:'Case Closed',completedDay:s.day,clues:cloneS(c.clues)};
  }
  advanceGuildDay(s,pending.result.dayCost||0);
  c.lastAttempt={missionId:m.id,success,attempt:c.attempts[m.id],day:s.day};c.pending=null;

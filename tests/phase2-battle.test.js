@@ -22,7 +22,7 @@ async function fixture(sim = false) {
     scrollHeight: { get() { return this.matches('.battle-ticker-viewport') ? this.children.length * 28 : 1200; } },
     scrollTop: { get() { return positions.get(this) || 0; }, set(v) { positions.set(this, Math.max(0, Math.min(v, this.scrollHeight - this.clientHeight))); } }
   });
-  w.scrollTo = (x, y) => { w.scrollX = x; w.scrollY = y; };
+  w.setInterval=()=>1;w.clearInterval=()=>{};w.scrollTo = (x, y) => { w.scrollX = x; w.scrollY = y; };
   let timerId = 0;
   const timers = new Map();
   w.setTimeout = (fn, delay) => { timers.set(++timerId, { fn, delay }); return timerId; };
@@ -39,7 +39,7 @@ async function fixture(sim = false) {
   state.quests = [{ id: 'test-contract', name: 'The Chapel Below', encounter: true, objective: 'combat', difficultySequence: 9, rewards: { funds: 0, reputation: 0, materials: {} }, tags: ['occult'] }];
   require('./pool-fixture')(g,state);
   w.localStorage.setItem('guild-rpg-browser-v9', JSON.stringify(state));
-  w.eval(['paths', 'v15', 'generate', 'traits', 'pathway-assets', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'].map(name => fs.readFileSync(path.join(root, `js/${name}.js`), 'utf8')).join('\n'));
+  w.eval(['vendor/dayjs.min', 'paths', 'v15', 'generate', 'traits', 'market', 'pathway-assets', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'].map(name => fs.readFileSync(path.join(root, `js/${name}.js`), 'utf8')).join('\n'));
   const allyId = sim ? 'sim_0_fool_9' : agent.id;
   w.groupEventsToRows = () => [{ round: 1, initiative: 'Test order', rows: [
     { type: 'turn', actorId: 'enemy_0', actorName: 'Enemy', actorTeam: 'enemy', ability: 'Strike', costSP: 10,

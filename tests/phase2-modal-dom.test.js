@@ -12,7 +12,7 @@ async function fixture(unsafeId = false) {
   const w = dom.window;
   w.fetch = async url => ({ok:true,json:async()=>JSON.parse(fs.readFileSync(path.join(root, new URL(url).pathname.replace('/guild_of_mystery/', '')), 'utf8'))});
   w.eval(fs.readFileSync(path.join(root, 'js/data-loader.js'), 'utf8')); w.G9_DATA = await w.G9DataLoader.load();
-  w.scrollTo=()=>{}; w.setTimeout=()=>1; w.clearTimeout=()=>{}; w.confirm=()=>false;
+  w.setInterval=()=>1;w.clearInterval=()=>{};w.scrollTo=()=>{}; w.setTimeout=()=>1; w.clearTimeout=()=>{}; w.confirm=()=>false;
   w.HTMLElement.prototype.getClientRects=function(){
     const hidden = Array.from(this.closest('.character-dossier')?.querySelectorAll('details:not([open])')||[]).some(d=>d.contains(this)&&this!==d.querySelector('summary'));
     return hidden?[]:[{width:100,height:30}];
@@ -21,7 +21,7 @@ async function fixture(unsafeId = false) {
   a.id=unsafeId?"modal');alert('unsafe');//":'modal_dom';a.name='Mara Vale';a.injuries=31;a.digest=63;a.weaponId='knife';g.restatAgent(a);
   state.roster=[a];state.funds=10000;state.materials[g.pathOf(a.path).material]=10;state.weapons.revolver=1;
   w.localStorage.setItem('guild-rpg-browser-v9',JSON.stringify(state));
-  w.eval(['paths','v15','generate','traits','pathway-assets','signatures','mythical','engine','state','campaign'].map(n=>fs.readFileSync(path.join(root,`js/${n}.js`),'utf8')).join('\n')+'\n'+fs.readFileSync(uiPath,'utf8'));
+  w.eval(['vendor/dayjs.min','paths','v15','generate','traits','market','pathway-assets','signatures','mythical','engine','state','campaign'].map(n=>fs.readFileSync(path.join(root,`js/${n}.js`),'utf8')).join('\n')+'\n'+fs.readFileSync(uiPath,'utf8'));
   w.G9.tab('hall');
   return {dom,w,a,read:()=>JSON.parse(w.localStorage.getItem('guild-rpg-browser-v9'))};
 }

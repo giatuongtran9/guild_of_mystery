@@ -19,7 +19,7 @@ async function main() {
     scrollHeight: { get() { return this.matches('.battle-ticker-viewport') ? this.children.length * 28 : 1200; } },
     scrollTop: { get() { return positions.get(this) || 0; }, set(value) { positions.set(this, Math.max(0, Math.min(value, this.scrollHeight - this.clientHeight))); } }
   });
-  w.scrollTo = (x, y) => { w.scrollX = x; w.scrollY = y; };
+  w.setInterval=()=>1;w.clearInterval=()=>{};w.scrollTo = (x, y) => { w.scrollX = x; w.scrollY = y; };
   let timerId = 0;
   const timers = new Map();
   w.setTimeout = (fn, delay) => { timers.set(++timerId, { fn, delay }); return timerId; };
@@ -32,7 +32,7 @@ async function main() {
   fixture.quests = [{ id: 'test-contract', name: 'The Chapel Below', encounter: true, objective: 'combat', difficultySequence: 9, rewards: { funds: 0, reputation: 0, materials: {} }, tags: ['occult'] }];
   require('./pool-fixture')(g,fixture);
   w.localStorage.setItem('guild-rpg-browser-v9', JSON.stringify(fixture));
-  w.eval(['paths', 'v15', 'generate', 'traits', 'pathway-assets', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'].map(name => fs.readFileSync(path.join(root, `js/${name}.js`), 'utf8')).join('\n'));
+  w.eval(['vendor/dayjs.min', 'paths', 'v15', 'generate', 'traits', 'market', 'pathway-assets', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'].map(name => fs.readFileSync(path.join(root, `js/${name}.js`), 'utf8')).join('\n'));
   // A deliberately long battle exercises the former 70-event collapsing boundary.
   w.groupEventsToRows = () => [{ round: 1, rows: Array.from({ length: 150 }, (_, i) => ({ type: 'story', text: `Event ${i}: the combatants continue their battle.` })) }];
   const config = w.G9_DATA.contracts.battlefields;
