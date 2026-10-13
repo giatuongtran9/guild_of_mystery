@@ -21,12 +21,12 @@ function agent(p = 'white_tower', seq = 5) {
   });
   g.restatAgent(a); return a;
 }
-function ui(a, type = 'active', rank = null) {
+function ui(a, type = 'active') {
   const state = g.newGame(); state.roster = [a]; state.funds = 10000;
   const displayStart = source.indexOf('function combatDisplayStats(a)'), displayEnd = source.indexOf('function statPair(', displayStart);
   const start = source.indexOf('function dossier()'), end = source.indexOf('function assignmentModal()', start);
   const inventoryStart=source.indexOf('function pathwayInventoryPanel(a)'),inventoryEnd=source.indexOf('function pathwayOutcomeMarkup()',inventoryStart);
-  const env = {...g, state, selected: a.id, dossierSkillType: type, dossierSkillSequence: rank,clone:x=>JSON.parse(JSON.stringify(x)),
+  const env = {...g, state, selected: a.id, dossierSkillType: type,clone:x=>JSON.parse(JSON.stringify(x)),
     TRAITS: JSON.parse(fs.readFileSync(path.join(root, 'data/enemies.json'))).TRAITS,
     pathName: p => g.pathOf(p).name, esc,
     getCombatSprite: (unit, options) => `<img data-sprite-path="${esc(unit.path)}" data-sprite-variant="${options.variant}" width="${options.width || 384}" height="${options.height || 384}" alt="${esc(unit.name)}">`,
@@ -48,16 +48,19 @@ test('Active and Passive tabs expose exactly one selected skill panel', () => {
   assert(html.includes('role="tabpanel"') && html.includes('aria-labelledby="dossier-tab-active"'));
   assert.strictEqual((html.match(/aria-selected="true"/g) || []).length, 1);
 });
-test('chosen active rank description is shown and other ranks remain selectable', () => {
-  const a = agent('white_tower', 4), html = ui(a, 'active', 6);
-  const chosen = g.tierFor(a.path, 6), another = g.tierFor(a.path, 8);
-  assert(html.includes('<h3>Sequence 6 — ' + esc(chosen.name) + '</h3>'));
-  assert(html.includes(esc(chosen.abilities[0].text)));
-  assert(html.includes(esc(another.name)) && html.includes('dossierSkillSequence'));
+test('all unlocked active descriptions appear together without a rank selector', () => {
+  const a = agent('white_tower', 4), html = ui(a, 'active');
+  const active=g.pathOf(a.path).sequences.filter(t=>t.sequence>=a.sequence&&t.abilities[0].type==='active');
+  for(const tier of active){
+    assert(html.includes('<h3>Sequence '+tier.sequence+' — '+esc(tier.name)+'</h3>'));
+    assert(html.includes(esc(tier.abilities[0].text)));
+  }
+  assert.equal((html.match(/class="dossier-ability"/g)||[]).length,active.length);
+  assert(!html.includes('dossier-rank-picker')&&!html.includes('dossierSkillSequence'));
 });
 test('passive tab uses authored types even when legacy ability history lacks type fields', () => {
   const a = agent('white_tower', 5); a.abilityHistory.forEach(x => delete x.type);
-  const html = ui(a, 'passive', 7);
+  const html = ui(a, 'passive');
   assert(html.includes('aria-labelledby="dossier-tab-passive"'));
   assert(html.includes('<h3>Sequence 7 — Detective</h3>'));
   assert(html.includes(esc(g.tierFor(a.path, 7).abilities[0].text)));
@@ -92,7 +95,7 @@ test('marionettes show owner and restrictions without an advancement action', ()
   assert(!html.includes("window.G9.advance(&quot;modal_agent&quot;)"));
 });
 test('Sequence 0 preserves deity message and all inherited ranks remain accessible', () => {
-  const a = agent('fool', 0), html = ui(a, 'active', 0);
+  const a = agent('fool', 0), html = ui(a, 'active');
   assert(html.includes('Sequence 0 — Deity. No further advancement.'));
   for (const x of a.abilityHistory.filter(x => x.type === 'active')) assert(html.includes(esc(x.name)), x.name);
 });
@@ -100,10 +103,11 @@ test('all 220 ranks render with no undefined values, raw markup injection or los
   for (const p of g.PATH_KEYS) for (let seq = 9; seq >= 0; seq--) {
     const a = agent(p, seq); a.name = '<img src=x onerror=alert(1)>'; a.introduction = '<script>bad</script>';
     for (const type of ['active', 'passive']) {
-      const html = ui(a, type, seq);
+      const html = ui(a, type);
       assert(!html.includes('undefined'), `${p} Seq${seq} ${type}`);
       assert(!html.includes(a.name) && html.includes(esc(a.name)), 'Name must be escaped');
       assert(!html.includes(a.introduction) && html.includes(esc(a.introduction)), 'Biography must be escaped');
+      assert.equal((html.match(/class="dossier-ability"/g)||[]).length,g.unlockedAbilities(a).filter(x=>x.type===type).length,`${p} Seq${seq} ${type} count`);
       for (const x of a.abilityHistory.filter(x => x.type === type)) assert(html.includes(esc(x.name)), `${p} Seq${x.sequence} inaccessible`);
     }
   }

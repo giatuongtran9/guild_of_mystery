@@ -35,14 +35,21 @@ async function test(label, fn){try{await fn();passed++;console.log(`PASS ${label
       assert.equal(dialog.querySelector('.dossier-portrait img').getAttribute('decoding'),'async');
     }finally{dom.window.close();}
   });
-  await test('tabs and rank selector update the actual visible skill description and focus',async()=>{
+  await test('tabs list every unlocked ability of their type without a selector',async()=>{
     const {dom,w,a}=await fixture();try{
       w.G9.dossier(a.id);w.document.querySelector('.dossier-abilities').open=true;w.document.getElementById('dossier-tab-passive').click();assert(w.document.querySelector('.dossier-abilities').open);
       assert.equal(w.document.activeElement.id,'dossier-tab-passive');assert.equal(w.document.activeElement.getAttribute('aria-selected'),'true');
-      assert(w.document.getElementById('dossier-skill-panel').textContent.includes('Predictive Guard'));
-      const ranks=w.document.querySelector('.dossier-rank-picker select');ranks.value='9';ranks.dispatchEvent(new w.Event('change',{bubbles:true}));
-      assert(w.document.getElementById('dossier-skill-panel').textContent.includes('Combat Analysis'));
-      assert(w.document.activeElement.matches('.dossier-rank-picker select'));
+      const passive=w.document.getElementById('dossier-skill-panel');
+      assert(passive.textContent.includes('Predictive Guard')&&passive.textContent.includes('Combat Analysis'));
+      for(const type of ['passive','active']){
+        w.document.getElementById(`dossier-tab-${type}`).click();
+        const panel=w.document.getElementById('dossier-skill-panel'),cards=Array.from(panel.querySelectorAll('.dossier-ability'));
+        const expected=g.pathOf(a.path).sequences.filter(t=>t.sequence>=a.sequence&&t.abilities[0].type===type).map(t=>t.sequence).sort((x,y)=>x-y);
+        assert.deepEqual(cards.map(card=>Number(card.dataset.sequence)),expected);
+        assert(cards.every(card=>card.dataset.abilityType===type));
+        assert.equal(panel.querySelector('select'),null);
+        assert.equal(w.document.activeElement.id,`dossier-tab-${type}`);
+      }
     }finally{dom.window.close();}
   });
   await test('arrow, Home and End keys select tabs; Escape closes and restores opener focus',async()=>{

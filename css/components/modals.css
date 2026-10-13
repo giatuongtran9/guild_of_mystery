@@ -278,14 +278,15 @@
   line-height: 1.45;
 }
 
-.character-dossier .dossier-rank-picker {
-  margin: 0;
-  font: 11px system-ui;
+.character-dossier .dossier-ability h3 {
+  margin: 0 0 7px;
+  font-size: 14px;
 }
 
-.character-dossier .dossier-rank-picker select {
-  padding: 7px;
-  font-size: 12px;
+.dossier-ability + .dossier-ability {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
 }
 
 .dossier-skill-panel p {

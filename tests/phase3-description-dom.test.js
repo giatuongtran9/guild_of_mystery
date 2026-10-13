@@ -50,16 +50,16 @@ async function fixture(agents = [agent()], saved = null) {
 }
 
 function panel(w) { return w.document.getElementById('dossier-skill-panel'); }
-function selectRank(w, type, rank) {
+function showAbility(w, type, rank) {
   w.document.querySelector('.dossier-abilities').open=true;
   if (w.document.getElementById(`dossier-tab-${type}`).getAttribute('aria-selected') !== 'true') {
     w.document.getElementById(`dossier-tab-${type}`).click();
   }
-  const picker = w.document.querySelector('.dossier-rank-picker select');
-  assert(picker, `No ${type} rank picker`);
-  picker.value = String(rank);
-  picker.dispatchEvent(new w.Event('change', {bubbles:true}));
-  assert.equal(picker.value, String(rank));
+  assert.equal(panel(w).querySelector('select'),null);
+  const ability=panel(w).querySelector(`.dossier-ability[data-sequence="${rank}"]`);
+  assert(ability, `Missing ${type} ability at Sequence ${rank}`);
+  assert.equal(ability.dataset.abilityType,type);
+  return ability;
 }
 async function test(label, fn) {
   try { await fn(); passed++; console.log(`PASS ${label}`); }
@@ -96,9 +96,9 @@ async function test(label, fn) {
       const before = read();
       w.G9.dossier(a.id);
       for (const [type, rank] of [['active', 6], ['passive', 7], ['passive', 9]]) {
-        selectRank(w, type, rank);
+        const ability=showAbility(w, type, rank);
         const tier = w.G9_PHASE3.tier(a.path, rank);
-        assert.equal(panel(w).querySelector('p').textContent, tier.abilities[0].text, `${type} Seq${rank} must use live rules`);
+        assert.equal(ability.querySelector('p').textContent, tier.abilities[0].text, `${type} Seq${rank} must use live rules`);
         assert.equal(panel(w).getAttribute('aria-labelledby'), `dossier-tab-${type}`);
         assert.equal(w.document.getElementById(`dossier-tab-${type}`).getAttribute('aria-selected'), 'true');
         assert(!panel(w).textContent.includes('STALE SAVED'));
@@ -117,8 +117,8 @@ async function test(label, fn) {
     const {dom, w, read} = await fixture([], saved);
     try {
       w.G9.dossier(a.id);
-      selectRank(w, 'active', 5);
-      assert.equal(panel(w).querySelector('p').textContent, w.G9_PHASE3.tier('door', 5).abilities[0].text);
+      const ability=showAbility(w, 'active', 5);
+      assert.equal(ability.querySelector('p').textContent, w.G9_PHASE3.tier('door', 5).abilities[0].text);
       assert.deepEqual(read().roster[0].abilityHistory, history);
       assert(!panel(w).textContent.includes('wins immediately'));
     } finally { dom.window.close(); }
@@ -132,9 +132,10 @@ async function test(label, fn) {
         w.G9.dossier(a.id);
         for (let rank = 9; rank >= 0; rank--) {
           const tier = w.G9_PHASE3.tier(a.path, rank), spec = tier.abilities[0];
-          selectRank(w, spec.type, rank);
-          assert.equal(panel(w).querySelector('h3').textContent, `Sequence ${rank} — ${tier.name}`);
-          assert.equal(panel(w).querySelector('p').textContent, spec.text, `${a.path} Seq${rank} visible description`);
+          const ability=showAbility(w, spec.type, rank);
+          assert.equal(ability.querySelector('h3').textContent, `Sequence ${rank} — ${tier.name}`);
+          assert.equal(ability.querySelector('p').textContent, spec.text, `${a.path} Seq${rank} visible description`);
+          assert.equal(panel(w).querySelectorAll('.dossier-ability').length,g.unlockedAbilities(a).filter(x=>x.type===spec.type).length);
           assert(!/undefined|NaN|STALE SAVED/.test(panel(w).textContent), `${a.path} Seq${rank}`);
           checked++;
         }
@@ -151,8 +152,8 @@ async function test(label, fn) {
       const spec = g.tierFor(a.path, 1).abilities[0], summary = g.abilityDamageText(spec);
       assert(summary.includes('105% ATK') && summary.includes('30% INT'), summary);
       w.G9.dossier(a.id);
-      selectRank(w, 'active', 1);
-      assert.equal(panel(w).querySelector('small').textContent, `SP ${spec.costSP} · Cooldown ${spec.cooldown} turns · ${summary}`);
+      const ability=showAbility(w, 'active', 1);
+      assert.equal(ability.querySelector('small').textContent, `SP ${spec.costSP} · Cooldown ${spec.cooldown} turns · ${summary}`);
       w.G9.closeDossier();
       w.G9.previewPath(a.path);
       const row = Array.from(w.document.querySelectorAll('.preview-ability')).find(x => x.querySelector('.preview-seq').textContent === 'SEQ 1');
@@ -185,13 +186,13 @@ async function test(label, fn) {
       const a = agent(key, 6), {dom, w} = await fixture([a]);
       try {
         w.G9.dossier(a.id);
-        selectRank(w, 'active', 6);
-        assert(panel(w).querySelector('small').textContent.includes('Stored skill SP and cooldown'), key);
+        const ability=showAbility(w, 'active', 6);
+        assert(ability.querySelector('small').textContent.includes('Stored skill SP and cooldown'), key);
       } finally { dom.window.close(); }
     }
   });
 
-  await test('live generated names are escaped in dossier descriptions, rank options and preview', async () => {
+  await test('live generated names are escaped in the ability list and preview', async () => {
     const a = agent('door', 8), {dom, w} = await fixture([a]);
     try {
       const spec = w.G9_PHASE3.tier(a.path, 8).abilities[0];
@@ -200,9 +201,9 @@ async function test(label, fn) {
       const expected = w.G9_PHASE3.describe(spec, a.path, 8);
       assert(expected && expected.includes(unsafe), 'Explicit live ability name must be generated');
       w.G9.dossier(a.id);
-      assert.equal(panel(w).querySelector('p').textContent, expected);
-      assert(w.document.querySelector('.dossier-rank-picker select').textContent.includes(unsafe));
-      assert(panel(w).querySelector('option').textContent.includes(unsafe));
+      const ability=showAbility(w, 'active', 8);
+      assert.equal(ability.querySelector('p').textContent, expected);
+      assert(ability.textContent.includes(unsafe));
       assert.equal(panel(w).querySelector('img'), null);
       w.G9.closeDossier();
       w.G9.previewPath(a.path);
