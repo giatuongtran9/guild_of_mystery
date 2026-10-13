@@ -36,9 +36,12 @@ async function startServer(){
    const context=await browser.newContext({viewport:{width,height:1000},ignoreHTTPSErrors:!!process.env.ASSET_BASE_URL});
    await context.addInitScript(({key,save})=>{if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(save));},{key,save:fixture()});
    const page=await context.newPage(),errors=[];page.on('pageerror',error=>errors.push(error.message));page.on('console',message=>{if(message.type()==='error'&&!message.location().url.endsWith('/favicon.ico'))errors.push(message.text());});page.on('response',response=>{if(response.status()>=400&&!response.url().endsWith('/favicon.ico'))errors.push(response.status()+' '+response.url());});
-   await page.goto(url);await page.waitForFunction(()=>!!window.G9,{timeout:30000});
+   await page.goto(url);await page.waitForFunction(()=>!!window.G9,{timeout:30000});await page.evaluate(()=>window.G9.tab('hall'));assert.equal(await page.locator('.agent .variance-box').count(),0);
    for(const p of Object.keys(g.PATHWAY_COLLECTIONS)){
-    await page.evaluate(p=>{window.G9.dossier('layout_'+p);window.G9.dossierSkillTab('inventory');},p);
+    await page.evaluate(p=>window.G9.dossier('layout_'+p),p);
+    assert.equal(await page.locator('.dossier-abilities[open], .dossier-inventory[open]').count(),0);assert.equal(await page.locator('#dossier-tab-active').isVisible(),false);
+    if(output&&[390,1440].includes(width)&&p==='hanged_man'){fs.mkdirSync(output,{recursive:true});await page.waitForFunction(()=>{const image=document.querySelector('.dossier-portrait img');return image?.complete&&image.naturalWidth>0;});await page.screenshot({path:path.join(output,'dossier-collapsed-'+width+'.png')});}
+    await page.locator('.dossier-abilities > summary').click();await page.locator('.dossier-inventory > summary').click();
     const dimensions=await page.evaluate(()=>{
      const panel=document.querySelector('.pathway-inventory'),modal=document.querySelector('.character-dossier'),tabs=document.querySelector('.dossier-skill-tabs'),box=panel.getBoundingClientRect();
      return {documentWidth:document.documentElement.scrollWidth,modalWidth:modal.clientWidth,modalScroll:modal.scrollWidth,panelWidth:panel.clientWidth,panelScroll:panel.scrollWidth,tabsWidth:tabs.clientWidth,tabsScroll:tabs.scrollWidth,cards:panel.querySelectorAll('[data-asset-id]').length,inside:[...panel.querySelectorAll('[data-asset-id]')].every(el=>{const r=el.getBoundingClientRect();return r.left>=box.left-1&&r.right<=box.right+1;})};
@@ -46,13 +49,15 @@ async function startServer(){
     assert(dimensions.documentWidth<=width,`${p} widens the document at ${width}px`);
     assert(dimensions.modalScroll<=dimensions.modalWidth+1,`${p} overflows its dossier at ${width}px`);
     assert(dimensions.panelScroll<=dimensions.panelWidth+1&&dimensions.inside,`${p} inventory cards overflow at ${width}px`);
-    assert(dimensions.tabsScroll<=dimensions.tabsWidth+1,`three tabs overflow at ${width}px`);assert(dimensions.cards>0);
+    assert(dimensions.tabsScroll<=dimensions.tabsWidth+1,`ability tabs overflow at ${width}px`);assert(dimensions.cards>0);
     results.push({width,pathway:p,...dimensions});
     if(output&&width===390&&['hanged_man','paragon'].includes(p)){fs.mkdirSync(output,{recursive:true});await page.screenshot({path:path.join(output,p+'-390.png')});}
    }
    await page.evaluate(()=>{window.G9.dossier('layout_hanged_man');window.G9.dossierSkillTab('active');});
-   await page.locator('#dossier-tab-active').focus();await page.keyboard.press('End');assert.equal(await page.locator('#dossier-tab-inventory').getAttribute('aria-selected'),'true');
+   await page.locator('#dossier-tab-active').focus();await page.keyboard.press('End');assert.equal(await page.locator('#dossier-tab-passive').getAttribute('aria-selected'),'true');
+   await page.locator('.dossier-inventory > summary').click();const modal=page.locator('.character-dossier');await modal.evaluate(el=>el.scrollTop=el.scrollHeight);
    await page.locator('.pathway-asset').first().getByRole('button',{name:'Unprepare',exact:true}).click();
+   assert.equal(await page.locator('.dossier-abilities[open], .dossier-inventory[open]').count(),2);assert((await modal.evaluate(el=>el.scrollTop))>0);
    let saved=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),key);assert.equal(saved.roster.find(a=>a.path==='hanged_man').pathwayInventory.prepared.length,4);
    await page.reload();await page.waitForFunction(()=>!!window.G9);await page.evaluate(()=>{window.G9.dossier('layout_hanged_man');window.G9.dossierSkillTab('inventory');});
    assert.equal(await page.locator('.pathway-asset.is-prepared').count(),4);await page.locator('.pathway-asset-policy select').selectOption('hold');

@@ -25,13 +25,14 @@ function ui(a, type = 'active', rank = null) {
   const state = g.newGame(); state.roster = [a]; state.funds = 10000;
   const displayStart = source.indexOf('function combatDisplayStats(a)'), displayEnd = source.indexOf('function statPair(', displayStart);
   const start = source.indexOf('function dossier()'), end = source.indexOf('function assignmentModal()', start);
-  const env = {...g, state, selected: a.id, dossierSkillType: type, dossierSkillSequence: rank,
+  const inventoryStart=source.indexOf('function pathwayInventoryPanel(a)'),inventoryEnd=source.indexOf('function pathwayOutcomeMarkup()',inventoryStart);
+  const env = {...g, state, selected: a.id, dossierSkillType: type, dossierSkillSequence: rank,clone:x=>JSON.parse(JSON.stringify(x)),
     TRAITS: JSON.parse(fs.readFileSync(path.join(root, 'data/enemies.json'))).TRAITS,
     pathName: p => g.pathOf(p).name, esc,
     getCombatSprite: (unit, options) => `<img data-sprite-path="${esc(unit.path)}" data-sprite-variant="${options.variant}" width="${options.width || 384}" height="${options.height || 384}" alt="${esc(unit.name)}">`,
     statusBar: (label, value) => `<div data-meter="${label}">${Math.round(value || 0)}/100</div>`,
     equipmentPicker: a => `<label>Equip Weapon<select onchange="window.G9.setWeapon(${esc(JSON.stringify(a.id))},this.value)"><option>${weaponUI.weaponFor(a).name}</option></select></label>`};
-  return new Function('env', `with(env) { ${weaponHelpers} ${source.slice(displayStart, displayEnd)} ${source.slice(start, end)} return dossier(); }`)(env);
+  return new Function('env', `with(env) { ${weaponHelpers} ${source.slice(displayStart, displayEnd)} ${source.slice(inventoryStart,inventoryEnd)} ${source.slice(start, end)} return dossier(); }`)(env);
 }
 test('compact dialog has a labeled identity portrait and preserved digestion progression', () => {
   const html = ui(agent());
@@ -82,7 +83,7 @@ test('ordinary recruits retain every awakening choice and have no fake pathway p
   const html = ui(a);
   assert(!html.includes('data-sprite-variant'));
   for (const p of g.PATH_KEYS) assert(html.includes(`window.G9.choosePath(&quot;human&quot;,'${p}')`));
-  assert(html.includes('No active abilities yet.'));
+  assert(!html.includes('dossier-abilities'));assert(!html.includes('dossier-inventory-title'));
 });
 test('marionettes show owner and restrictions without an advancement action', () => {
   const a = agent('fool', 4); a.unitType = 'marionette'; a.ownerId = 'owner'; a.permanentTraits = ['Marionette', 'Cannot advance', 'Permanent death'];

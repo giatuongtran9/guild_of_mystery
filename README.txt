@@ -155,7 +155,8 @@ reports/progression-review/CURRENT.md.
 Permanent character collections
 ------------------------------
 Fool, Door, Hanged Man, Death, Hermit, White Tower, Paragon, Moon and Visionary
-now have a Pathway Inventory tab in the character dossier. Assets come from
+now have a collapsible Pathway Inventory section in the character dossier.
+Active and passive skills share a collapsible Abilities section. Assets come from
 credited kills, witnessed spells, contract drops or earned learning milestones.
 Hanged Man stores five souls at every Sequence. Devices and beasts have one
 Normal/Rare/Epic/Legendary definition per tier and retain their own drawbacks.
