@@ -23,7 +23,7 @@ function parseV15Ability(ab, archetype, pathKey) {
     const scale = num(/(\d+(?:\.\d+)?)%\s*(?:ATK|INT)/i);
     if(scale) damage={scaling:/ATK/i.test(d)?'ATK':'INT',multiplier:scale,type:'physical',element:null,formula:'pure_caster_ability'};
   }
-  return { type:ab.type||'passive', id:ab.id||ab.effectId||`${pathKey}_${ab.sequence||0}`, text:d, sp:Number(ab.costSP||0), cd:Number(ab.cooldown||0), damage, effects, scale:damage?.multiplier||0, stat:damage?.scaling||'INT', damageType:damage?.type==='elemental'?(damage.element||'elemental'):(damage?.type||'Physical'), formula:damage?.formula||'pure_caster_ability', tag:ab.tag||null };
+  return { type:ab.type||'passive', id:ab.id||ab.effectId||`${pathKey}_${ab.sequence||0}`, text:d, sp:Number(ab.costSP||0), cd:Number(ab.cooldown||0), damage, effects, scale:damage?.multiplier||0, stat:damage?.scaling||'INT', damageType:damage?.type==='elemental'?(damage.element||'elemental'):(damage?.type||'Physical'), formula:damage?.formula||'pure_caster_ability', tag:ab.tag||null, utilityStrike:Number(ab.utilityStrike)||0 };
 }
 
 // Pathway abilities are authoritative in data/pathways.json; no JS ability table is generated here.
@@ -59,7 +59,7 @@ function v15Damage(kind, { agent, actor, target, abilityMult = 1, weaponBonus = 
   const casterBypass = Number(hybridCfg.pure_caster_ability?.base_def_bypass ?? 0.25);
   const defFactor = Number(hybridCfg.def_armor_mitigation?.factor ?? 0.5);
 
-  if(formula==='basic_physical_attack') raw=(ATK*mod.atk+weaponBonus)*strikeMult*seqMult;
+  if(formula==='basic_physical_attack') raw=(Math.max(ATK*mod.atk,INT*mod.int*(GLOBAL_COMBAT.intBasicFloor||0))+weaponBonus)*strikeMult*seqMult;
   else if(components.length){ const primary=String(spec.scaling||'ATK').toUpperCase(); const primaryTerm=primary==='INT'?INT*mod.int:ATK*mod.atk; raw=(primaryTerm*abilityMult+components.reduce((sum,c)=>sum+(c.stat==='ATK'?ATK*mod.atk:(c.stat==='DEF'?(st.def||0):(c.stat==='HP'?(st.hp||0):INT*mod.int)))*Number(c.multiplier||0),0))*seqMult; bypass=physCfg.base_def_bypass; }
   else if(formula==='empowered_hybrid_physical') { raw=(ATK*mod.atk*physCfg.atk_mult+INT*physCfg.int_mult*mod.int)*abilityMult*seqMult; bypass=physCfg.base_def_bypass; }
   else if(formula==='empowered_hybrid_agility') { raw=(ATK*mod.atk*agiCfg.atk_mult+INT*agiCfg.int_mult*mod.int)*abilityMult*seqMult; bypass=agiCfg.base_def_bypass; }

@@ -1,6 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict');
 const g=require('../js/node-loader.js');
+require('./mechanics-fixture')(g);
 let passed=0,failed=0;
 function test(name,fn){try{fn();passed++;console.log('PASS '+name);}catch(error){failed++;console.error('FAIL '+name+': '+error.message);}}
 function unit(path,sequence,id){

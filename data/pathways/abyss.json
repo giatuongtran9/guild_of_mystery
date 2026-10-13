@@ -158,7 +158,8 @@
             "amount": 0.5,
             "duration": 5
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -215,7 +216,8 @@
             "stat": "def",
             "duration": 2
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {

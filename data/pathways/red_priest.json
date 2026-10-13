@@ -84,7 +84,8 @@
             "type": "taunt",
             "duration": 2
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -196,7 +197,8 @@
             "type": "next_damage_bonus",
             "amount": 1.8
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -239,7 +241,8 @@
             "type": "targeting",
             "mode": "all_allies"
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {

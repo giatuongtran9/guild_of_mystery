@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const gameRoot = process.env.PHASE3_GAME_ROOT || path.join(__dirname, '..');
 const g = require(path.join(gameRoot, 'js/node-loader.js'));
+require('./mechanics-fixture')(g);
 assert.equal(typeof g.abilityDescription, 'function', 'Phase3 requires the live abilityDescription API');
 assert.equal(typeof g.abilityDamageText, 'function', 'Phase3 requires the live abilityDamageText API');
 const {world, expectedDamage, independentModifiers, exercisePassive} = require('./phase3-test-helpers.js');
@@ -206,8 +207,9 @@ function exerciseSignature(key,rank,team,e,text) {
       check(!w.v._signatureCommand,'one commanded action consumes the instruction');break;
     }
     case 'darkness_nightmare': {
-      g.addStatus(w.v,'sleep',e.duration,'fixture');full();const hp=w.v.hp,wanted=signatureDamageAmount(w,w.v,e.amount,'psychic');run();
-      equal(hp-w.v.hp,wanted,'dream damage matches configured INT scaling');check(g.hasStatus(w.v,'sleep'),'indirect dream damage preserves sleep');chargeSpent();
+      g.addStatus(w.v,'sleep',e.duration,'fixture');full();const hp=w.v.hp,wanted=signatureDamageAmount(w,w.v,e.amount,'psychic'),eventStart=w.state.events.length;run();
+      const directLoss=w.state.events.slice(eventStart).filter(ev=>ev.type==='damage'&&!ev.isSignature&&ev.targetId===w.v.id).reduce((n,ev)=>n+(ev.hpLoss||0),0);
+      equal(hp-w.v.hp,wanted+directLoss,'nightmare signature and newly added direct damage each match configured INT scaling');check(g.hasStatus(w.v,'sleep'),'indirect dream damage preserves sleep');chargeSpent();
       tooltipNumber(text,percent(e.amount),'dream damage');break;
     }
     case 'death_summon':case 'paragon_device':case 'moon_beast': {
@@ -291,8 +293,8 @@ function exerciseSignature(key,rank,team,e,text) {
     case 'hanged_graze': {
       w.v.path=w.b.path='door';w.b.awakened=true;w.v.awakened=true;run();witnessed();w.v.hp=1;
       g.resolveIncoming(w.u,w.v,100,w.state,[],high,{damageType:'true',trueDamage:true});check(w.a._signatureSoul,'one final defeated soul is retained');
-      equal(w.a._signatureSoul.sourceId,w.v.id,'soul belongs to the defeated enemy');full();const before=w.a.sp;
-      check(cast(w,spec,high,w.u,w.other),'grazed skill is paid and cast on a living foe');equal(before-w.a.sp,source.costSP,'grazed use pays source cost');check(!w.a._signatureSoul,'grazed skill is released once');chargeSpent();break;
+      equal(w.a._signatureSoul.sourceId,w.v.id,'soul belongs to the defeated enemy');full();const before=w.a.sp,capturedCost=w.a._signatureSoul.spec.costSP;
+      check(cast(w,spec,high,w.u,w.other),'grazed skill is paid and cast on a living foe');equal(before-w.a.sp,capturedCost,'grazed use pays the randomly captured source cost');check(!w.a._signatureSoul,'grazed skill is released once');chargeSpent();break;
     }
     case 'hermit_scroll': {
       check(cast(w,shipped('hermit',8)),'own learned spell prepares a scroll');check(w.a._signatureScroll,'one owned scroll exists');full();w.a.cooldowns.mystic_spell=5;

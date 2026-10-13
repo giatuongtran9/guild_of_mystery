@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 
 function loadGame() {
   delete require.cache[require.resolve('../js/node-loader.js')];
-  return require('../js/node-loader.js');
+  return require('./mechanics-fixture')(require('../js/node-loader.js'));
 }
 
 function agent(g, path, sequence, id) {
@@ -140,6 +140,7 @@ for (const [path, copyId] of [
 
   test(`${path}: real consecutive encounters leave normalized content unchanged`, () => {
     const g = loadGame(), a = agent(g, path, 6, 'copy_agent');
+    if(path==='door'){g.ensurePathwayInventory(a);a.pathwayInventory.policy='auto';}
     const before = JSON.stringify(g.PATHS);
     const quest = {
       encounter: true, name: 'Casting regression encounter', story: 'Test fixture',

@@ -37,6 +37,7 @@ testLoader.require = id => id === 'fs' ? { ...fs, readFileSync: readSource } : r
 testLoader._compile(loaderSource.replace(call,
   `new Function('module','exports','require','G9_DATA',src+${JSON.stringify(internal)})(m,m.exports,require,G9_DATA);`), loaderFile);
 const g = testLoader.exports;
+require('./mechanics-fixture')(g);
 
 let passed = 0, failed = 0;
 function test(name, fn) {
@@ -457,7 +458,7 @@ test('a fatal reflected hit reports resolved HP loss and the final target HP', (
 });
 test('Freeze and frozen both disable exactly their stated victim action count', () => {
   const w = fixture('death', 2); cast(w, 'death', 2);
-  for (let i = 0; i < 3; i++) { assert(g.actionDisabled(w.v), `Freeze action${i + 1}`); action(w, w.v); }
+  for (let i = 0; i < 1; i++) { assert(g.actionDisabled(w.v), `Freeze action${i + 1}`); action(w, w.v); }
   assert(!g.actionDisabled(w.v));
   g.addStatus(w.v, 'frozen', 2, 'legacy');
   for (let i = 0; i < 2; i++) { assert(g.actionDisabled(w.v)); action(w, w.v); }

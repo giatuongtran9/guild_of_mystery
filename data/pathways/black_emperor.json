@@ -40,10 +40,10 @@
         "spCost": 15,
         "cooldown": 2,
         "description": "Exploit Loophole — Exploits combat loophole: steals 10% DEF from enemy for 2 rounds.",
-        "stat": "INT",
-        "scale": 0,
-        "damageType": "physical",
-        "formula": "pure_caster_ability",
+        "stat": "ATK",
+        "scale": 0.7,
+        "damageType": "disorder",
+        "formula": "empowered_hybrid_agility",
         "tag": null,
         "effects": [
           {
@@ -96,10 +96,10 @@
         "spCost": 25,
         "cooldown": 2,
         "description": "Bribe Weakening — Bribes law: lowers target ATK by 20% for 2 rounds.",
-        "stat": "INT",
-        "scale": 0,
-        "damageType": "physical",
-        "formula": "pure_caster_ability",
+        "stat": "ATK",
+        "scale": 1.0,
+        "damageType": "disorder",
+        "formula": "empowered_hybrid_agility",
         "tag": null,
         "effects": [
           {
@@ -128,11 +128,11 @@
         "label": "Active",
         "spCost": 35,
         "cooldown": 2,
-        "description": "Distort Impact — Distorts strike vector, reducing incoming attack damage by 40%.",
-        "stat": "INT",
-        "scale": 0,
-        "damageType": "physical",
-        "formula": "pure_caster_ability",
+        "description": "Distort Impact — Counter the strike vector with 110% ATK Disorder DMG and reduce incoming attack damage by 40% until your next turn ends.",
+        "stat": "ATK",
+        "scale": 1.35,
+        "damageType": "disorder",
+        "formula": "empowered_hybrid_agility",
         "tag": "Defense",
         "effects": [
           {
@@ -218,7 +218,8 @@
             "chance": 0.3,
             "duration": 2
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {

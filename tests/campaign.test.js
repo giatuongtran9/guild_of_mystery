@@ -23,7 +23,7 @@ test('new guild derives recruitment, awakening and equipment readiness without g
 });
 test('v9 saves gain chapter state without replacing contracts, resources, roster or progression',()=>{
  const s=fixture(['hermit']);delete s.campaign;s.funds=432;s.day=28;s.roster[0].sequence=6;g.restatAgent(s.roster[0]);s.roster[0].digest=77;s.roster[0].injuries=31;
- const before=copy(s),loaded=g.migrateSave(copy(s));assert(loaded.campaign);assert(g.campaignStatus(loaded).ready);
+ g.maintainGuildBoards(s);const before=copy(s),loaded=g.migrateSave(copy(s));assert(loaded.campaign);assert(g.campaignStatus(loaded).ready);
  for(const key of ['funds','day','reputation','materials','weapons','quests','wanted','teams'])assert.deepStrictEqual(loaded[key],before[key],key);
  assert.strictEqual(loaded.roster[0].sequence,6);assert.strictEqual(loaded.roster[0].digest,77);assert.strictEqual(loaded.roster[0].injuries,31);assert.deepStrictEqual(loaded.roster[0].stats,before.roster[0].stats);
 });
@@ -44,9 +44,9 @@ test('investigation and preparation alter the actual boss profile or party reser
  const ward=prepare(fixture(),'interviews','ward'),supplies=prepare(fixture(),'ledger','supplies');
  const w=g.campaignStart(ward,'last_bell',['agent_0'],null,42).pending,p=g.campaignStart(supplies,'last_bell',['agent_0'],null,42).pending;
  assert.strictEqual(ward.campaign.clues[0].id,'counter_chant');assert.strictEqual(supplies.campaign.clues[0].id,'hidden_anchor');
- assert.strictEqual(w.initialEnemies[0].maxHp,500);assert.strictEqual(p.initialEnemies[0].maxHp,425);
- assert(w.result.lines.some(l=>l.text.includes('Cantor Vale · HP 500 · ATK 31')));
- assert.strictEqual(p.initialAllies[0].maxHp,Math.round(supplies.roster[0].stats.hp*1.25));
+ assert.strictEqual(w.initialEnemies[0].maxHp,g.balancedStats({hp:475},'darkness',9).hp);assert.strictEqual(p.initialEnemies[0].maxHp,g.balancedStats({hp:404},'darkness',9).hp);
+ assert(w.result.lines.some(l=>l.text.includes(`Cantor Vale · HP ${g.balancedStats({hp:475},'darkness',9).hp} · ATK 31`)));
+ assert.strictEqual(p.initialAllies[0].maxHp,g.balancedStats({hp:Math.round(supplies.roster[0].stats.hp*1.25)},supplies.roster[0].path,9).hp);
  assert.strictEqual(w.initialEnemies[0].path,'darkness');assert.strictEqual(w.initialEnemies[0].sequence,9);
 });
 test('failed chapter combat protects agents and resources, retains the current mission and allows retry',()=>{
@@ -59,7 +59,7 @@ test('failed chapter combat protects agents and resources, retains the current m
 });
 test('success keeps persistent stats, injuries and cooldowns while adding experience once',()=>{
  const s=prepare(fixture(['twilight_giant']),'ledger','supplies'),a=s.roster[0];a.injuries=45;a.madness=80;a.corruption=30;a.cooldowns={old:8};a.statusEffects={};const before=copy(a);
- const pending=g.campaignStart(s,'last_bell',[a.id],null,1).pending;assert(pending.result.success);assert(pending.result.events.length>0);assert.strictEqual(pending.initialAllies[0].maxHp,Math.round(before.stats.hp*1.25));
+ const pending=g.campaignStart(s,'last_bell',[a.id],null,1).pending;assert(pending.result.success);assert(pending.result.events.length>0);assert.strictEqual(pending.initialAllies[0].maxHp,g.balancedStats({hp:Math.round(before.stats.hp*1.25)},before.path,before.sequence).hp);
  const loaded=g.migrateSave(copy(s));assert.deepStrictEqual(loaded.campaign.pending,pending);const reward=g.campaignSettle(loaded);assert(reward.success);
  const after=loaded.roster[0];for(const key of ['stats','injuries','madness','corruption','cooldowns','statusEffects'])assert.deepStrictEqual(after[key],before[key],key);
  assert.strictEqual(after.digest,before.digest+18);const funds=loaded.funds;assert(!g.campaignSettle(loaded).ok);assert.strictEqual(loaded.funds,funds);
@@ -70,7 +70,7 @@ test('full chapter grants the case file, progression supplies and no premature n
  assert(g.campaignStatus(s).complete);assert.strictEqual(g.campaignStatus(s).current,null);assert.strictEqual(s.campaign.caseFile.title,'The Whispering District');assert.strictEqual(s.campaign.caseFile.badge,'Case Closed');
  assert.strictEqual(s.funds,funds+660);assert.strictEqual(s.reputation,12);assert(s.roster.every(a=>a.digest===70));
  for(const p of ['fool','mother'])assert.strictEqual(s.materials[g.pathOf(p).material],materials[g.pathOf(p).material]+3);
- assert.deepStrictEqual(s.quests,quests);assert.deepStrictEqual(s.wanted,wanted);assert(!g.campaignStart(s,'open_doors').ok);assert(!g.campaignStart(s,'daybreak').ok);
+ assert(s.quests.some(q=>q.difficultySequence===9));assert.equal(s.contractPool.lastRefreshDay,s.day);assert(s.quests.every(q=>q.enemySeed!==quests[0].enemySeed));assert(s.wanted.some(q=>q.bossId==='red_knife'),'chapter reputation unlocks the first eligible warrant');assert(!g.campaignStart(s,'open_doors').ok);assert(!g.campaignStart(s,'daybreak').ok);
  assert.deepStrictEqual(g.migrateSave(copy(s)).campaign.caseFile,s.campaign.caseFile);
 });
 test('authored enemy hook leaves normal contract random generation and death rules unchanged',()=>{

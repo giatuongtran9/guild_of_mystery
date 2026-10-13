@@ -115,7 +115,8 @@
             "type": "cleanse",
             "duration": 0
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -130,8 +131,8 @@
         "cooldown": 3,
         "description": "Dream Slumber — Puts enemy to sleep for 1 round or lowers target Speed by 30%.",
         "stat": "INT",
-        "scale": 0,
-        "damageType": "physical",
+        "scale": 0.8,
+        "damageType": "shadow",
         "formula": "pure_caster_ability",
         "tag": null,
         "effects": [
@@ -145,7 +146,7 @@
             "type": "status",
             "status": "sleep",
             "chance": 1,
-            "duration": 2
+            "duration": 1
           },
           {
             "type": "signature",
@@ -169,8 +170,8 @@
         "cooldown": 3,
         "description": "Soul Pacification — Pacifies target soul, silencing active skills for 1 round.",
         "stat": "INT",
-        "scale": 0,
-        "damageType": "physical",
+        "scale": 0.8,
+        "damageType": "shadow",
         "formula": "pure_caster_ability",
         "tag": null,
         "effects": [
@@ -225,8 +226,8 @@
         "cooldown": 4,
         "description": "Concealment Realm — Conceals user in darkness, gaining untargetability for 1 round.",
         "stat": "INT",
-        "scale": 0,
-        "damageType": "physical",
+        "scale": 0.9,
+        "damageType": "shadow",
         "formula": "pure_caster_ability",
         "tag": null,
         "effects": [

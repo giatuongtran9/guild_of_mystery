@@ -21,8 +21,9 @@ function campaignStatus(s){
 function campaignEligibility(s,missionId,agentIds=[],choice=null){
  const st=campaignStatus(s),m=st.current;
  const fail=reason=>({ok:false,reason,agents:[],choice:null});
+ if(s.pendingContract)return fail('Record the saved contract outcome before starting another mission.');
  if(st.pending)return fail('Finish the saved chapter result before starting another mission.');
- if(!m)return fail('This chapter is already complete. Normal contracts remain available.');
+ if(!m)return fail('This chapter is already complete. Supernatural contracts remain available.');
  if(m.id!==missionId)return fail('Complete the current chapter mission first.');
  if(!st.requirements.every(r=>r.done))return fail('Recruit, awaken and equip one active agent before accepting the case.');
  if(!Array.isArray(agentIds)||new Set(agentIds).size!==agentIds.length||agentIds.length>3)return fail('Assign one to three different agents.');
@@ -57,11 +58,12 @@ function campaignStart(s,missionId,agentIds=[],choice=null,seed=Date.now()){
   if(c.clues.some(x=>x.id==='hidden_anchor'))enemy.stats.hp=Math.round(enemy.stats.hp*.85);
   if(c.preparation==='ward'){enemy.stats.atk=Math.round(enemy.stats.atk*.75);enemy.stats.int=Math.round(enemy.stats.int*.75);}
   initialAllies=members.map(a=>{const hp=Math.round(effectiveStats(a).hp*(passiveCombatModifier(a).hp||1));return {id:a.id,name:a.name,team:'ally',path:a.path,sequence:a.sequence,unitType:a.unitType,maxHp:hp,hp};});
-  result=resolveQuest(members,quest,fixedSeed,{individual:members.length===1,authoredOpponents:[enemy]});
-  initialEnemies=[{id:'enemy_0',name:enemy.name,team:'enemy',path:enemy.path,sequence:enemy.sequence,campaignEnemy:true,maxHp:enemy.stats.hp,hp:enemy.stats.hp}];
+  result=resolveQuest(members,quest,fixedSeed,{individual:members.length===1,authoredOpponents:[enemy],disablePermanentAssets:true,day:s.day});
+  initialAllies=result.battleSnapshot.initialUnits.filter(u=>u.team==='ally');
+  initialEnemies=result.battleSnapshot.initialUnits.filter(u=>u.team==='enemy').map(u=>({...u,campaignEnemy:true}));
   // Engine consequences can contain death, stat buffs and battle cooldowns.
   // This protected chapter deliberately settles its own experience only.
-  result.consequences=[];result.marionettes=[];result.rewards=result.success?rewards:{funds:0,reputation:0,materials:{},digestion:0};
+  result.consequences=[];result.marionettes=[];result.assetOffers=[];result.assetGains=[];result.rewards=result.success?rewards:{funds:0,reputation:0,materials:{},digestion:0};
   result.lines.push({text:result.success?m.successText:m.failureText,kind:result.success?'victory':'story'});
  }else{
   result={success:true,lines:[{text:m.story,kind:'story'},...(eligible.choice?[{text:eligible.choice.outcome,kind:'story'}]:[]),{text:m.successText,kind:'victory'}],events:[],consequences:[],marionettes:[],rewards,dayCost:0,battleSnapshot:{allies:[],enemies:[]}};
@@ -82,7 +84,7 @@ function campaignSettle(s){
   c.completed.push(m.id);
   if(c.completed.length===CAMPAIGN.missions.length)c.caseFile={id:CAMPAIGN.id,title:CAMPAIGN.title,badge:'Case Closed',completedDay:s.day+(pending.result.dayCost||0),clues:cloneS(c.clues)};
  }
- s.day+=pending.result.dayCost||0;
+ advanceGuildDay(s,pending.result.dayCost||0);
  c.lastAttempt={missionId:m.id,success,attempt:c.attempts[m.id],day:s.day};c.pending=null;
  chronicle(s,success?`${m.title}: ${m.successText}`:`${m.title}: agents recovered safely; the case remains open.`);
  return {ok:true,reason:'',success,missionId:m.id,complete:c.completed.length===CAMPAIGN.missions.length,rewards};

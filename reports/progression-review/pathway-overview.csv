@@ -1,0 +1,23 @@
+pathway,name,before_win_percent,after_win_percent,after_loss_percent,after_draw_percent,observations,seq9_win_percent,seq5_win_percent,seq0_win_percent
+fool,Fool,46.09,46.23,18.7,35.07,1380,0.0,50.72,66.67
+abyss,Abyss,23.04,22.61,11.74,65.65,1380,78.26,11.59,1.45
+chained,Chained,19.28,20.72,22.61,56.67,1380,7.25,21.74,8.7
+white_tower,White Tower,20.58,19.28,18.12,62.61,1380,0.0,21.74,14.49
+door,Door,18.26,18.99,12.17,68.84,1380,0.0,31.88,24.64
+hermit,Hermit,15.94,16.67,11.59,71.74,1380,0.0,18.84,2.9
+paragon,Paragon,14.93,16.09,8.84,75.07,1380,0.0,21.74,1.45
+twilight_giant,Twilight Giant,13.48,13.33,6.09,80.58,1380,26.09,4.35,0.0
+red_priest,Red Priest,12.03,12.9,22.17,64.93,1380,2.9,20.29,4.35
+demoness,Demoness,9.28,10.29,16.52,73.19,1380,7.25,20.29,1.45
+mother,Mother,8.99,9.71,1.59,88.7,1380,1.45,11.59,0.0
+moon,Moon,6.67,9.71,2.03,88.26,1380,0.0,11.59,0.0
+sun,Sun,6.52,7.83,11.59,80.58,1380,1.45,7.25,7.25
+tyrant,Tyrant,5.94,6.38,17.25,76.38,1380,7.25,8.7,0.0
+hanged_man,Hanged Man,6.81,6.38,10.29,83.33,1380,5.8,2.9,0.0
+error,Error,3.62,4.93,7.97,87.1,1380,0.0,4.35,34.78
+justiciar,Justiciar,2.9,3.33,9.13,87.54,1380,5.8,5.8,1.45
+death,Death,1.88,2.03,6.52,91.45,1380,4.35,15.94,0.0
+darkness,Darkness,1.45,1.45,5.94,92.61,1380,0.0,0.0,0.0
+wheel_of_fortune,Wheel of Fortune,2.9,1.45,5.36,93.19,1380,0.0,5.8,0.0
+visionary,Visionary,1.16,1.16,9.57,89.28,1380,0.0,0.0,0.0
+black_emperor,Black Emperor,0.29,0.43,16.09,83.48,1380,0.0,1.45,2.9

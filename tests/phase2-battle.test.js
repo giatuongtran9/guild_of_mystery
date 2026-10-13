@@ -37,8 +37,9 @@ async function fixture(sim = false) {
   agent.id = 'test-agent'; agent.name = 'Test Agent'; g.restatAgent(agent);
   state.roster = [agent];
   state.quests = [{ id: 'test-contract', name: 'The Chapel Below', encounter: true, objective: 'combat', difficultySequence: 9, rewards: { funds: 0, reputation: 0, materials: {} }, tags: ['occult'] }];
+  require('./pool-fixture')(g,state);
   w.localStorage.setItem('guild-rpg-browser-v9', JSON.stringify(state));
-  w.eval(['paths', 'v15', 'generate', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'].map(name => fs.readFileSync(path.join(root, `js/${name}.js`), 'utf8')).join('\n'));
+  w.eval(['paths', 'v15', 'generate', 'traits', 'pathway-assets', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'].map(name => fs.readFileSync(path.join(root, `js/${name}.js`), 'utf8')).join('\n'));
   const allyId = sim ? 'sim_0_fool_9' : agent.id;
   w.groupEventsToRows = () => [{ round: 1, initiative: 'Test order', rows: [
     { type: 'turn', actorId: 'enemy_0', actorName: 'Enemy', actorTeam: 'enemy', ability: 'Strike', costSP: 10,
@@ -106,10 +107,10 @@ async function main() {
   await test('quest playback updates HP and shield gauges on the original unit', f => {
     f.tick(); f.tick();
     assertStable(f);
-    assert.equal(f.nodes.unit.querySelector('.gm-float-gauge.hp .gm-float-num').textContent, `125/${g.abbrNum(f.agent.stats.hp)}`);
-    assert.equal(f.nodes.unit.querySelector('.gm-float-fill.shield').style.width, `${Math.round(40 / f.agent.stats.hp * 100)}%`);
+    assert.equal(f.nodes.unit.querySelector('.gm-float-gauge.hp .gm-float-num').textContent, `125/${g.abbrNum(g.effectiveStats(f.agent).hp)}`);
+    assert.equal(f.nodes.unit.querySelector('.gm-float-fill.shield').style.width, `${Math.round(40 / g.effectiveStats(f.agent).hp * 100)}%`);
     f.tick();
-    assert.equal(f.nodes.unit.querySelector('.gm-float-gauge.hp .gm-float-num').textContent, `115/${g.abbrNum(f.agent.stats.hp)}`);
+    assert.equal(f.nodes.unit.querySelector('.gm-float-gauge.hp .gm-float-num').textContent, `115/${g.abbrNum(g.effectiveStats(f.agent).hp)}`);
   });
   await test('quest death and revival toggle the original unit class without replacing it', f => {
     for (let i = 0; i < 4; i++) f.tick();

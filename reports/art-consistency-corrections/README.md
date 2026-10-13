@@ -1,5 +1,7 @@
 # Character proportion corrections
 
+[Deployment integration](deployment-integration.md) records the later merge with GitHub's newer game changes and its updated startup version. The completion and verification details below describe the original local artwork checkpoint.
+
 Completed locally on `phase3-truthful-abilities`, against the first-pass artwork inventory at `b2aba18`. Nothing was pushed or deployed. This report supersedes the first pass's assessment of the 66 clear outliers; the first-pass report remains frozen for preservation checks.
 
 **66 selections corrected, 176 left unchanged.** Fool Sequence 9 remains the unchanged ruler for natural head size, compact head/body proportions and apparent humanoid height. Large hats, crowns, wings, weapons and auras are judged separately from anatomy. The seven approved pathways—Error, Justiciar, Hermit, Paragon, Darkness, Abyss and Wheel of Fortune—remain entirely unchanged in this pass. Minor variations elsewhere were retained.

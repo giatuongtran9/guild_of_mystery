@@ -41,7 +41,7 @@
     "stance_buffs": {
       "hp_shield": "+30% Max HP Shield",
       "damage_bonus": "+20% All Damage",
-      "mental_pollution_aura": "On transformation, 70% chance each enemy at Sequence 5–9 loses its next turn."
+      "mental_pollution_aura": "On transformation, 70% chance each enemy at Sequence 5\u20139 loses its next turn."
     },
     "casting_rule": "FULL ABILITY CASTING PERMITTED WHILE TRANSFORMED. Mythical Form acts as an active stance buff and does not disable skills."
   },
@@ -65,9 +65,9 @@
     },
     "dodge": {
       "base_rate": 0.05,
-      "int_scaling_num": 0.22,
+      "int_scaling_num": 0.12,
       "int_scaling_denom": 150,
-      "int_advantage_coefficient": 0.1,
+      "int_advantage_coefficient": 0.05,
       "close_quarters_mastery_factor": 0.015,
       "max_rate": 1
     },

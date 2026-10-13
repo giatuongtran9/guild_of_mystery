@@ -1,5 +1,6 @@
 'use strict';
 const {g,assert,world}=require('./phase3-test-helpers');
+require('./mechanics-fixture')(g);
 let passed=0,failed=0;
 function test(name,fn){try{fn();passed++;console.log(`PASS ${name}`);}catch(e){failed++;console.log(`FAIL ${name}: ${e.message}`);}}
 test('charged Fool removes the attachment resistance floor on either side',()=>{

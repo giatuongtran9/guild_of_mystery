@@ -1,0 +1,3579 @@
+{
+  "rules": {
+    "hp": 0.8,
+    "damage": 1.7,
+    "healing": 0.5,
+    "shield": 0.6,
+    "intBasicFloor": 0.65,
+    "intDodgeAdvantage": 0.05,
+    "intDodgeScaling": 0.12,
+    "ccGap": 3,
+    "roundRamp": 0.2,
+    "rampStarts": 5,
+    "utilityStrike": 0.35,
+    "seededTie": true,
+    "protectionTurns": 1,
+    "evadeRate": 0.4,
+    "stats": {
+      "door": {
+        "0": {
+          "hp": 0.54489
+        },
+        "1": {
+          "hp": 0.50209
+        },
+        "2": {
+          "hp": 0.58118
+        },
+        "3": {
+          "hp": 0.63573
+        },
+        "4": {
+          "hp": 0.69524
+        },
+        "5": {
+          "hp": 0.82394
+        },
+        "6": {
+          "hp": 0.94731
+        },
+        "7": {
+          "hp": 0.70031
+        },
+        "8": {
+          "hp": 0.91655
+        },
+        "9": {
+          "hp": 1.29009
+        }
+      },
+      "chained": {
+        "0": {
+          "hp": 0.63398
+        },
+        "1": {
+          "hp": 0.84541
+        },
+        "2": {
+          "hp": 0.81433
+        },
+        "3": {
+          "hp": 0.86657
+        },
+        "4": {
+          "hp": 0.66711
+        },
+        "5": {
+          "hp": 1.1545
+        },
+        "6": {
+          "hp": 0.88428
+        },
+        "7": {
+          "hp": 0.90971
+        },
+        "8": {
+          "hp": 0.82096
+        },
+        "9": {
+          "hp": 0.67544
+        }
+      },
+      "red_priest": {
+        "0": {
+          "hp": 0.74788
+        },
+        "1": {
+          "hp": 0.69241
+        },
+        "2": {
+          "hp": 0.83133
+        },
+        "3": {
+          "hp": 0.78696
+        },
+        "4": {
+          "hp": 0.57335
+        },
+        "5": {
+          "hp": 0.76386
+        },
+        "6": {
+          "hp": 0.78122
+        },
+        "7": {
+          "hp": 1.03682
+        },
+        "8": {
+          "hp": 1.85
+        },
+        "9": {
+          "hp": 0.97955
+        }
+      },
+      "white_tower": {
+        "0": {
+          "hp": 0.82354
+        },
+        "1": {
+          "hp": 0.88716
+        },
+        "2": {
+          "hp": 0.77602
+        },
+        "3": {
+          "hp": 0.55779
+        },
+        "4": {
+          "hp": 0.80893
+        },
+        "5": {
+          "hp": 1.07769
+        },
+        "6": {
+          "hp": 0.86026
+        },
+        "7": {
+          "hp": 0.81483
+        },
+        "8": {
+          "hp": 0.74554
+        },
+        "9": {
+          "hp": 1.00691
+        }
+      },
+      "demoness": {
+        "0": {
+          "hp": 1.0265
+        },
+        "1": {
+          "hp": 0.70686
+        },
+        "2": {
+          "hp": 0.61408
+        },
+        "3": {
+          "hp": 0.83151
+        },
+        "4": {
+          "hp": 0.89077
+        },
+        "5": {
+          "hp": 0.75341
+        },
+        "6": {
+          "hp": 0.73936
+        },
+        "7": {
+          "hp": 0.9351
+        },
+        "8": {
+          "hp": 1.21545
+        },
+        "9": {
+          "hp": 1.04937
+        }
+      },
+      "mother": {
+        "0": {
+          "hp": 0.73259
+        },
+        "1": {
+          "hp": 0.86305
+        },
+        "2": {
+          "hp": 1.05057
+        },
+        "3": {
+          "hp": 0.96748
+        },
+        "4": {
+          "hp": 0.86658
+        },
+        "5": {
+          "hp": 0.89489
+        },
+        "6": {
+          "hp": 0.74962
+        },
+        "7": {
+          "hp": 0.9097
+        },
+        "8": {
+          "hp": 0.71537
+        },
+        "9": {
+          "hp": 0.69429
+        }
+      },
+      "fool": {
+        "0": {
+          "hp": 0.60834
+        },
+        "1": {
+          "hp": 0.73161
+        },
+        "2": {
+          "hp": 0.79222
+        },
+        "3": {
+          "hp": 1.11029
+        },
+        "4": {
+          "hp": 1.08013
+        },
+        "5": {
+          "hp": 1.21986
+        },
+        "6": {
+          "hp": 1.07226
+        },
+        "7": {
+          "hp": 0.73997
+        },
+        "8": {
+          "hp": 0.86744
+        },
+        "9": {
+          "hp": 1.20427
+        }
+      },
+      "paragon": {
+        "0": {
+          "hp": 1.07718
+        },
+        "1": {
+          "hp": 0.99729
+        },
+        "2": {
+          "hp": 0.99428
+        },
+        "3": {
+          "hp": 0.7346
+        },
+        "4": {
+          "hp": 0.95425
+        },
+        "5": {
+          "hp": 0.77444
+        },
+        "6": {
+          "hp": 0.57312
+        },
+        "7": {
+          "hp": 1.04399
+        },
+        "8": {
+          "hp": 1.03747
+        },
+        "9": {
+          "hp": 1.29009
+        }
+      },
+      "abyss": {
+        "0": {
+          "hp": 1.17801
+        },
+        "1": {
+          "hp": 0.89328
+        },
+        "2": {
+          "hp": 1.02203
+        },
+        "3": {
+          "hp": 1.14129
+        },
+        "4": {
+          "hp": 1.09511
+        },
+        "5": {
+          "hp": 0.97868
+        },
+        "6": {
+          "hp": 0.82546
+        },
+        "7": {
+          "hp": 0.76063
+        },
+        "8": {
+          "hp": 0.72031
+        },
+        "9": {
+          "hp": 0.57258
+        }
+      },
+      "death": {
+        "0": {
+          "hp": 1.2972
+        },
+        "1": {
+          "hp": 0.98366
+        },
+        "2": {
+          "hp": 0.7294
+        },
+        "3": {
+          "hp": 0.84304
+        },
+        "4": {
+          "hp": 0.92833
+        },
+        "5": {
+          "hp": 0.66104
+        },
+        "6": {
+          "hp": 0.94081
+        },
+        "7": {
+          "hp": 0.90346
+        },
+        "8": {
+          "hp": 1.30207
+        },
+        "9": {
+          "hp": 0.85357
+        }
+      },
+      "wheel_of_fortune": {
+        "0": {
+          "hp": 0.51924
+        },
+        "1": {
+          "hp": 0.73667
+        },
+        "2": {
+          "hp": 0.86043
+        },
+        "3": {
+          "hp": 0.67636
+        },
+        "4": {
+          "hp": 0.6671
+        },
+        "5": {
+          "hp": 0.5195
+        },
+        "6": {
+          "hp": 0.76525
+        },
+        "7": {
+          "hp": 1.85
+        },
+        "8": {
+          "hp": 1.85
+        },
+        "9": {
+          "hp": 0.88957
+        }
+      },
+      "tyrant": {
+        "0": {
+          "hp": 1.13035
+        },
+        "1": {
+          "hp": 1.09819
+        },
+        "2": {
+          "hp": 0.96727
+        },
+        "3": {
+          "hp": 0.91563
+        },
+        "4": {
+          "hp": 0.82014
+        },
+        "5": {
+          "hp": 0.93907
+        },
+        "6": {
+          "hp": 0.9473
+        },
+        "7": {
+          "hp": 1.14173
+        },
+        "8": {
+          "hp": 0.94214
+        },
+        "9": {
+          "hp": 0.87739
+        }
+      },
+      "visionary": {
+        "0": {
+          "hp": 0.75304
+        },
+        "1": {
+          "hp": 0.72659
+        },
+        "2": {
+          "hp": 0.89057
+        },
+        "3": {
+          "hp": 0.81451
+        },
+        "4": {
+          "hp": 0.89692
+        },
+        "5": {
+          "hp": 1.1705
+        },
+        "6": {
+          "hp": 0.88429
+        },
+        "7": {
+          "hp": 0.8669
+        },
+        "8": {
+          "hp": 1.43379
+        },
+        "9": {
+          "hp": 1.30798
+        }
+      },
+      "twilight_giant": {
+        "0": {
+          "hp": 1.26197
+        },
+        "1": {
+          "hp": 1.16838
+        },
+        "2": {
+          "hp": 1.25647
+        },
+        "3": {
+          "hp": 1.3839
+        },
+        "4": {
+          "hp": 1.70137
+        },
+        "5": {
+          "hp": 1.06296
+        },
+        "6": {
+          "hp": 0.78123
+        },
+        "7": {
+          "hp": 0.8729
+        },
+        "8": {
+          "hp": 0.67703
+        },
+        "9": {
+          "hp": 0.66621
+        }
+      },
+      "hermit": {
+        "0": {
+          "hp": 1.38965
+        },
+        "1": {
+          "hp": 1.201
+        },
+        "2": {
+          "hp": 0.99427
+        },
+        "3": {
+          "hp": 0.9945
+        },
+        "4": {
+          "hp": 0.92833
+        },
+        "5": {
+          "hp": 1.06296
+        },
+        "6": {
+          "hp": 1.00093
+        },
+        "7": {
+          "hp": 0.94807
+        },
+        "8": {
+          "hp": 0.76634
+        },
+        "9": {
+          "hp": 1.04937
+        }
+      },
+      "error": {
+        "0": {
+          "hp": 0.62963
+        },
+        "1": {
+          "hp": 1.21764
+        },
+        "2": {
+          "hp": 1.19737
+        },
+        "3": {
+          "hp": 1.27418
+        },
+        "4": {
+          "hp": 1.28299
+        },
+        "5": {
+          "hp": 0.88876
+        },
+        "6": {
+          "hp": 1.06492
+        },
+        "7": {
+          "hp": 0.98126
+        },
+        "8": {
+          "hp": 0.90402
+        },
+        "9": {
+          "hp": 1.04937
+        }
+      },
+      "moon": {
+        "0": {
+          "hp": 1.66202
+        },
+        "1": {
+          "hp": 1.35944
+        },
+        "2": {
+          "hp": 1.22235
+        },
+        "3": {
+          "hp": 1.28299
+        },
+        "4": {
+          "hp": 1.29184
+        },
+        "5": {
+          "hp": 1.08514
+        },
+        "6": {
+          "hp": 0.86027
+        },
+        "7": {
+          "hp": 0.65824
+        },
+        "8": {
+          "hp": 0.74554
+        },
+        "9": {
+          "hp": 1.48052
+        }
+      },
+      "hanged_man": {
+        "0": {
+          "hp": 1.53025
+        },
+        "1": {
+          "hp": 1.4364
+        },
+        "2": {
+          "hp": 1.34602
+        },
+        "3": {
+          "hp": 1.43238
+        },
+        "4": {
+          "hp": 1.18941
+        },
+        "5": {
+          "hp": 1.38078
+        },
+        "6": {
+          "hp": 1.46164
+        },
+        "7": {
+          "hp": 1.06577
+        },
+        "8": {
+          "hp": 0.98187
+        },
+        "9": {
+          "hp": 0.93993
+        }
+      },
+      "sun": {
+        "0": {
+          "hp": 1.21091
+        },
+        "1": {
+          "hp": 1.09819
+        },
+        "2": {
+          "hp": 1.17289
+        },
+        "3": {
+          "hp": 0.99449
+        },
+        "4": {
+          "hp": 1.32791
+        },
+        "5": {
+          "hp": 1.3619
+        },
+        "6": {
+          "hp": 1.85
+        },
+        "7": {
+          "hp": 1.47293
+        },
+        "8": {
+          "hp": 0.79866
+        },
+        "9": {
+          "hp": 1.27245
+        }
+      },
+      "black_emperor": {
+        "0": {
+          "hp": 1
+        },
+        "1": {
+          "hp": 1
+        },
+        "2": {
+          "hp": 1
+        },
+        "3": {
+          "hp": 1
+        },
+        "4": {
+          "hp": 1
+        },
+        "5": {
+          "hp": 1
+        },
+        "6": {
+          "hp": 1
+        },
+        "7": {
+          "hp": 1
+        },
+        "8": {
+          "hp": 1
+        },
+        "9": {
+          "hp": 1
+        }
+      },
+      "justiciar": {
+        "0": {
+          "hp": 1.81761
+        },
+        "1": {
+          "hp": 1.85
+        },
+        "2": {
+          "hp": 1.84747
+        },
+        "3": {
+          "hp": 1.71312
+        },
+        "4": {
+          "hp": 1.38391
+        },
+        "5": {
+          "hp": 1.34328
+        },
+        "6": {
+          "hp": 1.50245
+        },
+        "7": {
+          "hp": 1.20637
+        },
+        "8": {
+          "hp": 1.1114
+        },
+        "9": {
+          "hp": 0.92707
+        }
+      },
+      "darkness": {
+        "0": {
+          "hp": 1,
+          "int": 1.35
+        },
+        "1": {
+          "hp": 1,
+          "int": 1.35
+        },
+        "2": {
+          "hp": 1,
+          "int": 1.35
+        },
+        "3": {
+          "hp": 1,
+          "int": 1.35
+        },
+        "4": {
+          "hp": 1,
+          "int": 1.35
+        },
+        "5": {
+          "hp": 1,
+          "int": 1.35
+        },
+        "6": {
+          "hp": 1,
+          "int": 1.35
+        },
+        "7": {
+          "hp": 1,
+          "int": 1.35
+        },
+        "8": {
+          "hp": 1,
+          "int": 1.35
+        },
+        "9": {
+          "hp": 1.03502,
+          "int": 1.35
+        }
+      }
+    }
+  },
+  "method": {
+    "sequences": [
+      9,
+      8,
+      7,
+      6,
+      5,
+      4,
+      3,
+      2,
+      1,
+      0
+    ],
+    "samples": 2,
+    "seedBase": 810019,
+    "assets": "legendary",
+    "loadout": "Representative legal collection; fixed library and one prepared vessel/knowledge modifier",
+    "charge": 100,
+    "weapon": "none",
+    "trait": "Stout Vitality",
+    "roundLimit": 15
+  },
+  "summary": {
+    "battles": 10120,
+    "drawRate": 0.018379446640316207,
+    "meanRounds": 7.808102766798419,
+    "completedBefore15": 0.9675889328063241,
+    "completedBy12": 0.9280632411067193,
+    "parityFailures": 0,
+    "histogram": {
+      "1": 16,
+      "2": 86,
+      "3": 336,
+      "4": 708,
+      "5": 990,
+      "6": 1178,
+      "7": 1720,
+      "8": 1438,
+      "9": 1244,
+      "10": 806,
+      "11": 540,
+      "12": 336,
+      "13": 228,
+      "14": 174,
+      "15": 320
+    }
+  },
+  "aggregates": [
+    {
+      "pathway": "fool",
+      "winRate": 0.6130434782608696,
+      "drawRate": 0.010869565217391304,
+      "minRankWin": 0.4782608695652174,
+      "maxRankWin": 0.8043478260869565
+    },
+    {
+      "pathway": "darkness",
+      "winRate": 0.6021739130434782,
+      "drawRate": 0.010869565217391304,
+      "minRankWin": 0.5,
+      "maxRankWin": 0.8695652173913043
+    },
+    {
+      "pathway": "wheel_of_fortune",
+      "winRate": 0.5717391304347826,
+      "drawRate": 0.05217391304347826,
+      "minRankWin": 0.2608695652173913,
+      "maxRankWin": 0.782608695652174
+    },
+    {
+      "pathway": "black_emperor",
+      "winRate": 0.5413043478260869,
+      "drawRate": 0.002173913043478261,
+      "minRankWin": 0.2608695652173913,
+      "maxRankWin": 0.6956521739130435
+    },
+    {
+      "pathway": "chained",
+      "winRate": 0.5282608695652173,
+      "drawRate": 0,
+      "minRankWin": 0.43478260869565216,
+      "maxRankWin": 0.6739130434782609
+    },
+    {
+      "pathway": "twilight_giant",
+      "winRate": 0.5217391304347826,
+      "drawRate": 0.034782608695652174,
+      "minRankWin": 0.41304347826086957,
+      "maxRankWin": 0.6956521739130435
+    },
+    {
+      "pathway": "demoness",
+      "winRate": 0.5108695652173914,
+      "drawRate": 0,
+      "minRankWin": 0.41304347826086957,
+      "maxRankWin": 0.5869565217391305
+    },
+    {
+      "pathway": "error",
+      "winRate": 0.5021739130434782,
+      "drawRate": 0.0782608695652174,
+      "minRankWin": 0.34782608695652173,
+      "maxRankWin": 0.6304347826086957
+    },
+    {
+      "pathway": "door",
+      "winRate": 0.5,
+      "drawRate": 0.004347826086956522,
+      "minRankWin": 0.3695652173913043,
+      "maxRankWin": 0.6739130434782609
+    },
+    {
+      "pathway": "mother",
+      "winRate": 0.49782608695652175,
+      "drawRate": 0.06739130434782609,
+      "minRankWin": 0.41304347826086957,
+      "maxRankWin": 0.5652173913043478
+    },
+    {
+      "pathway": "red_priest",
+      "winRate": 0.4956521739130435,
+      "drawRate": 0,
+      "minRankWin": 0.34782608695652173,
+      "maxRankWin": 0.5869565217391305
+    },
+    {
+      "pathway": "tyrant",
+      "winRate": 0.4891304347826087,
+      "drawRate": 0,
+      "minRankWin": 0.3695652173913043,
+      "maxRankWin": 0.5869565217391305
+    },
+    {
+      "pathway": "white_tower",
+      "winRate": 0.47391304347826085,
+      "drawRate": 0,
+      "minRankWin": 0.34782608695652173,
+      "maxRankWin": 0.6086956521739131
+    },
+    {
+      "pathway": "sun",
+      "winRate": 0.46956521739130436,
+      "drawRate": 0.002173913043478261,
+      "minRankWin": 0.391304347826087,
+      "maxRankWin": 0.5869565217391305
+    },
+    {
+      "pathway": "abyss",
+      "winRate": 0.46956521739130436,
+      "drawRate": 0,
+      "minRankWin": 0.32608695652173914,
+      "maxRankWin": 0.5652173913043478
+    },
+    {
+      "pathway": "justiciar",
+      "winRate": 0.45869565217391306,
+      "drawRate": 0.05434782608695652,
+      "minRankWin": 0.34782608695652173,
+      "maxRankWin": 0.5869565217391305
+    },
+    {
+      "pathway": "hermit",
+      "winRate": 0.45217391304347826,
+      "drawRate": 0.004347826086956522,
+      "minRankWin": 0.2391304347826087,
+      "maxRankWin": 0.6521739130434783
+    },
+    {
+      "pathway": "hanged_man",
+      "winRate": 0.4391304347826087,
+      "drawRate": 0.02608695652173913,
+      "minRankWin": 0.32608695652173914,
+      "maxRankWin": 0.5869565217391305
+    },
+    {
+      "pathway": "paragon",
+      "winRate": 0.43478260869565216,
+      "drawRate": 0.002173913043478261,
+      "minRankWin": 0.2391304347826087,
+      "maxRankWin": 0.6304347826086957
+    },
+    {
+      "pathway": "moon",
+      "winRate": 0.43478260869565216,
+      "drawRate": 0.015217391304347827,
+      "minRankWin": 0.2391304347826087,
+      "maxRankWin": 0.6956521739130435
+    },
+    {
+      "pathway": "visionary",
+      "winRate": 0.4108695652173913,
+      "drawRate": 0.01956521739130435,
+      "minRankWin": 0.2608695652173913,
+      "maxRankWin": 0.5434782608695652
+    },
+    {
+      "pathway": "death",
+      "winRate": 0.3804347826086957,
+      "drawRate": 0.01956521739130435,
+      "minRankWin": 0.2391304347826087,
+      "maxRankWin": 0.5217391304347826
+    }
+  ],
+  "rows": [
+    {
+      "pathway": "fool",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 50,
+      "losses": 42,
+      "draws": 0,
+      "rounds": 744,
+      "winRate": 0.5434782608695652,
+      "drawRate": 0,
+      "meanRounds": 8.08695652173913
+    },
+    {
+      "pathway": "door",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 46,
+      "losses": 46,
+      "draws": 0,
+      "rounds": 796,
+      "winRate": 0.5,
+      "drawRate": 0,
+      "meanRounds": 8.652173913043478
+    },
+    {
+      "pathway": "error",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 52,
+      "losses": 40,
+      "draws": 0,
+      "rounds": 804,
+      "winRate": 0.5652173913043478,
+      "drawRate": 0,
+      "meanRounds": 8.73913043478261
+    },
+    {
+      "pathway": "visionary",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 50,
+      "losses": 42,
+      "draws": 0,
+      "rounds": 794,
+      "winRate": 0.5434782608695652,
+      "drawRate": 0,
+      "meanRounds": 8.630434782608695
+    },
+    {
+      "pathway": "sun",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 42,
+      "losses": 50,
+      "draws": 0,
+      "rounds": 756,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0,
+      "meanRounds": 8.217391304347826
+    },
+    {
+      "pathway": "tyrant",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 46,
+      "losses": 46,
+      "draws": 0,
+      "rounds": 716,
+      "winRate": 0.5,
+      "drawRate": 0,
+      "meanRounds": 7.782608695652174
+    },
+    {
+      "pathway": "white_tower",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 32,
+      "losses": 60,
+      "draws": 0,
+      "rounds": 662,
+      "winRate": 0.34782608695652173,
+      "drawRate": 0,
+      "meanRounds": 7.195652173913044
+    },
+    {
+      "pathway": "hanged_man",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 42,
+      "losses": 50,
+      "draws": 0,
+      "rounds": 730,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0,
+      "meanRounds": 7.934782608695652
+    },
+    {
+      "pathway": "darkness",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 46,
+      "losses": 46,
+      "draws": 0,
+      "rounds": 726,
+      "winRate": 0.5,
+      "drawRate": 0,
+      "meanRounds": 7.891304347826087
+    },
+    {
+      "pathway": "death",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 44,
+      "losses": 48,
+      "draws": 0,
+      "rounds": 708,
+      "winRate": 0.4782608695652174,
+      "drawRate": 0,
+      "meanRounds": 7.695652173913044
+    },
+    {
+      "pathway": "twilight_giant",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 46,
+      "losses": 46,
+      "draws": 0,
+      "rounds": 630,
+      "winRate": 0.5,
+      "drawRate": 0,
+      "meanRounds": 6.8478260869565215
+    },
+    {
+      "pathway": "red_priest",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 44,
+      "losses": 48,
+      "draws": 0,
+      "rounds": 700,
+      "winRate": 0.4782608695652174,
+      "drawRate": 0,
+      "meanRounds": 7.608695652173913
+    },
+    {
+      "pathway": "demoness",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 52,
+      "losses": 40,
+      "draws": 0,
+      "rounds": 732,
+      "winRate": 0.5652173913043478,
+      "drawRate": 0,
+      "meanRounds": 7.956521739130435
+    },
+    {
+      "pathway": "hermit",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 22,
+      "losses": 70,
+      "draws": 0,
+      "rounds": 700,
+      "winRate": 0.2391304347826087,
+      "drawRate": 0,
+      "meanRounds": 7.608695652173913
+    },
+    {
+      "pathway": "paragon",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 58,
+      "losses": 34,
+      "draws": 0,
+      "rounds": 778,
+      "winRate": 0.6304347826086957,
+      "drawRate": 0,
+      "meanRounds": 8.456521739130435
+    },
+    {
+      "pathway": "wheel_of_fortune",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 44,
+      "losses": 48,
+      "draws": 0,
+      "rounds": 800,
+      "winRate": 0.4782608695652174,
+      "drawRate": 0,
+      "meanRounds": 8.695652173913043
+    },
+    {
+      "pathway": "mother",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 44,
+      "losses": 48,
+      "draws": 0,
+      "rounds": 738,
+      "winRate": 0.4782608695652174,
+      "drawRate": 0,
+      "meanRounds": 8.021739130434783
+    },
+    {
+      "pathway": "moon",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 64,
+      "losses": 28,
+      "draws": 0,
+      "rounds": 1018,
+      "winRate": 0.6956521739130435,
+      "drawRate": 0,
+      "meanRounds": 11.065217391304348
+    },
+    {
+      "pathway": "abyss",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 52,
+      "losses": 40,
+      "draws": 0,
+      "rounds": 456,
+      "winRate": 0.5652173913043478,
+      "drawRate": 0,
+      "meanRounds": 4.956521739130435
+    },
+    {
+      "pathway": "chained",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 48,
+      "losses": 44,
+      "draws": 0,
+      "rounds": 712,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0,
+      "meanRounds": 7.739130434782608
+    },
+    {
+      "pathway": "black_emperor",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 46,
+      "losses": 46,
+      "draws": 0,
+      "rounds": 726,
+      "winRate": 0.5,
+      "drawRate": 0,
+      "meanRounds": 7.891304347826087
+    },
+    {
+      "pathway": "justiciar",
+      "sequence": 9,
+      "battles": 92,
+      "wins": 42,
+      "losses": 50,
+      "draws": 0,
+      "rounds": 714,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0,
+      "meanRounds": 7.760869565217392
+    },
+    {
+      "pathway": "fool",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 48,
+      "losses": 44,
+      "draws": 0,
+      "rounds": 484,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0,
+      "meanRounds": 5.260869565217392
+    },
+    {
+      "pathway": "door",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 40,
+      "losses": 52,
+      "draws": 0,
+      "rounds": 530,
+      "winRate": 0.43478260869565216,
+      "drawRate": 0,
+      "meanRounds": 5.760869565217392
+    },
+    {
+      "pathway": "error",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 52,
+      "losses": 40,
+      "draws": 0,
+      "rounds": 688,
+      "winRate": 0.5652173913043478,
+      "drawRate": 0,
+      "meanRounds": 7.478260869565218
+    },
+    {
+      "pathway": "visionary",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 48,
+      "losses": 40,
+      "draws": 4,
+      "rounds": 844,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0.043478260869565216,
+      "meanRounds": 9.173913043478262
+    },
+    {
+      "pathway": "sun",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 38,
+      "losses": 54,
+      "draws": 0,
+      "rounds": 500,
+      "winRate": 0.41304347826086957,
+      "drawRate": 0,
+      "meanRounds": 5.434782608695652
+    },
+    {
+      "pathway": "tyrant",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 54,
+      "losses": 38,
+      "draws": 0,
+      "rounds": 596,
+      "winRate": 0.5869565217391305,
+      "drawRate": 0,
+      "meanRounds": 6.478260869565218
+    },
+    {
+      "pathway": "white_tower",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 34,
+      "losses": 58,
+      "draws": 0,
+      "rounds": 394,
+      "winRate": 0.3695652173913043,
+      "drawRate": 0,
+      "meanRounds": 4.282608695652174
+    },
+    {
+      "pathway": "hanged_man",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 50,
+      "losses": 42,
+      "draws": 0,
+      "rounds": 574,
+      "winRate": 0.5434782608695652,
+      "drawRate": 0,
+      "meanRounds": 6.239130434782608
+    },
+    {
+      "pathway": "darkness",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 80,
+      "losses": 12,
+      "draws": 0,
+      "rounds": 590,
+      "winRate": 0.8695652173913043,
+      "drawRate": 0,
+      "meanRounds": 6.413043478260869
+    },
+    {
+      "pathway": "death",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 48,
+      "losses": 44,
+      "draws": 0,
+      "rounds": 822,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0,
+      "meanRounds": 8.934782608695652
+    },
+    {
+      "pathway": "twilight_giant",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 38,
+      "losses": 54,
+      "draws": 0,
+      "rounds": 478,
+      "winRate": 0.41304347826086957,
+      "drawRate": 0,
+      "meanRounds": 5.195652173913044
+    },
+    {
+      "pathway": "red_priest",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 32,
+      "losses": 60,
+      "draws": 0,
+      "rounds": 898,
+      "winRate": 0.34782608695652173,
+      "drawRate": 0,
+      "meanRounds": 9.76086956521739
+    },
+    {
+      "pathway": "demoness",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 50,
+      "losses": 42,
+      "draws": 0,
+      "rounds": 672,
+      "winRate": 0.5434782608695652,
+      "drawRate": 0,
+      "meanRounds": 7.304347826086956
+    },
+    {
+      "pathway": "hermit",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 60,
+      "losses": 32,
+      "draws": 0,
+      "rounds": 476,
+      "winRate": 0.6521739130434783,
+      "drawRate": 0,
+      "meanRounds": 5.173913043478261
+    },
+    {
+      "pathway": "paragon",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 52,
+      "losses": 40,
+      "draws": 0,
+      "rounds": 520,
+      "winRate": 0.5652173913043478,
+      "drawRate": 0,
+      "meanRounds": 5.6521739130434785
+    },
+    {
+      "pathway": "wheel_of_fortune",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 40,
+      "losses": 40,
+      "draws": 12,
+      "rounds": 1058,
+      "winRate": 0.43478260869565216,
+      "drawRate": 0.13043478260869565,
+      "meanRounds": 11.5
+    },
+    {
+      "pathway": "mother",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 48,
+      "losses": 44,
+      "draws": 0,
+      "rounds": 564,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0,
+      "meanRounds": 6.130434782608695
+    },
+    {
+      "pathway": "moon",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 34,
+      "losses": 58,
+      "draws": 0,
+      "rounds": 576,
+      "winRate": 0.3695652173913043,
+      "drawRate": 0,
+      "meanRounds": 6.260869565217392
+    },
+    {
+      "pathway": "abyss",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 48,
+      "losses": 44,
+      "draws": 0,
+      "rounds": 424,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0,
+      "meanRounds": 4.608695652173913
+    },
+    {
+      "pathway": "chained",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 44,
+      "losses": 48,
+      "draws": 0,
+      "rounds": 486,
+      "winRate": 0.4782608695652174,
+      "drawRate": 0,
+      "meanRounds": 5.282608695652174
+    },
+    {
+      "pathway": "black_emperor",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 24,
+      "losses": 68,
+      "draws": 0,
+      "rounds": 686,
+      "winRate": 0.2608695652173913,
+      "drawRate": 0,
+      "meanRounds": 7.456521739130435
+    },
+    {
+      "pathway": "justiciar",
+      "sequence": 8,
+      "battles": 92,
+      "wins": 42,
+      "losses": 50,
+      "draws": 0,
+      "rounds": 648,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0,
+      "meanRounds": 7.043478260869565
+    },
+    {
+      "pathway": "fool",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 44,
+      "losses": 48,
+      "draws": 0,
+      "rounds": 430,
+      "winRate": 0.4782608695652174,
+      "drawRate": 0,
+      "meanRounds": 4.673913043478261
+    },
+    {
+      "pathway": "door",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 52,
+      "losses": 40,
+      "draws": 0,
+      "rounds": 470,
+      "winRate": 0.5652173913043478,
+      "drawRate": 0,
+      "meanRounds": 5.108695652173913
+    },
+    {
+      "pathway": "error",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 56,
+      "losses": 36,
+      "draws": 0,
+      "rounds": 720,
+      "winRate": 0.6086956521739131,
+      "drawRate": 0,
+      "meanRounds": 7.826086956521739
+    },
+    {
+      "pathway": "visionary",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 44,
+      "losses": 48,
+      "draws": 0,
+      "rounds": 646,
+      "winRate": 0.4782608695652174,
+      "drawRate": 0,
+      "meanRounds": 7.021739130434782
+    },
+    {
+      "pathway": "sun",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 54,
+      "losses": 36,
+      "draws": 2,
+      "rounds": 806,
+      "winRate": 0.5869565217391305,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 8.76086956521739
+    },
+    {
+      "pathway": "tyrant",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 44,
+      "losses": 48,
+      "draws": 0,
+      "rounds": 736,
+      "winRate": 0.4782608695652174,
+      "drawRate": 0,
+      "meanRounds": 8
+    },
+    {
+      "pathway": "white_tower",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 40,
+      "losses": 52,
+      "draws": 0,
+      "rounds": 442,
+      "winRate": 0.43478260869565216,
+      "drawRate": 0,
+      "meanRounds": 4.804347826086956
+    },
+    {
+      "pathway": "hanged_man",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 42,
+      "losses": 48,
+      "draws": 2,
+      "rounds": 694,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 7.543478260869565
+    },
+    {
+      "pathway": "darkness",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 66,
+      "losses": 26,
+      "draws": 0,
+      "rounds": 648,
+      "winRate": 0.717391304347826,
+      "drawRate": 0,
+      "meanRounds": 7.043478260869565
+    },
+    {
+      "pathway": "death",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 22,
+      "losses": 68,
+      "draws": 2,
+      "rounds": 762,
+      "winRate": 0.2391304347826087,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 8.282608695652174
+    },
+    {
+      "pathway": "twilight_giant",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 48,
+      "losses": 44,
+      "draws": 0,
+      "rounds": 626,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0,
+      "meanRounds": 6.804347826086956
+    },
+    {
+      "pathway": "red_priest",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 54,
+      "losses": 38,
+      "draws": 0,
+      "rounds": 638,
+      "winRate": 0.5869565217391305,
+      "drawRate": 0,
+      "meanRounds": 6.934782608695652
+    },
+    {
+      "pathway": "demoness",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 44,
+      "losses": 48,
+      "draws": 0,
+      "rounds": 556,
+      "winRate": 0.4782608695652174,
+      "drawRate": 0,
+      "meanRounds": 6.043478260869565
+    },
+    {
+      "pathway": "hermit",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 40,
+      "losses": 52,
+      "draws": 0,
+      "rounds": 560,
+      "winRate": 0.43478260869565216,
+      "drawRate": 0,
+      "meanRounds": 6.086956521739131
+    },
+    {
+      "pathway": "paragon",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 42,
+      "losses": 48,
+      "draws": 2,
+      "rounds": 620,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 6.739130434782608
+    },
+    {
+      "pathway": "wheel_of_fortune",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 24,
+      "losses": 48,
+      "draws": 20,
+      "rounds": 1184,
+      "winRate": 0.2608695652173913,
+      "drawRate": 0.21739130434782608,
+      "meanRounds": 12.869565217391305
+    },
+    {
+      "pathway": "mother",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 52,
+      "losses": 40,
+      "draws": 0,
+      "rounds": 692,
+      "winRate": 0.5652173913043478,
+      "drawRate": 0,
+      "meanRounds": 7.521739130434782
+    },
+    {
+      "pathway": "moon",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 42,
+      "losses": 50,
+      "draws": 0,
+      "rounds": 508,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0,
+      "meanRounds": 5.521739130434782
+    },
+    {
+      "pathway": "abyss",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 42,
+      "losses": 50,
+      "draws": 0,
+      "rounds": 504,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0,
+      "meanRounds": 5.478260869565218
+    },
+    {
+      "pathway": "chained",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 46,
+      "losses": 46,
+      "draws": 0,
+      "rounds": 540,
+      "winRate": 0.5,
+      "drawRate": 0,
+      "meanRounds": 5.869565217391305
+    },
+    {
+      "pathway": "black_emperor",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 50,
+      "losses": 42,
+      "draws": 0,
+      "rounds": 704,
+      "winRate": 0.5434782608695652,
+      "drawRate": 0,
+      "meanRounds": 7.6521739130434785
+    },
+    {
+      "pathway": "justiciar",
+      "sequence": 7,
+      "battles": 92,
+      "wins": 48,
+      "losses": 40,
+      "draws": 4,
+      "rounds": 806,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0.043478260869565216,
+      "meanRounds": 8.76086956521739
+    },
+    {
+      "pathway": "fool",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 48,
+      "losses": 42,
+      "draws": 2,
+      "rounds": 544,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 5.913043478260869
+    },
+    {
+      "pathway": "door",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 62,
+      "losses": 30,
+      "draws": 0,
+      "rounds": 508,
+      "winRate": 0.6739130434782609,
+      "drawRate": 0,
+      "meanRounds": 5.521739130434782
+    },
+    {
+      "pathway": "error",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 48,
+      "losses": 44,
+      "draws": 0,
+      "rounds": 690,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0,
+      "meanRounds": 7.5
+    },
+    {
+      "pathway": "visionary",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 38,
+      "losses": 54,
+      "draws": 0,
+      "rounds": 586,
+      "winRate": 0.41304347826086957,
+      "drawRate": 0,
+      "meanRounds": 6.369565217391305
+    },
+    {
+      "pathway": "sun",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 38,
+      "losses": 54,
+      "draws": 0,
+      "rounds": 910,
+      "winRate": 0.41304347826086957,
+      "drawRate": 0,
+      "meanRounds": 9.891304347826088
+    },
+    {
+      "pathway": "tyrant",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 52,
+      "losses": 40,
+      "draws": 0,
+      "rounds": 658,
+      "winRate": 0.5652173913043478,
+      "drawRate": 0,
+      "meanRounds": 7.1521739130434785
+    },
+    {
+      "pathway": "white_tower",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 42,
+      "losses": 50,
+      "draws": 0,
+      "rounds": 450,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0,
+      "meanRounds": 4.891304347826087
+    },
+    {
+      "pathway": "hanged_man",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 42,
+      "losses": 50,
+      "draws": 0,
+      "rounds": 792,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0,
+      "meanRounds": 8.608695652173912
+    },
+    {
+      "pathway": "darkness",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 48,
+      "losses": 44,
+      "draws": 0,
+      "rounds": 672,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0,
+      "meanRounds": 7.304347826086956
+    },
+    {
+      "pathway": "death",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 26,
+      "losses": 66,
+      "draws": 0,
+      "rounds": 768,
+      "winRate": 0.2826086956521739,
+      "drawRate": 0,
+      "meanRounds": 8.347826086956522
+    },
+    {
+      "pathway": "twilight_giant",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 38,
+      "losses": 54,
+      "draws": 0,
+      "rounds": 548,
+      "winRate": 0.41304347826086957,
+      "drawRate": 0,
+      "meanRounds": 5.956521739130435
+    },
+    {
+      "pathway": "red_priest",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 52,
+      "losses": 40,
+      "draws": 0,
+      "rounds": 426,
+      "winRate": 0.5652173913043478,
+      "drawRate": 0,
+      "meanRounds": 4.630434782608695
+    },
+    {
+      "pathway": "demoness",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 44,
+      "losses": 48,
+      "draws": 0,
+      "rounds": 510,
+      "winRate": 0.4782608695652174,
+      "drawRate": 0,
+      "meanRounds": 5.543478260869565
+    },
+    {
+      "pathway": "hermit",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 50,
+      "losses": 42,
+      "draws": 0,
+      "rounds": 500,
+      "winRate": 0.5434782608695652,
+      "drawRate": 0,
+      "meanRounds": 5.434782608695652
+    },
+    {
+      "pathway": "paragon",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 36,
+      "losses": 56,
+      "draws": 0,
+      "rounds": 436,
+      "winRate": 0.391304347826087,
+      "drawRate": 0,
+      "meanRounds": 4.739130434782608
+    },
+    {
+      "pathway": "wheel_of_fortune",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 54,
+      "losses": 38,
+      "draws": 0,
+      "rounds": 542,
+      "winRate": 0.5869565217391305,
+      "drawRate": 0,
+      "meanRounds": 5.891304347826087
+    },
+    {
+      "pathway": "mother",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 52,
+      "losses": 40,
+      "draws": 0,
+      "rounds": 666,
+      "winRate": 0.5652173913043478,
+      "drawRate": 0,
+      "meanRounds": 7.239130434782608
+    },
+    {
+      "pathway": "moon",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 50,
+      "losses": 42,
+      "draws": 0,
+      "rounds": 624,
+      "winRate": 0.5434782608695652,
+      "drawRate": 0,
+      "meanRounds": 6.782608695652174
+    },
+    {
+      "pathway": "abyss",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 40,
+      "losses": 52,
+      "draws": 0,
+      "rounds": 484,
+      "winRate": 0.43478260869565216,
+      "drawRate": 0,
+      "meanRounds": 5.260869565217392
+    },
+    {
+      "pathway": "chained",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 62,
+      "losses": 30,
+      "draws": 0,
+      "rounds": 472,
+      "winRate": 0.6739130434782609,
+      "drawRate": 0,
+      "meanRounds": 5.130434782608695
+    },
+    {
+      "pathway": "black_emperor",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 56,
+      "losses": 36,
+      "draws": 0,
+      "rounds": 636,
+      "winRate": 0.6086956521739131,
+      "drawRate": 0,
+      "meanRounds": 6.913043478260869
+    },
+    {
+      "pathway": "justiciar",
+      "sequence": 6,
+      "battles": 92,
+      "wins": 32,
+      "losses": 58,
+      "draws": 2,
+      "rounds": 886,
+      "winRate": 0.34782608695652173,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 9.630434782608695
+    },
+    {
+      "pathway": "fool",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 56,
+      "losses": 34,
+      "draws": 2,
+      "rounds": 692,
+      "winRate": 0.6086956521739131,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 7.521739130434782
+    },
+    {
+      "pathway": "door",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 48,
+      "losses": 44,
+      "draws": 0,
+      "rounds": 458,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0,
+      "meanRounds": 4.978260869565218
+    },
+    {
+      "pathway": "error",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 44,
+      "losses": 48,
+      "draws": 0,
+      "rounds": 680,
+      "winRate": 0.4782608695652174,
+      "drawRate": 0,
+      "meanRounds": 7.391304347826087
+    },
+    {
+      "pathway": "visionary",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 34,
+      "losses": 58,
+      "draws": 0,
+      "rounds": 702,
+      "winRate": 0.3695652173913043,
+      "drawRate": 0,
+      "meanRounds": 7.630434782608695
+    },
+    {
+      "pathway": "sun",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 36,
+      "losses": 56,
+      "draws": 0,
+      "rounds": 658,
+      "winRate": 0.391304347826087,
+      "drawRate": 0,
+      "meanRounds": 7.1521739130434785
+    },
+    {
+      "pathway": "tyrant",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 46,
+      "losses": 46,
+      "draws": 0,
+      "rounds": 580,
+      "winRate": 0.5,
+      "drawRate": 0,
+      "meanRounds": 6.304347826086956
+    },
+    {
+      "pathway": "white_tower",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 50,
+      "losses": 42,
+      "draws": 0,
+      "rounds": 574,
+      "winRate": 0.5434782608695652,
+      "drawRate": 0,
+      "meanRounds": 6.239130434782608
+    },
+    {
+      "pathway": "hanged_man",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 54,
+      "losses": 38,
+      "draws": 0,
+      "rounds": 726,
+      "winRate": 0.5869565217391305,
+      "drawRate": 0,
+      "meanRounds": 7.891304347826087
+    },
+    {
+      "pathway": "darkness",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 52,
+      "losses": 40,
+      "draws": 0,
+      "rounds": 710,
+      "winRate": 0.5652173913043478,
+      "drawRate": 0,
+      "meanRounds": 7.717391304347826
+    },
+    {
+      "pathway": "death",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 26,
+      "losses": 64,
+      "draws": 2,
+      "rounds": 584,
+      "winRate": 0.2826086956521739,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 6.3478260869565215
+    },
+    {
+      "pathway": "twilight_giant",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 56,
+      "losses": 36,
+      "draws": 0,
+      "rounds": 704,
+      "winRate": 0.6086956521739131,
+      "drawRate": 0,
+      "meanRounds": 7.6521739130434785
+    },
+    {
+      "pathway": "red_priest",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 44,
+      "losses": 48,
+      "draws": 0,
+      "rounds": 476,
+      "winRate": 0.4782608695652174,
+      "drawRate": 0,
+      "meanRounds": 5.173913043478261
+    },
+    {
+      "pathway": "demoness",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 42,
+      "losses": 50,
+      "draws": 0,
+      "rounds": 554,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0,
+      "meanRounds": 6.021739130434782
+    },
+    {
+      "pathway": "hermit",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 50,
+      "losses": 42,
+      "draws": 0,
+      "rounds": 586,
+      "winRate": 0.5434782608695652,
+      "drawRate": 0,
+      "meanRounds": 6.369565217391305
+    },
+    {
+      "pathway": "paragon",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 22,
+      "losses": 70,
+      "draws": 0,
+      "rounds": 506,
+      "winRate": 0.2391304347826087,
+      "drawRate": 0,
+      "meanRounds": 5.5
+    },
+    {
+      "pathway": "wheel_of_fortune",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 64,
+      "losses": 28,
+      "draws": 0,
+      "rounds": 546,
+      "winRate": 0.6956521739130435,
+      "drawRate": 0,
+      "meanRounds": 5.934782608695652
+    },
+    {
+      "pathway": "mother",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 42,
+      "losses": 50,
+      "draws": 0,
+      "rounds": 780,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0,
+      "meanRounds": 8.478260869565217
+    },
+    {
+      "pathway": "moon",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 42,
+      "losses": 50,
+      "draws": 0,
+      "rounds": 712,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0,
+      "meanRounds": 7.739130434782608
+    },
+    {
+      "pathway": "abyss",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 42,
+      "losses": 50,
+      "draws": 0,
+      "rounds": 612,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0,
+      "meanRounds": 6.6521739130434785
+    },
+    {
+      "pathway": "chained",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 50,
+      "losses": 42,
+      "draws": 0,
+      "rounds": 504,
+      "winRate": 0.5434782608695652,
+      "drawRate": 0,
+      "meanRounds": 5.478260869565218
+    },
+    {
+      "pathway": "black_emperor",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 64,
+      "losses": 28,
+      "draws": 0,
+      "rounds": 578,
+      "winRate": 0.6956521739130435,
+      "drawRate": 0,
+      "meanRounds": 6.282608695652174
+    },
+    {
+      "pathway": "justiciar",
+      "sequence": 5,
+      "battles": 92,
+      "wins": 46,
+      "losses": 46,
+      "draws": 0,
+      "rounds": 718,
+      "winRate": 0.5,
+      "drawRate": 0,
+      "meanRounds": 7.804347826086956
+    },
+    {
+      "pathway": "fool",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 64,
+      "losses": 28,
+      "draws": 0,
+      "rounds": 688,
+      "winRate": 0.6956521739130435,
+      "drawRate": 0,
+      "meanRounds": 7.478260869565218
+    },
+    {
+      "pathway": "door",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 40,
+      "losses": 52,
+      "draws": 0,
+      "rounds": 526,
+      "winRate": 0.43478260869565216,
+      "drawRate": 0,
+      "meanRounds": 5.717391304347826
+    },
+    {
+      "pathway": "error",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 40,
+      "losses": 36,
+      "draws": 16,
+      "rounds": 1074,
+      "winRate": 0.43478260869565216,
+      "drawRate": 0.17391304347826086,
+      "meanRounds": 11.673913043478262
+    },
+    {
+      "pathway": "visionary",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 30,
+      "losses": 62,
+      "draws": 0,
+      "rounds": 766,
+      "winRate": 0.32608695652173914,
+      "drawRate": 0,
+      "meanRounds": 8.326086956521738
+    },
+    {
+      "pathway": "sun",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 42,
+      "losses": 50,
+      "draws": 0,
+      "rounds": 712,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0,
+      "meanRounds": 7.739130434782608
+    },
+    {
+      "pathway": "tyrant",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 34,
+      "losses": 58,
+      "draws": 0,
+      "rounds": 598,
+      "winRate": 0.3695652173913043,
+      "drawRate": 0,
+      "meanRounds": 6.5
+    },
+    {
+      "pathway": "white_tower",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 50,
+      "losses": 42,
+      "draws": 0,
+      "rounds": 602,
+      "winRate": 0.5434782608695652,
+      "drawRate": 0,
+      "meanRounds": 6.543478260869565
+    },
+    {
+      "pathway": "hanged_man",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 36,
+      "losses": 54,
+      "draws": 2,
+      "rounds": 764,
+      "winRate": 0.391304347826087,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 8.304347826086957
+    },
+    {
+      "pathway": "darkness",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 56,
+      "losses": 36,
+      "draws": 0,
+      "rounds": 802,
+      "winRate": 0.6086956521739131,
+      "drawRate": 0,
+      "meanRounds": 8.717391304347826
+    },
+    {
+      "pathway": "death",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 36,
+      "losses": 56,
+      "draws": 0,
+      "rounds": 764,
+      "winRate": 0.391304347826087,
+      "drawRate": 0,
+      "meanRounds": 8.304347826086957
+    },
+    {
+      "pathway": "twilight_giant",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 48,
+      "losses": 36,
+      "draws": 8,
+      "rounds": 974,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0.08695652173913043,
+      "meanRounds": 10.58695652173913
+    },
+    {
+      "pathway": "red_priest",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 52,
+      "losses": 40,
+      "draws": 0,
+      "rounds": 410,
+      "winRate": 0.5652173913043478,
+      "drawRate": 0,
+      "meanRounds": 4.456521739130435
+    },
+    {
+      "pathway": "demoness",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 54,
+      "losses": 38,
+      "draws": 0,
+      "rounds": 710,
+      "winRate": 0.5869565217391305,
+      "drawRate": 0,
+      "meanRounds": 7.717391304347826
+    },
+    {
+      "pathway": "hermit",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 34,
+      "losses": 58,
+      "draws": 0,
+      "rounds": 580,
+      "winRate": 0.3695652173913043,
+      "drawRate": 0,
+      "meanRounds": 6.304347826086956
+    },
+    {
+      "pathway": "paragon",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 34,
+      "losses": 58,
+      "draws": 0,
+      "rounds": 682,
+      "winRate": 0.3695652173913043,
+      "drawRate": 0,
+      "meanRounds": 7.413043478260869
+    },
+    {
+      "pathway": "wheel_of_fortune",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 60,
+      "losses": 32,
+      "draws": 0,
+      "rounds": 782,
+      "winRate": 0.6521739130434783,
+      "drawRate": 0,
+      "meanRounds": 8.5
+    },
+    {
+      "pathway": "mother",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 40,
+      "losses": 44,
+      "draws": 8,
+      "rounds": 878,
+      "winRate": 0.43478260869565216,
+      "drawRate": 0.08695652173913043,
+      "meanRounds": 9.543478260869565
+    },
+    {
+      "pathway": "moon",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 36,
+      "losses": 56,
+      "draws": 0,
+      "rounds": 778,
+      "winRate": 0.391304347826087,
+      "drawRate": 0,
+      "meanRounds": 8.456521739130435
+    },
+    {
+      "pathway": "abyss",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 46,
+      "losses": 46,
+      "draws": 0,
+      "rounds": 688,
+      "winRate": 0.5,
+      "drawRate": 0,
+      "meanRounds": 7.478260869565218
+    },
+    {
+      "pathway": "chained",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 48,
+      "losses": 44,
+      "draws": 0,
+      "rounds": 464,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0,
+      "meanRounds": 5.043478260869565
+    },
+    {
+      "pathway": "black_emperor",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 60,
+      "losses": 32,
+      "draws": 0,
+      "rounds": 686,
+      "winRate": 0.6521739130434783,
+      "drawRate": 0,
+      "meanRounds": 7.456521739130435
+    },
+    {
+      "pathway": "justiciar",
+      "sequence": 4,
+      "battles": 92,
+      "wins": 54,
+      "losses": 36,
+      "draws": 2,
+      "rounds": 768,
+      "winRate": 0.5869565217391305,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 8.347826086956522
+    },
+    {
+      "pathway": "fool",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 52,
+      "losses": 38,
+      "draws": 2,
+      "rounds": 718,
+      "winRate": 0.5652173913043478,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 7.804347826086956
+    },
+    {
+      "pathway": "door",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 52,
+      "losses": 38,
+      "draws": 2,
+      "rounds": 566,
+      "winRate": 0.5652173913043478,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 6.1521739130434785
+    },
+    {
+      "pathway": "error",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 32,
+      "losses": 42,
+      "draws": 18,
+      "rounds": 1024,
+      "winRate": 0.34782608695652173,
+      "drawRate": 0.1956521739130435,
+      "meanRounds": 11.130434782608695
+    },
+    {
+      "pathway": "visionary",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 24,
+      "losses": 66,
+      "draws": 2,
+      "rounds": 858,
+      "winRate": 0.2608695652173913,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 9.326086956521738
+    },
+    {
+      "pathway": "sun",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 36,
+      "losses": 56,
+      "draws": 0,
+      "rounds": 646,
+      "winRate": 0.391304347826087,
+      "drawRate": 0,
+      "meanRounds": 7.021739130434782
+    },
+    {
+      "pathway": "tyrant",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 48,
+      "losses": 44,
+      "draws": 0,
+      "rounds": 696,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0,
+      "meanRounds": 7.565217391304348
+    },
+    {
+      "pathway": "white_tower",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 40,
+      "losses": 52,
+      "draws": 0,
+      "rounds": 506,
+      "winRate": 0.43478260869565216,
+      "drawRate": 0,
+      "meanRounds": 5.5
+    },
+    {
+      "pathway": "hanged_man",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 36,
+      "losses": 56,
+      "draws": 0,
+      "rounds": 922,
+      "winRate": 0.391304347826087,
+      "drawRate": 0,
+      "meanRounds": 10.021739130434783
+    },
+    {
+      "pathway": "darkness",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 50,
+      "losses": 40,
+      "draws": 2,
+      "rounds": 876,
+      "winRate": 0.5434782608695652,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 9.521739130434783
+    },
+    {
+      "pathway": "death",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 42,
+      "losses": 48,
+      "draws": 2,
+      "rounds": 874,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 9.5
+    },
+    {
+      "pathway": "twilight_giant",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 54,
+      "losses": 26,
+      "draws": 12,
+      "rounds": 1028,
+      "winRate": 0.5869565217391305,
+      "drawRate": 0.13043478260869565,
+      "meanRounds": 11.173913043478262
+    },
+    {
+      "pathway": "red_priest",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 44,
+      "losses": 48,
+      "draws": 0,
+      "rounds": 590,
+      "winRate": 0.4782608695652174,
+      "drawRate": 0,
+      "meanRounds": 6.413043478260869
+    },
+    {
+      "pathway": "demoness",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 52,
+      "losses": 40,
+      "draws": 0,
+      "rounds": 708,
+      "winRate": 0.5652173913043478,
+      "drawRate": 0,
+      "meanRounds": 7.695652173913044
+    },
+    {
+      "pathway": "hermit",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 46,
+      "losses": 46,
+      "draws": 0,
+      "rounds": 626,
+      "winRate": 0.5,
+      "drawRate": 0,
+      "meanRounds": 6.804347826086956
+    },
+    {
+      "pathway": "paragon",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 44,
+      "losses": 48,
+      "draws": 0,
+      "rounds": 592,
+      "winRate": 0.4782608695652174,
+      "drawRate": 0,
+      "meanRounds": 6.434782608695652
+    },
+    {
+      "pathway": "wheel_of_fortune",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 54,
+      "losses": 38,
+      "draws": 0,
+      "rounds": 852,
+      "winRate": 0.5869565217391305,
+      "drawRate": 0,
+      "meanRounds": 9.26086956521739
+    },
+    {
+      "pathway": "mother",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 46,
+      "losses": 32,
+      "draws": 14,
+      "rounds": 1054,
+      "winRate": 0.5,
+      "drawRate": 0.15217391304347827,
+      "meanRounds": 11.456521739130435
+    },
+    {
+      "pathway": "moon",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 40,
+      "losses": 46,
+      "draws": 6,
+      "rounds": 878,
+      "winRate": 0.43478260869565216,
+      "drawRate": 0.06521739130434782,
+      "meanRounds": 9.543478260869565
+    },
+    {
+      "pathway": "abyss",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 48,
+      "losses": 44,
+      "draws": 0,
+      "rounds": 796,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0,
+      "meanRounds": 8.652173913043478
+    },
+    {
+      "pathway": "chained",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 52,
+      "losses": 40,
+      "draws": 0,
+      "rounds": 600,
+      "winRate": 0.5652173913043478,
+      "drawRate": 0,
+      "meanRounds": 6.521739130434782
+    },
+    {
+      "pathway": "black_emperor",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 50,
+      "losses": 42,
+      "draws": 0,
+      "rounds": 688,
+      "winRate": 0.5434782608695652,
+      "drawRate": 0,
+      "meanRounds": 7.478260869565218
+    },
+    {
+      "pathway": "justiciar",
+      "sequence": 3,
+      "battles": 92,
+      "wins": 38,
+      "losses": 50,
+      "draws": 4,
+      "rounds": 990,
+      "winRate": 0.41304347826086957,
+      "drawRate": 0.043478260869565216,
+      "meanRounds": 10.76086956521739
+    },
+    {
+      "pathway": "fool",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 66,
+      "losses": 24,
+      "draws": 2,
+      "rounds": 746,
+      "winRate": 0.717391304347826,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 8.108695652173912
+    },
+    {
+      "pathway": "door",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 48,
+      "losses": 42,
+      "draws": 2,
+      "rounds": 778,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 8.456521739130435
+    },
+    {
+      "pathway": "error",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 40,
+      "losses": 38,
+      "draws": 14,
+      "rounds": 1080,
+      "winRate": 0.43478260869565216,
+      "drawRate": 0.15217391304347827,
+      "meanRounds": 11.73913043478261
+    },
+    {
+      "pathway": "visionary",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 26,
+      "losses": 64,
+      "draws": 2,
+      "rounds": 972,
+      "winRate": 0.2826086956521739,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 10.565217391304348
+    },
+    {
+      "pathway": "sun",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 46,
+      "losses": 46,
+      "draws": 0,
+      "rounds": 796,
+      "winRate": 0.5,
+      "drawRate": 0,
+      "meanRounds": 8.652173913043478
+    },
+    {
+      "pathway": "tyrant",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 48,
+      "losses": 44,
+      "draws": 0,
+      "rounds": 748,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0,
+      "meanRounds": 8.130434782608695
+    },
+    {
+      "pathway": "white_tower",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 48,
+      "losses": 44,
+      "draws": 0,
+      "rounds": 650,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0,
+      "meanRounds": 7.065217391304348
+    },
+    {
+      "pathway": "hanged_man",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 36,
+      "losses": 50,
+      "draws": 6,
+      "rounds": 948,
+      "winRate": 0.391304347826087,
+      "drawRate": 0.06521739130434782,
+      "meanRounds": 10.304347826086957
+    },
+    {
+      "pathway": "darkness",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 54,
+      "losses": 36,
+      "draws": 2,
+      "rounds": 848,
+      "winRate": 0.5869565217391305,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 9.217391304347826
+    },
+    {
+      "pathway": "death",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 28,
+      "losses": 64,
+      "draws": 0,
+      "rounds": 874,
+      "winRate": 0.30434782608695654,
+      "drawRate": 0,
+      "meanRounds": 9.5
+    },
+    {
+      "pathway": "twilight_giant",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 64,
+      "losses": 24,
+      "draws": 4,
+      "rounds": 992,
+      "winRate": 0.6956521739130435,
+      "drawRate": 0.043478260869565216,
+      "meanRounds": 10.782608695652174
+    },
+    {
+      "pathway": "red_priest",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 42,
+      "losses": 50,
+      "draws": 0,
+      "rounds": 646,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0,
+      "meanRounds": 7.021739130434782
+    },
+    {
+      "pathway": "demoness",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 44,
+      "losses": 48,
+      "draws": 0,
+      "rounds": 630,
+      "winRate": 0.4782608695652174,
+      "drawRate": 0,
+      "meanRounds": 6.8478260869565215
+    },
+    {
+      "pathway": "hermit",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 36,
+      "losses": 56,
+      "draws": 0,
+      "rounds": 684,
+      "winRate": 0.391304347826087,
+      "drawRate": 0,
+      "meanRounds": 7.434782608695652
+    },
+    {
+      "pathway": "paragon",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 38,
+      "losses": 54,
+      "draws": 0,
+      "rounds": 782,
+      "winRate": 0.41304347826086957,
+      "drawRate": 0,
+      "meanRounds": 8.5
+    },
+    {
+      "pathway": "wheel_of_fortune",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 56,
+      "losses": 30,
+      "draws": 6,
+      "rounds": 1034,
+      "winRate": 0.6086956521739131,
+      "drawRate": 0.06521739130434782,
+      "meanRounds": 11.23913043478261
+    },
+    {
+      "pathway": "mother",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 38,
+      "losses": 26,
+      "draws": 28,
+      "rounds": 1142,
+      "winRate": 0.41304347826086957,
+      "drawRate": 0.30434782608695654,
+      "meanRounds": 12.41304347826087
+    },
+    {
+      "pathway": "moon",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 22,
+      "losses": 66,
+      "draws": 4,
+      "rounds": 962,
+      "winRate": 0.2391304347826087,
+      "drawRate": 0.043478260869565216,
+      "meanRounds": 10.456521739130435
+    },
+    {
+      "pathway": "abyss",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 46,
+      "losses": 46,
+      "draws": 0,
+      "rounds": 760,
+      "winRate": 0.5,
+      "drawRate": 0,
+      "meanRounds": 8.26086956521739
+    },
+    {
+      "pathway": "chained",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 48,
+      "losses": 44,
+      "draws": 0,
+      "rounds": 594,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0,
+      "meanRounds": 6.456521739130435
+    },
+    {
+      "pathway": "black_emperor",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 56,
+      "losses": 34,
+      "draws": 2,
+      "rounds": 772,
+      "winRate": 0.6086956521739131,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 8.391304347826088
+    },
+    {
+      "pathway": "justiciar",
+      "sequence": 2,
+      "battles": 92,
+      "wins": 38,
+      "losses": 38,
+      "draws": 16,
+      "rounds": 1070,
+      "winRate": 0.41304347826086957,
+      "drawRate": 0.17391304347826086,
+      "meanRounds": 11.630434782608695
+    },
+    {
+      "pathway": "fool",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 74,
+      "losses": 16,
+      "draws": 2,
+      "rounds": 682,
+      "winRate": 0.8043478260869565,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 7.413043478260869
+    },
+    {
+      "pathway": "door",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 34,
+      "losses": 58,
+      "draws": 0,
+      "rounds": 654,
+      "winRate": 0.3695652173913043,
+      "drawRate": 0,
+      "meanRounds": 7.108695652173913
+    },
+    {
+      "pathway": "error",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 40,
+      "losses": 28,
+      "draws": 24,
+      "rounds": 1126,
+      "winRate": 0.43478260869565216,
+      "drawRate": 0.2608695652173913,
+      "meanRounds": 12.23913043478261
+    },
+    {
+      "pathway": "visionary",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 46,
+      "losses": 42,
+      "draws": 4,
+      "rounds": 886,
+      "winRate": 0.5,
+      "drawRate": 0.043478260869565216,
+      "meanRounds": 9.630434782608695
+    },
+    {
+      "pathway": "sun",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 48,
+      "losses": 44,
+      "draws": 0,
+      "rounds": 778,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0,
+      "meanRounds": 8.456521739130435
+    },
+    {
+      "pathway": "tyrant",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 42,
+      "losses": 50,
+      "draws": 0,
+      "rounds": 838,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0,
+      "meanRounds": 9.108695652173912
+    },
+    {
+      "pathway": "white_tower",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 44,
+      "losses": 48,
+      "draws": 0,
+      "rounds": 806,
+      "winRate": 0.4782608695652174,
+      "drawRate": 0,
+      "meanRounds": 8.76086956521739
+    },
+    {
+      "pathway": "hanged_man",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 30,
+      "losses": 48,
+      "draws": 14,
+      "rounds": 1062,
+      "winRate": 0.32608695652173914,
+      "drawRate": 0.15217391304347827,
+      "meanRounds": 11.543478260869565
+    },
+    {
+      "pathway": "darkness",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 54,
+      "losses": 36,
+      "draws": 2,
+      "rounds": 944,
+      "winRate": 0.5869565217391305,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 10.26086956521739
+    },
+    {
+      "pathway": "death",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 36,
+      "losses": 56,
+      "draws": 0,
+      "rounds": 962,
+      "winRate": 0.391304347826087,
+      "drawRate": 0,
+      "meanRounds": 10.456521739130435
+    },
+    {
+      "pathway": "twilight_giant",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 46,
+      "losses": 40,
+      "draws": 6,
+      "rounds": 960,
+      "winRate": 0.5,
+      "drawRate": 0.06521739130434782,
+      "meanRounds": 10.434782608695652
+    },
+    {
+      "pathway": "red_priest",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 52,
+      "losses": 40,
+      "draws": 0,
+      "rounds": 616,
+      "winRate": 0.5652173913043478,
+      "drawRate": 0,
+      "meanRounds": 6.695652173913044
+    },
+    {
+      "pathway": "demoness",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 38,
+      "losses": 54,
+      "draws": 0,
+      "rounds": 674,
+      "winRate": 0.41304347826086957,
+      "drawRate": 0,
+      "meanRounds": 7.326086956521739
+    },
+    {
+      "pathway": "hermit",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 34,
+      "losses": 56,
+      "draws": 2,
+      "rounds": 836,
+      "winRate": 0.3695652173913043,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 9.08695652173913
+    },
+    {
+      "pathway": "paragon",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 42,
+      "losses": 50,
+      "draws": 0,
+      "rounds": 776,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0,
+      "meanRounds": 8.434782608695652
+    },
+    {
+      "pathway": "wheel_of_fortune",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 58,
+      "losses": 24,
+      "draws": 10,
+      "rounds": 1130,
+      "winRate": 0.6304347826086957,
+      "drawRate": 0.10869565217391304,
+      "meanRounds": 12.282608695652174
+    },
+    {
+      "pathway": "mother",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 44,
+      "losses": 36,
+      "draws": 12,
+      "rounds": 1028,
+      "winRate": 0.4782608695652174,
+      "drawRate": 0.13043478260869565,
+      "meanRounds": 11.173913043478262
+    },
+    {
+      "pathway": "moon",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 36,
+      "losses": 54,
+      "draws": 2,
+      "rounds": 974,
+      "winRate": 0.391304347826087,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 10.58695652173913
+    },
+    {
+      "pathway": "abyss",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 30,
+      "losses": 62,
+      "draws": 0,
+      "rounds": 768,
+      "winRate": 0.32608695652173914,
+      "drawRate": 0,
+      "meanRounds": 8.347826086956522
+    },
+    {
+      "pathway": "chained",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 48,
+      "losses": 44,
+      "draws": 0,
+      "rounds": 684,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0,
+      "meanRounds": 7.434782608695652
+    },
+    {
+      "pathway": "black_emperor",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 48,
+      "losses": 44,
+      "draws": 0,
+      "rounds": 776,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0,
+      "meanRounds": 8.434782608695652
+    },
+    {
+      "pathway": "justiciar",
+      "sequence": 1,
+      "battles": 92,
+      "wins": 42,
+      "losses": 36,
+      "draws": 14,
+      "rounds": 1044,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0.15217391304347827,
+      "meanRounds": 11.347826086956522
+    },
+    {
+      "pathway": "fool",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 62,
+      "losses": 30,
+      "draws": 0,
+      "rounds": 644,
+      "winRate": 0.6739130434782609,
+      "drawRate": 0,
+      "meanRounds": 7
+    },
+    {
+      "pathway": "door",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 38,
+      "losses": 54,
+      "draws": 0,
+      "rounds": 556,
+      "winRate": 0.41304347826086957,
+      "drawRate": 0,
+      "meanRounds": 6.043478260869565
+    },
+    {
+      "pathway": "error",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 58,
+      "losses": 34,
+      "draws": 0,
+      "rounds": 668,
+      "winRate": 0.6304347826086957,
+      "drawRate": 0,
+      "meanRounds": 7.260869565217392
+    },
+    {
+      "pathway": "visionary",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 38,
+      "losses": 48,
+      "draws": 6,
+      "rounds": 744,
+      "winRate": 0.41304347826086957,
+      "drawRate": 0.06521739130434782,
+      "meanRounds": 8.08695652173913
+    },
+    {
+      "pathway": "sun",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 52,
+      "losses": 40,
+      "draws": 0,
+      "rounds": 708,
+      "winRate": 0.5652173913043478,
+      "drawRate": 0,
+      "meanRounds": 7.695652173913044
+    },
+    {
+      "pathway": "tyrant",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 36,
+      "losses": 56,
+      "draws": 0,
+      "rounds": 770,
+      "winRate": 0.391304347826087,
+      "drawRate": 0,
+      "meanRounds": 8.369565217391305
+    },
+    {
+      "pathway": "white_tower",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 56,
+      "losses": 36,
+      "draws": 0,
+      "rounds": 572,
+      "winRate": 0.6086956521739131,
+      "drawRate": 0,
+      "meanRounds": 6.217391304347826
+    },
+    {
+      "pathway": "hanged_man",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 36,
+      "losses": 56,
+      "draws": 0,
+      "rounds": 990,
+      "winRate": 0.391304347826087,
+      "drawRate": 0,
+      "meanRounds": 10.76086956521739
+    },
+    {
+      "pathway": "darkness",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 48,
+      "losses": 40,
+      "draws": 4,
+      "rounds": 852,
+      "winRate": 0.5217391304347826,
+      "drawRate": 0.043478260869565216,
+      "meanRounds": 9.26086956521739
+    },
+    {
+      "pathway": "death",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 42,
+      "losses": 38,
+      "draws": 12,
+      "rounds": 1088,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0.13043478260869565,
+      "meanRounds": 11.826086956521738
+    },
+    {
+      "pathway": "twilight_giant",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 42,
+      "losses": 48,
+      "draws": 2,
+      "rounds": 858,
+      "winRate": 0.45652173913043476,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 9.326086956521738
+    },
+    {
+      "pathway": "red_priest",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 40,
+      "losses": 52,
+      "draws": 0,
+      "rounds": 578,
+      "winRate": 0.43478260869565216,
+      "drawRate": 0,
+      "meanRounds": 6.282608695652174
+    },
+    {
+      "pathway": "demoness",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 50,
+      "losses": 42,
+      "draws": 0,
+      "rounds": 734,
+      "winRate": 0.5434782608695652,
+      "drawRate": 0,
+      "meanRounds": 7.978260869565218
+    },
+    {
+      "pathway": "hermit",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 44,
+      "losses": 46,
+      "draws": 2,
+      "rounds": 826,
+      "winRate": 0.4782608695652174,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 8.978260869565217
+    },
+    {
+      "pathway": "paragon",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 32,
+      "losses": 60,
+      "draws": 0,
+      "rounds": 664,
+      "winRate": 0.34782608695652173,
+      "drawRate": 0,
+      "meanRounds": 7.217391304347826
+    },
+    {
+      "pathway": "wheel_of_fortune",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 72,
+      "losses": 20,
+      "draws": 0,
+      "rounds": 922,
+      "winRate": 0.782608695652174,
+      "drawRate": 0,
+      "meanRounds": 10.021739130434783
+    },
+    {
+      "pathway": "mother",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 52,
+      "losses": 40,
+      "draws": 0,
+      "rounds": 856,
+      "winRate": 0.5652173913043478,
+      "drawRate": 0,
+      "meanRounds": 9.304347826086957
+    },
+    {
+      "pathway": "moon",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 34,
+      "losses": 56,
+      "draws": 2,
+      "rounds": 920,
+      "winRate": 0.3695652173913043,
+      "drawRate": 0.021739130434782608,
+      "meanRounds": 10
+    },
+    {
+      "pathway": "abyss",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 38,
+      "losses": 54,
+      "draws": 0,
+      "rounds": 724,
+      "winRate": 0.41304347826086957,
+      "drawRate": 0,
+      "meanRounds": 7.869565217391305
+    },
+    {
+      "pathway": "chained",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 40,
+      "losses": 52,
+      "draws": 0,
+      "rounds": 452,
+      "winRate": 0.43478260869565216,
+      "drawRate": 0,
+      "meanRounds": 4.913043478260869
+    },
+    {
+      "pathway": "black_emperor",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 44,
+      "losses": 48,
+      "draws": 0,
+      "rounds": 742,
+      "winRate": 0.4782608695652174,
+      "drawRate": 0,
+      "meanRounds": 8.065217391304348
+    },
+    {
+      "pathway": "justiciar",
+      "sequence": 0,
+      "battles": 92,
+      "wins": 40,
+      "losses": 44,
+      "draws": 8,
+      "rounds": 984,
+      "winRate": 0.43478260869565216,
+      "drawRate": 0.08695652173913043,
+      "meanRounds": 10.695652173913043
+    }
+  ]
+}

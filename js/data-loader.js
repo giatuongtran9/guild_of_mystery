@@ -51,7 +51,7 @@
   function validateRuntimeManifest(manifest) {
     if (!manifest || manifest.schema !== 'guild.runtime-manifest.v1') throw new Error('Runtime manifest has an invalid schema');
     if (typeof manifest.version !== 'string' || !/^[a-f0-9]{16}$/.test(manifest.version) || manifest.bundle !== `data/runtime/data.${manifest.version}.json`) throw new Error('Runtime manifest has an invalid versioned bundle path');
-    const scripts = ['paths', 'v15', 'generate', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'];
+    const scripts = ['paths', 'v15', 'generate', 'traits', 'pathway-assets', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'];
     if (!manifest.scriptVersions || typeof manifest.scriptVersions !== 'object' || Object.keys(manifest.scriptVersions).length !== scripts.length || scripts.some(name => typeof manifest.scriptVersions[`js/${name}.js`] !== 'string' || !/^[a-f0-9]{16}$/.test(manifest.scriptVersions[`js/${name}.js`]))) throw new Error('Runtime manifest has invalid script versions');
     if (manifest.serviceWorkerVersion !== undefined && !/^[a-f0-9]{16}$/.test(manifest.serviceWorkerVersion)) throw new Error('Runtime manifest has an invalid service worker version');
   }
@@ -61,7 +61,7 @@
     validateManifest(bundle.manifest);
     if (!bundle.pathwayFiles || Object.keys(bundle.pathwayFiles).length !== 22) throw new Error('Runtime data bundle must contain all 22 pathways');
     for (const key of bundle.manifest.order) validatePathway(bundle.pathwayFiles[key], key);
-    for (const name of ['items', 'enemies', 'contracts', 'formulas', 'balance', 'campaign']) {
+    for (const name of ['items', 'enemies', 'contracts', 'formulas', 'balance', 'campaign', 'traits']) {
       if (!bundle.other?.[name] || typeof bundle.other[name] !== 'object') throw new Error(`Runtime data bundle is missing ${name}`);
     }
     if (bundle.other.campaign.schema !== 'campaign.chapter.v1' || !Array.isArray(bundle.other.campaign.missions) || bundle.other.campaign.missions.length !== 5) throw new Error('data/campaign.json must contain a five-mission opening chapter');
@@ -113,6 +113,7 @@
     return {
       type: a.kind || 'passive', id: a.id, effectId: a.id, name: a.name, text: a.description || '',
       costSP: Number(a.spCost) || 0, cooldown: a.cooldown ?? 0, tag: a.tag ?? null,
+      utilityStrike: Number(a.utilityStrike) || 0,
       damage, effects
     };
   }
@@ -201,7 +202,7 @@
       OCCUPATIONS: enemyData.OCCUPATIONS || enemyData.human_enemy_occupations || []
     };
 
-    return { pathways, items: other.items, enemies: enemyData, contracts: other.contracts, campaign: other.campaign, formulas: other.formulas, balance: other.balance, system, characters, runtimeAssets, runtimeManifest };
+    return { pathways, traits: other.traits, items: other.items, enemies: enemyData, contracts: other.contracts, campaign: other.campaign, formulas: other.formulas, balance: other.balance, system, characters, runtimeAssets, runtimeManifest };
   }
 
   window.G9DataLoader = { load };

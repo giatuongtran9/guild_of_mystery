@@ -31,7 +31,7 @@ function mythicalNote(owner,target,state,lines,text,type='status',extra={}){
  lines?.push({text,kind:type==='damage'?'quirk':'status'});
  emitCombatEvent(state,{round:state?.currentRound||1,type,subtype:'mythical_authority',actorId:owner?.id,actorName:owner?.name,actorTeam:teamOf(owner,state),targetId:target?.id,targetName:target?.name,targetTeam:target?teamOf(target,state):undefined,text,...extra});
 }
-function mythicalHeal(owner,target,amount,state,lines){const restored=recoverHP(target,amount);if(restored>0)mythicalNote(owner,target,state,lines,`${owner.name}'s ${MYTHICAL_AUTHORITIES[mythicalAgent(owner).path].name} restores ${restored} HP to ${target.name}.`,'heal',{amount:restored,hpAfter:target.hp,maxHp:target.maxHp});return restored;}
+function mythicalHeal(owner,target,amount,state,lines){const beforeShield=target.shield||0;const restored=recoverHP(target,amount,{source:owner,state,lines,kind:'heal'});if(restored>0)mythicalNote(owner,target,state,lines,`${owner.name}'s ${MYTHICAL_AUTHORITIES[mythicalAgent(owner).path].name} restores ${restored} HP to ${target.name}.`,'heal',{amount:restored,hpAfter:target.hp,maxHp:target.maxHp});return restored+Math.max(0,(target.shield||0)-beforeShield);}
 function mythicalSpellDamage(owner,target,multiplier,element){return v15Damage('pure_caster_ability',{agent:mythicalAgent(owner),actor:owner,target,abilityMult:multiplier,damageSpec:{scaling:'INT',type:'elemental',element,multiplier}});}
 function mythicalHit(owner,target,amount,state,lines,r,damageType='physical'){
  if(!target?.alive||amount<=0)return null;
@@ -44,7 +44,7 @@ function mythicalControl(owner,state,lines,r,status,duration){
  const possible=foesOf(owner,state).filter(u=>u.alive&&u.inCombat!==false&&!hasStatus(u,'untargetable')&&canAffect(owner.sequence,u.sequence)&&!statusImmune(u,status));
  if(!possible.length)return null;const target=pickR(r,possible);
  if(r()<Number(combatRates(mythicalAgent(target),target).resistance||0)||r()<statusResistChance(target,status)){mythicalNote(owner,target,state,lines,`${target.name} resists ${MYTHICAL_AUTHORITIES[owner.path].name}.`);return null;}
- addStatus(target,status,duration,owner.name);mythicalNote(owner,target,state,lines,`${owner.name}'s ${MYTHICAL_AUTHORITIES[owner.path].name} afflicts ${target.name} with ${status.replace(/_/g,' ')} for ${duration} turns.`);return target;
+ if(!addStatus(target,status,duration,owner.name))return null;const turns=target.statusMeta[status].duration;mythicalNote(owner,target,state,lines,`${owner.name}'s ${MYTHICAL_AUTHORITIES[owner.path].name} afflicts ${target.name} with ${status.replace(/_/g,' ')} for ${turns} turn${turns===1?'':'s'}.`);return target;
 }
 function mythicalRecall(owner,state,lines){
  const authority=owner._mythicalAuthority;if(authority.used)return;
@@ -57,7 +57,7 @@ function mythicalAwaken(unit,state,lines=[],r=state?.rng){
  const authority=unit._mythicalAuthority={path,turns:cfg.turns,grace:!!unit._acting,used:false};
  mythicalNote(unit,unit,state,lines,`${unit.name} manifests ${cfg.name}. ${mythicalDescription(path,unit.sequence)}`);
  if(path==='door'){
-  if(unit.sequence<=2){const target=mythicalControl(unit,state,lines,r,'banished',cfg.exileTurns);if(target){target._skipTurns=cfg.exileTurns;addStatus(target,'untargetable',cfg.exileTurns,unit.name);checkThreadInterruptOnTarget(target,state,lines);}authority.used=true;}
+  if(unit.sequence<=2){const target=mythicalControl(unit,state,lines,r,'banished',cfg.exileTurns);if(target){target._skipTurns=target.statusMeta.banished.duration;addStatus(target,'untargetable',target._skipTurns,unit.name);checkThreadInterruptOnTarget(target,state,lines);}authority.used=true;}
   else for(const ally of sameSideOf(unit,state).filter(u=>u.alive)){ally._mythicalShelterOwners=ally._mythicalShelterOwners||[];ally._mythicalShelterOwners.push(unit.id);}
  }else if(path==='visionary'){
   const target=mythicalControl(unit,state,lines,r,'sleep',cfg.turns);if(target)target._mythicalDream={ownerId:unit.id};authority.used=true;
@@ -156,7 +156,7 @@ function mythicalFinalDeath(unit,source,state,lines=[],r=state?.rng){
  for(const owner of mythicalUnits(state).filter(u=>mythicalActive(u,'hanged_man')&&!u._mythicalAuthority.used&&!sameSideOf(u,state).includes(unit))){
   if(!unit.path||!Number.isInteger(unit.sequence)||unit.sequence>9)continue;
   owner._mythicalAuthority.used=true;mythicalHeal(owner,owner,Math.round(owner.maxHp*MYTHICAL_AUTHORITIES.hanged_man.healRatio),state,lines);
-  if(typeof signatureCaptureSoul==='function')signatureCaptureSoul(owner,unit,state,lines);
+  // Soul acquisition is settled once by the final-death kill-credit hook.
  }
 }
 function mythicalBeforeCast(agent,actor,enemy,state,lines=[],r=state?.rng,spec){
@@ -179,21 +179,21 @@ function mythicalDamageOptions(actor,target,spec){
  if(mythicalActive(actor,'hermit')&&matchesIncomingCategory('magic',spec?.type==='true'?'true':spec?.element||spec?.type)){const cfg=MYTHICAL_AUTHORITIES.hermit;return{defPen:cfg.defPen,resistanceMultiplier:cfg.resistanceMultiplier};}return{};
 }
 function mythicalDescription(path,sequence){
- const c=MYTHICAL_AUTHORITIES[path],turns=c?.turns;if(!c)return'';
+ const c=MYTHICAL_AUTHORITIES[path],turns=c?.turns;if(!c)return'';const controlTurns=n=>GLOBAL_COMBAT.ccGap?Math.min(1,n):n;
  const descriptions={
   fool:'Keeps Spirit Body Threads and marionettes unchanged; the fog cloak is its mythical appearance.',
-  door:sequence<=2?`Exiles one resistible enemy for ${c.exileTurns} turns.`:`Shelters living allies from targeted direct damage for ${turns} owner turn; area damage and damage over time still hit.`,
+  door:sequence<=2?`Exiles one resistible enemy for ${controlTurns(c.exileTurns)} turn(s).`:`Shelters living allies from targeted direct damage for ${turns} owner turn; area damage and damage over time still hit.`,
   error:sequence<=1?`Steals one resistible enemy's next action and grants one normally paid extra action within ${turns} owner turns.`:`Escapes one lethal direct hit through its living parasite host within ${turns} owner turns; the host takes the hit.`,
-  visionary:`One resistible enemy sleeps for ${turns} turns; HP damage wakes it and triggers one ${c.backlash*100}% INT Psychic backlash.`,
+  visionary:`One resistible enemy sleeps for ${controlTurns(turns)} turn(s); HP damage wakes it and triggers one ${c.backlash*100}% INT Psychic backlash.`,
   sun:`Cleanses living allies, then protects them against Poison and Curse for ${turns} owner turns.`,
   tyrant:`Deals ${c.multiplier*100}% INT Lightning damage to every eligible enemy at each of the next ${turns} owner turn starts.`,
   white_tower:`Within ${turns} owner turns, decodes and cancels one direct nonphysical, non-true hit and stores an eligible spell for one paid imitation.`,
-  hanged_man:`Devours one final enemy Beyonder death: restores ${c.healRatio*100}% Max HP and replaces the existing soul slot. Summons and allies are excluded.`,
+  hanged_man:`Devours one final enemy Beyonder death: restores ${c.healRatio*100}% Max HP. Permanent souls follow credited kills and the fixed five-soul cap. Summons and allies are excluded.`,
   darkness:`Conceals living allies against targeted direct damage for ${turns} owner turns; each ally is revealed when dealing direct damage. Area damage and damage over time still hit.`,
   death:`Within ${turns} owner turns, recalls one fallen nonsummoned ally at ${c.reviveRatio*100}% Max HP without resetting its survival counters.`,
   twilight_giant:`Intercepts ${c.intercept*100}% of direct single-target damage aimed at another ally for ${turns} owner turns.`,
   red_priest:`Party direct HP damage cleaves one additional eligible enemy for ${c.cleave*100}% of the HP damage as Fire for ${turns} owner turns; no copied statuses or recursive cleaves.`,
-  demoness:`Petrifies one resistible enemy for ${turns} turns; actual HP damage breaks petrification.`,
+  demoness:`Petrifies one resistible enemy for ${controlTurns(turns)} turn(s); actual HP damage breaks petrification.`,
   hermit:`For ${turns} owner turns, nonphysical, non-true spells gain ${c.defPen*100} percentage points of DEF penetration and ignore ${(1-c.resistanceMultiplier)*100}% of elemental resistance. Shields and damage reduction still apply.`,
   paragon:`Replaces the existing device with one historical machine at ${c.strength*100}% owner ATK and INT for ${turns} owner turns; it cannot summon, charge or awaken a form.`,
   wheel_of_fortune:sequence<=1?'Rewinds one fatal hit to HP recorded at its previous owner turn start; SP, cooldowns, survival uses and statuses remain unchanged.':`Adds ${c.dodge*100} percentage points of Dodge for 2 turns.`,

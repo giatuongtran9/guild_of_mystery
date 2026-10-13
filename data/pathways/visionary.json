@@ -189,7 +189,8 @@
             "type": "next_damage_bonus",
             "amount": 0.3
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -214,7 +215,8 @@
             "status": "stunned",
             "duration": 1
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {

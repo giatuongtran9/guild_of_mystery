@@ -41,7 +41,7 @@ test('a large INT advantage does not double-count enough evasion to suppress phy
   const state={allies:[attacker],enemies:[target],events:[],currentRound:1};
   assert.strictEqual(g.attackHit(attacker.agent,attacker,target,state,[],()=>.5),true,
     'the 50th-percentile roll should hit after the approved relative-INT coefficient reduction');
-  assert.strictEqual(formulas.combat_rates.dodge.int_advantage_coefficient,.10);
+  assert.strictEqual(formulas.combat_rates.dodge.int_advantage_coefficient,.05);
 });
 test('authored and allied balance profiles retain matching initial charge, SP and damaged HP', () => {
   const a = agent('fool', 4, 'Alpha'), b = agent('door', 4, 'Beta');

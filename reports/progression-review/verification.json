@@ -1,0 +1,270 @@
+{
+  "suites": [
+    {
+      "test": "battle-log.test.js",
+      "exitCode": 0,
+      "seconds": 0.39
+    },
+    {
+      "test": "battle-ui.test.js",
+      "exitCode": 0,
+      "seconds": 5.38
+    },
+    {
+      "test": "campaign.test.js",
+      "exitCode": 0,
+      "seconds": 3.68
+    },
+    {
+      "test": "combat-sprite.test.js",
+      "exitCode": 0,
+      "seconds": 0.37
+    },
+    {
+      "test": "fullres-cache-data.test.js",
+      "exitCode": 0,
+      "seconds": 0.58
+    },
+    {
+      "test": "fullres-portraits.test.js",
+      "exitCode": 0,
+      "seconds": 3.36
+    },
+    {
+      "test": "mythical-order.test.js",
+      "exitCode": 0,
+      "seconds": 7.53
+    },
+    {
+      "test": "persistence-contracts-ui.test.js",
+      "exitCode": 0,
+      "seconds": 4.38
+    },
+    {
+      "test": "phase1-ai.test.js",
+      "exitCode": 0,
+      "seconds": 1.32
+    },
+    {
+      "test": "phase1-casting.test.js",
+      "exitCode": 0,
+      "seconds": 2.42
+    },
+    {
+      "test": "phase1-combat-units.test.js",
+      "exitCode": 0,
+      "seconds": 5.08
+    },
+    {
+      "test": "phase1-damage-pipeline.test.js",
+      "exitCode": 0,
+      "seconds": 0.28
+    },
+    {
+      "test": "phase1-lifecycle.test.js",
+      "exitCode": 0,
+      "seconds": 0.88
+    },
+    {
+      "test": "phase1-progression-resistance.test.js",
+      "exitCode": 0,
+      "seconds": 0.71
+    },
+    {
+      "test": "phase2-battle.test.js",
+      "exitCode": 0,
+      "seconds": 9.36
+    },
+    {
+      "test": "phase2-boot.test.js",
+      "exitCode": 0,
+      "seconds": 0.13
+    },
+    {
+      "test": "phase2-cache.test.js",
+      "exitCode": 0,
+      "seconds": 0.3
+    },
+    {
+      "test": "phase2-modal-dom.test.js",
+      "exitCode": 0,
+      "seconds": 3.9
+    },
+    {
+      "test": "phase2-modal.test.js",
+      "exitCode": 0,
+      "seconds": 0.98
+    },
+    {
+      "test": "phase2-portraits.test.js",
+      "exitCode": 0,
+      "seconds": 0.11
+    },
+    {
+      "test": "phase2-runtime-data.test.js",
+      "exitCode": 0,
+      "seconds": 0.59
+    },
+    {
+      "test": "phase2-startup.test.js",
+      "exitCode": 0,
+      "seconds": 0.98
+    },
+    {
+      "test": "phase3-actual-casts.test.js",
+      "exitCode": 0,
+      "seconds": 2.44
+    },
+    {
+      "test": "phase3-description-dom.test.js",
+      "exitCode": 0,
+      "seconds": 17.15
+    },
+    {
+      "test": "phase3-descriptions.test.js",
+      "exitCode": 0,
+      "seconds": 0.19
+    },
+    {
+      "test": "phase3-existing-rules.test.js",
+      "exitCode": 0,
+      "seconds": 0.19
+    },
+    {
+      "test": "phase3-thread-damage.test.js",
+      "exitCode": 0,
+      "seconds": 0.14
+    },
+    {
+      "test": "phase4-balance.test.js",
+      "exitCode": 0,
+      "seconds": 20.17
+    },
+    {
+      "test": "phase4-core.test.js",
+      "exitCode": 0,
+      "seconds": 0.56
+    },
+    {
+      "test": "phase4-data.test.js",
+      "exitCode": 0,
+      "seconds": 0.15
+    },
+    {
+      "test": "phase4-fixes.test.js",
+      "exitCode": 0,
+      "seconds": 0.37
+    },
+    {
+      "test": "phase4-mythical.test.js",
+      "exitCode": 0,
+      "seconds": 0.58
+    },
+    {
+      "test": "phase4-saves.test.js",
+      "exitCode": 0,
+      "seconds": 0.15
+    },
+    {
+      "test": "phase4-side-parity.test.js",
+      "exitCode": 0,
+      "seconds": 0.37
+    },
+    {
+      "test": "phase4-signatures.test.js",
+      "exitCode": 0,
+      "seconds": 0.41
+    },
+    {
+      "test": "phase4-ui.test.js",
+      "exitCode": 0,
+      "seconds": 5.06
+    },
+    {
+      "test": "progression-contracts.test.js",
+      "exitCode": 0,
+      "seconds": 0.33
+    },
+    {
+      "test": "recruitment-choice.test.js",
+      "exitCode": 0,
+      "seconds": 0.11
+    },
+    {
+      "test": "reflect-order.test.js",
+      "exitCode": 0,
+      "seconds": 9.32
+    },
+    {
+      "test": "thread-cc-interrupt.test.js",
+      "exitCode": 0,
+      "seconds": 3.03
+    },
+    {
+      "test": "trait-ui.test.js",
+      "exitCode": 0,
+      "seconds": 2.88
+    },
+    {
+      "test": "traits.test.js",
+      "exitCode": 0,
+      "seconds": 1.1
+    }
+  ],
+  "passed": 42,
+  "total": 42,
+  "dataLoader": "passed; 22 pathways",
+  "effectTypes": "53 referenced types",
+  "effectsBehavior": {
+    "passed": 147,
+    "failed": 0
+  },
+  "runtimeDataCheck": "passed",
+  "runtimeVersion": "cebb9aaf9bd41c3b",
+  "sourceSha256": {
+    "js/engine.js": "c85c5ea95542ea07d7c3e472b647a5b1dc27476dd1ff86bd5a57b767c166d202",
+    "js/state.js": "17dbf4e7ff8730e24e30a54224be029236913fa485b8c5095cf246c9507dfcf2",
+    "js/ui.js": "d8fb4145ce9a82d336bd33564598ca42a38c9c0262d59fbc5851700dfa70c03b",
+    "js/generate.js": "eece715b541e58b889a354eb8acb0e59fd19806bfef5c0b180bf2daaa407be73",
+    "data/balance.json": "84605503ae54cdc791494f7ccad145ba78472c5928c80ab0059ff3477aea8dc3",
+    "data/contracts.json": "9acbc3c847d0dbc8c2dfc1cf2668f91060609ca4fe9319e86565a1a74936bb01",
+    "data/pathways/black_emperor.json": "a7d975a0b0997d361f41f29a06623d1a9d7910c9b8cd3b806cd6a009b7bd3293"
+  },
+  "battleMeasurements": {
+    "solo": {
+      "battles": 44000,
+      "pathwaySequenceCohorts": 220,
+      "samplesPerCohort": 200,
+      "minimumSuccess": 0.8,
+      "overallSuccess": 0.98375,
+      "seedBase": 1719381
+    },
+    "wanted": {
+      "battles": 1800,
+      "bosses": 6,
+      "mixedTeams": 6,
+      "samplesPerTeam": 50
+    },
+    "pvpBefore": {
+      "battles": 15180,
+      "referenceCommit": "38f252bacafa727ad4d7f688d6acfd2e1e11a2dc"
+    },
+    "pvpAfter": {
+      "battles": 15180,
+      "startingProfileMismatches": 0,
+      "swappedStateMismatches": 0
+    },
+    "total": 76160
+  },
+  "knownBalanceLimits": [
+    "Routine solo success is a measured 80% minimum, with a 98.4% overall average; injuries, depleted SP, other equipment and harder contracts are outside this sample.",
+    "PvP has a 77.1% overall draw rate under the unchanged 15-round cap; pathway duel strength remains unequal.",
+    "Middle wanted bosses are generous for prepared three-agent teams; completion can include casualties."
+  ],
+  "chromiumLayout": "not completed: Chromium socket operations are blocked by the execution sandbox; DOM UI interaction suites passed",
+  "balanceRegression": {
+    "passed": 154,
+    "failed": 0,
+    "command": "node tests/balance.js"
+  }
+}

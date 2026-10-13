@@ -1,16 +1,6 @@
 {
   "QUEST_TEMPLATES": [
     [
-      "A Missing Cat",
-      "Mrs. Eliza Bell, a seamstress in Whitechapel, arrives at the guild office in tears. Her black cat, Morrow, vanished before dawn. She cannot afford a private detective and asks the guild to search the alleys, courtyards and coal sheds nearby. The cat is frightened, not dangerous; this is a search and rescue contract.",
-      "normal"
-    ],
-    [
-      "The Stolen Heirloom",
-      "A respectable family claims a silver locket was stolen from a locked room. The owner suspects a servant, but the room shows signs of something stranger.",
-      "normal"
-    ],
-    [
       "Murder at Bell House",
       "A local constable asks the guild to discreetly investigate a murder before panic spreads. The victim's final note mentions a person who should not have been there.",
       "mystery"
@@ -48,38 +38,166 @@
   ],
   "WANTED_TARGETS": [
     {
+      "id": "red_knife",
+      "title": "The Red Knife",
       "target": "Elias Vane",
-      "path": "Unknown",
-      "threat": "★★★★☆",
+      "path": "red_priest",
+      "sequence": 9,
+      "minReputation": 10,
       "lastSeen": "South Wharf",
-      "story": "Three merchants have disappeared over the past two weeks. Their bodies were eventually discovered along the old canal, each bearing a single red cut across the throat. Witnesses describe a man wearing a dark travelling coat who asks merchants about their family before following them. The authorities believe Elias Vane is responsible for at least six murders. Yesterday, a dockworker survived an encounter with him and reported seeing supernatural abilities. The guild has been offered a substantial reward for his capture.",
-      "rewardFunds": 1250,
+      "story": "Elias once escorted dockworkers home through the fog. When the canal syndicate abandoned his brother after an accident, he turned that duty into a private war. Merchants now vanish along the towpath, marked with the same red cut. He has learned to provoke a crowd into fighting itself. Three agents must corner him before another shift ends.",
+      "mechanic": "Below half health, his frenzy grants a second action and 15% more damage.",
+      "phase": {
+        "type": "frenzy",
+        "damageMultiplier": 1.15,
+        "extraActions": 1
+      },
+      "statMultipliers": {
+        "hp": 5.75,
+        "atk": 1.05,
+        "def": 0.8,
+        "int": 1
+      },
+      "weaponId": "knife",
+      "rewardFunds": 1100,
+      "rewardRep": 10,
+      "rewardMaterials": 2,
+      "damageMultiplier": 0.8
+    },
+    {
+      "id": "black_mirror",
+      "title": "The Black Mirror",
+      "target": "Mara Quill",
+      "path": "demoness",
+      "sequence": 7,
+      "minReputation": 30,
+      "lastSeen": "Old Market",
+      "story": "A celebrated portrait restorer, Mara promised grieving families one final glimpse of the dead. Her black mirrors began keeping those families instead. She now moves between abandoned shop windows while poison spreads through their rooms. The guild has traced every mirror to her workshop; three agents are needed to break the escape routes and face her together.",
+      "mechanic": "At half health, she raises a shield worth 25% of maximum HP and deals 15% more damage.",
+      "phase": {
+        "type": "ward",
+        "shieldRatio": 0.25,
+        "damageMultiplier": 1.15
+      },
+      "statMultipliers": {
+        "hp": 4.2,
+        "atk": 1.1,
+        "def": 0.8,
+        "int": 1.05
+      },
+      "weaponId": "knife",
+      "rewardFunds": 1900,
+      "rewardRep": 14,
+      "rewardMaterials": 3
+    },
+    {
+      "id": "broken_hour",
+      "title": "The Broken Hour",
+      "target": "Jonas Rook",
+      "path": "error",
+      "sequence": 5,
+      "minReputation": 80,
+      "lastSeen": "Clockmakers Row",
+      "story": "Jonas repaired the district clocks until a guild patron erased his name from the commission ledger. Now the clocks lose an hour whenever he steals, and witnesses cannot agree which doors were open. His stolen records hold entire households in debt. A three-agent warrant team must force him into the same moment long enough to end the thefts.",
+      "mechanic": "At half health, he drains 15% of each agent’s maximum SP and deals 20% more damage.",
+      "phase": {
+        "type": "drain",
+        "spRatio": 0.15,
+        "damageMultiplier": 1.2
+      },
+      "statMultipliers": {
+        "hp": 4.32,
+        "atk": 1,
+        "def": 0.8,
+        "int": 1.05
+      },
+      "weaponId": "sword",
+      "rewardFunds": 2900,
       "rewardRep": 18,
       "rewardMaterials": 3
     },
     {
-      "target": "Mara Quill",
-      "path": "Demoness",
-      "threat": "★★★★★",
-      "lastSeen": "Old Market",
-      "story": "Several disappearances have been linked to a woman who leaves black mirrors at the scene. Survivors report charms, poison and impossible reflections. The guild is asked to bring her in before another district is affected.",
-      "rewardFunds": 1600,
+      "id": "ashen_choir",
+      "title": "The Ashen Choir",
+      "target": "Sister Agatha Bell",
+      "path": "darkness",
+      "sequence": 3,
+      "minReputation": 170,
+      "lastSeen": "Saint Brigid’s Hospice",
+      "story": "Agatha kept vigil over patients no physician could save. She found a hymn that eased their fear, but the choir it awakened never stopped singing. The hospice now sleeps through every sunrise and its lost patients walk in shared dreams. Three agents must enter the vigil, protect one another from its lullaby, and bring the waking bell back to the ward.",
+      "mechanic": "At half health, her nightmare frightens every agent for one turn and increases damage by 20%.",
+      "phase": {
+        "type": "fear",
+        "damageMultiplier": 1.2
+      },
+      "statMultipliers": {
+        "hp": 2.8,
+        "atk": 1.05,
+        "def": 0.8,
+        "int": 1.1
+      },
+      "weaponId": "none",
+      "rewardFunds": 4300,
       "rewardRep": 22,
-      "rewardMaterials": 3
+      "rewardMaterials": 4
     },
     {
-      "target": "Jonas Rook",
-      "path": "Error",
-      "threat": "★★★★☆",
-      "lastSeen": "Clockmaker’s Row",
-      "story": "A string of impossible thefts has left locked rooms empty without signs of entry. Witnesses describe a man who seems to make attacks and doors behave incorrectly. The authorities suspect supernatural interference.",
-      "rewardFunds": 1450,
-      "rewardRep": 20,
-      "rewardMaterials": 3
+      "id": "vacant_crown",
+      "title": "The Vacant Crown",
+      "target": "Lord Edran Voss",
+      "path": "black_emperor",
+      "sequence": 1,
+      "minReputation": 300,
+      "lastSeen": "The Court of Empty Seats",
+      "story": "Voss bought the courts that stripped his family of its title. He then changed the meaning of every oath sworn inside them. Petitioners arrive seeking justice and leave owing him their names. His vacant crown still commands guards who no longer remember him. A three-agent party must withstand the court’s decrees and break his authority together.",
+      "mechanic": "At half health, his decree drains 20% of maximum SP from every agent and increases damage by 20%.",
+      "phase": {
+        "type": "drain",
+        "spRatio": 0.2,
+        "damageMultiplier": 1.2
+      },
+      "statMultipliers": {
+        "hp": 4.44,
+        "atk": 1.05,
+        "def": 0.85,
+        "int": 1.1
+      },
+      "weaponId": "sword",
+      "rewardFunds": 6200,
+      "rewardRep": 28,
+      "rewardMaterials": 4
+    },
+    {
+      "id": "last_hour",
+      "title": "The Last Hour",
+      "target": "Archivist Ione Vale",
+      "path": "wheel_of_fortune",
+      "sequence": 0,
+      "minReputation": 400,
+      "lastSeen": "The Unfinished Observatory",
+      "story": "Ione catalogued disasters that had not happened yet. When she tried to spare the city its final calamity, she bound herself to an hour that never arrives. The observatory now repeats the deaths of everyone who crosses its threshold. Three agents must share the burden of that hour and confront its keeper before the city becomes another entry.",
+      "mechanic": "At half health, she gains a second action and a shield worth 20% of maximum HP.",
+      "phase": {
+        "type": "ward",
+        "shieldRatio": 0.2,
+        "extraActions": 1,
+        "damageMultiplier": 1.15
+      },
+      "statMultipliers": {
+        "hp": 2.53,
+        "atk": 1.05,
+        "def": 0.8,
+        "int": 1.1
+      },
+      "weaponId": "none",
+      "rewardFunds": 8500,
+      "rewardRep": 35,
+      "rewardMaterials": 5,
+      "damageMultiplier": 0.8
     }
   ],
   "system": {
-    "mundane_max_reputation": 9,
+    "mundane_max_reputation": -1,
     "max_sequence_by_reputation": [
       {
         "min": 0,
@@ -100,64 +218,220 @@
       {
         "min": 80,
         "max": 5
+      },
+      {
+        "min": 120,
+        "max": 4
+      },
+      {
+        "min": 170,
+        "max": 3
+      },
+      {
+        "min": 230,
+        "max": 2
+      },
+      {
+        "min": 300,
+        "max": 1
+      },
+      {
+        "min": 400,
+        "max": 0
       }
     ],
-    "mundane_base_chance": 0.48,
+    "mundane_base_chance": 0,
     "lower_contract_weight": 0.5,
-    "sequence_odds_by_reputation": [
+    "sequence_odds_note": "Boards retain a Sequence 9 contract and a contract matching the strongest awakened agent. Most jobs match the roster, with weaker work and occasional explicitly stronger threats. Ordinary errands are not generated.",
+    "sequence_9_always_available": true,
+    "roster_sequence_weights": {
+      "matching": 70,
+      "one_easier": 20,
+      "beginner": 10,
+      "harder": 8
+    },
+    "reputation_ranks": [
       {
-        "min": 0,
-        "weights": {
-          "9": 70,
-          "8": 20,
-          "7": 8,
+        "level": 1,
+        "name": "Provisional",
+        "minimumReputation": 0,
+        "maximumReputation": 14,
+        "sequenceOdds": {
+          "9": 90,
+          "8": 10,
+          "7": 0,
+          "6": 0,
+          "5": 0,
+          "4": 0,
+          "3": 0,
+          "2": 0,
+          "1": 0,
+          "0": 0
+        }
+      },
+      {
+        "level": 2,
+        "name": "Licensed",
+        "minimumReputation": 15,
+        "maximumReputation": 29,
+        "sequenceOdds": {
+          "9": 85,
+          "8": 12,
+          "7": 3,
+          "6": 0,
+          "5": 0,
+          "4": 0,
+          "3": 0,
+          "2": 0,
+          "1": 0,
+          "0": 0
+        }
+      },
+      {
+        "level": 3,
+        "name": "Trusted",
+        "minimumReputation": 30,
+        "maximumReputation": 49,
+        "sequenceOdds": {
+          "9": 80,
+          "8": 12,
+          "7": 6,
           "6": 2,
-          "5": 0
+          "5": 0,
+          "4": 0,
+          "3": 0,
+          "2": 0,
+          "1": 0,
+          "0": 0
         }
       },
       {
-        "min": 15,
-        "weights": {
-          "9": 45,
-          "8": 35,
-          "7": 15,
+        "level": 4,
+        "name": "Established",
+        "minimumReputation": 50,
+        "maximumReputation": 79,
+        "sequenceOdds": {
+          "9": 75,
+          "8": 15,
+          "7": 7,
+          "6": 3,
+          "5": 0,
+          "4": 0,
+          "3": 0,
+          "2": 0,
+          "1": 0,
+          "0": 0
+        }
+      },
+      {
+        "level": 5,
+        "name": "Renowned",
+        "minimumReputation": 80,
+        "maximumReputation": 119,
+        "sequenceOdds": {
+          "9": 70,
+          "8": 12,
+          "7": 8,
           "6": 5,
-          "5": 0
+          "5": 5,
+          "4": 0,
+          "3": 0,
+          "2": 0,
+          "1": 0,
+          "0": 0
         }
       },
       {
-        "min": 30,
-        "weights": {
-          "9": 25,
-          "8": 35,
-          "7": 25,
-          "6": 12,
-          "5": 3
+        "level": 6,
+        "name": "Distinguished",
+        "minimumReputation": 120,
+        "maximumReputation": 169,
+        "sequenceOdds": {
+          "9": 60,
+          "8": 15,
+          "7": 10,
+          "6": 7,
+          "5": 5,
+          "4": 3,
+          "3": 0,
+          "2": 0,
+          "1": 0,
+          "0": 0
         }
       },
       {
-        "min": 50,
-        "weights": {
-          "9": 12,
-          "8": 28,
-          "7": 30,
-          "6": 22,
-          "5": 8
+        "level": 7,
+        "name": "Elite",
+        "minimumReputation": 170,
+        "maximumReputation": 229,
+        "sequenceOdds": {
+          "9": 45,
+          "8": 18,
+          "7": 14,
+          "6": 10,
+          "5": 6,
+          "4": 4,
+          "3": 3,
+          "2": 0,
+          "1": 0,
+          "0": 0
         }
       },
       {
-        "min": 80,
-        "weights": {
-          "9": 7,
+        "level": 8,
+        "name": "Exalted",
+        "minimumReputation": 230,
+        "maximumReputation": 299,
+        "sequenceOdds": {
+          "9": 35,
           "8": 20,
-          "7": 28,
-          "6": 28,
-          "5": 17
+          "7": 15,
+          "6": 12,
+          "5": 7,
+          "4": 5,
+          "3": 4,
+          "2": 2,
+          "1": 0,
+          "0": 0
+        }
+      },
+      {
+        "level": 9,
+        "name": "Legendary",
+        "minimumReputation": 300,
+        "maximumReputation": 399,
+        "sequenceOdds": {
+          "9": 25,
+          "8": 18,
+          "7": 15,
+          "6": 12,
+          "5": 9,
+          "4": 8,
+          "3": 6,
+          "2": 5,
+          "1": 2,
+          "0": 0
+        }
+      },
+      {
+        "level": 10,
+        "name": "Mythic",
+        "minimumReputation": 400,
+        "maximumReputation": null,
+        "sequenceOdds": {
+          "9": 20,
+          "8": 13,
+          "7": 12,
+          "6": 10,
+          "5": 10,
+          "4": 10,
+          "3": 8,
+          "2": 7,
+          "1": 6,
+          "0": 4
         }
       }
-    ],
-    "sequence_odds_note": "Higher-reputation guilds shift contract-board weight toward higher-difficulty contracts, but Sequence 9 remains available at every reputation because low-sequence agents still need contracts for digestion and advancement. Odds are analogous to TFT tier odds: higher tiers become more common rather than lower tiers being hard-disabled.",
-    "sequence_9_always_available": true
+    ]
   },
   "battlefields": {
     "defaultImage": null,
@@ -176,5 +450,412 @@
       "Old Market": null,
       "Clockmaker’s Row": null
     }
+  },
+  "pool": {
+    "version": 1,
+    "returnDays": 3,
+    "refreshCost": 25,
+    "definitions": [
+      {
+        "id": "murder_at_bell_house_seq_9",
+        "title": "Murder at Bell House",
+        "story": "A local constable asks the guild to discreetly investigate a murder before panic spreads. The victim's final note mentions a person who should not have been there.",
+        "sequence": 9,
+        "copies": 10,
+        "tag": "mystery"
+      },
+      {
+        "id": "the_whispering_tenant_seq_9",
+        "title": "The Whispering Tenant",
+        "story": "Residents of a boarding house report knocking from an empty room every midnight. The landlord wants the matter solved quietly.",
+        "sequence": 9,
+        "copies": 10,
+        "tag": "mystery"
+      },
+      {
+        "id": "a_vanished_watchman_seq_9",
+        "title": "A Vanished Watchman",
+        "story": "A night watchman disappeared while patrolling a quiet street. His lantern was found still burning beside a locked iron gate.",
+        "sequence": 9,
+        "copies": 10,
+        "tag": "mystery"
+      },
+      {
+        "id": "the_chapel_below_seq_9",
+        "title": "The Chapel Below",
+        "story": "A charitable chapel reports strange chanting beneath its foundations. The priest insists there is no basement, yet a staircase was discovered after midnight.",
+        "sequence": 9,
+        "copies": 9,
+        "tag": "occult"
+      },
+      {
+        "id": "the_red_ledger_seq_9",
+        "title": "The Red Ledger",
+        "story": "Several merchants received identical anonymous invoices for goods they never ordered. Those who ignored them later disappeared.",
+        "sequence": 9,
+        "copies": 9,
+        "tag": "occult"
+      },
+      {
+        "id": "murder_at_bell_house_seq_8",
+        "title": "Murder at Bell House",
+        "story": "A local constable asks the guild to discreetly investigate a murder before panic spreads. The victim's final note mentions a person who should not have been there.",
+        "sequence": 8,
+        "copies": 8,
+        "tag": "mystery"
+      },
+      {
+        "id": "the_whispering_tenant_seq_8",
+        "title": "The Whispering Tenant",
+        "story": "Residents of a boarding house report knocking from an empty room every midnight. The landlord wants the matter solved quietly.",
+        "sequence": 8,
+        "copies": 7,
+        "tag": "mystery"
+      },
+      {
+        "id": "a_vanished_watchman_seq_8",
+        "title": "A Vanished Watchman",
+        "story": "A night watchman disappeared while patrolling a quiet street. His lantern was found still burning beside a locked iron gate.",
+        "sequence": 8,
+        "copies": 7,
+        "tag": "mystery"
+      },
+      {
+        "id": "the_chapel_below_seq_8",
+        "title": "The Chapel Below",
+        "story": "A charitable chapel reports strange chanting beneath its foundations. The priest insists there is no basement, yet a staircase was discovered after midnight.",
+        "sequence": 8,
+        "copies": 7,
+        "tag": "occult"
+      },
+      {
+        "id": "the_red_ledger_seq_8",
+        "title": "The Red Ledger",
+        "story": "Several merchants received identical anonymous invoices for goods they never ordered. Those who ignored them later disappeared.",
+        "sequence": 8,
+        "copies": 7,
+        "tag": "occult"
+      },
+      {
+        "id": "murder_at_bell_house_seq_7",
+        "title": "Murder at Bell House",
+        "story": "A local constable asks the guild to discreetly investigate a murder before panic spreads. The victim's final note mentions a person who should not have been there.",
+        "sequence": 7,
+        "copies": 6,
+        "tag": "mystery"
+      },
+      {
+        "id": "the_whispering_tenant_seq_7",
+        "title": "The Whispering Tenant",
+        "story": "Residents of a boarding house report knocking from an empty room every midnight. The landlord wants the matter solved quietly.",
+        "sequence": 7,
+        "copies": 6,
+        "tag": "mystery"
+      },
+      {
+        "id": "a_vanished_watchman_seq_7",
+        "title": "A Vanished Watchman",
+        "story": "A night watchman disappeared while patrolling a quiet street. His lantern was found still burning beside a locked iron gate.",
+        "sequence": 7,
+        "copies": 6,
+        "tag": "mystery"
+      },
+      {
+        "id": "the_chapel_below_seq_7",
+        "title": "The Chapel Below",
+        "story": "A charitable chapel reports strange chanting beneath its foundations. The priest insists there is no basement, yet a staircase was discovered after midnight.",
+        "sequence": 7,
+        "copies": 5,
+        "tag": "occult"
+      },
+      {
+        "id": "the_red_ledger_seq_7",
+        "title": "The Red Ledger",
+        "story": "Several merchants received identical anonymous invoices for goods they never ordered. Those who ignored them later disappeared.",
+        "sequence": 7,
+        "copies": 5,
+        "tag": "occult"
+      },
+      {
+        "id": "murder_at_bell_house_seq_6",
+        "title": "Murder at Bell House",
+        "story": "A local constable asks the guild to discreetly investigate a murder before panic spreads. The victim's final note mentions a person who should not have been there.",
+        "sequence": 6,
+        "copies": 5,
+        "tag": "mystery"
+      },
+      {
+        "id": "the_whispering_tenant_seq_6",
+        "title": "The Whispering Tenant",
+        "story": "Residents of a boarding house report knocking from an empty room every midnight. The landlord wants the matter solved quietly.",
+        "sequence": 6,
+        "copies": 5,
+        "tag": "mystery"
+      },
+      {
+        "id": "a_vanished_watchman_seq_6",
+        "title": "A Vanished Watchman",
+        "story": "A night watchman disappeared while patrolling a quiet street. His lantern was found still burning beside a locked iron gate.",
+        "sequence": 6,
+        "copies": 4,
+        "tag": "mystery"
+      },
+      {
+        "id": "the_chapel_below_seq_6",
+        "title": "The Chapel Below",
+        "story": "A charitable chapel reports strange chanting beneath its foundations. The priest insists there is no basement, yet a staircase was discovered after midnight.",
+        "sequence": 6,
+        "copies": 4,
+        "tag": "occult"
+      },
+      {
+        "id": "the_red_ledger_seq_6",
+        "title": "The Red Ledger",
+        "story": "Several merchants received identical anonymous invoices for goods they never ordered. Those who ignored them later disappeared.",
+        "sequence": 6,
+        "copies": 4,
+        "tag": "occult"
+      },
+      {
+        "id": "murder_at_bell_house_seq_5",
+        "title": "Murder at Bell House",
+        "story": "A local constable asks the guild to discreetly investigate a murder before panic spreads. The victim's final note mentions a person who should not have been there.",
+        "sequence": 5,
+        "copies": 4,
+        "tag": "mystery"
+      },
+      {
+        "id": "the_whispering_tenant_seq_5",
+        "title": "The Whispering Tenant",
+        "story": "Residents of a boarding house report knocking from an empty room every midnight. The landlord wants the matter solved quietly.",
+        "sequence": 5,
+        "copies": 4,
+        "tag": "mystery"
+      },
+      {
+        "id": "a_vanished_watchman_seq_5",
+        "title": "A Vanished Watchman",
+        "story": "A night watchman disappeared while patrolling a quiet street. His lantern was found still burning beside a locked iron gate.",
+        "sequence": 5,
+        "copies": 4,
+        "tag": "mystery"
+      },
+      {
+        "id": "the_chapel_below_seq_5",
+        "title": "The Chapel Below",
+        "story": "A charitable chapel reports strange chanting beneath its foundations. The priest insists there is no basement, yet a staircase was discovered after midnight.",
+        "sequence": 5,
+        "copies": 3,
+        "tag": "occult"
+      },
+      {
+        "id": "the_red_ledger_seq_5",
+        "title": "The Red Ledger",
+        "story": "Several merchants received identical anonymous invoices for goods they never ordered. Those who ignored them later disappeared.",
+        "sequence": 5,
+        "copies": 3,
+        "tag": "occult"
+      },
+      {
+        "id": "murder_at_bell_house_seq_4",
+        "title": "The Bell House Conspiracy",
+        "story": "An invisible conspiracy is turning an entire district against itself. Expose the demigod behind the murders before the bells announce another purge.",
+        "sequence": 4,
+        "copies": 3,
+        "tag": "mystery"
+      },
+      {
+        "id": "the_whispering_tenant_seq_4",
+        "title": "The Whispering District",
+        "story": "Every empty room in a district whispers the same name. A demigod has spread a curse through the walls; confront its source before the residents vanish.",
+        "sequence": 4,
+        "copies": 3,
+        "tag": "mystery"
+      },
+      {
+        "id": "a_vanished_watchman_seq_4",
+        "title": "The Watchmen of the Hollow Gate",
+        "story": "An entire watch company has vanished into an impossible gate. Defeat the demigod guarding it and reopen a route for the survivors.",
+        "sequence": 4,
+        "copies": 3,
+        "tag": "mystery"
+      },
+      {
+        "id": "the_chapel_below_seq_4",
+        "title": "The Chapel Beneath the District",
+        "story": "A buried congregation is calling a demigod through the foundations of a district. Descend into the chapel and silence its custodian before the ritual reaches the streets.",
+        "sequence": 4,
+        "copies": 3,
+        "tag": "occult"
+      },
+      {
+        "id": "the_red_ledger_seq_4",
+        "title": "The Ledger of Borrowed Lives",
+        "story": "A demigod is collecting an entire district as payment for debts no one remembers. Seize the red ledger and defeat its collector before the accounts close.",
+        "sequence": 4,
+        "copies": 2,
+        "tag": "occult"
+      },
+      {
+        "id": "murder_at_bell_house_seq_3",
+        "title": "The Bell House Conspiracy",
+        "story": "An invisible conspiracy is turning an entire district against itself. Expose the demigod behind the murders before the bells announce another purge.",
+        "sequence": 3,
+        "copies": 2,
+        "tag": "mystery"
+      },
+      {
+        "id": "the_whispering_tenant_seq_3",
+        "title": "The Whispering District",
+        "story": "Every empty room in a district whispers the same name. A demigod has spread a curse through the walls; confront its source before the residents vanish.",
+        "sequence": 3,
+        "copies": 2,
+        "tag": "mystery"
+      },
+      {
+        "id": "a_vanished_watchman_seq_3",
+        "title": "The Watchmen of the Hollow Gate",
+        "story": "An entire watch company has vanished into an impossible gate. Defeat the demigod guarding it and reopen a route for the survivors.",
+        "sequence": 3,
+        "copies": 2,
+        "tag": "mystery"
+      },
+      {
+        "id": "the_chapel_below_seq_3",
+        "title": "The Chapel Beneath the District",
+        "story": "A buried congregation is calling a demigod through the foundations of a district. Descend into the chapel and silence its custodian before the ritual reaches the streets.",
+        "sequence": 3,
+        "copies": 2,
+        "tag": "occult"
+      },
+      {
+        "id": "the_red_ledger_seq_3",
+        "title": "The Ledger of Borrowed Lives",
+        "story": "A demigod is collecting an entire district as payment for debts no one remembers. Seize the red ledger and defeat its collector before the accounts close.",
+        "sequence": 3,
+        "copies": 2,
+        "tag": "occult"
+      },
+      {
+        "id": "murder_at_bell_house_seq_2",
+        "title": "The Bell House Testament",
+        "story": "An angelic testament rewrites the memories of a city. Trace the surviving witness and confront its keeper before the last true history is erased.",
+        "sequence": 2,
+        "copies": 2,
+        "tag": "mystery"
+      },
+      {
+        "id": "the_whispering_tenant_seq_2",
+        "title": "The Tenant Beyond the Veil",
+        "story": "An angel has made a city its dwelling, and its dreams are leaking into every home. Locate its manifestation and sever the dream before the waking world collapses.",
+        "sequence": 2,
+        "copies": 2,
+        "tag": "mystery"
+      },
+      {
+        "id": "a_vanished_watchman_seq_2",
+        "title": "The Vigil at the Broken Horizon",
+        "story": "The horizon has stopped moving and the city watch is trapped in a repeating night. Confront the angel maintaining the vigil before dawn is lost forever.",
+        "sequence": 2,
+        "copies": 2,
+        "tag": "mystery"
+      },
+      {
+        "id": "the_chapel_below_seq_2",
+        "title": "The Choir Beneath the World",
+        "story": "An angelic choir is turning the city into an altar. Find its hidden sanctuary and defeat the conductor before the final verse is sung.",
+        "sequence": 2,
+        "copies": 1,
+        "tag": "occult"
+      },
+      {
+        "id": "the_red_ledger_seq_2",
+        "title": "The Debt of a Thousand Names",
+        "story": "An angel has bound the names of a city into a single unpaid debt. Challenge the keeper of the accounts before the citizens cease to exist.",
+        "sequence": 2,
+        "copies": 1,
+        "tag": "occult"
+      },
+      {
+        "id": "murder_at_bell_house_seq_1",
+        "title": "The Bell House Testament",
+        "story": "An angelic testament rewrites the memories of a city. Trace the surviving witness and confront its keeper before the last true history is erased.",
+        "sequence": 1,
+        "copies": 2,
+        "tag": "mystery"
+      },
+      {
+        "id": "the_whispering_tenant_seq_1",
+        "title": "The Tenant Beyond the Veil",
+        "story": "An angel has made a city its dwelling, and its dreams are leaking into every home. Locate its manifestation and sever the dream before the waking world collapses.",
+        "sequence": 1,
+        "copies": 1,
+        "tag": "mystery"
+      },
+      {
+        "id": "a_vanished_watchman_seq_1",
+        "title": "The Vigil at the Broken Horizon",
+        "story": "The horizon has stopped moving and the city watch is trapped in a repeating night. Confront the angel maintaining the vigil before dawn is lost forever.",
+        "sequence": 1,
+        "copies": 1,
+        "tag": "mystery"
+      },
+      {
+        "id": "the_chapel_below_seq_1",
+        "title": "The Choir Beneath the World",
+        "story": "An angelic choir is turning the city into an altar. Find its hidden sanctuary and defeat the conductor before the final verse is sung.",
+        "sequence": 1,
+        "copies": 1,
+        "tag": "occult"
+      },
+      {
+        "id": "the_red_ledger_seq_1",
+        "title": "The Debt of a Thousand Names",
+        "story": "An angel has bound the names of a city into a single unpaid debt. Challenge the keeper of the accounts before the citizens cease to exist.",
+        "sequence": 1,
+        "copies": 1,
+        "tag": "occult"
+      },
+      {
+        "id": "murder_at_bell_house_seq_0",
+        "title": "The Bell House Apocalypse",
+        "story": "A divine proclamation has made every toll of the Bell House lethal. Confront the authority sustaining it before the next toll consumes the city.",
+        "sequence": 0,
+        "copies": 2,
+        "tag": "mystery"
+      },
+      {
+        "id": "the_whispering_tenant_seq_0",
+        "title": "The Dwelling Outside Reality",
+        "story": "A divine dwelling is swallowing streets into an impossible interior. Challenge its owner at the threshold before the city becomes another empty room.",
+        "sequence": 0,
+        "copies": 1,
+        "tag": "mystery"
+      },
+      {
+        "id": "a_vanished_watchman_seq_0",
+        "title": "The Gate at the End of Dawn",
+        "story": "A divine gate bars the return of daylight. Breach the authority guarding it and free the watchmen standing their final vigil.",
+        "sequence": 0,
+        "copies": 1,
+        "tag": "mystery"
+      },
+      {
+        "id": "the_chapel_below_seq_0",
+        "title": "The Altar Beneath Heaven",
+        "story": "A divine altar is drawing the city out of reality. Confront the manifestation at its centre and break the consecration before the offering is complete.",
+        "sequence": 0,
+        "copies": 1,
+        "tag": "occult"
+      },
+      {
+        "id": "the_red_ledger_seq_0",
+        "title": "The Final Account",
+        "story": "A divine ledger has recorded the city as a settled debt. Confront its author and tear open the final account before its judgement becomes permanent.",
+        "sequence": 0,
+        "copies": 1,
+        "tag": "occult"
+      }
+    ]
   }
 }

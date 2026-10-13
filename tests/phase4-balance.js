@@ -142,9 +142,12 @@ const csvRows = ordered.map(r => [r.pathway,r.sequence,r.team_size,r.initial_cha
   percent(r.wins/r.battles),percent(r.draws/r.battles),(r.deaths/r.battles).toFixed(3),(r.rounds/r.battles).toFixed(3),(r.forms/r.battles).toFixed(3),(r.signature_casts/r.battles).toFixed(3)].join(','));
 fs.writeFileSync(path.join(output,`${phase}-neutral.csv`), `${fields.join(',')}\n${csvRows.join('\n')}\n`);
 if (swappedExamples.length) fs.writeFileSync(path.join(output,`${phase}-swapped-examples.json`), `${JSON.stringify(swappedExamples,null,2)}\n`);
+const tableSize = sizes.includes(3) ? 3 : sizes[0];
+const tableCharge = charges.includes(0) ? 0 : charges[0];
+const tableMode = modes.includes('normal') ? 'normal' : modes[0];
 const table = pathways.map(p => {
   const ranks = sequences.map(s => {
-    const selected = ordered.filter(r => r.pathway===p && r.sequence===s && r.mode==='normal' && r.initial_charge===0 && r.team_size===3);
+    const selected = ordered.filter(r => r.pathway===p && r.sequence===s && r.mode===tableMode && r.initial_charge===tableCharge && r.team_size===tableSize);
     const b = selected.reduce((sum,r) => sum+r.battles,0), w = selected.reduce((sum,r) => sum+r.wins,0), d = selected.reduce((sum,r) => sum+r.draws,0);
     return b ? `${percent(w/b)} / ${percent(d/b)}` : '—';
   });
@@ -155,7 +158,7 @@ const report = `# Phase 4 ${phase}: neutral matched battles\n\n`+
   `Same Sequence, neutral variance, Stout Vitality trait, no equipment, full initial SP and no injury/madness. Each pair runs with both team assignments using the same seed and persistent actor names. Individual mode removes the PvE enemy damage multiplier. Archetype stats and innate pathway passives remain. Mirrors are included.\n\n`+
   `Draw means both sides survive the existing 15-round cap (or simultaneous defeat); it is not counted as a loss. Form-entry fixtures begin at 49% HP on both sides for Sequence 4–0. These probe form interactions, not typical encounter win rates. A support pathway need not win 50% of duels. Small seed counts give direction, not precise rankings.\n\n`+
   `Controlled fixture mismatches: ${fixtureMismatches}. Swapped final-state mismatches: ${swappedMismatches}; these must be reviewed before concluding side parity. Runtime: ${((Date.now()-start)/1000).toFixed(1)} seconds. Original profiles and shared pathway definitions stayed unchanged.\n\n`+
-  `Table: normal 3v3, zero initial charge; each cell is win % / draw %. The CSV includes 1v1 and 3v3, charge 0/50/100 and controlled form entry where requested.\n\n`+
+  `Table: ${tableMode} ${tableSize}v${tableSize}, initial charge ${tableCharge}; each cell is win % / draw %. The CSV includes all requested team sizes, charges and modes.\n\n`+
   `| Pathway | ${sequences.map(s=>`Seq${s}`).join(' | ')} |\n| --- | ${sequences.map(()=> '---').join(' | ')} |\n${table.join('\n')}\n`;
 fs.writeFileSync(path.join(output,`${phase}-neutral.md`), report);
 console.log(`Wrote ${phase}-neutral.csv/.md; ${totalBattles} battles, ${swappedMismatches} swapped mismatches.`);

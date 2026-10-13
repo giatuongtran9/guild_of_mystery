@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const root = process.env.PHASE3_GAME_ROOT || path.join(__dirname, '..');
 const g = require(path.join(root, 'js/node-loader.js'));
+require('./mechanics-fixture')(g);
 const {world} = require('./phase3-test-helpers.js');
 const high = () => .99;
 const shipped = (key, rank) => g.tierFor(key, rank).abilities[0];
@@ -126,7 +127,7 @@ test('Darkness: Sleep gives a setup bonus and Nightmare needs an already sleepin
   const hp = w.v.hp;
   cast(w, shipped('darkness', 6));
   assert(g.hasStatus(w.v, 'sleep'), 'sleep applied');
-  assert.equal(w.v.hp, hp, 'no Nightmare damage in the same cast');
+  assert(w.v.hp<hp,'the new direct attack damages the target');assert(!w.state.events.some(e=>e.type==='damage'&&e.isSignature),'Nightmare still waits for an already sleeping target');
   assert.equal(meter(w.u), 100, 'charge kept (setup bonus is capped at the maximum)');
   cast(w, shipped('darkness', 6));
   assert(w.v.hp < hp, 'second cast on a sleeping foe spends charge and deals damage');

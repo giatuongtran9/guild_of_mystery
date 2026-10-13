@@ -1,5 +1,131 @@
 /* inventory — see css/README.md for ownership. */
 
+.pathway-inventory .section-head {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pathway-inventory .section-head h3 {
+  margin: 0;
+}
+
+.pathway-asset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(min(100%,245px),1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.pathway-asset,
+.pathway-asset-offer {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--panel2);
+  overflow-wrap: anywhere;
+}
+
+.pathway-asset.is-prepared {
+  border-color: var(--gold);
+  box-shadow: inset 3px 0 var(--gold);
+}
+
+.pathway-asset[data-asset-tier="epic"] {
+  border-top: 3px solid #af83dd;
+}
+
+.pathway-asset[data-asset-tier="legendary"] {
+  border-top: 3px solid var(--gold);
+}
+
+.pathway-asset header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pathway-asset h4,
+.pathway-asset-offer h4 {
+  margin: 0;
+  color: var(--bone);
+}
+
+.pathway-asset small {
+  display: block;
+  margin-top: 7px;
+  line-height: 1.5;
+}
+
+.pathway-asset-status {
+  color: var(--gold);
+  font-size: 12px;
+}
+
+.pathway-asset-drawback {
+  color: #d9a6a0;
+  font-size: 13px;
+}
+
+.pathway-asset-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.pathway-asset-actions button {
+  flex: 1 1 auto;
+  min-height: 36px;
+}
+
+.pathway-asset-policy {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0;
+  font-size: 13px;
+}
+
+.pathway-loot-reference {
+  margin-top: 18px;
+}
+
+.pathway-loot-reference summary {
+  cursor: pointer;
+  color: var(--gold);
+}
+
+.pathway-loot-reference>div {
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.pathway-outcome {
+  padding: 16px;
+  margin: 16px 0;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+}
+
+.pathway-asset-offer {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.pathway-asset-offer label {
+  display: grid;
+  gap: 6px;
+}
+
+.pathway-asset-offer select,
+.pathway-asset-policy select {
+  max-width: 100%;
+  min-width: 0;
+}
+
 .inventory-summary {
   display: grid;
   grid-template-columns: repeat(3,1fr);

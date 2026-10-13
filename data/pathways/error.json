@@ -59,7 +59,8 @@
             "amount": 0.15,
             "duration": 2
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -161,7 +162,8 @@
             "duration": 2,
             "uses": 1
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -190,7 +192,8 @@
             "spRatio": 0.1,
             "maxHpRatio": 0.1
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -217,7 +220,8 @@
             "negate": true,
             "duration": "next_turn"
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -256,7 +260,8 @@
             "type": "extra_turn",
             "amount": 1
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
@@ -285,7 +290,8 @@
             "type": "extra_turn",
             "amount": 1
           }
-        ]
+        ],
+        "utilityStrike": 0.35
       }
     },
     {
