@@ -6,13 +6,13 @@ async function main(){
  const root=path.resolve(__dirname,'..'),dom=new JSDOM('<div id="app"></div>',{url:'https://example.test/guild_of_mystery/',runScripts:'dangerously'}),w=dom.window;
  w.fetch=async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(path.join(root,new URL(url).pathname.replace('/guild_of_mystery/','')),'utf8'))});
  w.eval(fs.readFileSync(path.join(root,'js/data-loader.js'),'utf8'));w.G9_DATA=await w.G9DataLoader.load();
- w.scrollTo=()=>{};w.matchMedia=()=>({matches:false});
+ w.setInterval=()=>1;w.clearInterval=()=>{};w.scrollTo=()=>{};w.matchMedia=()=>({matches:false});
  const timers=new Map();let next=0;w.setTimeout=fn=>{timers.set(++next,fn);return next;};w.clearTimeout=id=>timers.delete(id);
  const fixture=g.newGame();fixture.funds=1000;
  const ids=['hardy','glass_cannon','wardbreaker','fates_debt'];
  fixture.recruitPool=ids.map((traitId,i)=>{const a=g.makeAgent(()=>.5,{traitId,sequence:10});a.id='candidate-'+i;return a;});
  w.localStorage.setItem('guild-rpg-browser-v9',JSON.stringify(fixture));
- w.eval(['paths','v15','generate','traits','pathway-assets','signatures','mythical','engine','state','campaign','ui'].map(name=>fs.readFileSync(path.join(root,`js/${name}.js`),'utf8')).join('\n'));
+ w.eval(['vendor/dayjs.min','paths','v15','generate','traits','market','pathway-assets','signatures','mythical','engine','state','campaign','ui'].map(name=>fs.readFileSync(path.join(root,`js/${name}.js`),'utf8')).join('\n'));
  w.G9.tab('recruit');
  assert.equal(w.document.querySelectorAll('.recruit').length,4);assert.equal(w.document.querySelectorAll('.trait-badge').length,4);
  assert.match(w.document.body.textContent,/Normal 74%/);assert.match(w.document.body.textContent,/Rare 20%/);assert.match(w.document.body.textContent,/Epic 5%/);assert.match(w.document.body.textContent,/Legendary 1%/);

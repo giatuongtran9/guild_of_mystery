@@ -18,7 +18,7 @@ const rawBundle = () => ({
 function release(bundle = rawBundle()) {
   const text = JSON.stringify(bundle);
   const version = crypto.createHash('sha256').update(text).digest('hex').slice(0, 16);
-  const scriptVersions = Object.fromEntries(['paths', 'v15', 'generate', 'traits', 'pathway-assets', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'].map(name => [`js/${name}.js`, '0123456789abcdef']));
+  const scriptVersions = Object.fromEntries(['vendor/dayjs.min', 'paths', 'v15', 'generate', 'traits', 'market', 'pathway-assets', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'].map(name => [`js/${name}.js`, '0123456789abcdef']));
   return { manifest: { schema: 'guild.runtime-manifest.v1', version, bundle: `data/runtime/data.${version}.json`, scriptVersions }, text };
 }
 function memoryCache() {

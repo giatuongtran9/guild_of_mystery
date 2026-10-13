@@ -1,3 +1,5 @@
+The current Market, real-calendar rules and measured combat/economy results are in [market-balance/CURRENT.md](../market-balance/CURRENT.md). The measurements below describe an earlier release.
+
 # Permanent character collections
 
 Implemented for Fool, Door, Hanged Man, Death, Hermit, White Tower, Paragon, Moon and Visionary. The other thirteen pathways retain their existing abilities and receive no new collection system.

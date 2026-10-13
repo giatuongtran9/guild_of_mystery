@@ -193,7 +193,7 @@ function shippedDossierUI(a) {
   const s = g.newGame(); s.roster = [a];
   const env = { ...g, TRAITS: JSON.parse(fs.readFileSync(path.join(root, 'data/enemies.json'), 'utf8')).TRAITS,
     state: s, selected: a.id, esc: value => String(value),
-    pathName: p => g.pathOf(p).name, statusBar: () => '', equipmentPicker: () => '' };
+    pathName: p => g.pathOf(p).name, statusBar: () => '', equipmentPicker: () => '', pathwayInventoryPanel: () => '' };
   return new Function('env', `with (env) {
     ${weaponHelpers}
     ${source.slice(helperStart, helperEnd)}

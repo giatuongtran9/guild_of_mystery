@@ -17,7 +17,7 @@ const readSource = (file, encoding) => {
   return fs.readFileSync(file, encoding);
 };
 const loaderSource = readSource(loaderFile, 'utf8');
-const call = "new Function('module','exports','require','G9_DATA',src)(m,m.exports,require,G9_DATA);";
+const call = "new Function('module','exports','require','G9_DATA','dayjs',src)(m,m.exports,require,G9_DATA,require('./vendor/dayjs.min.js'));";
 assert(loaderSource.includes(call), 'canonical Node loader entry must be present');
 const internal = `
 const lifecycleObservations=[];
@@ -35,7 +35,7 @@ testLoader.paths = Module._nodeModulePaths(path.dirname(loaderFile));
 const requireModule = testLoader.require.bind(testLoader);
 testLoader.require = id => id === 'fs' ? { ...fs, readFileSync: readSource } : requireModule(id);
 testLoader._compile(loaderSource.replace(call,
-  `new Function('module','exports','require','G9_DATA',src+${JSON.stringify(internal)})(m,m.exports,require,G9_DATA);`), loaderFile);
+  `new Function('module','exports','require','G9_DATA','dayjs',src+${JSON.stringify(internal)})(m,m.exports,require,G9_DATA,require('./vendor/dayjs.min.js'));`), loaderFile);
 const g = testLoader.exports;
 require('./mechanics-fixture')(g);
 

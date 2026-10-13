@@ -68,7 +68,7 @@ Tests:
   node tests/balance.js
 
 Current progression, combat measurements and known 1v1 balance limitations are
-documented in reports/progression-review/CURRENT.md. The balance regression
+documented in reports/market-balance/CURRENT.md. The balance regression
 script also checks the current advancement and supernatural-board rules.
 
 Ability data ownership:
@@ -137,7 +137,7 @@ Ordinary errands are retired. Boards retain beginner work and jobs matching
 the strongest active agent, with optional harder threats as reputation grows.
 Six named wanted bosses require three awakened Beyonders and award greater
 funds, materials and 2.5x base digestion to each survivor. Each boss can be
-defeated once; declining hides the warrant until the next game day.
+defeated once; declining hides the warrant until the next real day.
 Failed jobs grant no materials or reputation. Routine failures retain 35%
 of funds; failed boss hunts pay nothing.
 Guild changes take effect only after the save succeeds. A saved battle resumes
@@ -161,4 +161,54 @@ credited kills, witnessed spells, contract drops or earned learning milestones.
 Hanged Man stores five souls at every Sequence. Devices and beasts have one
 Normal/Rare/Epic/Legendary definition per tier and retain their own drawbacks.
 Preparation, paid combat use, saved replacement choices and companion recovery
-are documented with measured balance limits in reports/permanent-assets/CURRENT.md.
+are documented with measured balance limits in reports/market-balance/CURRENT.md.
+
+
+REAL CALENDAR AND MARKET (SAVE SCHEMA 16)
+---------------------------------------
+One game day is one calendar day in the player's local timezone. Midnight,
+offline catch-up, daylight saving and date formatting use the bundled Day.js
+1.11.13 library (MIT license in js/vendor/dayjs.LICENSE.txt). Actions do not
+advance the date. Existing saves retain their current day and remaining timers.
+Recruitment refreshes every seven real days; weapons refresh each real day.
+Beasts/spirits rest for three real days. Completed contract slots refill from
+available finite stock immediately; their used copies return after three real
+days. An exhausted contract pool cannot charge a refresh fee.
+
+The Market offers four chosen weapon purchases, a £50 paid refresh and a free
+refill after buying all four. Normal/Rare/Epic/Legendary odds are 74/20/5/1;
+Epic unlocks at 80 reputation and Legendary at 300. Locked odds move to Normal.
+Unlimited advancement materials cost £250 each, with quantity purchases.
+Five weapon families have four qualities. Rare gives +25% weapon ATK; Epic
+and Legendary add unique effects and drawbacks, including recoil, higher SP
+costs, reduced healing, speed penalties or increased incoming damage. Epic
+costs 10x its Normal family price and Legendary 30x. Equipped weapons are lost
+with a permanently lost owner; unequipped guild stock remains available.
+
+A defeated party gets ONE 30% retreat roll. A successful retreat remains a
+failed contract but returns regular owners at 99 injuries. Ordinary failures
+pay 35% funds and no materials/reputation; Wanted failures pay nothing.
+Surviving members on a timed-out hunt return without the shared defeat roll.
+Wanted hunts have a published 15-round deadline. Boss materials now match the
+actual dispatched party, rather than the first characters in the guild roster.
+
+Legendary Paragon devices and Moon beasts have higher base stats. Chronometric
+Regulator grants one native damaging cooldown bypass per owner per encounter,
++25% damage, +50% SP cost and an extra cooldown turn. Recalling/redeploying it
+does not reset the allowance. Eclipse Serpent grants up to two nonlethal HP-paid
+native damaging casts with +25% damage while deployed; normal charges and
+cooldowns still apply. Collection drop odds and fixed storage caps are unchanged.
+
+Ten variants add disclosed tradeoffs to the existing encounter families.
+Assignment previews show materials, effective HP and injuries. Results show
+actual rewards, each owner's digestion/injuries/loss, and collapsible weapon
+and collection events. Reputation's ordinary reward bonus now caps at +20%.
+Fresh per-Sequence combat profiles and native Death/Moon/Visionary/Darkness
+ability tuning are global, affecting duels, contracts and boss fights together.
+
+Reproducible current measurements and their limits:
+  reports/market-balance/CURRENT.md
+  node scripts/measure-pathway-duels.js --seeds=8 --assets=rare
+  node scripts/measure-contract-balance.js --samples=100 --assets=rare --variants=live
+  node scripts/measure-wanted-balance.js --samples=100 --assets=rare
+  node scripts/measure-persistent-guild-economy.js --guilds=30 --days=60 --jobs=8

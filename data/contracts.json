@@ -46,14 +46,14 @@
       "minReputation": 10,
       "lastSeen": "South Wharf",
       "story": "Elias once escorted dockworkers home through the fog. When the canal syndicate abandoned his brother after an accident, he turned that duty into a private war. Merchants now vanish along the towpath, marked with the same red cut. He has learned to provoke a crowd into fighting itself. Three agents must corner him before another shift ends.",
-      "mechanic": "Below half health, his frenzy grants a second action and 15% more damage.",
+      "mechanic": "Below half health, his frenzy grants a second action and 15% more damage. The party has 15 rounds to finish the hunt.",
       "phase": {
         "type": "frenzy",
         "damageMultiplier": 1.15,
         "extraActions": 1
       },
       "statMultipliers": {
-        "hp": 5.75,
+        "hp": 38.08032,
         "atk": 1.05,
         "def": 0.8,
         "int": 1
@@ -62,7 +62,7 @@
       "rewardFunds": 1100,
       "rewardRep": 10,
       "rewardMaterials": 2,
-      "damageMultiplier": 0.8
+      "damageMultiplier": 0.2
     },
     {
       "id": "black_mirror",
@@ -73,14 +73,14 @@
       "minReputation": 30,
       "lastSeen": "Old Market",
       "story": "A celebrated portrait restorer, Mara promised grieving families one final glimpse of the dead. Her black mirrors began keeping those families instead. She now moves between abandoned shop windows while poison spreads through their rooms. The guild has traced every mirror to her workshop; three agents are needed to break the escape routes and face her together.",
-      "mechanic": "At half health, she raises a shield worth 25% of maximum HP and deals 15% more damage.",
+      "mechanic": "At half health, she raises a shield worth 25% of maximum HP and deals 15% more damage. The party has 15 rounds to finish the hunt. Her lingering poison deals 35% less damage than an ordinary application.",
       "phase": {
         "type": "ward",
         "shieldRatio": 0.25,
         "damageMultiplier": 1.15
       },
       "statMultipliers": {
-        "hp": 4.2,
+        "hp": 18.3245,
         "atk": 1.1,
         "def": 0.8,
         "int": 1.05
@@ -88,7 +88,9 @@
       "weaponId": "knife",
       "rewardFunds": 1900,
       "rewardRep": 14,
-      "rewardMaterials": 3
+      "rewardMaterials": 3,
+      "damageMultiplier": 0.14,
+      "statusDamageMultiplier": 0.65
     },
     {
       "id": "broken_hour",
@@ -99,14 +101,14 @@
       "minReputation": 80,
       "lastSeen": "Clockmakers Row",
       "story": "Jonas repaired the district clocks until a guild patron erased his name from the commission ledger. Now the clocks lose an hour whenever he steals, and witnesses cannot agree which doors were open. His stolen records hold entire households in debt. A three-agent warrant team must force him into the same moment long enough to end the thefts.",
-      "mechanic": "At half health, he drains 15% of each agent’s maximum SP and deals 20% more damage.",
+      "mechanic": "At half health, he drains 15% of each agent’s maximum SP and deals 20% more damage. The party has 15 rounds to finish the hunt. Redirected strikes deal 25% of their usual damage to the party.",
       "phase": {
         "type": "drain",
         "spRatio": 0.15,
         "damageMultiplier": 1.2
       },
       "statMultipliers": {
-        "hp": 4.32,
+        "hp": 18.8478,
         "atk": 1,
         "def": 0.8,
         "int": 1.05
@@ -114,7 +116,9 @@
       "weaponId": "sword",
       "rewardFunds": 2900,
       "rewardRep": 18,
-      "rewardMaterials": 3
+      "rewardMaterials": 3,
+      "damageMultiplier": 0.25,
+      "redirectedDamageMultiplier": 0.25
     },
     {
       "id": "ashen_choir",
@@ -125,13 +129,13 @@
       "minReputation": 170,
       "lastSeen": "Saint Brigid’s Hospice",
       "story": "Agatha kept vigil over patients no physician could save. She found a hymn that eased their fear, but the choir it awakened never stopped singing. The hospice now sleeps through every sunrise and its lost patients walk in shared dreams. Three agents must enter the vigil, protect one another from its lullaby, and bring the waking bell back to the ward.",
-      "mechanic": "At half health, her nightmare frightens every agent for one turn and increases damage by 20%.",
+      "mechanic": "At half health, her nightmare frightens every agent for one turn and increases damage by 20%. The party has 15 rounds to finish the hunt.",
       "phase": {
         "type": "fear",
         "damageMultiplier": 1.2
       },
       "statMultipliers": {
-        "hp": 2.8,
+        "hp": 11.32237,
         "atk": 1.05,
         "def": 0.8,
         "int": 1.1
@@ -139,7 +143,8 @@
       "weaponId": "none",
       "rewardFunds": 4300,
       "rewardRep": 22,
-      "rewardMaterials": 4
+      "rewardMaterials": 4,
+      "damageMultiplier": 0.25
     },
     {
       "id": "vacant_crown",
@@ -150,14 +155,14 @@
       "minReputation": 300,
       "lastSeen": "The Court of Empty Seats",
       "story": "Voss bought the courts that stripped his family of its title. He then changed the meaning of every oath sworn inside them. Petitioners arrive seeking justice and leave owing him their names. His vacant crown still commands guards who no longer remember him. A three-agent party must withstand the court’s decrees and break his authority together.",
-      "mechanic": "At half health, his decree drains 20% of maximum SP from every agent and increases damage by 20%.",
+      "mechanic": "At half health, his decree drains 20% of maximum SP from every agent and increases damage by 20%. The party has 15 rounds to finish the hunt.",
       "phase": {
         "type": "drain",
         "spRatio": 0.2,
         "damageMultiplier": 1.2
       },
       "statMultipliers": {
-        "hp": 4.44,
+        "hp": 10.53266,
         "atk": 1.05,
         "def": 0.85,
         "int": 1.1
@@ -165,7 +170,8 @@
       "weaponId": "sword",
       "rewardFunds": 6200,
       "rewardRep": 28,
-      "rewardMaterials": 4
+      "rewardMaterials": 4,
+      "damageMultiplier": 0.25
     },
     {
       "id": "last_hour",
@@ -176,7 +182,7 @@
       "minReputation": 400,
       "lastSeen": "The Unfinished Observatory",
       "story": "Ione catalogued disasters that had not happened yet. When she tried to spare the city its final calamity, she bound herself to an hour that never arrives. The observatory now repeats the deaths of everyone who crosses its threshold. Three agents must share the burden of that hour and confront its keeper before the city becomes another entry.",
-      "mechanic": "At half health, she gains a second action and a shield worth 20% of maximum HP.",
+      "mechanic": "At half health, she gains a second action and a shield worth 20% of maximum HP. The party has 15 rounds to finish the hunt.",
       "phase": {
         "type": "ward",
         "shieldRatio": 0.2,
@@ -184,7 +190,7 @@
         "damageMultiplier": 1.15
       },
       "statMultipliers": {
-        "hp": 2.53,
+        "hp": 12.11818,
         "atk": 1.05,
         "def": 0.8,
         "int": 1.1
@@ -193,7 +199,7 @@
       "rewardFunds": 8500,
       "rewardRep": 35,
       "rewardMaterials": 5,
-      "damageMultiplier": 0.8
+      "damageMultiplier": 0.128
     }
   ],
   "system": {
@@ -855,6 +861,104 @@
         "sequence": 0,
         "copies": 1,
         "tag": "occult"
+      }
+    ]
+  },
+  "encounterVariants": {
+    "murder_at_bell_house": [
+      {
+        "id": "echoed_testimony",
+        "name": "Echoed Testimony",
+        "description": "A remembered witness shields the hostile presence for 8% of its maximum HP, but its attacks deal 5% less damage.",
+        "shieldRatio": 0.08,
+        "damageMultiplier": 0.95
+      },
+      {
+        "id": "fraying_echo",
+        "name": "Fraying Echo",
+        "description": "The echo has 10% less HP, but its attacks deal 10% more damage.",
+        "stats": {
+          "hp": 0.9
+        },
+        "damageMultiplier": 1.1
+      }
+    ],
+    "the_whispering_tenant": [
+      {
+        "id": "borrowed_breath",
+        "name": "Borrowed Breath",
+        "description": "The tenant has 10% more INT but 10% less ATK.",
+        "stats": {
+          "int": 1.1,
+          "atk": 0.9
+        }
+      },
+      {
+        "id": "fading_voice",
+        "name": "Fading Voice",
+        "description": "The voice has 10% more HP but 10% less INT.",
+        "stats": {
+          "hp": 1.1,
+          "int": 0.9
+        }
+      }
+    ],
+    "a_vanished_watchman": [
+      {
+        "id": "restless_vigil",
+        "name": "Restless Vigil",
+        "description": "The watchman acts 7% faster but has 5% less HP.",
+        "speedMultiplier": 1.07,
+        "stats": {
+          "hp": 0.95
+        }
+      },
+      {
+        "id": "iron_lantern",
+        "name": "Iron Lantern",
+        "description": "The watchman has 10% more DEF but 5% less ATK.",
+        "stats": {
+          "def": 1.1,
+          "atk": 0.95
+        }
+      }
+    ],
+    "the_chapel_below": [
+      {
+        "id": "consecrated_threshold",
+        "name": "Consecrated Threshold",
+        "description": "The congregation begins with a shield worth 12% maximum HP, but attacks deal 10% less damage.",
+        "shieldRatio": 0.12,
+        "damageMultiplier": 0.9
+      },
+      {
+        "id": "broken_rite",
+        "name": "Broken Rite",
+        "description": "The broken rite gives its guardian 10% more INT but 10% less DEF.",
+        "stats": {
+          "int": 1.1,
+          "def": 0.9
+        }
+      }
+    ],
+    "the_red_ledger": [
+      {
+        "id": "armored_account",
+        "name": "Armored Account",
+        "description": "The collector has 10% more DEF but 5% less HP.",
+        "stats": {
+          "def": 1.1,
+          "hp": 0.95
+        }
+      },
+      {
+        "id": "overdue_payment",
+        "name": "Overdue Payment",
+        "description": "The collector has 10% more ATK but 10% less DEF.",
+        "stats": {
+          "atk": 1.1,
+          "def": 0.9
+        }
       }
     ]
   }

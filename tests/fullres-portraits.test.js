@@ -25,13 +25,13 @@ async function fixture() {
   w.fetch=async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(path.join(root,new URL(url).pathname.replace('/guild_of_mystery/','')),'utf8'))});
   w.eval(fs.readFileSync(path.join(root,'js/data-loader.js'),'utf8'));w.G9_DATA=await w.G9DataLoader.load();
   const key='data/assets/characters/white_tower/white_tower_seq5.png';w.G9_DATA.runtimeAssets.entries[key].full=metadata(key).full;
-  w.scrollTo=()=>{};w.setTimeout=()=>1;w.clearTimeout=()=>{};
+  w.setInterval=()=>1;w.clearInterval=()=>{};w.scrollTo=()=>{};w.setTimeout=()=>1;w.clearTimeout=()=>{};
   w.HTMLElement.prototype.getClientRects=function(){return [{width:100,height:30}];};
   Object.defineProperty(w.HTMLElement.prototype,'clientWidth',{configurable:true,get(){return this.classList.contains('portrait-viewer-canvas')?360:390;}});
   Object.defineProperty(w.HTMLElement.prototype,'clientHeight',{configurable:true,get(){return this.classList.contains('portrait-viewer-canvas')?580:844;}});
   const save=g.newGame(),a=g.makeAgent(()=>.5,{path:'white_tower',sequence:5,trait:'Stout Vitality'});a.id='fullres';a.name='Alden Voss';a.weaponId='knife';g.restatAgent(a);save.roster=[a];
   w.localStorage.setItem('guild-rpg-browser-v9',JSON.stringify(save));
-  w.eval(['paths','v15','generate','traits','pathway-assets','signatures','mythical','engine','state','campaign','ui'].map(n=>fs.readFileSync(path.join(root,`js/${n}.js`),'utf8')).join('\n'));
+  w.eval(['vendor/dayjs.min','paths','v15','generate','traits','market','pathway-assets','signatures','mythical','engine','state','campaign','ui'].map(n=>fs.readFileSync(path.join(root,`js/${n}.js`),'utf8')).join('\n'));
   w.G9.tab('hall');w.G9.dossier(a.id);
   const opener=w.document.querySelector('.dossier-portrait-zoom');
   return {dom,w,opener,key,read:()=>w.localStorage.getItem('guild-rpg-browser-v9')};

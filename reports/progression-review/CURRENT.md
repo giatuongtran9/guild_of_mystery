@@ -1,3 +1,5 @@
+The current Market, real-calendar rules and measured combat/economy results are in [market-balance/CURRENT.md](../market-balance/CURRENT.md). The measurements below describe an earlier release.
+
 The latest implementation and measurements are in [reputation-combat/CURRENT.md](../reputation-combat/CURRENT.md). The measurements below describe the previous release.
 
 # Implemented progression and contract update

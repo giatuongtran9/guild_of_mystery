@@ -49,19 +49,23 @@ function weightedSequence(r,rep,roster=[]){
  for(const [seq,w] of arr){n-=w;if(n<0)return seq;}return arr.at(-1)[0];
 }
 function bossDefinition(id){return WANTED_TARGETS.find(b=>b.id===id)||null;}
+function wantedRewardsForParty(quest,party=[]){
+ const definition=bossDefinition(quest.bossId),materials={},count=definition?.rewardMaterials||quest.rewardMaterials||0;
+ for(const path of new Set(party.map(a=>getCombatAgent(a).path).filter(p=>PATH_KEYS.includes(p))))materials[pathOf(path).material]=count;
+ return {...quest.rewards,materials};
+}
 function makeWantedQuest(rep=15,rng=Math.random,roster=[],bossId=null){
  const eligible=WANTED_TARGETS.filter(b=>rep>=b.minReputation),w=bossId?bossDefinition(bossId):pick(rng,eligible);
  if(!w)return null;
- const profile=rosterProfile(roster),materialPaths=[...new Set(profile.paths)].slice(0,3),materials={};
- for(const p of materialPaths.length?materialPaths:[w.path])materials[pathOf(p).material]=w.rewardMaterials;
- return {id:newId('w'),kind:'wanted',bossId:w.id,name:w.title,brief:w.story,story:w.story,target:w.target,knownPath:pathOf(w.path).name,threat:`Sequence ${w.sequence} boss`,lastSeen:w.lastSeen,mechanic:w.mechanic,objectiveText:`Defeat ${w.target} with three awakened agents`,objective:'combat',difficultySequence:w.sequence,encounter:true,mundane:false,requiredPath:w.path,requiredPartySize:3,roundLimit:G9D.balance.contract_encounters.boss_round_limit,rewards:{funds:w.rewardFunds,reputation:w.rewardRep,materials},tags:['wanted','boss'],dayCost:1};
+ return {id:newId('w'),kind:'wanted',bossId:w.id,name:w.title,brief:w.story,story:w.story,target:w.target,knownPath:pathOf(w.path).name,threat:`Sequence ${w.sequence} boss`,lastSeen:w.lastSeen,mechanic:w.mechanic,objectiveText:`Defeat ${w.target} with three awakened agents`,objective:'combat',difficultySequence:w.sequence,encounter:true,mundane:false,requiredPath:w.path,requiredPartySize:3,roundLimit:G9D.balance.contract_encounters.boss_round_limit,rewardMaterials:w.rewardMaterials,rewards:{funds:w.rewardFunds,reputation:w.rewardRep,materials:{}},tags:['wanted','boss'],dayCost:0};
 }
+function contractEncounterVariant(definitionId,rng=Math.random){const family=String(definitionId||'').replace(/_seq_[0-9]$/,'');const variants=G9D.contracts.encounterVariants?.[family];return variants?.length?cloneS(pick(rng,variants)):null;}
 function makeQuest(rng=Math.random,min=9,max=10,rep=0,roster=[],forcedSequence=null){
  const tpl=pick(rng,QUEST_TEMPLATES),difficultySequence=Number.isInteger(forcedSequence)?forcedSequence:weightedSequence(rng,rep,roster);
  const profile=rosterProfile(roster),materialPath=pick(rng,profile.paths.length?profile.paths:PATH_KEYS),mat=pathOf(materialPath).material;
- const difficultyScale=1+(9-difficultySequence)*.25,trustScale=1+Math.min(rep,400)*.002;
+ const difficultyScale=1+(9-difficultySequence)*.25,trustScale=1+Math.min(rep,400)*.0005;
  const funds=Math.round(randRange(rng,170,250)*difficultyScale*trustScale),reputation=3+Math.floor((9-difficultySequence)/2),materials=1+Math.floor((9-difficultySequence)/4);
- return {id:newId('q'),kind:'contract',name:tpl[0],brief:tpl[1],story:tpl[1],requiredPath:null,tags:[tpl[2],pick(rng,tags)],difficultySequence,objective:'combat',encounter:true,mundane:false,materialPath,rewards:{funds,reputation,materials:{[mat]:materials}},dayCost:1};
+ return {id:newId('q'),kind:'contract',name:tpl[0],brief:tpl[1],story:tpl[1],requiredPath:null,tags:[tpl[2],pick(rng,tags)],difficultySequence,objective:'combat',encounter:true,mundane:false,materialPath,rewards:{funds,reputation,materials:{[mat]:materials}},dayCost:0};
 }
 function guildQuestTier(rep){return rep>=80?4:rep>=50?3:rep>=30?2:rep>=15?1:0;}
 function questCountForReputation(rep){if(rep<5)return 2;if(rep<15)return 3;if(rep<50)return 4;if(rep<80)return 5;return 6;}

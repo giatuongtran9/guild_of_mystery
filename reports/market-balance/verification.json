@@ -1,0 +1,278 @@
+{
+  "nodeSuites": [
+    {
+      "test": "battle-log.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "combat-sprite.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "campaign.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "battle-ui.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "effects-behavior.js",
+      "exitCode": 0
+    },
+    {
+      "test": "encounter-state.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "fullres-cache-data.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "encounter-feedback-ui.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "generic-effects.js",
+      "exitCode": 0
+    },
+    {
+      "test": "global-combat.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "market-calendar.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "fullres-portraits.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "market-weapons.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "market-ui.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "permanent-asset-combat.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "contract-pool.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "permanent-assets.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "mythical-order.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase1-ai.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "permanent-assets-ui.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "persistence-contracts-ui.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase1-casting.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase1-damage-pipeline.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase1-lifecycle.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase1-progression-resistance.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase2-boot.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase2-cache.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase1-combat-units.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase2-modal.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase2-modal-dom.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase2-portraits.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase2-runtime-data.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase2-battle.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase2-startup.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase3-descriptions.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase3-existing-rules.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase3-thread-damage.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase3-actual-casts.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase4-core.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase4-data.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase4-fixes.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase4-mythical.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase4-saves.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase4-side-parity.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase4-signatures.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase4-ui.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase3-description-dom.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "recruitment-choice.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "phase4-balance.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "progression-contracts.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "retreat.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "thread-cc-interrupt.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "thread-marionette.js",
+      "exitCode": 0
+    },
+    {
+      "test": "reflect-order.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "trait-ui.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "traits.test.js",
+      "exitCode": 0
+    },
+    {
+      "test": "balance.js",
+      "exitCode": 0
+    }
+  ],
+  "artworkSuites": [
+    {
+      "test": "art-consistency-corrections.test.py",
+      "exitCode": 0
+    },
+    {
+      "test": "artwork-overrides.test.py",
+      "exitCode": 0
+    },
+    {
+      "test": "fullres-assets.test.py",
+      "exitCode": 0
+    },
+    {
+      "test": "phase2-runtime-assets.test.py",
+      "exitCode": 0
+    }
+  ],
+  "marketBrowser": {
+    "url": "http://127.0.0.1:35727/",
+    "results": [
+      {
+        "width": 320,
+        "documentWidth": 320,
+        "cards": true
+      },
+      {
+        "width": 390,
+        "documentWidth": 390,
+        "cards": true
+      },
+      {
+        "width": 560,
+        "documentWidth": 560,
+        "cards": true
+      },
+      {
+        "width": 1440,
+        "documentWidth": 1440,
+        "cards": true
+      }
+    ]
+  },
+  "inventoryBrowser": "36 views and four interaction/reload runs at 320/390/560/1440px passed",
+  "builderCheck": true,
+  "preservedArtworkBase": "b477c6e5d82fcd315f6ba680cf42aa33f4be828a"
+}

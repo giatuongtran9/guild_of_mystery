@@ -70,7 +70,7 @@ test('full chapter grants the case file, progression supplies and no premature n
  assert(g.campaignStatus(s).complete);assert.strictEqual(g.campaignStatus(s).current,null);assert.strictEqual(s.campaign.caseFile.title,'The Whispering District');assert.strictEqual(s.campaign.caseFile.badge,'Case Closed');
  assert.strictEqual(s.funds,funds+660);assert.strictEqual(s.reputation,12);assert(s.roster.every(a=>a.digest===70));
  for(const p of ['fool','mother'])assert.strictEqual(s.materials[g.pathOf(p).material],materials[g.pathOf(p).material]+3);
- assert(s.quests.some(q=>q.difficultySequence===9));assert.equal(s.contractPool.lastRefreshDay,s.day);assert(s.quests.every(q=>q.enemySeed!==quests[0].enemySeed));assert(s.wanted.some(q=>q.bossId==='red_knife'),'chapter reputation unlocks the first eligible warrant');assert(!g.campaignStart(s,'open_doors').ok);assert(!g.campaignStart(s,'daybreak').ok);
+ assert(s.quests.some(q=>q.difficultySequence===9));assert.equal(s.contractPool.lastRefreshDay,s.day);assert.equal(s.quests.find(q=>q.id===quests[0].id).enemySeed,quests[0].enemySeed,'chapter actions do not refresh the real-day board');assert(s.wanted.some(q=>q.bossId==='red_knife'),'chapter reputation unlocks the first eligible warrant');assert(!g.campaignStart(s,'open_doors').ok);assert(!g.campaignStart(s,'daybreak').ok);
  assert.deepStrictEqual(g.migrateSave(copy(s)).campaign.caseFile,s.campaign.caseFile);
 });
 test('authored enemy hook leaves normal contract random generation and death rules unchanged',()=>{

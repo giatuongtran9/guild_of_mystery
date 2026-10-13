@@ -33,15 +33,25 @@ for(const reputation of [0,15,30,80,170,400])for(const seq of [9,8,5,0])for(let 
 }
 const failQuest={id:'failure',kind:'contract',name:'Failure probe',encounter:true,difficultySequence:5,requiredPath:'darkness',rewards:{funds:100,reputation:5,materials:{'Spirit Thread':3}}};
 const failed=g.resolveQuest([agent(9)],failQuest,1009,{individual:true});assert.equal(failed.success,false);assert.deepEqual(failed.rewards.materials,{});assert.equal(failed.rewards.reputation,0);
-const s=g.newGame();s.day=7;s.recruitRefreshDay=8;const ids=s.recruitPool.map(a=>a.id);g.advanceGuildDay(s,1);assert.equal(s.day,8);assert.equal(s.recruitRefreshDay,15);assert(s.recruitPool.every(a=>!ids.includes(a.id)));
+const s=g.newGame();s.day=7;s.recruitRefreshDay=8;const ids=s.recruitPool.map(a=>a.id);g.advanceGuildDay(s,0,g.dayjs(s.calendar.originDate).add(7,'day').valueOf());assert.equal(s.day,8);assert.equal(s.recruitRefreshDay,15);assert(s.recruitPool.every(a=>!ids.includes(a.id)));
 const stable=copy(s.recruitPool);g.advanceGuildDay(s,0);assert.deepEqual(s.recruitPool,stable);
 
 const trio=[agent(9,'fool','a'),agent(9,'tyrant','b'),agent(9,'mother','c')];
 s.roster=trio;s.reputation=10;g.maintainGuildBoards(s);
 assert.equal(s.wanted.length,1);assert.equal(s.wanted[0].bossId,'red_knife');
 const boss=s.wanted[0];assert.equal(boss.requiredPartySize,3);assert(boss.story.length>100);assert(boss.rewards.funds>g.makeQuest(()=>.5,9,10,10,trio).rewards.funds);
+assert.deepEqual(boss.rewards.materials,{},'a warrant does not bind materials to roster order');
+const dispatched=[agent(9,'sun','d'),agent(9,'death','e'),agent(9,'hermit','f')];
+const dispatchedMaterials=Object.fromEntries(dispatched.map(a=>[g.pathOf(a.path).material,g.bossDefinition(boss.bossId).rewardMaterials]));
+assert.deepEqual(g.wantedRewardsForParty(boss,dispatched).materials,dispatchedMaterials);
+assert.equal(Object.keys(g.wantedRewardsForParty(boss,[trio[0],agent(9,'fool','second'),agent(9,'fool','third')]).materials).length,1,'materials reward each distinct dispatched pathway');
+const rewardProbe=copy(boss);rewardProbe.roundLimit=1;
+const survivingParty=dispatched.map(a=>({...a,stats:{...a.stats,hp:100000,atk:100000,int:100000}}));
+const partyResult=g.resolveQuest(survivingParty,rewardProbe,93);
+assert(partyResult.success);assert.deepEqual(partyResult.rewards.materials,dispatchedMaterials);
+assert.deepEqual(boss.rewards.materials,{},'resolving the fight does not mutate the posted warrant');
 s.bossDeferrals={red_knife:s.day};g.maintainGuildBoards(s);assert(!s.wanted.some(q=>q.bossId==='red_knife'));
-g.advanceGuildDay(s,1);g.maintainGuildBoards(s);assert(s.wanted.some(q=>q.bossId==='red_knife'),'a declined warrant returns on the next game day');
+g.advanceGuildDay(s,0,g.dayjs(s.calendar.originDate).add(s.day-s.calendar.originDay+1,'day').valueOf());g.maintainGuildBoards(s);assert(s.wanted.some(q=>q.bossId==='red_knife'),'a declined warrant returns on the next game day');
 const bosses=require('../data/contracts.json').WANTED_TARGETS;assert.equal(bosses.length,6);assert.equal(new Set(bosses.map(b=>b.title)).size,6);
 assert.throws(()=>g.resolveQuest(trio.slice(0,2),boss,1),/three awakened/);
 assert.throws(()=>g.resolveQuest([trio[0],trio[0],trio[0]],boss,1),/three awakened/);
@@ -52,7 +62,7 @@ assert(!g.settleContract(s).ok);assert.equal(s.funds,funds+boss.rewards.funds);
 
 const legacy=g.newGame();legacy.schema=12;legacy.quests=[{id:'cat',name:'A Missing Cat',difficultySequence:10,encounter:false}];legacy.wanted=[{id:'fake',name:'Wanted: A Missing Cat'}];
 const migrated=g.migrateSave(legacy);assert(migrated.quests.every(q=>q.kind==='contract'&&q.encounter));assert.equal(migrated.wanted.length,0);
-const due=g.newGame();due.day=8;due.recruitRefreshDay=8;let raw=JSON.stringify(due),deny=true;
+const due=g.newGame();due.calendar.originDate=g.dayjs().subtract(7,'day').format('YYYY-MM-DD');due.calendar.currentDate=due.calendar.originDate;due.recruitRefreshDay=8;let raw=JSON.stringify(due),deny=true;
 global.localStorage={getItem:()=>raw,setItem:(key,value)=>{if(deny)throw new Error('storage denied');raw=value;}};
 const beforeIds=due.recruitPool.map(a=>a.id),unchanged=g.loadGame();assert.deepEqual(unchanged.recruitPool.map(a=>a.id),beforeIds);assert.equal(raw,JSON.stringify(due));
 deny=false;const refreshed=g.loadGame();assert(refreshed.recruitPool.every(a=>!beforeIds.includes(a.id)));assert.equal(refreshed.recruitRefreshDay,15);assert.deepEqual(JSON.parse(raw).recruitPool,refreshed.recruitPool);

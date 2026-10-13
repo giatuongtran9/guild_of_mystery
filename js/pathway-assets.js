@@ -14,11 +14,11 @@ const PATHWAY_ASSET_DEFINITIONS=Object.freeze({
  copper_turret:{kind:'device',tier:'normal',name:'Copper Turret',atk:1,int:1,hp:1,def:1,description:'A balanced clockwork attacker.',drawback:'Limited vessel HP; no special effect.'},
  glass_lens_turret:{kind:'device',tier:'rare',name:'Glass-Lens Turret',atk:1.25,int:1.25,hp:.7,def:.85,description:'25% stronger attack and intellect than the ordinary device profile.',drawback:'30% less HP and 15% less DEF.'},
  mirror_battery:{kind:'device',tier:'epic',name:'Mirror Battery',atk:.9,int:.9,hp:.65,def:.9,description:'Stores part of actual magical HP damage its owner takes to strengthen its next successful ordinary shot.',drawback:'Fragile vessel; discharge replaces an ordinary shot and cannot charge from reflection.'},
- chronometric_regulator:{kind:'device',tier:'legendary',name:'Chronometric Regulator',atk:.7,int:.7,hp:.7,def:.8,description:'Once per encounter, a qualifying native damaging skill can be cast despite its cooldown, with normal action and resource costs.',drawback:'The repeated skill is locked for the rest of the encounter; weak ordinary attacks.'},
+ chronometric_regulator:{kind:'device',tier:'legendary',name:'Chronometric Regulator',atk:1.4,int:1.4,hp:1.1,def:1.05,description:'40% stronger ATK and INT than a Normal vessel. Once per encounter, overclock a native damaging skill on cooldown for 25% more damage using a normal action.',drawback:'Overclock costs 50% more SP and adds one turn to the native skill cooldown. The vessel retains limited HP.'},
  grey_hound:{kind:'beast',tier:'normal',name:'Grey Hound',atk:1,int:1,hp:1,def:1,description:'A balanced beast with ordinary melee attacks.',drawback:'No special effect.'},
  nightfang_wolf:{kind:'beast',tier:'rare',name:'Nightfang Wolf',atk:1.25,int:1.1,hp:.75,def:.9,description:'25% stronger attack than the ordinary beast profile.',drawback:'25% less HP and 10% less DEF.'},
  gravehound:{kind:'beast',tier:'epic',name:'Gravehound',atk:.9,int:.9,hp:.9,def:.8,description:'A successful ordinary attack consumes one enemy Curse for a stronger strike.',drawback:'Sacrifices the remaining Curse ticks; lower ordinary stats.'},
- eclipse_serpent:{kind:'beast',tier:'legendary',name:'Eclipse Serpent',atk:.65,int:.65,hp:.65,def:.8,description:'While deployed, up to two qualifying native damaging spells may be paid with HP instead of SP.',drawback:'HP payment cannot be lethal; normal charge and cooldown apply. Fragile vessel with weak attacks.'},
+ eclipse_serpent:{kind:'beast',tier:'legendary',name:'Eclipse Serpent',atk:1.4,int:1.3,hp:1.1,def:1.05,description:'40% stronger ATK and 30% stronger INT than a Normal vessel. While deployed, two native damaging spells can pay HP instead of SP and deal 25% more damage.',drawback:'Blood-powered spells spend owner HP, cannot make a lethal payment, and keep normal charge, action and cooldown costs. The vessel retains limited HP.'},
  graveguard:{kind:'spirit',name:'Graveguard',atk:.7,int:.6,hp:1.2,def:1.2,description:'Its vessel can take a small portion of one hit for its owner.',drawback:'Weak ordinary attacks.'},
  wailing_shade:{kind:'spirit',name:'Wailing Shade',atk:.8,int:1,hp:.7,def:.7,description:'Its first successful attack weakens enemy damage briefly.',drawback:'Fragile vessel and higher invocation cost.'},
  soul_reaper:{kind:'spirit',name:'Soul Reaper',atk:1.1,int:.8,hp:.8,def:.7,description:'Its ordinary attacks are stronger against an injured enemy.',drawback:'Weak defenses; no protective or healing role.'},
@@ -139,23 +139,23 @@ function pathwayVesselDestroyed(unit,state){
  asset.hpRatio=0;
  if(asset.kind==='marionette')asset.condition='lost';
  else if(asset.kind==='device')asset.condition='wrecked';
- else {asset.condition='wounded';asset.readyDay=(state.assetContext?.day||1)+1+PATHWAY_ASSET_RULES.recoveryDays;}
+ else {asset.condition='wounded';asset.readyDay=(state.assetContext?.day||1)+PATHWAY_ASSET_RULES.recoveryDays;}
 }
 function recallPathwayVessel(unit,state){const {asset}=pathwayVesselAsset(unit,state);if(asset&&unit.alive){asset.hpRatio=Math.max(0,Math.min(1,unit.hp/unit.maxHp));if(asset.kind==='marionette')asset.sp=unit.sp;}unit._assetRecalled=true;}
 function dismissPathwayOwnedUnits(owner,state){for(const u of signatureUnits(state))if(u!==owner&&(u._assetOwnerId===owner.id||u._signatureOwnerId===owner.id||u.ownerId===owner.id)){u.alive=false;u.inCombat=false;u._assetRecalled=true;}}
 function finalizePathwayBattle(state,quest,success,lines=[]){
  for(const u of signatureUnits(state).filter(x=>x._assetId&&x.alive))recallPathwayVessel(u,state);
- for(const owner of state.allies.filter(x=>!x.summoned&&x.alive)){const inv=owner.agent.pathwayInventory;if(!inv)continue;inv.assets=inv.assets.filter(x=>x.condition!=='lost');inv.prepared=inv.prepared.filter(id=>inv.assets.some(x=>x.id===id));}
+ for(const owner of state.allies.filter(x=>!x.summoned&&(x.alive||state.retreatedOwners?.has(x.id)))){const inv=owner.agent.pathwayInventory;if(!inv)continue;inv.assets=inv.assets.filter(x=>x.condition!=='lost');inv.prepared=inv.prepared.filter(id=>inv.assets.some(x=>x.id===id));}
  if(state.assetContext?.enabled){
   if(success)for(const kind of ['device','beast']){const owners=state.allies.filter(u=>!u.summoned&&u.alive&&pathwayCollection(u)?.kind===kind&&Math.max(0,(u.agent.madness||0)+(success?-3:12))<100);if(!owners.length)continue;const chance=quest.kind==='wanted'?PATHWAY_ASSET_RULES.wantedDrop:PATHWAY_ASSET_RULES.regularDrop;if(state.rng()>=chance)continue;owners.sort((a,b)=>(a.agent.pathwayInventory.assets.length-b.agent.pathwayInventory.assets.length)||a.id.localeCompare(b.id));const owner=owners[0],tier=rollPathwayLootTier(state.rng),definitionId=pathwayLootDefinition(kind,tier);addPathwayAsset(owner,state,newPathwayAsset(owner,state,{kind,tier,definitionId,sequence:quest.difficultySequence,sourcePath:owner.path,hpRatio:1}),lines);}
-  for(const owner of state.allies.filter(u=>!u.summoned&&u.alive&&Math.max(0,(u.agent.madness||0)+(success?-3:12))<100)){const a=owner.agent,c=pathwayCollection(a),inv=a.pathwayInventory;if(!c||!PATHWAY_LEARNING_ORDER[c.kind]||a.sequence>c.unlock)continue;
+  for(const owner of state.allies.filter(u=>!u.summoned&&(u.alive||state.retreatedOwners?.has(u.id))&&Math.max(0,(u.agent.madness||0)+(success?-3:12))<100)){const a=owner.agent,c=pathwayCollection(a),inv=a.pathwayInventory;if(!c||!PATHWAY_LEARNING_ORDER[c.kind]||a.sequence>c.unlock)continue;
    if(c.kind==='conditioning'){if(!a._assetHypnosisSucceeded)continue;inv.progress.hypnosis++;}
    else {if(!success||![a.sequence,Math.min(9,a.sequence+1)].includes(quest.difficultySequence))continue;inv.progress.contracts++;}
    const count=c.kind==='conditioning'?inv.progress.hypnosis:inv.progress.contracts,order=PATHWAY_LEARNING_ORDER[c.kind],earned=Math.min(order.length,Math.floor(count/PATHWAY_ASSET_RULES.learningContracts));
    for(const id of order.slice(0,earned))if(!inv.assets.some(x=>x.definitionId===id))addPathwayAsset(owner,state,newPathwayAsset(owner,state,{kind:c.kind,definitionId:id,sequence:PATHWAY_ASSET_DEFINITIONS[id].sequence??c.unlock,sourcePath:a.path}),lines);
   }
  }
- const survivors=new Set(state.allies.filter(u=>!u.summoned&&u.alive&&Math.max(0,(u.agent.madness||0)+(success?-3:12))<100).map(u=>u.id));
+ const survivors=new Set(state.allies.filter(u=>!u.summoned&&(u.alive||state.retreatedOwners?.has(u.id))&&Math.max(0,(u.agent.madness||0)+(success?-3:12))<100).map(u=>u.id));
  state.assetOffers=state.assetOffers.filter(o=>survivors.has(o.ownerId)&&o.asset.condition!=='lost');state.assetGains=state.assetGains.filter(o=>survivors.has(o.ownerId)&&state.allies.find(u=>u.id===o.ownerId)?.agent.pathwayInventory.assets.some(x=>x.id===o.asset.id));
 }
 function choosePathwayAssetOffer(state,offerId,replaceId=null){
@@ -189,7 +189,7 @@ function pathwayMarionetteAbility(agent,actor,state){
 function pathwayAssetAbilities(agent,actor=null,state=null){
  const a=getCombatAgent(agent),result=[];if(!a.pathwayInventory)return result;
  if(a.path==='hanged_man'&&a.sequence<=5&&getMeterValue(a,a.path)>=100){for(const asset of preparedPathwayAssets(a)){const original=pathwayAssetSpec(asset);if(!original||!soulAbilityEligible(original))continue;const passive=original.type==='passive',spec={...cloneE(original),type:'active',id:`asset_soul:${asset.abilityId}`,effectId:`asset_soul:${asset.abilityId}`,name:`Grazed ${original.name}`,text:`Grazed ${original.name} — ${passive?'Manifest this soul for two turns.':original.text}`,costSP:passive?PATHWAY_ASSET_RULES.passiveSP:original.costSP,cooldown:passive?PATHWAY_ASSET_RULES.passiveCooldown:original.cooldown,damage:passive?null:cloneE(original.damage),effects:passive?[{type:'pathway_asset',action:'manifest_soul',assetId:asset.id}]:cloneE(original.effects),_assetOwned:true,_assetId:asset.id,_assetOwnerId:a.id,_signatureOwned:'soul',_signatureOwnerId:a.id,_signatureSourceId:asset.sourceId,_signatureSourceSequence:asset.sequence,_signatureCopied:true,_signatureChargeCost:100};result.push(spec);}}
- if(a.path==='paragon'&&actor){const device=pathwayCompanion(actor,state);if(device?._assetDefinitionId==='chronometric_regulator'&&!device._assetChronoSpent){const locked=a._assetLockedSkills||[],pool=unlockedAbilities(a).filter(s=>nativePathwayDamage(s)&&Number(a.cooldowns?.[s.effectId||s.id])>0&&!locked.includes(s.effectId||s.id)&&!abilityEffects(s).some(e=>['revive','form','extra_turn','copy_ability','copy_highest','reset_state'].includes(e.type))).sort((x,y)=>(y.damage?.multiplier||0)-(x.damage?.multiplier||0));if(pool.length){const original=pool[0],id=original.effectId||original.id;result.push({...cloneE(original),id:`asset_chrono:${id}`,effectId:`asset_chrono:${id}`,name:`Regulated ${original.name}`,text:`Regulated ${original.name} — Pays normal costs, bypasses this cooldown once, then locks the skill for this encounter.`,_assetOwned:true,_assetChrono:true,_assetSourceAbilityId:id,_assetId:device._assetId,_assetOwnerId:a.id});}}}
+ if(a.path==='paragon'&&actor){const device=pathwayCompanion(actor,state);if(device?._assetDefinitionId==='chronometric_regulator'&&!a._assetChronoSpent){const locked=a._assetLockedSkills||[],pool=unlockedAbilities(a).filter(s=>nativePathwayDamage(s)&&Number(a.cooldowns?.[s.effectId||s.id])>0&&!locked.includes(s.effectId||s.id)&&!abilityEffects(s).some(e=>['revive','form','extra_turn','copy_ability','copy_highest','reset_state'].includes(e.type))).sort((x,y)=>(y.damage?.multiplier||0)-(x.damage?.multiplier||0));if(pool.length){const original=pool[0],id=original.effectId||original.id;result.push({...cloneE(original),id:`asset_chrono:${id}`,effectId:`asset_chrono:${id}`,name:`Regulated ${original.name}`,text:`Regulated ${original.name} — Overclock once: 25% more damage, 50% more SP, then one extra turn of native cooldown.`,_assetOwned:true,_assetChrono:true,_assetSourceAbilityId:id,_assetId:device._assetId,_assetOwnerId:a.id});}}}
  const puppet=pathwayMarionetteAbility(a,actor,state);if(puppet)result.push(puppet);return result;
 }
 function pathwayAbilityReady(agent,spec,actor,enemy,state){
@@ -199,11 +199,11 @@ function pathwayAbilityReady(agent,spec,actor,enemy,state){
  const asset=preparedPathwayAssets(a).find(x=>x.id===spec._assetId);if(!asset)return false;
  if(asset.kind==='soul'){if(getMeterValue(a,a.path)<100)return false;if(pathwayAssetSpec(asset)?.type==='passive'&&a._assetManifestation?.assetId===asset.id)return false;}
  if(asset.kind==='marionette'&&(threadUsage(state,a)>=threadSlots(a.sequence)||signatureUnits(state).some(u=>u._assetId===asset.id&&u.alive)))return false;
- if(spec._assetChrono){const device=pathwayCompanion(actor,state);if(device?._assetId!==asset.id||device._assetChronoSpent||!(a.cooldowns?.[spec._assetSourceAbilityId]>0))return false;}
+ if(spec._assetChrono){const device=pathwayCompanion(actor,state);if(device?._assetId!==asset.id||a._assetChronoSpent||!(a.cooldowns?.[spec._assetSourceAbilityId]>0))return false;}
  return true;
 }
 function pathwayCostMultiplier(agent,spec){
- const a=getCombatAgent(agent);if(spec._signatureOwned||spec._assetOwned)return 1;
+ const a=getCombatAgent(agent);if(spec._assetChrono)return 1.5;if(spec._signatureOwned||spec._assetOwned)return 1;
  const formula=preparedPathwayDefinition(a,'formula');let mult=formula?.name==='Warding Constellation'&&nativePathwayDamage(spec)?1.2:1;
  if(formula?.name==='Fairy-Tale Escape'&&a._assetFairySurcharge&&nativePathwayDamage(spec))mult*=1.25;
  if(preparedPathwayDefinition(a,'conditioning')&&signatureEffects(spec).some(e=>e.rule==='visionary_hypnosis'))mult*=1.25;
@@ -216,14 +216,15 @@ function pathwayAbilityQuote(agent,spec,actor,quote){
  if(quote.resource!=='sp'||!actor||!pathwayResourceEligible(spec)||(a._assetHPConversions||0)>=2)return quote;
  const formula=preparedPathwayDefinition(a,'formula'),companion=pathwayCompanion(actor,state),eligible=formula?.name==='Blood Inscription'||companion?._assetDefinitionId==='eclipse_serpent';if(!eligible)return quote;
  const amount=Math.max(1,Math.ceil(actor.maxHp*.2*quote.normalSP/Math.max(1,maxSPFor(a)))),affordable=actor.hp>amount;
- return {...quote,amount,resource:'hp',affordable,ready:quote.cooldownReady&&affordable,assetHPConversion:true};
+ if(!affordable&&companion?._assetDefinitionId==='eclipse_serpent')return quote;
+ return {...quote,amount,resource:'hp',affordable,ready:quote.cooldownReady&&affordable,assetHPConversion:true,assetEclipseBoost:companion?._assetDefinitionId==='eclipse_serpent'};
 }
 function pathwayAfterPayment(agent,actor,spec,quote,state,lines){
- const a=getCombatAgent(agent);if(a._assetFairySurcharge&&nativePathwayDamage(spec))delete a._assetFairySurcharge;if(quote.assetHPConversion){a._assetHPConversions=(a._assetHPConversions||0)+1;pathwayAssetNote(actor,state,lines,`${actor.name} converts this spell's SP payment into ${quote.amount} HP (${a._assetHPConversions}/2 uses).`);}
- if(spec._assetChrono){const companion=pathwayCompanion(actor,state);if(companion)companion._assetChronoSpent=true;a._assetLockedSkills=[...(a._assetLockedSkills||[]),spec._assetSourceAbilityId];a.cooldowns[spec._assetSourceAbilityId]=(spec.cooldown||0)+1;pathwayAssetNote(actor,state,lines,`${spec.name} bypasses its cooldown; the native skill is now locked for this encounter.`);}
+ const a=getCombatAgent(agent);if(a._assetFairySurcharge&&nativePathwayDamage(spec))delete a._assetFairySurcharge;if(quote.assetHPConversion){a._assetHPConversions=(a._assetHPConversions||0)+1;if(quote.assetEclipseBoost&&spec.damage){spec.damage.multiplier*=1.25;spec._assetEclipseBoost=true;}pathwayAssetNote(actor,state,lines,`${actor.name} converts this spell's SP payment into ${quote.amount} HP (${a._assetHPConversions}/2 uses)${quote.assetEclipseBoost?'; Eclipse Serpent grants 25% more spell damage':''}.`);}
+ if(spec._assetChrono){const companion=pathwayCompanion(actor,state);if(companion)companion._assetChronoSpent=true;a._assetChronoSpent=true;a.cooldowns[spec._assetSourceAbilityId]=(spec.cooldown||0)+2;pathwayAssetNote(actor,state,lines,`${spec.name} bypasses its cooldown with 25% more damage and 50% more SP cost; the native cooldown is extended by one turn.`);}
 }
 function preparePathwayCast(agent,actor,enemy,state,spec){
- const a=getCombatAgent(agent),owned=cloneE(spec);if(!nativePathwayDamage(owned))return owned;
+ const a=getCombatAgent(agent),owned=cloneE(spec);if(owned._assetChrono&&owned.damage)owned.damage.multiplier*=1.25;if(!nativePathwayDamage(owned))return owned;
  const formula=preparedPathwayDefinition(a,'formula');
  if(formula){owned._assetOriginalSpec=cloneE(spec);owned._assetFormula=formula.name;if(formula.name==='Warding Constellation')owned.damage={...owned.damage,multiplier:owned.damage.multiplier*.8};if(formula.name==='Thorn Tale'){owned.damage={...owned.damage,multiplier:owned.damage.multiplier*.8};owned.effects=[...abilityEffects(owned),{type:'status',status:'curse',duration:1}];}}
  if(preparedPathwayDefinition(a,'doctrine')?.name==='Barrier Thesis'&&!a._assetDoctrineUsed)owned._assetBarrierOpening=true;

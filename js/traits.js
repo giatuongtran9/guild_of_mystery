@@ -98,7 +98,7 @@ function traitAbilityQuote(agent,spec,actor=null,baseCost=null){
 }
 function traitAbilityDescription(agent,spec,path,sequence){
  const base=abilityDescription(spec,path,sequence);
- if(!traitActive(agent)||spec.type!=='active')return base;
+ if(spec.type!=='active'||(!traitActive(agent)&&Number(weaponFor(agent).skillCostMultiplier||1)===1))return base;
  if(hasTrait(agent,'spell_eater'))return base+' Disabled by Spell Eater.';
  const effective={...traitAgent(agent),stats:effectiveStats(traitAgent(agent))};
  const maxHp=Math.round(effective.stats.hp*(passiveCombatModifier(effective).hp||1));

@@ -1,3 +1,5 @@
+The current Market, real-calendar rules and measured combat/economy results are in [market-balance/CURRENT.md](../market-balance/CURRENT.md). The measurements below describe an earlier release.
+
 # Reputation, contract pools and global combat implementation
 
 Implemented the accepted prototype with the proposed 35% dodge ceiling and the extra 35%-HP thread conversion requirement removed. This report describes the production engine, not the experimental loader.

@@ -29,7 +29,7 @@ async function browserFixture(outcome) {
   w.fetch = async url => ({ ok: true, json: async () => JSON.parse(fs.readFileSync(path.join(root, new URL(url).pathname.replace('/guild_of_mystery/', '')), 'utf8')) });
   w.eval(fs.readFileSync(path.join(root, 'js/data-loader.js'), 'utf8'));
   w.G9_DATA = await w.G9DataLoader.load();
-  w.scrollTo = () => {};
+  w.setInterval=()=>1;w.clearInterval=()=>{};w.scrollTo = () => {};
   let id = 0;
   const timers = new Map();
   w.setTimeout = (fn, delay) => { timers.set(++id, { fn, delay }); return id; };
@@ -41,7 +41,7 @@ async function browserFixture(outcome) {
   save.quests = [{ id: 'test', name: 'Test', encounter: true, objective: 'combat', difficultySequence: 5, rewards: { funds: 0, reputation: 0, materials: {} } }];
   require('./pool-fixture')(g,save);
   w.localStorage.setItem('guild-rpg-browser-v9', JSON.stringify(save));
-  w.eval(['paths','v15','generate','traits','pathway-assets','signatures','mythical','engine','state','campaign','ui'].map(name => fs.readFileSync(path.join(root, `js/${name}.js`), 'utf8')).join('\n'));
+  w.eval(['vendor/dayjs.min','paths','v15','generate','traits','market','pathway-assets','signatures','mythical','engine','state','campaign','ui'].map(name => fs.readFileSync(path.join(root, `js/${name}.js`), 'utf8')).join('\n'));
   if (outcome) {
     const resolve = w.resolveQuest;
     w.resolveQuest = (...args) => { const result = resolve(...args); result.success = false; result.battleOutcome = outcome; result.battleSnapshot.outcome = outcome; return result; };

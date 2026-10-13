@@ -49,11 +49,13 @@ test('general vulnerability also affects an actual basic strike',()=>{
  g.attackOnce(plain.a,plain.u,plain.v,plain.state,[],R,1);
  assert.equal(beforeM-marked.v.hp,Math.round((beforeP-plain.v.hp)*1.2));
 });
-test('Vampire Transformation grants exactly two turns of strike Lifesteal',()=>{
+test('Vampire Transformation grants exactly three turns of 28% strike Lifesteal',()=>{
  const w=world('moon',5);w.u.hp=3000;assert(cast(w,'moon',5));
  const before=w.u.hp,victim=w.v.hp;
  g.attackOnce(w.a,w.u,w.v,w.state,[],R,1);
- assert.equal(w.u.hp-before,Math.round((victim-w.v.hp)*.2));
+ assert.equal(w.u.hp-before,Math.round((victim-w.v.hp)*.28));
+ g.tickCombatEffectDurations([w.u]);
+ assert(w.u._lifestealBonus>0,'bonus should survive the second affected turn');
  g.tickCombatEffectDurations([w.u]);
  assert(w.u._lifestealBonus>0,'bonus should survive one affected turn');
  g.tickCombatEffectDurations([w.u]);
