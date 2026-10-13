@@ -1,0 +1,120 @@
+[
+  {
+    "command": "python tests/art-consistency-corrections.test.py",
+    "exitCode": 0,
+    "summary": [
+      "Ran 3 tests in 8.404s",
+      "OK"
+    ],
+    "failures": []
+  },
+  {
+    "command": "python tests/artwork-overrides.test.py",
+    "exitCode": 0,
+    "summary": [
+      "Ran 11 tests in 23.366s",
+      "OK"
+    ],
+    "failures": []
+  },
+  {
+    "command": "python tests/fullres-assets.test.py",
+    "exitCode": 0,
+    "summary": [
+      "Ran 2 tests in 9.540s",
+      "OK"
+    ],
+    "failures": []
+  },
+  {
+    "command": "python tests/phase2-runtime-assets.test.py",
+    "exitCode": 0,
+    "summary": [
+      "Ran 15 tests in 27.471s",
+      "OK"
+    ],
+    "failures": []
+  },
+  {
+    "command": "node tests/fullres-portraits.test.js",
+    "exitCode": 0,
+    "summary": [
+      "Full-resolution portraits: 16 passed, 0 failed."
+    ],
+    "failures": []
+  },
+  {
+    "command": "node tests/fullres-cache-data.test.js",
+    "exitCode": 0,
+    "summary": [
+      "43 passed, 0 failed"
+    ],
+    "failures": []
+  },
+  {
+    "command": "node tests/phase2-runtime-data.test.js",
+    "exitCode": 0,
+    "summary": [
+      "PASS runtime data build: deterministic versioning, 29-file/220-rank parity, immutable originals, stale-build check, script/SW versions, portrait manifest inclusion."
+    ],
+    "failures": []
+  },
+  {
+    "command": "node tests/phase2-boot.test.js",
+    "exitCode": 0,
+    "summary": [
+      "Boot regressions: 8 passed; 0 failed."
+    ],
+    "failures": []
+  },
+  {
+    "command": "node tests/phase2-cache.test.js",
+    "exitCode": 0,
+    "summary": [
+      "20 passed, 0 failed"
+    ],
+    "failures": []
+  },
+  {
+    "command": "node tests/phase2-startup.test.js",
+    "exitCode": 0,
+    "summary": [
+      "Startup loader regressions: 27 passed; 0 failed."
+    ],
+    "failures": []
+  },
+  {
+    "command": "node tests/phase2-portraits.test.js",
+    "exitCode": 0,
+    "summary": [
+      "18 passed, 0 failed"
+    ],
+    "failures": []
+  },
+  {
+    "command": "node tests/phase2-modal.test.js",
+    "exitCode": 0,
+    "summary": [
+      "Phase 2 modal: 10 passed, 0 failed."
+    ],
+    "failures": []
+  },
+  {
+    "command": "node tests/phase2-modal-dom.test.js",
+    "exitCode": 0,
+    "summary": [
+      "Phase 2 modal DOM: 6 passed, 0 failed."
+    ],
+    "failures": []
+  },
+  {
+    "command": "node tests/phase2-battle.test.js",
+    "exitCode": 1,
+    "summary": [
+      "Phase 2 battle DOM: 19 passed, 1 failed."
+    ],
+    "failures": [
+      "FAIL completed Skip control stays hidden under the actual toolbar stylesheet: finished Skip cannot remain visibly active"
+    ]
+  }
+]

@@ -1,7 +1,7 @@
 {
   "schema": "guild.runtime-manifest.v1",
-  "version": "0fb7020c7266a74f",
-  "bundle": "data/runtime/data.0fb7020c7266a74f.json",
+  "version": "f513d0e85377d599",
+  "bundle": "data/runtime/data.f513d0e85377d599.json",
   "scriptVersions": {
     "js/paths.js": "257cf4f003450e93",
     "js/v15.js": "f2491511aa109499",
