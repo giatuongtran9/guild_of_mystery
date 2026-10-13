@@ -49,7 +49,7 @@ Save schema 15 uses the existing browser save key. Existing individual stats, va
 
 Validation: **51 regression suites passed**, **147 effect behavior checks and 154 legacy balance checks passed**, and **36 real-browser inventory views** passed at 320, 390, 560 and 1440 pixels, including keyboard navigation, preparation changes, reload, paid repair and game-day recovery. New coverage includes final-kill ownership, failed-contract captures, fixed soul capacity, paid passives, every special device/beast effect, learned modifiers, companion loss, and duplicate-name battle resources.
 
-The implementation also fixes Death AI repeatedly selecting an unavailable summon, same-name companion HP displays sharing a record, duplicate mythical soul acquisition, and premature Door archive capacity. Reproducible commands and measurements follow.
+The implementation also fixes Death AI repeatedly selecting an unavailable summon, same-name companion HP displays sharing a record, duplicate mythical soul acquisition, premature Door archive capacity, and owned deployment/recast commands entering copying archives. Reproducible commands and measurements follow.
 
 ## Combat measurements
 
@@ -57,17 +57,17 @@ Both sides use the production combat engine and equal Sequences 9–0, neutral v
 
 | PvP scenario | Battles | Mean rounds | Finished by round 12 | Draws | Side-parity errors |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Rare collections, 0 starting charge | 20,240 | 7.83 | 92.92% | 1.90% | 0 |
-| Legendary collections, 100 starting charge | 10,120 | 7.81 | 92.83% | 1.84% | 0 |
+| Rare collections, 0 starting charge | 20,240 | 7.83 | 92.94% | 1.88% | 0 |
+| Legendary collections, 100 starting charge | 10,120 | 7.81 | 92.81% | 1.84% | 0 |
 
-Pacing meets the requested overall targets in these samples. **The 45–55% fairness target at every pathway/Sequence is still unmet**: the Rare scenario has 15 of 22 pathway averages and 101 of 220 pathway/Sequence groups in range. The Legendary charged scenario has 14 averages and 94 groups in range. These are bounded diagnostics, not evidence for every trait, acquired power, spirit role or party combination. Legendary and Rare scenarios also differ in charge, so their results do not isolate the effect of rarity.
+Pacing meets the requested overall targets in these samples. **The 45–55% fairness target at every pathway/Sequence is still unmet**: the Rare scenario has 15 of 22 pathway averages and 102 of 220 pathway/Sequence groups in range. The Legendary charged scenario has 14 averages and 94 groups in range. These are bounded diagnostics, not evidence for every trait, acquired power, spirit role or party combination. Legendary and Rare scenarios also differ in charge, so their results do not isolate the effect of rarity.
 
 | Pathway | Rare, cold wins | Legendary, charged wins |
 | --- | ---: | ---: |
 | Darkness | 58.8% | 60.2% |
-| Door | 58.6% | 50.2% |
+| Door | 58.7% | 50.0% |
 | Wheel Of Fortune | 55.5% | 57.2% |
-| Fool | 55.0% | 61.1% |
+| Fool | 55.0% | 61.3% |
 | Black Emperor | 52.7% | 54.1% |
 | Red Priest | 52.0% | 49.6% |
 | Tyrant | 50.9% | 48.9% |
@@ -76,7 +76,7 @@ Pacing meets the requested overall targets in these samples. **The 45–55% fair
 | Hermit | 49.1% | 45.2% |
 | Mother | 49.1% | 49.8% |
 | White Tower | 48.7% | 47.4% |
-| Error | 47.9% | 50.2% |
+| Error | 48.0% | 50.2% |
 | Justiciar | 47.9% | 45.9% |
 | Sun | 47.8% | 47.0% |
 | Abyss | 47.2% | 47.0% |

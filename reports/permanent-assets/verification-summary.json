@@ -11,10 +11,10 @@
   "effectBehaviorChecks": 147,
   "pvpRare": {
     "battles": 20240,
-    "drawRate": 0.018972332015810278,
-    "meanRounds": 7.827272727272727,
-    "completedBefore15": 0.9701581027667984,
-    "completedBy12": 0.9292490118577075,
+    "drawRate": 0.018774703557312252,
+    "meanRounds": 7.826185770750988,
+    "completedBefore15": 0.9703557312252964,
+    "completedBy12": 0.9294466403162055,
     "parityFailures": 0,
     "histogram": {
       "1": 32,
@@ -22,24 +22,24 @@
       "3": 648,
       "4": 1358,
       "5": 2046,
-      "6": 2228,
-      "7": 3536,
+      "6": 2226,
+      "7": 3538,
       "8": 3052,
       "9": 2404,
-      "10": 1612,
+      "10": 1618,
       "11": 1112,
-      "12": 690,
+      "12": 688,
       "13": 486,
       "14": 342,
-      "15": 576
+      "15": 572
     }
   },
   "pvpLegendary": {
     "battles": 10120,
     "drawRate": 0.018379446640316207,
-    "meanRounds": 7.8069169960474305,
+    "meanRounds": 7.808102766798419,
     "completedBefore15": 0.9675889328063241,
-    "completedBy12": 0.9282608695652174,
+    "completedBy12": 0.9280632411067193,
     "parityFailures": 0,
     "histogram": {
       "1": 16,
@@ -47,15 +47,15 @@
       "3": 336,
       "4": 708,
       "5": 990,
-      "6": 1176,
-      "7": 1722,
+      "6": 1178,
+      "7": 1720,
       "8": 1438,
       "9": 1244,
-      "10": 808,
-      "11": 542,
+      "10": 806,
+      "11": 540,
       "12": 336,
       "13": 228,
-      "14": 170,
+      "14": 174,
       "15": 320
     }
   },
@@ -84,5 +84,6 @@
   "legacyBalanceChecks": 154,
   "legacyBalanceFailures": 0,
   "nodeManifestChecks": 2,
-  "authoredEffectTypesAudited": 53
+  "authoredEffectTypesAudited": 53,
+  "permanentAssetCombatChecks": 33
 }

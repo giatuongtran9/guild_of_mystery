@@ -746,19 +746,19 @@
     ],
     "samples": 4,
     "seedBase": 810019,
+    "assets": "rare",
+    "loadout": "Representative legal collection; fixed library and one prepared vessel/knowledge modifier",
     "charge": 0,
     "weapon": "none",
     "trait": "Stout Vitality",
-    "roundLimit": 15,
-    "assets": "rare",
-    "loadout": "Representative legal collection; fixed library and one prepared vessel/knowledge modifier"
+    "roundLimit": 15
   },
   "summary": {
     "battles": 20240,
-    "drawRate": 0.018972332015810278,
-    "meanRounds": 7.827272727272727,
-    "completedBefore15": 0.9701581027667984,
-    "completedBy12": 0.9292490118577075,
+    "drawRate": 0.018774703557312252,
+    "meanRounds": 7.826185770750988,
+    "completedBefore15": 0.9703557312252964,
+    "completedBy12": 0.9294466403162055,
     "parityFailures": 0,
     "histogram": {
       "1": 32,
@@ -766,16 +766,16 @@
       "3": 648,
       "4": 1358,
       "5": 2046,
-      "6": 2228,
-      "7": 3536,
+      "6": 2226,
+      "7": 3538,
       "8": 3052,
       "9": 2404,
-      "10": 1612,
+      "10": 1618,
       "11": 1112,
-      "12": 690,
+      "12": 688,
       "13": 486,
       "14": 342,
-      "15": 576
+      "15": 572
     }
   },
   "aggregates": [
@@ -788,8 +788,8 @@
     },
     {
       "pathway": "door",
-      "winRate": 0.5858695652173913,
-      "drawRate": 0.004347826086956522,
+      "winRate": 0.5869565217391305,
+      "drawRate": 0.0010869565217391304,
       "minRankWin": 0.5108695652173914,
       "maxRankWin": 0.6956521739130435
     },
@@ -803,7 +803,7 @@
     {
       "pathway": "fool",
       "winRate": 0.55,
-      "drawRate": 0.011956521739130435,
+      "drawRate": 0.009782608695652175,
       "minRankWin": 0.4673913043478261,
       "maxRankWin": 0.6630434782608695
     },
@@ -859,13 +859,13 @@
     {
       "pathway": "white_tower",
       "winRate": 0.48695652173913045,
-      "drawRate": 0,
+      "drawRate": 0.0010869565217391304,
       "minRankWin": 0.3695652173913043,
       "maxRankWin": 0.5434782608695652
     },
     {
       "pathway": "error",
-      "winRate": 0.47934782608695653,
+      "winRate": 0.48043478260869565,
       "drawRate": 0.07391304347826087,
       "minRankWin": 0.33695652173913043,
       "maxRankWin": 0.5869565217391305
@@ -1998,10 +1998,10 @@
       "wins": 96,
       "losses": 84,
       "draws": 4,
-      "rounds": 1400,
+      "rounds": 1402,
       "winRate": 0.5217391304347826,
       "drawRate": 0.021739130434782608,
-      "meanRounds": 7.608695652173913
+      "meanRounds": 7.619565217391305
     },
     {
       "pathway": "door",
@@ -2010,10 +2010,10 @@
       "wins": 128,
       "losses": 56,
       "draws": 0,
-      "rounds": 1014,
+      "rounds": 1016,
       "winRate": 0.6956521739130435,
       "drawRate": 0,
-      "meanRounds": 5.510869565217392
+      "meanRounds": 5.521739130434782
     },
     {
       "pathway": "error",
@@ -2262,10 +2262,10 @@
       "wins": 118,
       "losses": 66,
       "draws": 0,
-      "rounds": 1392,
+      "rounds": 1394,
       "winRate": 0.6413043478260869,
       "drawRate": 0,
-      "meanRounds": 7.565217391304348
+      "meanRounds": 7.576086956521739
     },
     {
       "pathway": "door",
@@ -2274,10 +2274,10 @@
       "wins": 108,
       "losses": 76,
       "draws": 0,
-      "rounds": 1006,
+      "rounds": 1008,
       "winRate": 0.5869565217391305,
       "drawRate": 0,
-      "meanRounds": 5.467391304347826
+      "meanRounds": 5.478260869565218
     },
     {
       "pathway": "error",
@@ -2523,35 +2523,35 @@
       "pathway": "fool",
       "sequence": 3,
       "battles": 184,
-      "wins": 92,
-      "losses": 88,
-      "draws": 4,
+      "wins": 90,
+      "losses": 92,
+      "draws": 2,
       "rounds": 1556,
-      "winRate": 0.5,
-      "drawRate": 0.021739130434782608,
+      "winRate": 0.4891304347826087,
+      "drawRate": 0.010869565217391304,
       "meanRounds": 8.456521739130435
     },
     {
       "pathway": "door",
       "sequence": 3,
       "battles": 184,
-      "wins": 108,
+      "wins": 110,
       "losses": 74,
-      "draws": 2,
-      "rounds": 1212,
-      "winRate": 0.5869565217391305,
-      "drawRate": 0.010869565217391304,
-      "meanRounds": 6.586956521739131
+      "draws": 0,
+      "rounds": 1214,
+      "winRate": 0.5978260869565217,
+      "drawRate": 0,
+      "meanRounds": 6.5978260869565215
     },
     {
       "pathway": "error",
       "sequence": 3,
       "battles": 184,
-      "wins": 66,
-      "losses": 78,
+      "wins": 68,
+      "losses": 76,
       "draws": 40,
       "rounds": 2070,
-      "winRate": 0.358695652173913,
+      "winRate": 0.3695652173913043,
       "drawRate": 0.21739130434782608,
       "meanRounds": 11.25
     },
@@ -2598,10 +2598,10 @@
       "wins": 80,
       "losses": 104,
       "draws": 0,
-      "rounds": 1034,
+      "rounds": 1032,
       "winRate": 0.43478260869565216,
       "drawRate": 0,
-      "meanRounds": 5.619565217391305
+      "meanRounds": 5.608695652173913
     },
     {
       "pathway": "hanged_man",
@@ -2787,25 +2787,25 @@
       "pathway": "fool",
       "sequence": 2,
       "battles": 184,
-      "wins": 112,
+      "wins": 116,
       "losses": 66,
-      "draws": 6,
-      "rounds": 1568,
-      "winRate": 0.6086956521739131,
-      "drawRate": 0.03260869565217391,
-      "meanRounds": 8.521739130434783
+      "draws": 2,
+      "rounds": 1548,
+      "winRate": 0.6304347826086957,
+      "drawRate": 0.010869565217391304,
+      "meanRounds": 8.41304347826087
     },
     {
       "pathway": "door",
       "sequence": 2,
       "battles": 184,
       "wins": 100,
-      "losses": 78,
-      "draws": 6,
-      "rounds": 1678,
+      "losses": 82,
+      "draws": 2,
+      "rounds": 1658,
       "winRate": 0.5434782608695652,
-      "drawRate": 0.03260869565217391,
-      "meanRounds": 9.119565217391305
+      "drawRate": 0.010869565217391304,
+      "meanRounds": 9.01086956521739
     },
     {
       "pathway": "error",
@@ -3054,10 +3054,10 @@
       "wins": 122,
       "losses": 60,
       "draws": 2,
-      "rounds": 1464,
+      "rounds": 1462,
       "winRate": 0.6630434782608695,
       "drawRate": 0.010869565217391304,
-      "meanRounds": 7.956521739130435
+      "meanRounds": 7.945652173913044
     },
     {
       "pathway": "door",
@@ -3126,10 +3126,10 @@
       "wins": 98,
       "losses": 86,
       "draws": 0,
-      "rounds": 1572,
+      "rounds": 1570,
       "winRate": 0.532608695652174,
       "drawRate": 0,
-      "meanRounds": 8.543478260869565
+      "meanRounds": 8.532608695652174
     },
     {
       "pathway": "hanged_man",
@@ -3315,13 +3315,13 @@
       "pathway": "fool",
       "sequence": 0,
       "battles": 184,
-      "wins": 102,
+      "wins": 100,
       "losses": 82,
-      "draws": 0,
-      "rounds": 1314,
-      "winRate": 0.5543478260869565,
-      "drawRate": 0,
-      "meanRounds": 7.141304347826087
+      "draws": 2,
+      "rounds": 1310,
+      "winRate": 0.5434782608695652,
+      "drawRate": 0.010869565217391304,
+      "meanRounds": 7.119565217391305
     },
     {
       "pathway": "door",
@@ -3330,10 +3330,10 @@
       "wins": 124,
       "losses": 60,
       "draws": 0,
-      "rounds": 1180,
+      "rounds": 1176,
       "winRate": 0.6739130434782609,
       "drawRate": 0,
-      "meanRounds": 6.413043478260869
+      "meanRounds": 6.391304347826087
     },
     {
       "pathway": "error",
@@ -3388,11 +3388,11 @@
       "sequence": 0,
       "battles": 184,
       "wins": 86,
-      "losses": 98,
-      "draws": 0,
+      "losses": 96,
+      "draws": 2,
       "rounds": 1100,
       "winRate": 0.4673913043478261,
-      "drawRate": 0,
+      "drawRate": 0.010869565217391304,
       "meanRounds": 5.978260869565218
     },
     {

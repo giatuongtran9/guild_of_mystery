@@ -13,14 +13,14 @@
       1,
       0
     ],
+    "assets": "rare",
     "weapon": "knife",
     "startingSP": "full",
     "injuries": 0,
     "mastery": 0,
     "traitGeneration": "live rarity odds",
     "roundLimit": 45,
-    "seedBase": 710019,
-    "assets": "rare"
+    "seedBase": 710019
   },
   "results": [
     {
