@@ -89,6 +89,7 @@ function initializePathwayBattle(state,quest,seed,decisions={}){
  state.assetOffers=[];state.assetGains=[];
  for(const u of signatureUnits(state)){
   ensurePathwayInventory(u.agent);
+  u._assetHadPreparedCollection=preparedPathwayAssets(u.agent).length>0&&pathwayPolicyAllows(u.agent,state);
   const stats={...u.stats};for(const k of ['hp','atk','def','int']){const factor=(k==='hp'?(GLOBAL_COMBAT.hp||1):1)*Number(GLOBAL_COMBAT.stats?.[u.path]?.[u.sequence]?.[k]??GLOBAL_COMBAT.stats?.[u.path]?.[k]??1);stats[k]=Math.max(1,Math.round(stats[k]/Math.max(.001,factor)));}
   u._assetCaptureStats=stats;
   if(u.path==='door'&&u.sequence<=6)u.agent._signatureRecords=preparedPathwayAssets(u.agent).filter(x=>x.kind==='record').map(x=>({spec:pathwayAssetSpec(x),sourceId:x.sourceId,sequence:x.sequence,assetId:x.id}));

@@ -16,7 +16,7 @@ const owner=path=>{const a=g.makeAgent(()=>.5,{path,sequence:9,trait:'Stout Vita
 const rewards=g.wantedRewardsForParty(wanted,roster.slice(3));assert.deepEqual(Object.keys(rewards.materials).sort(),roster.slice(3).map(a=>g.pathOf(a.path).material).sort());assert(Object.values(rewards.materials).every(n=>n===2));assert.deepEqual(wanted.rewards.materials,{});
 // A boss's DoT budget is separate from native PvP Poison and follows its source.
 const victim=g.makeCombatUnit(owner('fool')),boss=g.makeBossEnemy(g.makeWantedQuest(999,()=>.5,roster,'black_mirror'),()=>.5),battle={allies:[victim],enemies:[boss],events:[],currentRound:1,rng:()=>.99};
-g.addStatus(victim,'poison',2,boss.id);g.processStatuses(victim,()=>{},battle,false);const tick=battle.events.find(e=>e.isDot);assert.equal(tick.incoming,Math.round(victim.maxHp*.05*.65));
+boss.bossDefinition.statusDamageMultiplier=.65;g.addStatus(victim,'poison',2,boss.id);g.processStatuses(victim,()=>{},battle,false);const tick=battle.events.find(e=>e.isDot);assert.equal(tick.incoming,Math.round(victim.maxHp*.05*.65));
 const ordinary=g.makeCombatUnit(owner('fool')),caster=g.makeCombatUnit(owner('demoness')),normalBattle={allies:[ordinary],enemies:[caster],events:[],currentRound:1,rng:()=>.99};
 g.addStatus(ordinary,'poison',2,caster.id);g.processStatuses(ordinary,()=>{},normalBattle,false);assert.equal(normalBattle.events.find(e=>e.isDot).incoming,Math.round(ordinary.maxHp*.05));
 console.log('Encounter state passed: immediate same-day refill, all 196 copies conserved, real-day exhaustion/recovery, stable variants and dispatched-party Wanted materials.');

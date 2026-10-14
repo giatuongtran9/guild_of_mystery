@@ -2,8 +2,8 @@
   "version": "v16.0",
   "damage_formulas": {
     "basic_physical_attack": {
-      "formula": "round((ATK * ATK_mod + Weapon_Bonus_DMG) * Strike_Mult - Defender_DEF * 0.5)",
-      "description": "Standard melee/ranged weapon strikes. Pure ATK scaling with 0% INT dependence.",
+      "formula": "round((Category_Power + Weapon_Bonus_DMG) * Strike_Mult * Authority_Mult - Defender_DEF * 0.5)",
+      "description": "Basic category power uses modified stats: Physical ATK; Agility 0.75 ATK + 0.35 INT; Caster 0.80 INT. Weapon bonus applies once, independently of damage element.",
       "weapon_mastery_applies": true
     },
     "pure_caster_ability": {
@@ -47,7 +47,7 @@
   },
   "combat_pipeline": {
     "version": "v17",
-    "basic_attack": "(ATK * offensive_mod + weapon_bonus) * strike_multiplier * authority_multiplier",
+    "basic_attack": "(category_power + weapon_bonus) * strike_multiplier * authority_multiplier",
     "ability_attack": "scaling_stat * ability_multiplier * offensive_mod * authority_multiplier",
     "hybrid_attack": "((ATK * 1.05) + (INT * 0.30)) * ability_multiplier * authority_multiplier",
     "mitigation": "raw_damage * (1 - resistance/100) - DEF * 0.5 * (1 - defense_penetration)",
@@ -118,6 +118,20 @@
     },
     "def_armor_mitigation": {
       "factor": 0.5
+    }
+  },
+  "basic_attack_coefficients": {
+    "Physical": {
+      "atk_mult": 1,
+      "int_mult": 0
+    },
+    "Agility": {
+      "atk_mult": 0.75,
+      "int_mult": 0.35
+    },
+    "Caster": {
+      "atk_mult": 0,
+      "int_mult": 0.8
     }
   }
 }

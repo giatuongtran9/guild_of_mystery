@@ -31,6 +31,26 @@ let _seed = 7;
 const seededRng = () => ((_seed = Math.imul(1664525, _seed) + 1013904223) >>> 0) / 4294967296;
 const mkSeeded = (path, seq, id) => { const a = g.makeAgent(seededRng, { sequence: seq, path, trait: 'Stout Vitality' }); Object.assign(a, { id, name: g.pathOf(path).name + ' Seq ' + seq, awakened: true, path, sequence: seq, recommendedPath: path, injuries: 0, weaponId: 'none', weaponMastery: {} }); g.restatAgent(a); a.sp = g.maxSPFor(a); return a; };
 let reflects = 0;
+// Isolate the real ward/cast/damage pipeline from strategic skill selection.
+// Equal INT permits high-roll hits; high HP preserves both units through the
+// ward's utility strike and the enemy's answered attack.
+for (let round = 1; round <= 32; round++) {
+  const warder = mkSeeded('fool', 7, 'warder'), striker = mkSeeded('red_priest', 8, 'striker');
+  warder.stats = striker.stats = { hp: 1e8, atk: 1000, def: 1, int: 500 };
+  const defender = g.makeCombatUnit(warder), attacker = g.makeCombatUnit(striker);
+  const state = { allies: [defender], enemies: [attacker], currentRound: round,
+    events: [], balanceTrace: [], weaponUsage: {} }, lines = [];
+  const ward = g.activeSpecs(defender.agent).find(s => s.effectId === 'paper_figurine_rebound');
+  assert(g.applyStructuredAbility(defender.agent, defender, attacker, state, lines, () => .99, ward));
+  g.attackOnce(attacker.agent, attacker, defender, state, lines, () => .99);
+  const reflected = state.events.find(e => e.isReflect);
+  assert(reflected && reflected.amount > 0, 'authored reflecting ward must answer a landed real attack');
+  const rows = g.groupEventsToRows(state.events).flatMap(r => r.rows);
+  const row = rows.find(r => (r.reflects || []).includes(reflected));
+  assert(row && row.actorId === attacker.id, 'the answer belongs to the attack row that triggered it');
+  assert((row.damages || []).some(e => e.targetId === defender.id), 'the same row retains the original hit');
+  reflects++;
+}
 const q = { id: 's', name: 'x', brief: '', story: '', objective: 'combat', difficultySequence: 0, encounter: true, mundane: false, rewards: { funds: 0, reputation: 0, materials: {} }, enemyCount: 2, requiredPath: 'red_priest' };
 for (let sd = 1; sd <= 200; sd++) {
   const res = g.resolveQuest([mkSeeded('fool', 0, 'f0'), mkSeeded('door', 0, 'd0')], q, sd, { individual: false, simulationOpponents: [{ path: 'red_priest', sequence: 0 }, { path: 'demoness', sequence: 0 }] });

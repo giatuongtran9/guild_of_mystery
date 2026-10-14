@@ -30,3 +30,9 @@ if (typeof module !== 'undefined' && module.exports) Object.assign(module.export
 if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { CONTRACT_ENCOUNTERS:G9D.balance.contract_encounters });
 
 if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { pathwayIncomingDamageScale });
+
+if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { categoryAttackPower, isUndeadCombatTarget, choosePathwayBattleAction, PATHWAY_BATTLE_POLICIES });
+
+if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { battleAIContext, battleAIEvaluate, battleAIBasicDamage, battleAIDamage, battleAIPreviewHeal, battleAIPreviewShield, battleAIReady, battleAIHitChance, battleAIThreadCandidate });
+
+if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { nativeAbilityDamageMultiplier, nativeAbilityCooldown });

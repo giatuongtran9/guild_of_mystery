@@ -275,7 +275,7 @@
       {
         "target": "Elias Vane",
         "path": "Unknown",
-        "threat": "★★★★☆",
+        "threat": "\u2605\u2605\u2605\u2605\u2606",
         "lastSeen": "South Wharf",
         "story": "Three merchants have disappeared over the past two weeks. Their bodies were eventually discovered along the old canal, each bearing a single red cut across the throat. Witnesses describe a man wearing a dark travelling coat who asks merchants about their family before following them. The authorities believe Elias Vane is responsible for at least six murders. Yesterday, a dockworker survived an encounter with him and reported seeing supernatural abilities. The guild has been offered a substantial reward for his capture.",
         "rewardFunds": 1250,
@@ -285,7 +285,7 @@
       {
         "target": "Mara Quill",
         "path": "Demoness",
-        "threat": "★★★★★",
+        "threat": "\u2605\u2605\u2605\u2605\u2605",
         "lastSeen": "Old Market",
         "story": "Several disappearances have been linked to a woman who leaves black mirrors at the scene. Survivors report charms, poison and impossible reflections. The guild is asked to bring her in before another district is affected.",
         "rewardFunds": 1600,
@@ -295,8 +295,8 @@
       {
         "target": "Jonas Rook",
         "path": "Error",
-        "threat": "★★★★☆",
-        "lastSeen": "Clockmaker’s Row",
+        "threat": "\u2605\u2605\u2605\u2605\u2606",
+        "lastSeen": "Clockmaker\u2019s Row",
         "story": "A string of impossible thefts has left locked rooms empty without signs of entry. Witnesses describe a man who seems to make attacks and doors behave incorrectly. The authorities suspect supernatural interference.",
         "rewardFunds": 1450,
         "rewardRep": 20,
@@ -340,5 +340,8 @@
         "occult"
       ]
     ]
-  }
+  },
+  "undead_names": [
+    "Undead Bailiff"
+  ]
 }

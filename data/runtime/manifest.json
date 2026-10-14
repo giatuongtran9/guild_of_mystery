@@ -1,21 +1,22 @@
 {
   "schema": "guild.runtime-manifest.v1",
-  "version": "13212aca3eef5896",
-  "bundle": "data/runtime/data.13212aca3eef5896.json",
+  "version": "ced181afa7b0cd53",
+  "bundle": "data/runtime/data.ced181afa7b0cd53.json",
   "scriptVersions": {
     "js/vendor/dayjs.min.js": "9cfdb93f38afcf2d",
     "js/paths.js": "0d440daddbbd53de",
-    "js/v15.js": "01f187c339a69441",
+    "js/v15.js": "54f7ad9394d1540b",
     "js/generate.js": "3b89a553e2211423",
-    "js/traits.js": "53d1ad0961c30a15",
+    "js/traits.js": "58d006e9da31ae62",
     "js/market.js": "507fb36b01097000",
-    "js/pathway-assets.js": "1de8295f457cb330",
-    "js/signatures.js": "41aa6e51c0b4700b",
+    "js/pathway-assets.js": "ef09591df80d1802",
+    "js/signatures.js": "39bb7aeae825d5db",
     "js/mythical.js": "3dd8aaf90a9c9665",
-    "js/engine.js": "4cd9954fd27ee0d9",
+    "js/battle-ai.js": "938d1e520e19fc4d",
+    "js/engine.js": "38263a0e143a1a73",
     "js/state.js": "06b4d9cd538f377d",
     "js/campaign.js": "cc4a4e65446ccee4",
-    "js/ui.js": "2098d16a489a8f0f"
+    "js/ui.js": "a61ba64d9fdb1101"
   },
-  "serviceWorkerVersion": "2ab548a46a5be0be"
+  "serviceWorkerVersion": "e1bc522e1bc66336"
 }

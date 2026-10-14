@@ -21,6 +21,9 @@ const cast=lines=>lines.some(l=>/casts \[Thread Binding\]/.test(l.text));
  fool.cooldowns.thread_binding=0;const l2=[];g.powerEffect(fool,fu,e2,st,l2,r);
  assert(!cast(l2),'slots full: Fool must not cast Thread Binding again');
  m.alive=false;m.hp=0; assert.strictEqual(g.threadUsage(st,fool),0,'dead marionette frees the slot');
+ // Isolate slot legality from the AI's preference for a lethal paid attack.
+ for(const spec of g.activeSpecs(fool))if(spec.effectId!=='thread_binding')fool.cooldowns[spec.effectId]=99;
+ e2.hp=e2.maxHp=1e8;e2.stats.int=e2.agent.stats.int=10000;
  const l3=[];g.powerEffect(fool,fu,e2,st,l3,r);assert(cast(l3),'slot free: Fool casts Thread Binding again');
  assert.strictEqual(fool.cooldowns.thread_binding,999,'locked while the new thread is active');}
 
