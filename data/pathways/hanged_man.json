@@ -39,7 +39,7 @@
         "label": "Passive",
         "spCost": 0,
         "cooldown": 0,
-        "description": "Blood Supplication — Basic attacks heal user for 10% of damage dealt.",
+        "description": "Blood Supplication — Restores 10% of damage dealt by basic strikes. Passive.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -63,7 +63,7 @@
         "label": "Active",
         "spCost": 15,
         "cooldown": 1,
-        "description": "Shadow Strike — Deals 135% ATK Physical/Shadow DMG; ignores 15% DEF.",
+        "description": "Shadow Strike — Deals 135% × (105% ATK + 30% INT) Shadow damage (22% base DEF bypass); +15% DEF bypass on this cast; Damage and hostile effects use accuracy and Dodge; critical, authority and defense modifiers still apply. 15 SP · Cooldown 1 turn.",
         "stat": "ATK",
         "scale": 1.35,
         "damageType": "shadow",
@@ -87,7 +87,7 @@
         "label": "Active",
         "spCost": 25,
         "cooldown": 3,
-        "description": "Flesh Healing — Regenerates 15% Max HP over 2 turns.",
+        "description": "Flesh Healing — Immediately restores 15% Max HP HP, capped at Max HP; If the resolved cast deals no damage, follows its utility effects with a 35% basic strike against the current enemy. 25 SP · Cooldown 3 turns.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -114,7 +114,7 @@
         "label": "Active",
         "spCost": 35,
         "cooldown": 2,
-        "description": "Depravity Mark — Marks enemy, causing them to take +20% extra damage for 2 rounds.",
+        "description": "Depravity Mark — Target takes +30% incoming damage for 2 turns; If the resolved cast deals no damage, follows its utility effects with a 65% basic strike against the current enemy. 35 SP · Cooldown 2 turns.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -123,11 +123,11 @@
         "effects": [
           {
             "type": "vulnerability",
-            "amount": 0.2,
+            "amount": 0.3,
             "duration": 2
           }
         ],
-        "utilityStrike": 0.35
+        "utilityStrike": 0.65
       }
     },
     {
@@ -140,16 +140,16 @@
         "label": "Active",
         "spCost": 45,
         "cooldown": 3,
-        "description": "Soul Drain — Deals 170% ATK Blood DMG and drains 15 SP from target.",
+        "description": "Soul Drain — Deals 210% × (105% ATK + 30% INT) Blood damage (22% base DEF bypass); Immediately drains up to 15 target SP; From Sequence 5, your kills grant one random compatible active or passive ability per soul. Keep five souls permanently at every Sequence. At 100 charge, invoke a retained power with normal payment; passives require a paid two-turn manifestation.; Damage and hostile effects use accuracy and Dodge; critical, authority and defense modifiers still apply. 45 SP · Cooldown 3 turns.",
         "stat": "ATK",
-        "scale": 1.7,
+        "scale": 2.1,
         "damageType": "blood",
         "formula": "empowered_hybrid_physical",
         "tag": null,
         "effects": [
           {
             "type": "sp_drain",
-            "amount": 15.0
+            "amount": 15
           },
           {
             "type": "signature",
@@ -171,7 +171,7 @@
         "label": "Active",
         "spCost": 50,
         "cooldown": 3,
-        "description": "Shadow Sword Execution — Swings a corrupted blade of shadow and flesh (190% ATK + 0.35 INT DMG with 30% Lifesteal).",
+        "description": "Shadow Sword Execution — Deals 190% ATK + 35% INT Shadow damage (22% base DEF bypass); Restores 30% of damage dealt by this cast; Damage and hostile effects use accuracy and Dodge; critical, authority and defense modifiers still apply. 50 SP · Cooldown 3 turns.",
         "stat": "ATK",
         "scale": 1.9,
         "damageType": "shadow",
@@ -200,7 +200,7 @@
         "label": "Active",
         "spCost": 65,
         "cooldown": 4,
-        "description": "Flesh Creation — Creates flesh shield absorbing 25% Max HP damage.",
+        "description": "Flesh Creation — Grants a 25% Max HP shield; lasts until depleted or dispelled; If the resolved cast deals no damage, follows its utility effects with a 35% basic strike against the current enemy. 65 SP · Cooldown 4 turns.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -226,9 +226,9 @@
         "label": "Active",
         "spCost": 85,
         "cooldown": 4,
-        "description": "Devouring Shadow — Deals 270% ATK Shadow DMG with 25% Lifesteal.",
+        "description": "Devouring Shadow — Deals 310% × (105% ATK + 30% INT) Shadow damage (22% base DEF bypass); Restores 25% of damage dealt by this cast; Damage and hostile effects use accuracy and Dodge; critical, authority and defense modifiers still apply. 85 SP · Cooldown 4 turns.",
         "stat": "ATK",
-        "scale": 2.7,
+        "scale": 3.1,
         "damageType": "shadow",
         "formula": "empowered_hybrid_physical",
         "tag": null,
@@ -250,7 +250,7 @@
         "label": "Passive",
         "spCost": 0,
         "cooldown": 0,
-        "description": "Degeneration Aura — Aura reduces surrounding enemy ATK and DEF by 20%.",
+        "description": "Degeneration Aura — Enemy ATK −20% while you are alive; Enemy DEF −20% while you are alive. Passive.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -280,7 +280,7 @@
         "label": "Active Authority",
         "spCost": 125,
         "cooldown": 5,
-        "description": "Divine Depravity — Unleashes depravity wave dealing 410% ATK Shadow/Blood True DMG.",
+        "description": "Divine Depravity — Targets all enemies; Deals 410% × (105% ATK + 30% INT) True damage (ignores DEF and elemental resistance); Damage and hostile effects use accuracy and Dodge; critical, authority and defense modifiers still apply. 125 SP · Cooldown 5 turns.",
         "stat": "ATK",
         "scale": 4.1,
         "damageType": "true",

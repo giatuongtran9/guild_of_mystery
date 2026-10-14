@@ -67,8 +67,9 @@ Tests:
   node tests/effects-behavior.js   (runs every effect type through the real engine)
   node tests/balance.js
 
-Current progression, combat measurements and known 1v1 balance limitations are
-documented in reports/market-balance/CURRENT.md. The balance regression
+Current category combat, pathway AI, encounter measurements and 1v1 balance
+limitations are documented in reports/category-combat/CURRENT.md. Earlier market
+and progression measurements are historical snapshots. The balance regression
 script also checks the current advancement and supernatural-board rules.
 
 Ability data ownership:
@@ -189,7 +190,7 @@ A defeated party gets ONE 30% retreat roll. A successful retreat remains a
 failed contract but returns regular owners at 99 injuries. Ordinary failures
 pay 35% funds and no materials/reputation; Wanted failures pay nothing.
 Surviving members on a timed-out hunt return without the shared defeat roll.
-Wanted hunts have a published 15-round deadline. Boss materials now match the
+Wanted hunts have a published 50-round safety limit. Boss materials now match the
 actual dispatched party, rather than the first characters in the guild roster.
 
 Legendary Paragon devices and Moon beasts have higher base stats. Chronometric
@@ -212,3 +213,9 @@ Reproducible current measurements and their limits:
   node scripts/measure-contract-balance.js --samples=100 --assets=rare --variants=live
   node scripts/measure-wanted-balance.js --samples=100 --assets=rare
   node scripts/measure-persistent-guild-economy.js --guilds=30 --days=60 --jobs=8
+
+Category combat: basic attacks use Physical ATK, Agility 75% ATK + 35% INT,
+and Caster 80% INT. Paid native skills use their pathway category; copied
+powers retain the source formula using the current caster stats. Battles use
+2x damage, full HP/healing/shields, authored control and Evade durations,
+and a 50-round safety limit without overtime damage escalation.

@@ -36,6 +36,21 @@ function v15Mods(agent, actor) {
   const pm = passiveCombatModifier(agent), sm = statusCombatModifier(actor), deb = actor?._debuffs || {};
   return { atk: pm.atk * sm.atk * (deb.atk || 1), int: pm.int * sm.int * (deb.int || 1), defPen: pm.defPen };
 }
+// Real basic strikes use the owner's category, including ordinary attacks made
+// by a companion. Authored spell/component formulas remain attached to their
+// ability so recorded and borrowed powers retain their original scaling.
+function categoryAttackPower(agent, actor, modifiers = null) {
+  const mod = modifiers || v15Mods(agent, actor), st = agent.stats || {};
+  const category = agent.path ? archetypeOf(agent.path) : 'Physical';
+  const defaults = category === 'Physical' ? { atk_mult: 1, int_mult: 0 }
+    : category === 'Agility' ? { atk_mult: 0.75, int_mult: 0.35 }
+    : { atk_mult: 0, int_mult: 0.80 };
+  const cfg = G9D.formulas.basic_attack_coefficients?.[category] || defaults;
+  const atk = ((st.atk || 0) + (agent._stolenAtk || 0)) * mod.atk;
+  const intelligence = (st.int || 0) * mod.int;
+  return atk * Number(cfg.atk_mult ?? defaults.atk_mult)
+    + intelligence * Number(cfg.int_mult ?? defaults.int_mult);
+}
 // Returns final damage after DEF mitigation (Defender_DEF * 0.5, reduced by the formula's bypass).
 function v15Damage(kind, { agent, actor, target, abilityMult = 1, weaponBonus = 0, strikeMult = 1, defPen = 0, trueDamage = false, psychicTrue = false, damageSpec = null, trace = null }) {
   const st=agent.stats, mod=v15Mods(agent,actor);
@@ -59,7 +74,15 @@ function v15Damage(kind, { agent, actor, target, abilityMult = 1, weaponBonus = 
   const casterBypass = Number(hybridCfg.pure_caster_ability?.base_def_bypass ?? 0.25);
   const defFactor = Number(hybridCfg.def_armor_mitigation?.factor ?? 0.5);
 
-  if(formula==='basic_physical_attack') raw=(Math.max(ATK*mod.atk,INT*mod.int*(GLOBAL_COMBAT.intBasicFloor||0))+weaponBonus)*strikeMult*seqMult;
+  if(formula==='basic_physical_attack') {
+    // An explicit basic-formula spec is an authored ATK/INT retaliation, not
+    // an implicit free attack. Keep its declared stat instead of reclassifying
+    // it by the current caster (which can also be a recorded-power owner).
+    const power = damageSpec
+      ? (String(spec.scaling || 'ATK').toUpperCase() === 'INT' ? INT * mod.int : ATK * mod.atk)
+      : categoryAttackPower(agent, actor, mod);
+    raw = (power + weaponBonus) * strikeMult * seqMult;
+  }
   else if(components.length){ const primary=String(spec.scaling||'ATK').toUpperCase(); const primaryTerm=primary==='INT'?INT*mod.int:ATK*mod.atk; raw=(primaryTerm*abilityMult+components.reduce((sum,c)=>sum+(c.stat==='ATK'?ATK*mod.atk:(c.stat==='DEF'?(st.def||0):(c.stat==='HP'?(st.hp||0):INT*mod.int)))*Number(c.multiplier||0),0))*seqMult; bypass=physCfg.base_def_bypass; }
   else if(formula==='empowered_hybrid_physical') { raw=(ATK*mod.atk*physCfg.atk_mult+INT*physCfg.int_mult*mod.int)*abilityMult*seqMult; bypass=physCfg.base_def_bypass; }
   else if(formula==='empowered_hybrid_agility') { raw=(ATK*mod.atk*agiCfg.atk_mult+INT*agiCfg.int_mult*mod.int)*abilityMult*seqMult; bypass=agiCfg.base_def_bypass; }

@@ -32,7 +32,7 @@ async function main() {
   fixture.quests = [{ id: 'test-contract', name: 'The Chapel Below', encounter: true, objective: 'combat', difficultySequence: 9, rewards: { funds: 0, reputation: 0, materials: {} }, tags: ['occult'] }];
   require('./pool-fixture')(g,fixture);
   w.localStorage.setItem('guild-rpg-browser-v9', JSON.stringify(fixture));
-  w.eval(['vendor/dayjs.min', 'paths', 'v15', 'generate', 'traits', 'market', 'pathway-assets', 'signatures', 'mythical', 'engine', 'state', 'campaign', 'ui'].map(name => fs.readFileSync(path.join(root, `js/${name}.js`), 'utf8')).join('\n'));
+  w.eval(['vendor/dayjs.min', 'paths', 'v15', 'generate', 'traits', 'market', 'pathway-assets', 'signatures', 'mythical', 'battle-ai', 'engine', 'state', 'campaign', 'ui'].map(name => fs.readFileSync(path.join(root, `js/${name}.js`), 'utf8')).join('\n'));
   // A deliberately long battle exercises the former 70-event collapsing boundary.
   w.groupEventsToRows = () => [{ round: 1, rows: Array.from({ length: 150 }, (_, i) => ({ type: 'story', text: `Event ${i}: the combatants continue their battle.` })) }];
   const config = w.G9_DATA.contracts.battlefields;

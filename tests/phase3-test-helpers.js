@@ -112,7 +112,14 @@ function expectedDamage(agent, actor, target, spec, { abilityMult, defPen, trueD
   const formula = d.formula || spec.formula || 'pure_caster_ability', multi = abilityMult ?? d.multiplier ?? spec.scale ?? 1;
   const components = effects.some(e => e.type === 'damage_component') ? effects.filter(e => e.type === 'damage_component') : d.components;
   let raw, bypass;
-  if (formula === 'basic_physical_attack') { raw = (ATK + weaponBonus) * strikeMult; bypass = 0; }
+  if (formula === 'basic_physical_attack') {
+    // This oracle models real attackOnce strikes, independently of the engine.
+    // Authored spell/retaliation damage continues through its explicit formula.
+    const category = agent.path ? balance.path_archetype[agent.path] || 'Caster' : 'Physical';
+    const power = category === 'Physical' ? ATK
+      : category === 'Agility' ? .75 * ATK + .35 * INT : .80 * INT;
+    raw = (power + weaponBonus) * strikeMult; bypass = 0;
+  }
   else if (components?.length) {
     const stats = { ATK, INT, DEF: agent.stats.def, HP: agent.stats.hp };
     raw = stats[String(d.scaling || 'ATK').toUpperCase()] * multi + components.reduce((sum, c) => sum + stats[c.stat] * c.multiplier, 0);
@@ -262,7 +269,7 @@ function exercisePassive(key, rank, team = 'allies') {
         const w = fresh();
         if (el === 'physical') ok(basic(w, w.v, w.u), 'canonical physical resistance mitigates a real attack');
         else {
-          const probes = { water: ['tyrant', 8], lightning: ['tyrant', 6], frost: ['demoness', 4], decay: ['twilight_giant', 2],
+          const probes = { water: ['tyrant', 8], lightning: ['tyrant', 6], frost: ['demoness', 4], decay: ['twilight_giant', 2], psychic: ['visionary', 7],
             poison: ['demoness', 7], piercing: ['paragon', 8], corrosion: ['error', 6], fire: ['paragon', 6] };
           ok(!!probes[el], `a shipped active probes ${el} resistance`);
           if(el==='corrosion') {

@@ -12,7 +12,7 @@ async function main(){
  const ids=['hardy','glass_cannon','wardbreaker','fates_debt'];
  fixture.recruitPool=ids.map((traitId,i)=>{const a=g.makeAgent(()=>.5,{traitId,sequence:10});a.id='candidate-'+i;return a;});
  w.localStorage.setItem('guild-rpg-browser-v9',JSON.stringify(fixture));
- w.eval(['vendor/dayjs.min','paths','v15','generate','traits','market','pathway-assets','signatures','mythical','engine','state','campaign','ui'].map(name=>fs.readFileSync(path.join(root,`js/${name}.js`),'utf8')).join('\n'));
+ w.eval(['vendor/dayjs.min','paths','v15','generate','traits','market','pathway-assets','signatures','mythical','battle-ai','engine','state','campaign','ui'].map(name=>fs.readFileSync(path.join(root,`js/${name}.js`),'utf8')).join('\n'));
  w.G9.tab('recruit');
  assert.equal(w.document.querySelectorAll('.recruit').length,4);assert.equal(w.document.querySelectorAll('.trait-badge').length,4);
  assert.match(w.document.body.textContent,/Normal 74%/);assert.match(w.document.body.textContent,/Rare 20%/);assert.match(w.document.body.textContent,/Epic 5%/);assert.match(w.document.body.textContent,/Legendary 1%/);

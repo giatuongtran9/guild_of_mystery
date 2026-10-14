@@ -1,0 +1,1238 @@
+{
+  "schema": "mixed-checkpoint-pvp-v2",
+  "candidateProfile": "/workspace/guild_assessment/category-ability-ai/bounded-repair-v2/final-profile.json",
+  "retainedSequences": [
+    9,
+    7,
+    6,
+    4,
+    3,
+    2
+  ],
+  "replacementSequences": [
+    8,
+    5,
+    1,
+    0
+  ],
+  "retainedConfigurationChecks": [
+    {
+      "sequence": 9,
+      "status": "PASS",
+      "comparedFields": [
+        "empty_collection_incoming_by_pathway_sequence",
+        "incoming_by_pathway_sequence",
+        "native_ability_cooldown_by_pathway_sequence",
+        "native_ability_damage_by_pathway_sequence",
+        "stats"
+      ],
+      "assertion": "All configured pathway entries for this Sequence and global scalar rules unchanged."
+    },
+    {
+      "sequence": 7,
+      "status": "PASS",
+      "comparedFields": [
+        "empty_collection_incoming_by_pathway_sequence",
+        "incoming_by_pathway_sequence",
+        "native_ability_cooldown_by_pathway_sequence",
+        "native_ability_damage_by_pathway_sequence",
+        "stats"
+      ],
+      "assertion": "All configured pathway entries for this Sequence and global scalar rules unchanged."
+    },
+    {
+      "sequence": 6,
+      "status": "PASS",
+      "comparedFields": [
+        "empty_collection_incoming_by_pathway_sequence",
+        "incoming_by_pathway_sequence",
+        "native_ability_cooldown_by_pathway_sequence",
+        "native_ability_damage_by_pathway_sequence",
+        "stats"
+      ],
+      "assertion": "All configured pathway entries for this Sequence and global scalar rules unchanged."
+    },
+    {
+      "sequence": 4,
+      "status": "PASS",
+      "comparedFields": [
+        "empty_collection_incoming_by_pathway_sequence",
+        "incoming_by_pathway_sequence",
+        "native_ability_cooldown_by_pathway_sequence",
+        "native_ability_damage_by_pathway_sequence",
+        "stats"
+      ],
+      "assertion": "All configured pathway entries for this Sequence and global scalar rules unchanged."
+    },
+    {
+      "sequence": 3,
+      "status": "PASS",
+      "comparedFields": [
+        "empty_collection_incoming_by_pathway_sequence",
+        "incoming_by_pathway_sequence",
+        "native_ability_cooldown_by_pathway_sequence",
+        "native_ability_damage_by_pathway_sequence",
+        "stats"
+      ],
+      "assertion": "All configured pathway entries for this Sequence and global scalar rules unchanged."
+    },
+    {
+      "sequence": 2,
+      "status": "PASS",
+      "comparedFields": [
+        "empty_collection_incoming_by_pathway_sequence",
+        "incoming_by_pathway_sequence",
+        "native_ability_cooldown_by_pathway_sequence",
+        "native_ability_damage_by_pathway_sequence",
+        "stats"
+      ],
+      "assertion": "All configured pathway entries for this Sequence and global scalar rules unchanged."
+    }
+  ],
+  "provenance": [
+    {
+      "dataset": "prepared",
+      "sequence": 9,
+      "classification": "retained-v1-holdout",
+      "sourceFile": "/workspace/guild_assessment/category-ability-ai/final-holdout-prepared-high.json",
+      "sourceFingerprint": "3be33b3dffddc3cd2bcb6c4906dc6c54f524a74556841ddc8daaaea55b3bbc07",
+      "seedBase": 99007919,
+      "samples": 16,
+      "configurationAssertion": "unchanged retained Sequence fields; source fingerprint differs from v2"
+    },
+    {
+      "dataset": "prepared",
+      "sequence": 8,
+      "classification": "replacement-v2-holdout",
+      "sourceFile": "/workspace/guild_assessment/category-ability-ai/bounded-repair-v2/root-holdout-prepared-s8.json",
+      "sourceFingerprint": "e692781803d9652995aca2c85e7e423d2f617a139967614ba702a3cc86163065",
+      "seedBase": 291007919,
+      "samples": 16,
+      "configurationAssertion": "rules equal frozen v2 candidate"
+    },
+    {
+      "dataset": "prepared",
+      "sequence": 7,
+      "classification": "retained-v1-holdout",
+      "sourceFile": "/workspace/guild_assessment/category-ability-ai/final-holdout-prepared-high.json",
+      "sourceFingerprint": "3be33b3dffddc3cd2bcb6c4906dc6c54f524a74556841ddc8daaaea55b3bbc07",
+      "seedBase": 99007919,
+      "samples": 16,
+      "configurationAssertion": "unchanged retained Sequence fields; source fingerprint differs from v2"
+    },
+    {
+      "dataset": "prepared",
+      "sequence": 6,
+      "classification": "retained-v1-holdout",
+      "sourceFile": "/workspace/guild_assessment/category-ability-ai/final-holdout-prepared-middle.json",
+      "sourceFingerprint": "3be33b3dffddc3cd2bcb6c4906dc6c54f524a74556841ddc8daaaea55b3bbc07",
+      "seedBase": 99007919,
+      "samples": 16,
+      "configurationAssertion": "unchanged retained Sequence fields; source fingerprint differs from v2"
+    },
+    {
+      "dataset": "prepared",
+      "sequence": 5,
+      "classification": "replacement-v2-holdout",
+      "sourceFile": "/workspace/guild_assessment/category-ability-ai/bounded-repair-v2/root-holdout-prepared-s5.json",
+      "sourceFingerprint": "e692781803d9652995aca2c85e7e423d2f617a139967614ba702a3cc86163065",
+      "seedBase": 291007919,
+      "samples": 16,
+      "configurationAssertion": "rules equal frozen v2 candidate"
+    },
+    {
+      "dataset": "prepared",
+      "sequence": 4,
+      "classification": "retained-v1-holdout",
+      "sourceFile": "/workspace/guild_assessment/category-ability-ai/final-holdout-prepared-middle.json",
+      "sourceFingerprint": "3be33b3dffddc3cd2bcb6c4906dc6c54f524a74556841ddc8daaaea55b3bbc07",
+      "seedBase": 99007919,
+      "samples": 16,
+      "configurationAssertion": "unchanged retained Sequence fields; source fingerprint differs from v2"
+    },
+    {
+      "dataset": "prepared",
+      "sequence": 3,
+      "classification": "retained-v1-holdout",
+      "sourceFile": "/workspace/guild_assessment/category-ability-ai/final-holdout-prepared-low.json",
+      "sourceFingerprint": "3be33b3dffddc3cd2bcb6c4906dc6c54f524a74556841ddc8daaaea55b3bbc07",
+      "seedBase": 99007919,
+      "samples": 16,
+      "configurationAssertion": "unchanged retained Sequence fields; source fingerprint differs from v2"
+    },
+    {
+      "dataset": "prepared",
+      "sequence": 2,
+      "classification": "retained-v1-holdout",
+      "sourceFile": "/workspace/guild_assessment/category-ability-ai/final-holdout-prepared-low.json",
+      "sourceFingerprint": "3be33b3dffddc3cd2bcb6c4906dc6c54f524a74556841ddc8daaaea55b3bbc07",
+      "seedBase": 99007919,
+      "samples": 16,
+      "configurationAssertion": "unchanged retained Sequence fields; source fingerprint differs from v2"
+    },
+    {
+      "dataset": "prepared",
+      "sequence": 1,
+      "classification": "replacement-v2-holdout",
+      "sourceFile": "/workspace/guild_assessment/category-ability-ai/bounded-repair-v2/root-holdout-prepared-s1.json",
+      "sourceFingerprint": "e692781803d9652995aca2c85e7e423d2f617a139967614ba702a3cc86163065",
+      "seedBase": 291007919,
+      "samples": 16,
+      "configurationAssertion": "rules equal frozen v2 candidate"
+    },
+    {
+      "dataset": "prepared",
+      "sequence": 0,
+      "classification": "replacement-v2-holdout",
+      "sourceFile": "/workspace/guild_assessment/category-ability-ai/bounded-repair-v2/root-holdout-prepared-s0.json",
+      "sourceFingerprint": "e692781803d9652995aca2c85e7e423d2f617a139967614ba702a3cc86163065",
+      "seedBase": 291007919,
+      "samples": 16,
+      "configurationAssertion": "rules equal frozen v2 candidate"
+    },
+    {
+      "dataset": "empty",
+      "sequence": 9,
+      "classification": "retained-v1-holdout",
+      "sourceFile": "/workspace/guild_assessment/category-ability-ai/final-holdout-empty-high.json",
+      "sourceFingerprint": "3be33b3dffddc3cd2bcb6c4906dc6c54f524a74556841ddc8daaaea55b3bbc07",
+      "seedBase": 99007919,
+      "samples": 16,
+      "configurationAssertion": "unchanged retained Sequence fields; source fingerprint differs from v2"
+    },
+    {
+      "dataset": "empty",
+      "sequence": 8,
+      "classification": "replacement-v2-holdout",
+      "sourceFile": "/workspace/guild_assessment/category-ability-ai/bounded-repair-v2/root-holdout-empty-s8.json",
+      "sourceFingerprint": "e692781803d9652995aca2c85e7e423d2f617a139967614ba702a3cc86163065",
+      "seedBase": 291007919,
+      "samples": 16,
+      "configurationAssertion": "rules equal frozen v2 candidate"
+    },
+    {
+      "dataset": "empty",
+      "sequence": 7,
+      "classification": "retained-v1-holdout",
+      "sourceFile": "/workspace/guild_assessment/category-ability-ai/final-holdout-empty-high.json",
+      "sourceFingerprint": "3be33b3dffddc3cd2bcb6c4906dc6c54f524a74556841ddc8daaaea55b3bbc07",
+      "seedBase": 99007919,
+      "samples": 16,
+      "configurationAssertion": "unchanged retained Sequence fields; source fingerprint differs from v2"
+    },
+    {
+      "dataset": "empty",
+      "sequence": 6,
+      "classification": "retained-v1-holdout",
+      "sourceFile": "/workspace/guild_assessment/category-ability-ai/final-holdout-empty-middle.json",
+      "sourceFingerprint": "3be33b3dffddc3cd2bcb6c4906dc6c54f524a74556841ddc8daaaea55b3bbc07",
+      "seedBase": 99007919,
+      "samples": 16,
+      "configurationAssertion": "unchanged retained Sequence fields; source fingerprint differs from v2"
+    },
+    {
+      "dataset": "empty",
+      "sequence": 5,
+      "classification": "replacement-v2-holdout",
+      "sourceFile": "/workspace/guild_assessment/category-ability-ai/bounded-repair-v2/root-holdout-empty-s5.json",
+      "sourceFingerprint": "e692781803d9652995aca2c85e7e423d2f617a139967614ba702a3cc86163065",
+      "seedBase": 291007919,
+      "samples": 16,
+      "configurationAssertion": "rules equal frozen v2 candidate"
+    },
+    {
+      "dataset": "empty",
+      "sequence": 4,
+      "classification": "retained-v1-holdout",
+      "sourceFile": "/workspace/guild_assessment/category-ability-ai/final-holdout-empty-middle.json",
+      "sourceFingerprint": "3be33b3dffddc3cd2bcb6c4906dc6c54f524a74556841ddc8daaaea55b3bbc07",
+      "seedBase": 99007919,
+      "samples": 16,
+      "configurationAssertion": "unchanged retained Sequence fields; source fingerprint differs from v2"
+    },
+    {
+      "dataset": "empty",
+      "sequence": 3,
+      "classification": "retained-v1-holdout",
+      "sourceFile": "/workspace/guild_assessment/category-ability-ai/final-holdout-empty-low.json",
+      "sourceFingerprint": "3be33b3dffddc3cd2bcb6c4906dc6c54f524a74556841ddc8daaaea55b3bbc07",
+      "seedBase": 99007919,
+      "samples": 16,
+      "configurationAssertion": "unchanged retained Sequence fields; source fingerprint differs from v2"
+    },
+    {
+      "dataset": "empty",
+      "sequence": 2,
+      "classification": "retained-v1-holdout",
+      "sourceFile": "/workspace/guild_assessment/category-ability-ai/final-holdout-empty-low.json",
+      "sourceFingerprint": "3be33b3dffddc3cd2bcb6c4906dc6c54f524a74556841ddc8daaaea55b3bbc07",
+      "seedBase": 99007919,
+      "samples": 16,
+      "configurationAssertion": "unchanged retained Sequence fields; source fingerprint differs from v2"
+    },
+    {
+      "dataset": "empty",
+      "sequence": 1,
+      "classification": "replacement-v2-holdout",
+      "sourceFile": "/workspace/guild_assessment/category-ability-ai/bounded-repair-v2/root-holdout-empty-s1.json",
+      "sourceFingerprint": "e692781803d9652995aca2c85e7e423d2f617a139967614ba702a3cc86163065",
+      "seedBase": 291007919,
+      "samples": 16,
+      "configurationAssertion": "rules equal frozen v2 candidate"
+    },
+    {
+      "dataset": "empty",
+      "sequence": 0,
+      "classification": "replacement-v2-holdout",
+      "sourceFile": "/workspace/guild_assessment/category-ability-ai/bounded-repair-v2/root-holdout-empty-s0.json",
+      "sourceFingerprint": "e692781803d9652995aca2c85e7e423d2f617a139967614ba702a3cc86163065",
+      "seedBase": 291007919,
+      "samples": 16,
+      "configurationAssertion": "rules equal frozen v2 candidate"
+    }
+  ],
+  "limitations": [
+    "Mixed checkpoints; no full-source/full-rule parity assertion.",
+    "Retention depends on stated scope of native readiness/cooldown repair; configuration checks do not prove behavioral equality.",
+    "Wilson intervals are marginal binomial intervals, not simultaneous or universal assurance.",
+    "Prior affected v1 results are diagnostic training; the frozen candidate must not be refit against replacement holdouts."
+  ],
+  "datasets": [
+    {
+      "dataset": "primary",
+      "global45to55": {
+        "status": "FAIL",
+        "passed": 178,
+        "outside": 42,
+        "unavailable": 0,
+        "text": "FAIL (178/220 pass; 42 fail; 0 unavailable)"
+      },
+      "empty35Floor": null,
+      "totalBattles": 40480,
+      "nonMirrorBattles": 36960,
+      "draws": 204,
+      "meanObservedRounds": 8.55009881422925,
+      "p95ObservedRounds": 19,
+      "meanCompletedRounds": 8.423767871744678,
+      "p95CompletedRounds": 19,
+      "sideOutcomes": {
+        "attempts": 36960,
+        "alliedWins": 18499,
+        "enemyWins": 18336,
+        "draws": 125,
+        "aAllied": 18480,
+        "bAllied": 18480,
+        "alliedRate": 0.5005140692640693,
+        "enemyRate": 0.4961038961038961
+      },
+      "replayParity": null
+    },
+    {
+      "dataset": "empty",
+      "global45to55": {
+        "status": "FAIL",
+        "passed": 131,
+        "outside": 89,
+        "unavailable": 0,
+        "text": "FAIL (131/220 pass; 89 fail; 0 unavailable)"
+      },
+      "empty35Floor": {
+        "status": "PASS",
+        "passed": 220,
+        "outside": 0,
+        "unavailable": 0,
+        "text": "PASS (220/220 pass; 0 fail; 0 unavailable)"
+      },
+      "totalBattles": 40480,
+      "nonMirrorBattles": 36960,
+      "draws": 272,
+      "meanObservedRounds": 9.079891304347827,
+      "p95ObservedRounds": 20,
+      "meanCompletedRounds": 8.85321807387535,
+      "p95CompletedRounds": 20,
+      "sideOutcomes": {
+        "attempts": 36960,
+        "alliedWins": 18458,
+        "enemyWins": 18360,
+        "draws": 142,
+        "aAllied": 18480,
+        "bAllied": 18480,
+        "alliedRate": 0.4994047619047619,
+        "enemyRate": 0.4967532467532468
+      },
+      "replayParity": null
+    }
+  ],
+  "profileHashes": {
+    "fileSha256": "182011e7a3f3e7d829f40179dc4e55b5959850d94cc1449346fb7d4a3b464352",
+    "rulesHash": "36f7df4bf5577cde8b1d9ed5ce46ca0a5116662ecc5726ea859f4f951c7e7c8a"
+  },
+  "perSequence": [
+    {
+      "dataset": "primary",
+      "sequence": 9,
+      "cohorts": 22,
+      "within45to55": 20,
+      "above35": 22,
+      "minRawWinRate": 0.44642857142857145,
+      "maxRawWinRate": 0.5476190476190477
+    },
+    {
+      "dataset": "primary",
+      "sequence": 8,
+      "cohorts": 22,
+      "within45to55": 16,
+      "above35": 22,
+      "minRawWinRate": 0.40476190476190477,
+      "maxRawWinRate": 0.5744047619047619
+    },
+    {
+      "dataset": "primary",
+      "sequence": 7,
+      "cohorts": 22,
+      "within45to55": 21,
+      "above35": 22,
+      "minRawWinRate": 0.45535714285714285,
+      "maxRawWinRate": 0.5595238095238095
+    },
+    {
+      "dataset": "primary",
+      "sequence": 6,
+      "cohorts": 22,
+      "within45to55": 17,
+      "above35": 22,
+      "minRawWinRate": 0.41964285714285715,
+      "maxRawWinRate": 0.5625
+    },
+    {
+      "dataset": "primary",
+      "sequence": 5,
+      "cohorts": 22,
+      "within45to55": 18,
+      "above35": 22,
+      "minRawWinRate": 0.44047619047619047,
+      "maxRawWinRate": 0.5773809523809523
+    },
+    {
+      "dataset": "primary",
+      "sequence": 4,
+      "cohorts": 22,
+      "within45to55": 17,
+      "above35": 22,
+      "minRawWinRate": 0.43452380952380953,
+      "maxRawWinRate": 0.5684523809523809
+    },
+    {
+      "dataset": "primary",
+      "sequence": 3,
+      "cohorts": 22,
+      "within45to55": 18,
+      "above35": 22,
+      "minRawWinRate": 0.4226190476190476,
+      "maxRawWinRate": 0.5595238095238095
+    },
+    {
+      "dataset": "primary",
+      "sequence": 2,
+      "cohorts": 22,
+      "within45to55": 19,
+      "above35": 22,
+      "minRawWinRate": 0.4255952380952381,
+      "maxRawWinRate": 0.5416666666666666
+    },
+    {
+      "dataset": "primary",
+      "sequence": 1,
+      "cohorts": 22,
+      "within45to55": 17,
+      "above35": 22,
+      "minRawWinRate": 0.41964285714285715,
+      "maxRawWinRate": 0.5684523809523809
+    },
+    {
+      "dataset": "primary",
+      "sequence": 0,
+      "cohorts": 22,
+      "within45to55": 15,
+      "above35": 22,
+      "minRawWinRate": 0.4226190476190476,
+      "maxRawWinRate": 0.5714285714285714
+    },
+    {
+      "dataset": "empty",
+      "sequence": 9,
+      "cohorts": 22,
+      "within45to55": 17,
+      "above35": 22,
+      "minRawWinRate": 0.44047619047619047,
+      "maxRawWinRate": 0.6101190476190477
+    },
+    {
+      "dataset": "empty",
+      "sequence": 8,
+      "cohorts": 22,
+      "within45to55": 14,
+      "above35": 22,
+      "minRawWinRate": 0.40476190476190477,
+      "maxRawWinRate": 0.6428571428571429
+    },
+    {
+      "dataset": "empty",
+      "sequence": 7,
+      "cohorts": 22,
+      "within45to55": 15,
+      "above35": 22,
+      "minRawWinRate": 0.43154761904761907,
+      "maxRawWinRate": 0.7261904761904762
+    },
+    {
+      "dataset": "empty",
+      "sequence": 6,
+      "cohorts": 22,
+      "within45to55": 12,
+      "above35": 22,
+      "minRawWinRate": 0.37202380952380953,
+      "maxRawWinRate": 0.7172619047619048
+    },
+    {
+      "dataset": "empty",
+      "sequence": 5,
+      "cohorts": 22,
+      "within45to55": 15,
+      "above35": 22,
+      "minRawWinRate": 0.40773809523809523,
+      "maxRawWinRate": 0.6755952380952381
+    },
+    {
+      "dataset": "empty",
+      "sequence": 4,
+      "cohorts": 22,
+      "within45to55": 11,
+      "above35": 22,
+      "minRawWinRate": 0.38392857142857145,
+      "maxRawWinRate": 0.6488095238095238
+    },
+    {
+      "dataset": "empty",
+      "sequence": 3,
+      "cohorts": 22,
+      "within45to55": 14,
+      "above35": 22,
+      "minRawWinRate": 0.4017857142857143,
+      "maxRawWinRate": 0.6458333333333334
+    },
+    {
+      "dataset": "empty",
+      "sequence": 2,
+      "cohorts": 22,
+      "within45to55": 12,
+      "above35": 22,
+      "minRawWinRate": 0.35119047619047616,
+      "maxRawWinRate": 0.6755952380952381
+    },
+    {
+      "dataset": "empty",
+      "sequence": 1,
+      "cohorts": 22,
+      "within45to55": 8,
+      "above35": 22,
+      "minRawWinRate": 0.4107142857142857,
+      "maxRawWinRate": 0.6190476190476191
+    },
+    {
+      "dataset": "empty",
+      "sequence": 0,
+      "cohorts": 22,
+      "within45to55": 13,
+      "above35": 22,
+      "minRawWinRate": 0.38392857142857145,
+      "maxRawWinRate": 0.5982142857142857
+    }
+  ],
+  "focalCohorts": [
+    {
+      "dataset": "primary",
+      "pathway": "sun",
+      "sequence": 5,
+      "wins": 171,
+      "losses": 165,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.5089285714285714,
+      "wilson95": {
+        "lower": 0.45567664519265905,
+        "upper": 0.561978646250654
+      },
+      "drawRate": 0,
+      "meanObservedRounds": 6.196428571428571,
+      "p95ObservedRounds": 10
+    },
+    {
+      "dataset": "primary",
+      "pathway": "darkness",
+      "sequence": 8,
+      "wins": 183,
+      "losses": 153,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.5446428571428571,
+      "wilson95": {
+        "lower": 0.4911887585070905,
+        "upper": 0.5970876987094743
+      },
+      "drawRate": 0,
+      "meanObservedRounds": 6.226190476190476,
+      "p95ObservedRounds": 9
+    },
+    {
+      "dataset": "primary",
+      "pathway": "wheel_of_fortune",
+      "sequence": 1,
+      "wins": 160,
+      "losses": 176,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.47619047619047616,
+      "wilson95": {
+        "lower": 0.42335985391424635,
+        "upper": 0.5295593689035856
+      },
+      "drawRate": 0,
+      "meanObservedRounds": 15.744047619047619,
+      "p95ObservedRounds": 28
+    },
+    {
+      "dataset": "primary",
+      "pathway": "wheel_of_fortune",
+      "sequence": 0,
+      "wins": 172,
+      "losses": 164,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.5119047619047619,
+      "wilson95": {
+        "lower": 0.4586257128632057,
+        "upper": 0.5649146757278782
+      },
+      "drawRate": 0,
+      "meanObservedRounds": 11.571428571428571,
+      "p95ObservedRounds": 21
+    },
+    {
+      "dataset": "empty",
+      "pathway": "sun",
+      "sequence": 5,
+      "wins": 159,
+      "losses": 177,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.4732142857142857,
+      "wilson95": {
+        "lower": 0.42043315410409143,
+        "upper": 0.5266009715659695
+      },
+      "drawRate": 0,
+      "meanObservedRounds": 6.4226190476190474,
+      "p95ObservedRounds": 10
+    },
+    {
+      "dataset": "empty",
+      "pathway": "darkness",
+      "sequence": 8,
+      "wins": 183,
+      "losses": 153,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.5446428571428571,
+      "wilson95": {
+        "lower": 0.4911887585070905,
+        "upper": 0.5970876987094743
+      },
+      "drawRate": 0,
+      "meanObservedRounds": 6.175595238095238,
+      "p95ObservedRounds": 9
+    },
+    {
+      "dataset": "empty",
+      "pathway": "wheel_of_fortune",
+      "sequence": 1,
+      "wins": 152,
+      "losses": 184,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.4523809523809524,
+      "wilson95": {
+        "lower": 0.3999987390415488,
+        "upper": 0.5058397065941153
+      },
+      "drawRate": 0,
+      "meanObservedRounds": 16.452380952380953,
+      "p95ObservedRounds": 32
+    },
+    {
+      "dataset": "empty",
+      "pathway": "wheel_of_fortune",
+      "sequence": 0,
+      "wins": 168,
+      "losses": 168,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.5,
+      "wilson95": {
+        "lower": 0.44684061895000715,
+        "upper": 0.5531593810499928
+      },
+      "drawRate": 0,
+      "meanObservedRounds": 12.30952380952381,
+      "p95ObservedRounds": 24
+    }
+  ],
+  "exceptions": [
+    {
+      "pathway": "fool",
+      "sequence": 6,
+      "wins": 142,
+      "losses": 191,
+      "draws": 3,
+      "attempts": 336,
+      "rawWinRate": 0.4226190476190476,
+      "wilson95": {
+        "lower": 0.37096754768908574,
+        "upper": 0.4760199264688683
+      }
+    },
+    {
+      "pathway": "fool",
+      "sequence": 0,
+      "wins": 187,
+      "losses": 140,
+      "draws": 9,
+      "attempts": 336,
+      "rawWinRate": 0.5565476190476191,
+      "wilson95": {
+        "lower": 0.503086236795215,
+        "upper": 0.6087306090124339
+      }
+    },
+    {
+      "pathway": "door",
+      "sequence": 6,
+      "wins": 186,
+      "losses": 150,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.5535714285714286,
+      "wilson95": {
+        "lower": 0.5001090291368739,
+        "upper": 0.6058227195230039
+      }
+    },
+    {
+      "pathway": "door",
+      "sequence": 0,
+      "wins": 186,
+      "losses": 148,
+      "draws": 2,
+      "attempts": 336,
+      "rawWinRate": 0.5535714285714286,
+      "wilson95": {
+        "lower": 0.5001090291368739,
+        "upper": 0.6058227195230039
+      }
+    },
+    {
+      "pathway": "error",
+      "sequence": 8,
+      "wins": 190,
+      "losses": 146,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.5654761904761905,
+      "wilson95": {
+        "lower": 0.5120292643711952,
+        "upper": 0.6174428728797665
+      }
+    },
+    {
+      "pathway": "error",
+      "sequence": 4,
+      "wins": 190,
+      "losses": 146,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.5654761904761905,
+      "wilson95": {
+        "lower": 0.5120292643711952,
+        "upper": 0.6174428728797665
+      }
+    },
+    {
+      "pathway": "error",
+      "sequence": 2,
+      "wins": 147,
+      "losses": 182,
+      "draws": 7,
+      "attempts": 336,
+      "rawWinRate": 0.4375,
+      "wilson95": {
+        "lower": 0.3854593102540925,
+        "upper": 0.4909536496427166
+      }
+    },
+    {
+      "pathway": "error",
+      "sequence": 1,
+      "wins": 141,
+      "losses": 191,
+      "draws": 4,
+      "attempts": 336,
+      "rawWinRate": 0.41964285714285715,
+      "wilson95": {
+        "lower": 0.36807496582809945,
+        "upper": 0.47302741118208363
+      }
+    },
+    {
+      "pathway": "visionary",
+      "sequence": 6,
+      "wins": 189,
+      "losses": 147,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.5625,
+      "wilson95": {
+        "lower": 0.5090463503572834,
+        "upper": 0.6145406897459075
+      }
+    },
+    {
+      "pathway": "visionary",
+      "sequence": 3,
+      "wins": 185,
+      "losses": 151,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.5505952380952381,
+      "wilson95": {
+        "lower": 0.49713371584662613,
+        "upper": 0.6029129356654809
+      }
+    },
+    {
+      "pathway": "tyrant",
+      "sequence": 2,
+      "wins": 143,
+      "losses": 191,
+      "draws": 2,
+      "attempts": 336,
+      "rawWinRate": 0.4255952380952381,
+      "wilson95": {
+        "lower": 0.3738620599206951,
+        "upper": 0.4790105113850299
+      }
+    },
+    {
+      "pathway": "white_tower",
+      "sequence": 3,
+      "wins": 142,
+      "losses": 194,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.4226190476190476,
+      "wilson95": {
+        "lower": 0.37096754768908574,
+        "upper": 0.4760199264688683
+      }
+    },
+    {
+      "pathway": "white_tower",
+      "sequence": 0,
+      "wins": 142,
+      "losses": 193,
+      "draws": 1,
+      "attempts": 336,
+      "rawWinRate": 0.4226190476190476,
+      "wilson95": {
+        "lower": 0.37096754768908574,
+        "upper": 0.4760199264688683
+      }
+    },
+    {
+      "pathway": "hanged_man",
+      "sequence": 7,
+      "wins": 188,
+      "losses": 148,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.5595238095238095,
+      "wilson95": {
+        "lower": 0.5060653425531796,
+        "upper": 0.6116366004022402
+      }
+    },
+    {
+      "pathway": "hanged_man",
+      "sequence": 1,
+      "wins": 186,
+      "losses": 147,
+      "draws": 3,
+      "attempts": 336,
+      "rawWinRate": 0.5535714285714286,
+      "wilson95": {
+        "lower": 0.5001090291368739,
+        "upper": 0.6058227195230039
+      }
+    },
+    {
+      "pathway": "darkness",
+      "sequence": 6,
+      "wins": 147,
+      "losses": 189,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.4375,
+      "wilson95": {
+        "lower": 0.3854593102540925,
+        "upper": 0.4909536496427166
+      }
+    },
+    {
+      "pathway": "darkness",
+      "sequence": 4,
+      "wins": 185,
+      "losses": 151,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.5505952380952381,
+      "wilson95": {
+        "lower": 0.49713371584662613,
+        "upper": 0.6029129356654809
+      }
+    },
+    {
+      "pathway": "death",
+      "sequence": 9,
+      "wins": 150,
+      "losses": 185,
+      "draws": 1,
+      "attempts": 336,
+      "rawWinRate": 0.44642857142857145,
+      "wilson95": {
+        "lower": 0.3941772804769961,
+        "upper": 0.49989097086312606
+      }
+    },
+    {
+      "pathway": "death",
+      "sequence": 0,
+      "wins": 150,
+      "losses": 184,
+      "draws": 2,
+      "attempts": 336,
+      "rawWinRate": 0.44642857142857145,
+      "wilson95": {
+        "lower": 0.3941772804769961,
+        "upper": 0.49989097086312606
+      }
+    },
+    {
+      "pathway": "twilight_giant",
+      "sequence": 9,
+      "wins": 150,
+      "losses": 185,
+      "draws": 1,
+      "attempts": 336,
+      "rawWinRate": 0.44642857142857145,
+      "wilson95": {
+        "lower": 0.3941772804769961,
+        "upper": 0.49989097086312606
+      }
+    },
+    {
+      "pathway": "twilight_giant",
+      "sequence": 5,
+      "wins": 151,
+      "losses": 185,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.4494047619047619,
+      "wilson95": {
+        "lower": 0.3970870643345192,
+        "upper": 0.502866284153374
+      }
+    },
+    {
+      "pathway": "red_priest",
+      "sequence": 3,
+      "wins": 188,
+      "losses": 148,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.5595238095238095,
+      "wilson95": {
+        "lower": 0.5060653425531796,
+        "upper": 0.6116366004022402
+      }
+    },
+    {
+      "pathway": "demoness",
+      "sequence": 8,
+      "wins": 136,
+      "losses": 200,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.40476190476190477,
+      "wilson95": {
+        "lower": 0.3536412136055227,
+        "upper": 0.45803567766580544
+      }
+    },
+    {
+      "pathway": "demoness",
+      "sequence": 5,
+      "wins": 148,
+      "losses": 188,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.44047619047619047,
+      "wilson95": {
+        "lower": 0.38836339959775973,
+        "upper": 0.49393465744682036
+      }
+    },
+    {
+      "pathway": "demoness",
+      "sequence": 4,
+      "wins": 191,
+      "losses": 145,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.5684523809523809,
+      "wilson95": {
+        "lower": 0.5150140889780359,
+        "upper": 0.6203431454206969
+      }
+    },
+    {
+      "pathway": "demoness",
+      "sequence": 2,
+      "wins": 151,
+      "losses": 185,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.4494047619047619,
+      "wilson95": {
+        "lower": 0.3970870643345192,
+        "upper": 0.502866284153374
+      }
+    },
+    {
+      "pathway": "demoness",
+      "sequence": 0,
+      "wins": 189,
+      "losses": 147,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.5625,
+      "wilson95": {
+        "lower": 0.5090463503572834,
+        "upper": 0.6145406897459075
+      }
+    },
+    {
+      "pathway": "hermit",
+      "sequence": 0,
+      "wins": 192,
+      "losses": 137,
+      "draws": 7,
+      "attempts": 336,
+      "rawWinRate": 0.5714285714285714,
+      "wilson95": {
+        "lower": 0.5180008287828091,
+        "upper": 0.6232415027636946
+      }
+    },
+    {
+      "pathway": "paragon",
+      "sequence": 6,
+      "wins": 141,
+      "losses": 193,
+      "draws": 2,
+      "attempts": 336,
+      "rawWinRate": 0.41964285714285715,
+      "wilson95": {
+        "lower": 0.36807496582809945,
+        "upper": 0.47302741118208363
+      }
+    },
+    {
+      "pathway": "wheel_of_fortune",
+      "sequence": 8,
+      "wins": 185,
+      "losses": 151,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.5505952380952381,
+      "wilson95": {
+        "lower": 0.49713371584662613,
+        "upper": 0.6029129356654809
+      }
+    },
+    {
+      "pathway": "wheel_of_fortune",
+      "sequence": 4,
+      "wins": 186,
+      "losses": 150,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.5535714285714286,
+      "wilson95": {
+        "lower": 0.5001090291368739,
+        "upper": 0.6058227195230039
+      }
+    },
+    {
+      "pathway": "mother",
+      "sequence": 3,
+      "wins": 147,
+      "losses": 167,
+      "draws": 22,
+      "attempts": 336,
+      "rawWinRate": 0.4375,
+      "wilson95": {
+        "lower": 0.3854593102540925,
+        "upper": 0.4909536496427166
+      }
+    },
+    {
+      "pathway": "mother",
+      "sequence": 1,
+      "wins": 191,
+      "losses": 143,
+      "draws": 2,
+      "attempts": 336,
+      "rawWinRate": 0.5684523809523809,
+      "wilson95": {
+        "lower": 0.5150140889780359,
+        "upper": 0.6203431454206969
+      }
+    },
+    {
+      "pathway": "moon",
+      "sequence": 0,
+      "wins": 143,
+      "losses": 191,
+      "draws": 2,
+      "attempts": 336,
+      "rawWinRate": 0.4255952380952381,
+      "wilson95": {
+        "lower": 0.3738620599206951,
+        "upper": 0.4790105113850299
+      }
+    },
+    {
+      "pathway": "abyss",
+      "sequence": 5,
+      "wins": 194,
+      "losses": 142,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.5773809523809523,
+      "wilson95": {
+        "lower": 0.5239800735311315,
+        "upper": 0.6290324523109141
+      }
+    },
+    {
+      "pathway": "abyss",
+      "sequence": 4,
+      "wins": 146,
+      "losses": 190,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.43452380952380953,
+      "wilson95": {
+        "lower": 0.3825571271202334,
+        "upper": 0.4879707356288048
+      }
+    },
+    {
+      "pathway": "chained",
+      "sequence": 8,
+      "wins": 146,
+      "losses": 189,
+      "draws": 1,
+      "attempts": 336,
+      "rawWinRate": 0.43452380952380953,
+      "wilson95": {
+        "lower": 0.3825571271202334,
+        "upper": 0.4879707356288048
+      }
+    },
+    {
+      "pathway": "chained",
+      "sequence": 1,
+      "wins": 186,
+      "losses": 150,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.5535714285714286,
+      "wilson95": {
+        "lower": 0.5001090291368739,
+        "upper": 0.6058227195230039
+      }
+    },
+    {
+      "pathway": "black_emperor",
+      "sequence": 8,
+      "wins": 193,
+      "losses": 143,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.5744047619047619,
+      "wilson95": {
+        "lower": 0.52098948861497,
+        "upper": 0.6261379400793048
+      }
+    },
+    {
+      "pathway": "black_emperor",
+      "sequence": 1,
+      "wins": 151,
+      "losses": 184,
+      "draws": 1,
+      "attempts": 336,
+      "rawWinRate": 0.4494047619047619,
+      "wilson95": {
+        "lower": 0.3970870643345192,
+        "upper": 0.502866284153374
+      }
+    },
+    {
+      "pathway": "justiciar",
+      "sequence": 8,
+      "wins": 149,
+      "losses": 187,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.44345238095238093,
+      "wilson95": {
+        "lower": 0.3912693909875661,
+        "upper": 0.496913763204785
+      }
+    },
+    {
+      "pathway": "justiciar",
+      "sequence": 5,
+      "wins": 148,
+      "losses": 188,
+      "draws": 0,
+      "attempts": 336,
+      "rawWinRate": 0.44047619047619047,
+      "wilson95": {
+        "lower": 0.38836339959775973,
+        "upper": 0.49393465744682036
+      }
+    }
+  ]
+}

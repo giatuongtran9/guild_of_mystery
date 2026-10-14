@@ -42,7 +42,7 @@ const assetManifest = () => ({ schemaVersion: 1, version: '1234567890abcdef', en
     fs.cpSync(path.join(root, 'data'), path.join(temp, 'data'), { recursive: true, filter: name => !name.includes(`${path.sep}assets`) && !name.includes(`${path.sep}runtime`) });
     fs.mkdirSync(path.join(temp, 'js/vendor'), { recursive: true });
     fs.writeFileSync(path.join(temp, 'js/vendor/dayjs.min.js'), '// fixture');
-    for (const name of ['paths', 'v15', 'signatures', 'mythical', 'generate', 'traits', 'market', 'pathway-assets', 'engine', 'state', 'campaign', 'ui']) fs.writeFileSync(path.join(temp, `js/${name}.js`), '// fixture');
+    for (const name of ['paths', 'v15', 'signatures', 'mythical', 'generate', 'traits', 'market', 'pathway-assets', 'battle-ai', 'engine', 'state', 'campaign', 'ui']) fs.writeFileSync(path.join(temp, `js/${name}.js`), '// fixture');
     fs.writeFileSync(path.join(temp, 'index.html'), '');
     const manifestPath = path.join(temp, 'data/assets/runtime/characters/manifest.json');
     fs.mkdirSync(path.dirname(manifestPath), { recursive: true });

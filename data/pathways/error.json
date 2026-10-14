@@ -40,7 +40,7 @@
         "label": "Active",
         "spCost": 15,
         "cooldown": 2,
-        "description": "Combat Theft — Steals 15% ATK and 15% DEF from enemy for 2 rounds.",
+        "description": "Combat Theft — Lowers target ATK by 15% and raises your own ATK by 15% for 2 turns; Lowers target DEF by 15% and raises your own DEF by 15% for 2 turns; If the resolved cast deals no damage, follows its utility effects with a 35% basic strike against the current enemy. 15 SP · Cooldown 2 turns.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -73,7 +73,7 @@
         "label": "Active",
         "spCost": 20,
         "cooldown": 2,
-        "description": "Deceptive Feint — Distorts enemy focus, dealing 110% ATK DMG + 100% Miss Chance on target's next hit.",
+        "description": "Deceptive Feint — Deals 110% × (85% ATK + 55% INT) Physical damage (22% base DEF bypass); Forces the target's next damaging action to miss with 100% chance; Damage and hostile effects use accuracy and Dodge; critical, authority and defense modifiers still apply. 20 SP · Cooldown 2 turns.",
         "stat": "ATK",
         "scale": 1.1,
         "damageType": "physical",
@@ -82,7 +82,7 @@
         "effects": [
           {
             "type": "next_attack_miss",
-            "chance": 1.0
+            "chance": 1
           }
         ]
       }
@@ -97,7 +97,7 @@
         "label": "Passive",
         "spCost": 0,
         "cooldown": 0,
-        "description": "Flaw Exploitation — Attacks bypass 20% of target DEF by analyzing structural weaknesses.",
+        "description": "Flaw Exploitation — +20% DEF bypass. Passive.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -121,11 +121,11 @@
         "label": "Active",
         "spCost": 35,
         "cooldown": 2,
-        "description": "Rust Siphon — Deal Corrosion damage. At 100 charge, steal one observed ability, deny its owner access for one turn, and retain one paid use.",
-        "stat": "INT",
+        "description": "Rust Siphon — Deals 140% × (85% ATK + 55% INT) Corrosion damage (22% base DEF bypass); At 100 charge, steal one witnessed ability from Sequence 6: deny its owner access for 1 turn and gain one normally paid use.; Damage and hostile effects use accuracy and Dodge; critical, authority and defense modifiers still apply. 35 SP · Cooldown 2 turns.",
+        "stat": "ATK",
         "scale": 1.4,
         "damageType": "corrosion",
-        "formula": "pure_caster_ability",
+        "formula": "empowered_hybrid_agility",
         "tag": null,
         "effects": [
           {
@@ -148,7 +148,7 @@
         "label": "Active",
         "spCost": 45,
         "cooldown": 3,
-        "description": "Logic Distortion — A resistible mark redirects the target's next paid damaging ability to its own side once within two turns; the ability retains its normal SP cost and cooldown.",
+        "description": "Logic Distortion — Distort one enemy's next paid damaging ability to target its own side, once within 2 turns; normal SP, cooldown, damage and hit rules remain. Confusion immunity and mental resistance apply.; If the resolved cast deals no damage, follows its utility effects with a 35% basic strike against the current enemy. 45 SP · Cooldown 3 turns.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -176,7 +176,7 @@
         "label": "Active",
         "spCost": 50,
         "cooldown": 3,
-        "description": "Parasitic Contagion — Establish one parasite host for two turns, drain SP (20 plus 10% of the host's Max SP) and recover health while the host remains alive.",
+        "description": "Parasitic Contagion — Attach one parasite from Sequence 4 for 2 turns; on each host turn siphon 20 SP plus 10% of the host's Max SP (limited to the SP the host has) and recover 4% Max HP when SP is drained; total recovery from all hosts is capped at 4% owner Max HP per round. A new cast moves the parasite. At 100 charge, Contagion attaches it to every enemy and refreshes existing parasites; against a lone enemy it drains 50% more.; If the resolved cast deals no damage, follows its utility effects with a 35% basic strike against the current enemy. 50 SP · Cooldown 3 turns.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -190,7 +190,8 @@
             "duration": 2,
             "amount": 20,
             "spRatio": 0.1,
-            "maxHpRatio": 0.1
+            "maxHpRatio": 0.04,
+            "healingRoundCap": 0.04
           }
         ],
         "utilityStrike": 0.35
@@ -206,7 +207,7 @@
         "label": "Active",
         "spCost": 70,
         "cooldown": 4,
-        "description": "Deceive Impact -- Deceives damage rules: until your next turn, negates all incoming damage and reflects 100% of it back to the attacker.",
+        "description": "Deceive Impact — Negates incoming direct hits and reflects 100% of incoming damage to the attacker until your next turn; periodic damage does not trigger reflection; If the resolved cast deals no damage, follows its utility effects with a 35% basic strike against the current enemy. 70 SP · Cooldown 4 turns.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -216,7 +217,7 @@
           {
             "type": "reflect",
             "mode": "share",
-            "share": 1.0,
+            "share": 1,
             "negate": true,
             "duration": "next_turn"
           }
@@ -234,7 +235,7 @@
         "label": "Active",
         "spCost": 85,
         "cooldown": 4,
-        "description": "Steal Destiny & Turn — Steals all positive buffs and turn priority from enemy, gaining immediate turn +25% stats.",
+        "description": "Steal Destiny & Turn — Removes current stat buffs, Guarded, Evade and shields; +25% ATK for 2 turns; +25% INT for 2 turns; Grants 1 extra action if you and the current enemy survive; If the resolved cast deals no damage, follows its utility effects with a 35% basic strike against the current enemy. 85 SP · Cooldown 4 turns.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -274,7 +275,7 @@
         "label": "Active",
         "spCost": 100,
         "cooldown": 4,
-        "description": "Time Theft — Steals 1 turn from target enemy (skipping their turn) and grants an extra turn to user.",
+        "description": "Time Theft — 100% chance: Stunned (blocks actions) for 1 turn; subject to status resistance and immunity; Grants 1 extra action if you and the current enemy survive; If the resolved cast deals no damage, follows its utility effects with a 35% basic strike against the current enemy. 100 SP · Cooldown 4 turns.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -304,8 +305,8 @@
         "label": "Active Authority",
         "spCost": 120,
         "cooldown": 5,
-        "description": "Systemic Glitch — Steals 30% HP, 30% ATK, and all buffs from target, dealing 420% INT True DMG.",
-        "stat": "INT",
+        "description": "Systemic Glitch — Deals 420% × (85% ATK + 55% INT) True damage (ignores DEF and elemental resistance); Removes up to 30% enemy Max HP and restores the amount removed to you; cannot kill by this siphon; Lowers target ATK by 30% and raises your own ATK by 30% for 2 turns; Removes current stat buffs, Guarded, Evade and shields; Damage and hostile effects use accuracy and Dodge; critical, authority and defense modifiers still apply. 120 SP · Cooldown 5 turns.",
+        "stat": "ATK",
         "scale": 4.2,
         "damageType": "true",
         "formula": "empowered_hybrid_agility",

@@ -1,0 +1,26 @@
+{
+  "node": {
+    "started": "2026-10-14T23:08:24.683690+00:00",
+    "suites": 66,
+    "passed": 66,
+    "failed": 0
+  },
+  "browser": {
+    "started": "2026-10-14T18:11:17.389540+00:00",
+    "suites": 4,
+    "passed": 4,
+    "failed": 0
+  },
+  "browserCoverage": "Automatic entry/settlement, market/calendar, all nine collection dossiers and portraits at mobile and desktop widths; final text/cooldown/data parity is separately covered by the shipped Node/DOM run.",
+  "runtimeBundle": "data/runtime/data.ced181afa7b0cd53.json",
+  "sourceBudgetParity": "PASS: globals, all ten NPC multipliers and final Last Hour stats equal the measured artifacts.",
+  "checks": [
+    "66 regression suites",
+    "62 pathway AI checks including actual Snake cast and fatal guard",
+    "220 authored ability tiers exercised on both sides",
+    "all220browser/Nodeability descriptions and native cooldown/trait payment display",
+    "source copies and companion construction preserved",
+    "git diff --check",
+    "immutable runtime --check"
+  ]
+}

@@ -96,9 +96,11 @@ function actionLossBattles(mode,seeds=40){
     const a=g.makeAgent(rng,{sequence:4,path:'fool',trait:'Stout Vitality'});
     Object.assign(a,{id:'f',name:'Fool Seq 4',awakened:true,path:'fool',sequence:4,injuries:0,weaponId:'none',weaponMastery:{},madness:mode==='madness'?80:0});
     a.sp=g.maxSPFor(a);g.restatAgent(a);
+    a.stats={hp:1e7,atk:1,def:1,int:1};
+    for(const spec of g.activeSpecs(a))if(spec.effectId!=='thread_binding')a.cooldowns[spec.effectId]=99;
     let member=a;
     if(mode!=='madness'){member=g.makeCombatUnit(a);g.addStatus(member,mode==='fear'?'fear':'confused',99,'test');}
-    const res=g.resolveQuest([member],quest,s,{individual:true,simulationOpponents:[{path:'door',sequence:5},{path:'red_priest',sequence:5}]});
+    const res=g.resolveQuest([member],quest,s,{individual:true,authoredOpponents:[{name:'Durable Door',path:'door',sequence:4,stats:{hp:1e7,atk:100,def:1,int:100},sp:0},{name:'Durable Hunter',path:'red_priest',sequence:4,stats:{hp:1e7,atk:100,def:1,int:100},sp:0}]});
     const text=res.lines.map(l=>l.text),attached=new Set();let armed=false;
     text.forEach((x,i)=>{
       let m;

@@ -39,7 +39,7 @@
         "label": "Passive",
         "spCost": 0,
         "cooldown": 0,
-        "description": "Earthy Vitality — +15% Max HP, Poison & Blunt Resistance.",
+        "description": "Earthy Vitality — +15% Max HP; +15% Poison direct-damage resistance, +15% Physical direct-damage resistance. Passive.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -71,7 +71,7 @@
         "label": "Active",
         "spCost": 15,
         "cooldown": 1,
-        "description": "Nature Growth — Deals 135% ATK Physical/Nature DMG.",
+        "description": "Nature Growth — Deals 135% × (105% ATK + 30% INT) Nature damage (22% base DEF bypass); Damage and hostile effects use accuracy and Dodge; critical, authority and defense modifiers still apply. 15 SP · Cooldown 1 turn.",
         "stat": "ATK",
         "scale": 1.35,
         "damageType": "nature",
@@ -88,8 +88,8 @@
         "kind": "active",
         "label": "Active",
         "spCost": 25,
-        "cooldown": 3,
-        "description": "Harvest Blessing — Regenerates 15% Max HP over 2 turns.",
+        "cooldown": 4,
+        "description": "Harvest Blessing — Immediately restores 10% Max HP HP, capped at Max HP; If the resolved cast deals no damage, follows its utility effects with a 35% basic strike against the current enemy. 25 SP · Cooldown 4 turns.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -98,7 +98,7 @@
         "effects": [
           {
             "type": "heal",
-            "maxHpRatio": 0.15,
+            "maxHpRatio": 0.1,
             "scaling": "INT",
             "multiplier": 0
           }
@@ -116,7 +116,7 @@
         "label": "Active",
         "spCost": 35,
         "cooldown": 2,
-        "description": "Life Seed — Plants life seed dealing 160% ATK DMG and healing user for 10% damage dealt.",
+        "description": "Life Seed — Deals 160% × (105% ATK + 30% INT) Physical damage (22% base DEF bypass); Plant one seed on the most injured living ally for 2 turns; restore 4% Max HP on each turn. At 100 charge, increase one seed's regeneration to 6% Max HP per turn.; Damage and hostile effects use accuracy and Dodge; critical, authority and defense modifiers still apply. 35 SP · Cooldown 2 turns.",
         "stat": "ATK",
         "scale": 1.6,
         "damageType": "physical",
@@ -127,9 +127,10 @@
             "type": "signature",
             "rule": "mother_seed",
             "chargeCost": 100,
-            "amount": 0.08,
-            "duration": 3,
-            "slots": 1
+            "amount": 0.04,
+            "duration": 2,
+            "slots": 1,
+            "chargedMultiplier": 1.5
           }
         ]
       }
@@ -143,8 +144,8 @@
         "kind": "active",
         "label": "Active",
         "spCost": 45,
-        "cooldown": 3,
-        "description": "Life Bloom — Restores 20% Max HP to user.",
+        "cooldown": 4,
+        "description": "Life Bloom — Immediately restores 12% Max HP HP, capped at Max HP; If the resolved cast deals no damage, follows its utility effects with a 35% basic strike against the current enemy. 45 SP · Cooldown 4 turns.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -153,7 +154,7 @@
         "effects": [
           {
             "type": "heal",
-            "maxHpRatio": 0.2,
+            "maxHpRatio": 0.12,
             "scaling": "INT",
             "multiplier": 0
           }
@@ -171,7 +172,7 @@
         "label": "Active",
         "spCost": 50,
         "cooldown": 3,
-        "description": "Nature's Growth Surge — Summons giant thorn vines that bind target for 1 round while healing user for 15% Max HP.",
+        "description": "Nature's Growth Surge — Immediately restores 10% Max HP HP, capped at Max HP; 100% chance: Bound (blocks actions) for 1 turn; subject to status resistance and immunity; If the resolved cast deals no damage, follows its utility effects with a 35% basic strike against the current enemy. 50 SP · Cooldown 3 turns.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -180,7 +181,7 @@
         "effects": [
           {
             "type": "heal",
-            "maxHpRatio": 0.15,
+            "maxHpRatio": 0.1,
             "scaling": "INT",
             "multiplier": 0
           },
@@ -204,7 +205,7 @@
         "label": "Active Stance",
         "spCost": 65,
         "cooldown": 4,
-        "description": "Flesh Mutation — +25% DEF armor, reflects 30% physical damage back to attacker.",
+        "description": "Flesh Mutation — +25% DEF for 2 turns; Reflects 30% of incoming damage to the attacker until your next turn; periodic damage does not trigger reflection; If the resolved cast deals no damage, follows its utility effects with a 35% basic strike against the current enemy. 65 SP · Cooldown 4 turns.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -237,8 +238,8 @@
         "kind": "active",
         "label": "Active",
         "spCost": 85,
-        "cooldown": 4,
-        "description": "Mother's Touch — Restores 30% Max HP and cleanses all negative status effects.",
+        "cooldown": 5,
+        "description": "Mother's Touch — Immediately restores 18% Max HP HP, capped at Max HP; Removes Burn, Bleed, Poison, Curse, Curse link, Silenced, Confused, Sleep, Stunned, Frozen, Freeze, Bound; If the resolved cast deals no damage, follows its utility effects with a 100% basic strike against the current enemy. 85 SP · Cooldown 5 turns.",
         "stat": "INT",
         "scale": 0,
         "damageType": "physical",
@@ -247,7 +248,7 @@
         "effects": [
           {
             "type": "heal",
-            "maxHpRatio": 0.3,
+            "maxHpRatio": 0.18,
             "scaling": "INT",
             "multiplier": 0
           },
@@ -256,7 +257,7 @@
             "duration": 0
           }
         ],
-        "utilityStrike": 0.35
+        "utilityStrike": 1
       }
     },
     {
@@ -269,7 +270,7 @@
         "label": "Active",
         "spCost": 100,
         "cooldown": 4,
-        "description": "Creation Domain — Unleashes nature growth dealing 310% ATK Nature DMG.",
+        "description": "Creation Domain — Deals 310% × (105% ATK + 30% INT) Nature damage (22% base DEF bypass); Damage and hostile effects use accuracy and Dodge; critical, authority and defense modifiers still apply. 100 SP · Cooldown 4 turns.",
         "stat": "ATK",
         "scale": 3.1,
         "damageType": "nature",
@@ -287,7 +288,7 @@
         "label": "Active Authority",
         "spCost": 125,
         "cooldown": 5,
-        "description": "Origin of Life — Calls primordial life force dealing 410% ATK True DMG while fully restoring HP once.",
+        "description": "Origin of Life — Deals 410% × (105% ATK + 30% INT) True damage (ignores DEF and elemental resistance); Immediately restores 100% Max HP HP, capped at Max HP; this recovery occurs once per caster per battle, consumed only when HP is restored; Damage and hostile effects use accuracy and Dodge; critical, authority and defense modifiers still apply. 125 SP · Cooldown 5 turns.",
         "stat": "ATK",
         "scale": 4.1,
         "damageType": "true",
@@ -298,7 +299,8 @@
             "type": "heal",
             "maxHpRatio": 1,
             "scaling": "INT",
-            "multiplier": 0
+            "multiplier": 0,
+            "oncePerBattle": "origin_of_life"
           },
           {
             "type": "damage_rule",

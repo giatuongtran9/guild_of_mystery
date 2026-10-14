@@ -38,7 +38,7 @@ async function fixture(agents = [agent()], saved = null) {
   state.funds = 10000;
   require('./pool-fixture')(g,state);
   w.localStorage.setItem(saveKey, saved || JSON.stringify(state));
-  w.eval(['vendor/dayjs.min','paths','v15','generate','traits','market','pathway-assets','signatures','mythical','engine','state','campaign','ui'].map(n => fs.readFileSync(path.join(root, `js/${n}.js`), 'utf8')).join('\n'));
+  w.eval(['vendor/dayjs.min','paths','v15','generate','traits','market','pathway-assets','signatures','mythical','battle-ai','engine','state','campaign','ui'].map(n => fs.readFileSync(path.join(root, `js/${n}.js`), 'utf8')).join('\n'));
   // Inspect the same lexical definitions used by the UI, without replacing its renderer.
   w.eval(`window.G9_PHASE3 = {
     tier: tierFor,
@@ -107,6 +107,21 @@ async function test(label, fn) {
       assert.equal(read().roster[0].digest, 63);
       assert.equal(read().roster[0].sequence, 5);
     } finally { dom.window.close(); }
+  });
+
+  await test('native cooldown compensation follows the current agent and preserves adjusted payment text', async () => {
+    const a=agent('wheel_of_fortune',1),other=agent('wheel_of_fortune',0);other.id+='0';
+    Object.assign(a,{traitId:'blood_script',traitSource:'catalog_v1',traitTier:'epic'});
+    const {dom,w}=await fixture([a,other]);
+    try{
+      w.G9_DATA.balance.global_combat.native_ability_cooldown_by_pathway_sequence={wheel_of_fortune:{1:{reincarnation_loop:8}}};
+      w.G9.dossier(a.id);
+      const native=showAbility(w,'active',2);
+      assert(native.querySelector('p').textContent.includes('HP · Cooldown 8 turns'));
+      assert(native.querySelector('small').textContent.includes('Cooldown 8 turns'));
+      w.G9.closeDossier();w.G9.dossier(other.id);
+      assert(showAbility(w,'active',2).querySelector('small').textContent.includes('Cooldown 4 turns'));
+    }finally{dom.window.close();}
   });
 
   await test('reopening a saved stale-history game still renders live rules and preserves snapshots', async () => {

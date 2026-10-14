@@ -100,6 +100,9 @@ function damageChecks(w, effectiveSpec, victimList, mult, critical = false) {
   }
 }
 function exerciseThread(w, spec, text) {
+  // Exercise the attachment route itself, rather than requiring the battle AI
+  // to prefer a five-stage capture over every available damaging ability.
+  for (const active of g.activeSpecs(w.a)) if (active.effectId !== 'thread_binding') w.a.cooldowns[active.effectId] = 99;
   const before = w.a.sp;
   check(g.powerEffect(w.a, w.u, w.v, w.state, [], high), 'Thread Binding uses shipped special powerEffect route');
   equal(before - w.a.sp, spec.costSP, 'actual thread SP cost');
@@ -120,6 +123,7 @@ function exerciseThread(w, spec, text) {
   equal(w.a.cooldowns.thread_binding, spec.cooldown + 1, 'real cooldown begins at conversion');
   equal(w.state.createdMarionettes.length, 0, 'Marionette is battle-only');
   const empowered=world('fool',0,current.team),rule=spec.effects.find(e=>e.rule==='thread_binding');
+  for (const active of g.activeSpecs(empowered.a)) if (active.effectId !== 'thread_binding') empowered.a.cooldowns[active.effectId] = 99;
   g.setMeterValue(empowered.a,'fool',rule.chargeCost);
   check(g.powerEffect(empowered.a,empowered.u,empowered.v,empowered.state,[],()=>0),'full charge overcomes equal-rank Sequence 0 resistance even at zero RNG');
   equal(empowered.v.thread.progress,0,'empowerment cannot bypass any binding stages');
@@ -187,17 +191,35 @@ function exerciseSignature(key,rank,team,e,text) {
     case 'error_parasite': {
       w.u.hp=Math.floor(w.u.maxHp*.5);run();equal(w.u._signatureParasite.hostId,w.v.id,'one host is selected');
       equal(w.u._signatureParasite.turns,e.duration,'one shared parasite timer');equal(w.v._signatureParasites[0].turns,undefined,'host entry has no separate timer');
+      let recoveredThisRound=0;
       for(let turn=0;turn<e.duration;turn++) {
         const sp=w.b.sp,ownSP=w.a.sp,hp=w.u.hp,drain=Math.min(Math.round((e.drain??e.amount)+(e.spRatio||0)*w.b.maxSP),sp);
         g.signatureTurnStart(w.v,w.state,[],high);
         equal(w.b.sp,sp-drain,'each host turn drains actual available SP');
         equal(w.a.sp,Math.min(w.a.maxSP,ownSP+drain),'drained SP is transferred without manufacture');
-        if(e.maxHpRatio)equal(w.u.hp,Math.min(w.u.maxHp,hp+Math.round(w.u.maxHp*e.maxHpRatio)),'host tick recovers published HP');
+        if(e.maxHpRatio){
+          const allowance=e.healingRoundCap>0?Math.max(0,Math.floor(w.u.maxHp*e.healingRoundCap)-recoveredThisRound):Infinity;
+          const healed=drain>0?Math.min(w.u.maxHp-hp,Math.round(Math.min(allowance,w.u.maxHp*e.maxHpRatio))):0;
+          equal(w.u.hp,hp+healed,'host tick recovers published HP within the owner round budget');recoveredThisRound+=healed;
+        }
         g.signatureTurnEnd(w.v,w.state,[],high);g.signatureTurnEnd(w.u,w.state,[],high);
       }
       for(let extra=0;extra<2&&w.u._signatureParasite;extra++)g.signatureTurnEnd(w.u,w.state,[],high);
       equal(w.v._signatureParasites.length,0,'parasite stops after its stated duration');
       const sp=w.b.sp;g.signatureTurnStart(w.v,w.state,[],high);equal(w.b.sp,sp,'no extra drain after expiry');
+      if(e.healingRoundCap>0){
+        const spread=world(key,rank,team);spread.u.hp=Math.floor(spread.u.maxHp*.2);g.setMeterValue(spread.a,key,e.chargeCost);
+        check(cast(spread,spec),'full-charge Contagion is cast through the shipped ability');
+        check(spread.v._signatureParasites?.length===1&&spread.other._signatureParasites?.length===1,'Contagion attaches to both living enemy hosts');
+        const before=spread.u.hp,limit=Math.floor(spread.u.maxHp*e.healingRoundCap);
+        for(const host of [spread.v,spread.other]){
+          const beforeSP=host.agent.sp;g.signatureTurnStart(host,spread.state,[],high);check(host.agent.sp<beforeSP,'each host still loses SP when the shared healing budget is exhausted');
+        }
+        equal(spread.u.hp-before,Math.min(limit,Math.round(spread.u.maxHp*e.maxHpRatio)*2),'two host ticks share one configured per-round healing cap');
+        spread.state.currentRound++;
+        const next=spread.u.hp;g.signatureTurnStart(spread.other,spread.state,[],high);
+        equal(spread.u.hp-next,Math.min(limit,Math.round(spread.u.maxHp*e.maxHpRatio)),'a new combat round restores the owner healing budget');
+      }
       tooltipNumber(text,`${e.drain??e.amount} SP`,'per-host-turn SP drain');break;
     }
     case 'visionary_hypnosis': {
@@ -312,8 +334,9 @@ function exerciseSignature(key,rank,team,e,text) {
       equal(before-w.a.sp,scroll.costSP,'scroll pays source SP');equal(hp-w.v.hp,wanted,'scroll uses full source strength');equal(w.a.cooldowns.mystic_spell,5,'source cooldown remains independent');equal(w.a._signatureScroll,null,'one scroll consumed');chargeSpent();break;
     }
     case 'mother_seed': {
-      w.ally.hp=Math.round(w.ally.maxHp*.2);full();run();chargeSpent();equal(w.ally._signatureSeed.amount,e.amount*2,'charge doubles one seed regeneration');
-      const hp=w.ally.hp;g.signatureTurnStart(w.ally,w.state,[],high);equal(w.ally.hp,hp+Math.round(w.ally.maxHp*e.amount*2),'seed regenerates configured Max HP');
+      const chargedAmount=e.amount*(e.chargedMultiplier??2);
+      w.ally.hp=Math.round(w.ally.maxHp*.2);full();run();chargeSpent();equal(w.ally._signatureSeed.amount,chargedAmount,'charge multiplies one seed regeneration by its published coefficient');
+      const hp=w.ally.hp;g.signatureTurnStart(w.ally,w.state,[],high);equal(w.ally.hp,hp+Math.round(w.ally.maxHp*chargedAmount),'seed regenerates configured Max HP');
       g.addStatus(w.ally,'no_heal',1);const prohibited=w.ally.hp;g.signatureTurnStart(w.ally,w.state,[],high);equal(w.ally.hp,prohibited,'seed respects healing prohibition');
       signatureExpiry(w,w.ally,'_signatureSeed',e.duration);tooltipNumber(text,percent(e.amount),'seed ordinary healing');break;
     }

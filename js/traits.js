@@ -192,7 +192,9 @@ function traitConvertHealing(source,target,amount,context={}){
  if(context.kind==='revive'||!hasTrait(source,'hollow_saint'))return false;
  if(!target?.alive)return true;
  const budget=traitBudget(source,'ward:'+target.id,ctx.state),limit=Math.floor(target.maxHp*d.params.roundCap/100)-budget.value;
- const desired=Math.max(0,Math.min(Math.floor(amount*d.params.conversion/100),Math.max(0,limit)+(target.shield||0)));
+ const shieldScale=Number(resolvedTraitModifiers(target).shieldReceived??1)*Number(GLOBAL_COMBAT.shield??1);
+ const recoveryCeiling=Number.isFinite(context.maxRecovery)?Math.floor(((target.shield||0)+Math.max(0,context.maxRecovery))/Math.max(.00001,shieldScale)):Infinity;
+ const desired=Math.max(0,Math.min(Math.floor(amount*d.params.conversion/100),Math.max(0,limit)+(target.shield||0),recoveryCeiling));
  const gain=desired>0?grantShield(target,desired):0;budget.spend(gain);
  if(gain){traitNote(source,ctx.state,ctx.lines,`converts healing into ${gain} shield for ${target.name}.`);emitCombatEvent(ctx.state,{type:'shield',actorId:source.id,actorName:source.name,actorTeam:teamOf(source,ctx.state),targetId:target.id,targetName:target.name,targetTeam:teamOf(target,ctx.state),amount:gain,shieldAfter:target.shield});}
  return true;

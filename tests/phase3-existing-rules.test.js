@@ -47,7 +47,7 @@ test('general vulnerability also affects an actual basic strike',()=>{
  const beforeM=marked.v.hp,beforeP=plain.v.hp;
  g.attackOnce(marked.a,marked.u,marked.v,marked.state,[],R,1);
  g.attackOnce(plain.a,plain.u,plain.v,plain.state,[],R,1);
- assert.equal(beforeM-marked.v.hp,Math.round((beforeP-plain.v.hp)*1.2));
+ assert.equal(beforeM-marked.v.hp,Math.round((beforeP-plain.v.hp)*(1+g.tierFor('hanged_man',6).abilities[0].effects.find(e=>e.type==='vulnerability').amount)));
 });
 test('Vampire Transformation grants exactly three turns of 28% strike Lifesteal',()=>{
  const w=world('moon',5);w.u.hp=3000;assert(cast(w,'moon',5));

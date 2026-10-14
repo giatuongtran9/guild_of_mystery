@@ -62,7 +62,7 @@ test('a transformed actor fallback basic attack gains its form bonus once', () =
   g.powerEffect(a, u, target, state, [], () => .99);
   const hit = state.balanceTrace.find(t => t.abilityId === 'basic_attack');
   assert(hit, 'Fixture must exercise the real basic fallback');
-  assert(Math.abs(hit.raw - a.stats.atk * g.passiveCombatModifier(a).atk * 1.2) < 1e-9);
+  assert(Math.abs(hit.raw - a.stats.int * g.passiveCombatModifier(a).int * .8 * 1.2) < 1e-9);
 });
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exitCode = failed ? 1 : 0;

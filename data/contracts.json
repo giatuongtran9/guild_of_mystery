@@ -46,14 +46,14 @@
       "minReputation": 10,
       "lastSeen": "South Wharf",
       "story": "Elias once escorted dockworkers home through the fog. When the canal syndicate abandoned his brother after an accident, he turned that duty into a private war. Merchants now vanish along the towpath, marked with the same red cut. He has learned to provoke a crowd into fighting itself. Three agents must corner him before another shift ends.",
-      "mechanic": "Below half health, his frenzy grants a second action and 15% more damage. The party has 15 rounds to finish the hunt.",
+      "mechanic": "Below half health, his frenzy grants a second action and 15% more damage. The party has 50 rounds to finish the hunt. Ongoing damage affects this target at 35% strength. The target's ongoing damage deals 20% of its usual damage.",
       "phase": {
         "type": "frenzy",
         "damageMultiplier": 1.15,
         "extraActions": 1
       },
       "statMultipliers": {
-        "hp": 38.08032,
+        "hp": 54.074054399999994,
         "atk": 1.05,
         "def": 0.8,
         "int": 1
@@ -62,7 +62,9 @@
       "rewardFunds": 1100,
       "rewardRep": 10,
       "rewardMaterials": 2,
-      "damageMultiplier": 0.2
+      "damageMultiplier": 0.1,
+      "statusDamageMultiplier": 0.2,
+      "periodicDamageTakenMultiplier": 0.35
     },
     {
       "id": "black_mirror",
@@ -73,24 +75,26 @@
       "minReputation": 30,
       "lastSeen": "Old Market",
       "story": "A celebrated portrait restorer, Mara promised grieving families one final glimpse of the dead. Her black mirrors began keeping those families instead. She now moves between abandoned shop windows while poison spreads through their rooms. The guild has traced every mirror to her workshop; three agents are needed to break the escape routes and face her together.",
-      "mechanic": "At half health, she raises a shield worth 25% of maximum HP and deals 15% more damage. The party has 15 rounds to finish the hunt. Her lingering poison deals 35% less damage than an ordinary application.",
+      "mechanic": "At half health, she raises a shield worth 25% of maximum HP and deals 15% more damage. The party has 50 rounds to finish the hunt. Her lingering poison deals 35% less damage than an ordinary application. Ongoing damage affects this target at 50% strength. Misdirection and friendly fire deal 25% of their usual damage during this hunt. The target's ongoing damage deals 25% of its usual damage.",
       "phase": {
         "type": "ward",
         "shieldRatio": 0.25,
         "damageMultiplier": 1.15
       },
       "statMultipliers": {
-        "hp": 18.3245,
+        "hp": 42.14635,
         "atk": 1.1,
         "def": 0.8,
-        "int": 1.05
+        "int": 0.63
       },
       "weaponId": "knife",
       "rewardFunds": 1900,
       "rewardRep": 14,
       "rewardMaterials": 3,
-      "damageMultiplier": 0.14,
-      "statusDamageMultiplier": 0.65
+      "damageMultiplier": 0.042,
+      "statusDamageMultiplier": 0.25,
+      "periodicDamageTakenMultiplier": 0.5,
+      "redirectedDamageMultiplier": 0.25
     },
     {
       "id": "broken_hour",
@@ -101,14 +105,14 @@
       "minReputation": 80,
       "lastSeen": "Clockmakers Row",
       "story": "Jonas repaired the district clocks until a guild patron erased his name from the commission ledger. Now the clocks lose an hour whenever he steals, and witnesses cannot agree which doors were open. His stolen records hold entire households in debt. A three-agent warrant team must force him into the same moment long enough to end the thefts.",
-      "mechanic": "At half health, he drains 15% of each agent’s maximum SP and deals 20% more damage. The party has 15 rounds to finish the hunt. Redirected strikes deal 25% of their usual damage to the party.",
+      "mechanic": "At half health, he drains 15% of each agent’s maximum SP and deals 20% more damage. The party has 50 rounds to finish the hunt. Redirected strikes deal 25% of their usual damage to the party. Ongoing damage affects this target at 35% strength. Misdirection and friendly fire deal 25% of their usual damage during this hunt. The target's ongoing damage deals 50% of its usual damage.",
       "phase": {
         "type": "drain",
         "spRatio": 0.15,
         "damageMultiplier": 1.2
       },
       "statMultipliers": {
-        "hp": 18.8478,
+        "hp": 24.50214,
         "atk": 1,
         "def": 0.8,
         "int": 1.05
@@ -117,8 +121,10 @@
       "rewardFunds": 2900,
       "rewardRep": 18,
       "rewardMaterials": 3,
-      "damageMultiplier": 0.25,
-      "redirectedDamageMultiplier": 0.25
+      "damageMultiplier": 0.075,
+      "redirectedDamageMultiplier": 0.25,
+      "statusDamageMultiplier": 0.5,
+      "periodicDamageTakenMultiplier": 0.35
     },
     {
       "id": "ashen_choir",
@@ -129,13 +135,13 @@
       "minReputation": 170,
       "lastSeen": "Saint Brigid’s Hospice",
       "story": "Agatha kept vigil over patients no physician could save. She found a hymn that eased their fear, but the choir it awakened never stopped singing. The hospice now sleeps through every sunrise and its lost patients walk in shared dreams. Three agents must enter the vigil, protect one another from its lullaby, and bring the waking bell back to the ward.",
-      "mechanic": "At half health, her nightmare frightens every agent for one turn and increases damage by 20%. The party has 15 rounds to finish the hunt.",
+      "mechanic": "At half health, her nightmare frightens every agent for one turn and increases damage by 20%. The party has 50 rounds to finish the hunt. Ongoing damage affects this target at 85% strength.",
       "phase": {
         "type": "fear",
         "damageMultiplier": 1.2
       },
       "statMultipliers": {
-        "hp": 11.32237,
+        "hp": 7.925658999999999,
         "atk": 1.05,
         "def": 0.8,
         "int": 1.1
@@ -144,7 +150,8 @@
       "rewardFunds": 4300,
       "rewardRep": 22,
       "rewardMaterials": 4,
-      "damageMultiplier": 0.25
+      "damageMultiplier": 0.15,
+      "periodicDamageTakenMultiplier": 0.85
     },
     {
       "id": "vacant_crown",
@@ -155,14 +162,14 @@
       "minReputation": 300,
       "lastSeen": "The Court of Empty Seats",
       "story": "Voss bought the courts that stripped his family of its title. He then changed the meaning of every oath sworn inside them. Petitioners arrive seeking justice and leave owing him their names. His vacant crown still commands guards who no longer remember him. A three-agent party must withstand the court’s decrees and break his authority together.",
-      "mechanic": "At half health, his decree drains 20% of maximum SP from every agent and increases damage by 20%. The party has 15 rounds to finish the hunt.",
+      "mechanic": "At half health, his decree drains 20% of maximum SP from every agent and increases damage by 20%. The party has 50 rounds to finish the hunt.",
       "phase": {
         "type": "drain",
         "spRatio": 0.2,
         "damageMultiplier": 1.2
       },
       "statMultipliers": {
-        "hp": 10.53266,
+        "hp": 20.012054,
         "atk": 1.05,
         "def": 0.85,
         "int": 1.1
@@ -171,7 +178,8 @@
       "rewardFunds": 6200,
       "rewardRep": 28,
       "rewardMaterials": 4,
-      "damageMultiplier": 0.2
+      "damageMultiplier": 0.08000000000000002,
+      "periodicDamageTakenMultiplier": 1
     },
     {
       "id": "last_hour",
@@ -182,7 +190,7 @@
       "minReputation": 400,
       "lastSeen": "The Unfinished Observatory",
       "story": "Ione catalogued disasters that had not happened yet. When she tried to spare the city its final calamity, she bound herself to an hour that never arrives. The observatory now repeats the deaths of everyone who crosses its threshold. Three agents must share the burden of that hour and confront its keeper before the city becomes another entry.",
-      "mechanic": "At half health, she gains a second action and a shield worth 20% of maximum HP. The party has 15 rounds to finish the hunt.",
+      "mechanic": "At half health, she gains a second action and a shield worth 20% of maximum HP. The party has 50 rounds to finish the hunt. Ongoing damage affects this target at 35% strength.",
       "phase": {
         "type": "ward",
         "shieldRatio": 0.2,
@@ -190,7 +198,7 @@
         "damageMultiplier": 1.15
       },
       "statMultipliers": {
-        "hp": 12.11818,
+        "hp": 21.812724000000003,
         "atk": 1.05,
         "def": 0.8,
         "int": 1.1
@@ -199,7 +207,8 @@
       "rewardFunds": 8500,
       "rewardRep": 35,
       "rewardMaterials": 5,
-      "damageMultiplier": 0.08
+      "damageMultiplier": 0.04,
+      "periodicDamageTakenMultiplier": 0.35
     }
   ],
   "system": {

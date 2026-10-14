@@ -69,12 +69,17 @@ for (const path of g.PATH_KEYS) {
 
 test('ordinary enemy initial SP stays zero; explicit authored profile starts at its configured SP', () => {
   assert.strictEqual(g.makeEnemy(9, () => .5, 0, 'error').sp, 0);
-  const a = agent('error', 9), b = agent('error', 9, 'B');
+  const a = agent('fool', 8), b = agent('door', 8, 'B');
+  a.stats = { hp: 1e6, atk: 1, def: 1, int: 1 };
+  b.stats = { hp: 1e6, atk: 1, def: 1, int: 100 };
   b.sp = 40;
-  const result = g.resolveQuest([a], quest(), 15,
+  const result = g.resolveQuest([a], quest(8), 15,
     { individual: true, authoredOpponents: [profile(b)] });
+  assert.strictEqual(result.battleSnapshot.initialUnits.find(u => u.name === 'B').sp, 40,
+    'the authored profile must retain its configured starting SP');
   const cast = result.events.find(e => e.actorName === 'B' && e.type === 'cast');
-  assert(cast && cast.ability === 'Combat Theft', 'explicit enemy SP must fund its first cast');
+  assert(cast && cast.ability === 'Elemental Spark' && cast.costSP > 0,
+    'explicit enemy SP must fund its first useful damaging cast');
 });
 
 test('real lower-Sequence enemy basic attacks respect a Sequence 4 allied authority lock', () => {
@@ -99,14 +104,15 @@ test('real enemy-to-ally basics use the defender pathway and Sequence for the ma
     { individual: true, authoredOpponents: [profile(b)] });
   const first = result.battleSnapshot.balanceTrace.find(t => t.attacker === 'B' && t.abilityId === 'basic_attack');
   assert(first, 'fixture must exercise an enemy basic attack');
-  assert.strictEqual(first.raw, 100 * g.damageMultiplier(9, 9, 'error', 'fool'));
+  const agilityPower = .75 * 100 + .35 * 100;
+  assert.strictEqual(first.raw, agilityPower * g.damageMultiplier(9, 9, 'error', 'fool'));
 });
 
 test('a non-Fool foe keeps SP spent on its cast and regenerates from that remainder next round', () => {
   const a = agent('fool', 9);
   a.stats = { hp: 1e6, atk: 1, def: 1, int: 1 };
   const b = agent('door', 8, 'B');
-  b.stats = { hp: 1e6, atk: 1, def: 1, int: 1 };
+  b.stats = { hp: 1e6, atk: 1, def: 1, int: 100 };
   b.sp = 0;
   const result = g.resolveQuest([a], quest(8), 8,
     { individual: true, authoredOpponents: [profile(b)] });
@@ -258,7 +264,7 @@ test('actual counters emit a Counter cast followed by typed damage under the rea
 
 test('a target that automatically revives from the hit cannot counter that lethal hit', () => {
   const a = agent('fool', 1), b = agent('wheel_of_fortune', 1, 'B');
-  a.stats = { hp: 1e6, atk: 1e6, def: 100, int: 100 };
+  a.stats = { hp: 1e6, atk: 100, def: 100, int: 1e6 };
   b.stats = { hp: 1000, atk: 100, def: 10, int: 100 };
   const { ua, ub, state } = world(a, b);
   const lines = [];
@@ -309,9 +315,11 @@ test('basic lifesteal event reports actual recovery capped by the attacker remai
 test('a real timed Moon stance expires across quest settlement, save reload and the next encounter', () => {
   const a = agent('moon', 5, 'Moon');
   a.trait = 'Ironclad';
-  a.stats = a.baseStats = { hp: 1e7, atk: 1, def: 1, int: 1 };
-  const opponent = { name: 'foe', path: 'sun', sequence: 5, stats: clone(a.stats), sp: 0 };
-  const first = g.resolveQuest([a], quest(5), 7, { individual: true, authoredOpponents: [opponent] });
+  a.stats = a.baseStats = { hp: 1e7, atk: 1, def: 1, int: 1000 };
+  for (const spec of g.activeSpecs(a)) if (spec.effectId !== 'vampire_transformation') a.cooldowns[spec.effectId] = 99;
+  const member = g.makeCombatUnit(a); member.hp = Math.round(member.maxHp * .1); member._formUsed = true;
+  const opponent = { name: 'foe', path: 'sun', sequence: 5, stats: { hp: 1e8, atk: 1, def: 1, int: 1500 }, sp: 0 };
+  const first = g.resolveQuest([member], quest(5), 7, { individual: true, authoredOpponents: [opponent] });
   assert(first.events.some(e => e.actorName === 'Moon' && e.ability === 'Vampire Transformation'),
     'first real quest must actually cast the timed stance');
   const guild = g.newGame();guild.roster = [clone(a)];
@@ -411,17 +419,18 @@ test('two real Fool quests restore a per-battle thread budget and convert only i
   assert.strictEqual(unit.agent.cooldowns.paper_card_dagger, 3);
 });
 
-test('a real round-15 pending thread normalizes its decremented lock before saving', () => {
+test('a real final-round pending thread normalizes its decremented lock before saving', () => {
   const a = agent('fool', 0, 'F');a.trait = 'Ironclad';
   a.stats = a.baseStats = { hp: 1e7, atk: 1, def: 1, int: 1 };
   // Delay attachment until the final round instead of depending on a particular
   // historical sequence of resisted rolls. Full charge gives an equal-rank
   // Sequence 0 target zero attachment resistance without skipping stages.
-  a.cooldowns.thread_binding=15;g.setMeterValue(a,'fool',100);
+  for (const spec of g.activeSpecs(a)) a.cooldowns[spec.effectId] = 99;
+  a.cooldowns.thread_binding=50;g.setMeterValue(a,'fool',100);
   const result = g.resolveQuest([a], quest(0), 3, { individual: true,
-    authoredOpponents: [{ name: 'foe', path: 'paragon', sequence: 0, stats: clone(a.stats), sp: 0 }] });
+    authoredOpponents: [{ name: 'foe', path: 'tyrant', sequence: 0, stats: { ...a.stats, atk: 100 }, sp: 0 }] });
   const bindings = result.events.filter(e => e.actorName === 'F' && e.ability === 'Thread Binding');
-  assert.deepStrictEqual(bindings.map(e=>e.round),[15],'fixture attaches exactly when the real battle times out');
+  assert.deepStrictEqual(bindings.map(e=>e.round),[50],'fixture attaches exactly when the real battle times out');
   const saved = result.consequences.find(c => c.type === 'syncAgent').agent;
   const spec = g.activeSpecs(saved).find(s => s.effectId === 'thread_binding');
   assert.strictEqual(saved.cooldowns.thread_binding, spec.cooldown + 1,
