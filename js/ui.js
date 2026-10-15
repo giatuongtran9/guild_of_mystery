@@ -174,13 +174,14 @@ function getCombatSprite(u, options = {}) {
     ? Number.isInteger(art.width) && art.width > 0 && Number.isInteger(art.height) && art.height > 0 && typeof art.src === 'string' && [canonical, canonical.replace('/characters/', '/revisions/'), canonical.replace('/characters/', '/revisions/').replace(/\.png$/, '.' + art.src.slice(-16) + '.png')].some(source => art.src.startsWith(source + '?v=') && /^[a-f0-9]{16}$/.test(art.src.slice(source.length + 3)))
     : art.width === size && art.height === size && new RegExp(`^data/assets/runtime/characters/${spritePath}/${stem}\\.${size}\\.[a-f0-9]{16}\\.(png|webp)$`).test(art.src));
   const src = valid ? art.src : original;
-  const loading = options.loading === 'eager' ? 'eager' : 'lazy';
-  const priority = loading === 'eager' && options.priority === 'high' ? ' fetchpriority="high"' : '';
+  // Battle sprites are few and must appear immediately on mobile; do not defer their URL into data-src.
+  const loading = options.variant === 'battle' || options.loading === 'eager' ? 'eager' : 'lazy';
+  const priority = loading === 'eager' && (options.priority === 'high' || options.variant === 'battle') ? ' fetchpriority="high"' : '';
   const hide = "this.onerror=null;this.style.display='none';const fb=this.parentElement.querySelector('.combat-sprite-fallback');if(fb)fb.style.display='flex';";
   const quoted = value => "'" + String(value).replace(/[\\'<>&"\r\n\u2028\u2029]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')) + "'";
   const legacyError = `this.onerror=()=>{${hide}};this.src=${quoted(legacy)};`;
   const onerror = valid ? `this.onerror=()=>{${legacyError}};this.src=${quoted(original)};` : legacyError;
-  return `<img class="combat-sprite-img" ${options.variant === 'battle' ? 'data-src' : 'src'}="${esc(src)}" width="${valid ? art.width : size}" height="${valid ? art.height : size}" loading="${loading}" decoding="async"${priority} onerror="${onerror}" alt="${inForm ? 'Mythical Form' : `Seq ${spriteSeq}`}"><div class="combat-sprite-fallback" style="display:none">${esc((u.name||'?').slice(0,2).toUpperCase())}</div>`;
+  return `<img class="combat-sprite-img" src="${esc(src)}" width="${valid ? art.width : size}" height="${valid ? art.height : size}" loading="${loading}" decoding="async"${priority} onerror="${onerror}" alt="${inForm ? 'Mythical Form' : `Seq ${spriteSeq}`}"><div class="combat-sprite-fallback" style="display:none">${esc((u.name||'?').slice(0,2).toUpperCase())}</div>`;
 }
 function battlefieldImageFor(quest = {}, isSim = false) {
   const config = typeof G9D !== 'undefined' ? G9D.contracts.battlefields || {} : {};
