@@ -116,35 +116,37 @@ async function main() {
     assert.equal(shield.backgroundColor, 'rgb(255, 255, 255)');
     assert.equal(shield.position, 'absolute'); assert.equal(shield.zIndex, '1');
   });
-  await test('both battle teams defer original image requests until their portraits are visible', f => {
+  await test('both battle teams start full artwork without waiting for scrolling', f => {
     const map = f.w.calculateCurrentHp([unit], [enemy], []);
     f.w.document.body.innerHTML = f.w.renderHpStrip(map, [unit], [enemy]);
     for (const image of f.w.document.querySelectorAll('.gm-arena-unit img')) {
-      assert(!image.hasAttribute('src'), 'offscreen battle art must not start a download');
-      assert(image.dataset.src.endsWith('.png')); assert.equal(image.getAttribute('loading'), 'lazy');
+      assert(image.getAttribute('src').endsWith('.png'));
+      assert(!image.hasAttribute('data-src')); assert.equal(image.getAttribute('loading'), 'eager');
       assert.equal(image.getAttribute('decoding'), 'async');
     }
   });
-  await test('scrolling reveals deferred originals while clipped portraits stay unfetched', f => {
+  await test('scrolling promotes visible portraits without changing their original sources', f => {
     const map = f.w.calculateCurrentHp([unit, { ...unit, id: 'second' }], [enemy], []);
     f.w.document.body.innerHTML = f.w.renderHpStrip(map, [unit, { ...unit, id: 'second' }], [enemy]);
     const images = Array.from(f.w.document.querySelectorAll('.gm-rank-allies img'));
+    const sources = images.map(image => image.getAttribute('src'));
     const row = f.w.document.querySelector('.gm-rank-allies');
     row.getBoundingClientRect = () => ({ left: 10, right: 180, top: 10, bottom: 100 });
     images[0].getBoundingClientRect = () => ({ left: 20, right: 84, top: 20, bottom: 84, width: 64, height: 64 });
     images[1].getBoundingClientRect = () => ({ left: 200, right: 264, top: 20, bottom: 84, width: 64, height: 64 });
     f.w.prioritizeVisiblePartyPortraits();
     assert(images[0].getAttribute('src').endsWith('.png')); assert.equal(images[0].fetchPriority, 'high');
-    assert(!images[1].hasAttribute('src')); assert.equal(images[1].getAttribute('loading'), 'lazy');
+    assert.equal(images[1].getAttribute('src'), sources[1]); assert.equal(images[1].loading, 'lazy');
     images[1].getBoundingClientRect = images[0].getBoundingClientRect;
     f.w.prioritizeVisiblePartyPortraits();
     assert(images[1].getAttribute('src').endsWith('.png')); assert(!images[1].hasAttribute('data-src'));
+    assert.deepEqual(images.map(image => image.getAttribute('src')), sources);
   });
   await test('battle mythical art uses the original without changing the dossier portrait policy', f => {
     const data = { ...unit, curHp: 100, inForm: true };
     f.w.document.body.innerHTML = f.w.renderCombatEntity(data, 'ally', 0, {});
     const image = f.w.document.querySelector('img');
-    assert.equal(image.dataset.src, 'data/assets/characters/fool/fool_mythical.png?v=0123456789abcdef');
+    assert.equal(image.getAttribute('src'), 'data/assets/characters/fool/fool_mythical.png?v=0123456789abcdef');
     assert.equal(image.getAttribute('width'), '1254');
     const dossier = f.w.getCombatSprite(data, { variant: 'full', loading: 'eager', priority: 'auto' });
     assert(dossier.includes('fool_mythical.192.0123456789abcdef.webp'), 'existing dossier behavior must stay unchanged');
@@ -198,7 +200,7 @@ async function main() {
     const node = f.app.querySelector('.gm-arena-unit.ally'), image = node.querySelector('img');
     f.w.G9.toggleTickerPause(); f.w.G9.stepTicker();
     assert.equal(f.app.querySelector('.gm-arena-unit.ally'), node); assert.equal(node.querySelector('img'), image);
-    assert((image.getAttribute('src') || image.dataset.src).includes('fool_mythical.png?v=')); assert(node.textContent.includes('25 Shield')); assert(node.textContent.includes('12/80'));
+    assert(image.getAttribute('src').includes('fool_mythical.png?v=')); assert(node.textContent.includes('25 Shield')); assert(node.textContent.includes('12/80'));
   }, true);
   await test('summon snapshots append once and show expiration without inventing HP loss', f => {
     const summon = { ...unit, id: 'summon', name: 'Companion', hp: 20, maxHp: 20, alive: true, summoned: true };

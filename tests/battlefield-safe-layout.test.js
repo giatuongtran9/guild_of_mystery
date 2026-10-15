@@ -1,0 +1,252 @@
+// Real Chromium geometry checks. NODE_PATH=<Playwright node_modules> node tests/battlefield-safe-layout.test.js
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const { chromium } = require('playwright');
+const root = path.resolve(__dirname, '..');
+const output = process.env.BATTLEFIELD_BROWSER_OUTPUT;
+const source = fs.readFileSync(path.join(root, 'js/ui.js'), 'utf8').split('// ===== Browser UI =====')[0];
+const styles = Array.from(fs.readFileSync(path.join(root, 'index.html'), 'utf8').matchAll(/href="(css\/[^"?]+\.css)/g), m => fs.readFileSync(path.join(root, m[1]), 'utf8')).join('\n');
+const contracts = JSON.parse(fs.readFileSync(path.join(root, 'data/contracts.json'), 'utf8'));
+const backgrounds = ['abandoned_market', 'clockmaker_alley', 'foggy_town', 'gothic_cathedral', 'river_dock', 'ruined_temple', 'sewer_vault'];
+// Bounds independently reviewed against the original scene artwork. Geometry
+// assertions must not trust the renderer to declare its own safe area.
+const clearFloor = {
+  abandoned_market: [0.10, 0.46, 0.90, 0.91], foggy_town: [0.08, 0.51, 0.92, 0.94],
+  clockmaker_alley: [0.10, 0.58, 0.90, 0.93], gothic_cathedral: [0.10, 0.68, 0.90, 0.93],
+  ruined_temple: [0.14, 0.57, 0.86, 0.84], sewer_vault: [0.10, 0.58, 0.90, 0.94],
+  river_dock: [0.09, 0.45, 0.91, 0.90]
+};
+const widths = [320, 390, 560, 768, 1440];
+// Edge-reaching artwork makes a square-image containment assertion stricter
+// than checking feet or the opaque center of the production portraits.
+const sprite = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="1254" height="1254" viewBox="0 0 1254 1254"><path fill="#d5ac6a" d="M0 0h1254v1254H0z"/><path fill="#506a93" d="M100 100h1054v1054H100z"/></svg>');
+const wideSprite = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="800"><path fill="#d5ac6a" d="M0 0h1600v800H0z"/></svg>');
+const tallSprite = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1600"><path fill="#506a93" d="M0 0h800v1600H0z"/></svg>');
+const files = new Map();
+let passed = 0, failed = 0;
+const measurements = [];
+
+function units(team, companions = 0, characters = 3) {
+  const principal = Array.from({ length: characters }, (_, i) => ({
+    id: `${team}_character_${i}`, name: `${team} character ${i}`, team,
+    path: ['fool', 'moon', 'paragon'][i % 3], sequence: 0,
+    maxHp: 100, hp: 100, maxSP: 20, sp: 20,
+    meter: i === 0 ? { name: 'Charge', value: 50, max: 100 } : null
+  }));
+  return [...principal, ...Array.from({ length: companions }, (_, i) => ({
+    id: `${team}_companion_${i}`, name: `${team} companion ${i}`, team,
+    path: ['tyrant', 'moon', 'paragon'][i % 3], sequence: 0,
+    // Cover legacy roster marionettes as well as automatically summoned units.
+    summoned: i % 3 !== 0, unitType: i % 3 === 0 ? 'marionette' : null,
+    maxHp: 50, hp: 50, maxSP: 0, sp: 0
+  }))];
+}
+
+async function pageFixture(browser, width, brokenSprites = false) {
+  const page = await browser.newPage({ viewport: { width, height: 1100 } });
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.route('https://guild-review.test/**', async route => {
+    const file = new URL(route.request().url()).pathname.slice(1);
+    if (/data\/assets\/(?:characters|revisions)\//.test(file)) {
+      if (brokenSprites) return route.fulfill({ status: 404, body: 'Missing fixture portrait' });
+      return route.fulfill({ body: /moon_/.test(file) ? wideSprite : /paragon_/.test(file) ? tallSprite : sprite, contentType: 'image/svg+xml' });
+    }
+    const absolute = path.resolve(root, file);
+    if (!absolute.startsWith(root + path.sep)) return route.abort();
+    try {
+      if (!files.has(absolute)) files.set(absolute, fs.readFileSync(absolute));
+      return route.fulfill({ body: files.get(absolute), contentType: file.endsWith('.png') ? 'image/png' : 'application/octet-stream' });
+    } catch { return route.fulfill({ status: 404, body: 'Not found' }); }
+  });
+  await page.setContent(`<base href="https://guild-review.test/"><style>${styles}</style><main id="fixture"></main>`);
+  await page.evaluate(value => {
+    window.G9D = { contracts: value };
+    window.G9_DATA = { runtimeAssets: { entries: {} } };
+    window.abbrNum = number => String(Math.round(number || 0));
+  }, contracts);
+  await page.addScriptTag({ content: source });
+  return { page, errors };
+}
+
+async function settle(page) {
+  await page.waitForFunction(() => Array.from(document.images).every(image => image.complete && (image.naturalWidth > 0 || image.hidden || image.style.display === 'none')));
+  await page.evaluate(() => layoutBattlefields(document));
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+}
+
+async function render(page, allies, enemies, background, playback = false) {
+  await page.evaluate(({ allies, enemies, background, playback }) => {
+    const image = background ? `data/assets/battlefields/${background}.png` : '';
+    window.fixtureProps = { allies, enemies, flattenedRows: [], shownCount: 0, isDone: false, showDetails: false, speed: 1, isSim: false, summaryText: '', battlefieldImage: image };
+    document.getElementById('fixture').innerHTML = playback
+      ? renderBattleLogComponent(window.fixtureProps)
+      : renderHpStrip({}, allies, enemies, image);
+    layoutBattlefields(document);
+  }, { allies, enemies, background, playback });
+  await settle(page);
+}
+
+async function geometry(page) {
+  return page.evaluate(clearFloor => {
+    const box = element => {
+      const r = element.getBoundingClientRect();
+      return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, height: r.height };
+    };
+    const arena = document.querySelector('.gm-dungeon-arena');
+    const image = arena.querySelector('.gm-battlefield-image');
+    const frame = box(arena), canvas = image && !image.hidden ? box(image) : frame;
+    const name = image?.getAttribute('src').split('/').pop().replace(/\.png$/, '');
+    const bounds = image && !image.hidden ? clearFloor[name] : [0, 0, 1, 1];
+    const sourceGround = Object.fromEntries(['left', 'top', 'right', 'bottom'].map((key, index) => [key, bounds[index]]));
+    // This uses the actual rendered full source-image rectangle, independently
+    // of the implementation's zoom, offset and row-placement calculations.
+    const ground = {
+      left: Math.max(frame.left, canvas.left + canvas.width * sourceGround.left),
+      right: Math.min(frame.right, canvas.left + canvas.width * sourceGround.right),
+      top: Math.max(frame.top, canvas.top + canvas.height * sourceGround.top),
+      bottom: Math.min(frame.bottom, canvas.top + canvas.height * sourceGround.bottom)
+    };
+    return {
+      frame, canvas, sourceGround, ground, crowded: arena.classList.contains('crowded'),
+      documentWidth: document.documentElement.scrollWidth,
+      cards: Array.from(arena.querySelectorAll('.gm-arena-unit'), card => {
+        const art = card.querySelector('.combat-sprite-img');
+        const fallback = card.querySelector('.combat-sprite-fallback, .combat-enemy-avatar');
+        const visibleArt = art && getComputedStyle(art).display !== 'none' ? art : fallback;
+        return {
+          id: card.dataset.unitId, role: card.dataset.unitRole,
+          team: card.classList.contains('ally') ? 'ally' : 'enemy',
+          card: box(card), sprite: box(card.querySelector('.gm-unit-sprite')),
+          art: box(visibleArt), fit: art && getComputedStyle(art).objectFit,
+          isFallback: visibleArt !== art,
+          display: getComputedStyle(card).display, visibility: getComputedStyle(card).visibility,
+          info: box(card.querySelector('.gm-unit-info')),
+          gauges: Array.from(card.querySelectorAll('.gm-float-track'), box),
+          inExpectedFormation: !!card.closest(card.dataset.unitRole === 'companion' ? '.gm-companion-formation' : '.gm-character-formation')
+        };
+      })
+    };
+  }, clearFloor);
+}
+
+function inside(inner, outer, label, tolerance = 1) {
+  for (const side of ['left', 'top', 'right', 'bottom']) assert(Number.isFinite(outer[side]), `${label}: finite ${side} boundary`);
+  assert(inner.left >= outer.left - tolerance && inner.right <= outer.right + tolerance && inner.top >= outer.top - tolerance && inner.bottom <= outer.bottom + tolerance,
+    `${label}: ${JSON.stringify(inner)} is outside ${JSON.stringify(outer)}`);
+}
+
+function check(result, width, allies, enemies) {
+  assert(result.documentWidth <= width, 'formation must not widen the page');
+  assert.equal(result.cards.length, allies.length + enemies.length, 'every deployed unit has a card');
+  assert(result.ground.right > result.ground.left && result.ground.bottom > result.ground.top, 'visible safe floor exists');
+  const expected = new Map([...allies, ...enemies].map(unit => [unit.id, unit]));
+  for (const card of result.cards) {
+    const unit = expected.get(card.id), companion = !!unit.summoned || unit.unitType === 'marionette';
+    assert.equal(card.role, companion ? 'companion' : 'character', `${card.id} keeps its real role`);
+    assert(card.inExpectedFormation, `${card.id} belongs to its role's formation`);
+    assert.notEqual(card.display, 'none'); assert.notEqual(card.visibility, 'hidden');
+    const size = companion ? (width <= 560 ? (result.crowded ? 28 : 32) : 40) : width <= 560 ? 64 : 96;
+    assert(Math.abs(card.sprite.width - size) < .1 && Math.abs(card.sprite.height - size) < .1, `${card.id}: expected ${size}px square artwork`);
+    assert(card.art.width > 0 && card.art.height > 0, `${card.id} has visible artwork or a fallback`);
+    if (!card.isFallback) assert.equal(card.fit, 'contain', 'wide weapons and wings must retain full source bounds');
+    inside(card.card, result.ground, `${card.id} complete card on floor`);
+    inside(card.art, card.sprite, `${card.id} artwork fits its square`);
+    inside(card.info, card.card, `${card.id} information remains visible`);
+    for (const gauge of card.gauges) {
+      assert(gauge.width > 0 && gauge.height > 0, `${card.id} gauge remains visible`);
+      inside(gauge, card.card, `${card.id} gauge fits card`);
+    }
+  }
+  for (let i = 0; i < result.cards.length; i++) for (let j = i + 1; j < result.cards.length; j++) {
+    const a = result.cards[i].art, b = result.cards[j].art;
+    const overlapX = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+    const overlapY = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+    assert(overlapX <= 1 || overlapY <= 1, `artwork ${result.cards[i].id} and ${result.cards[j].id} must not overlap`);
+  }
+  const enemy = result.cards.filter(card => card.team === 'enemy'), guild = result.cards.filter(card => card.team === 'ally');
+  if (enemy.length && guild.length) assert(Math.max(...enemy.map(card => card.card.bottom)) <= Math.min(...guild.map(card => card.card.top)) + 1, 'enemies stay above guild at every breakpoint');
+}
+
+async function test(label, fn) {
+  try { await fn(); passed++; console.log('PASS ' + label); }
+  catch (error) { failed++; console.error('FAIL ' + label + ': ' + error.message); }
+}
+
+(async () => {
+  const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium' });
+  try {
+    for (const width of widths) {
+      const { page, errors } = await pageFixture(browser, width);
+      try {
+        for (const background of backgrounds) for (const companionCount of [4, 12]) {
+          await test(`${background}, ${width}px, ${companionCount} companions per side`, async () => {
+            const allies = units('ally', companionCount), enemies = units('enemy', companionCount);
+            await render(page, allies, enemies, background);
+            const result = await geometry(page); check(result, width, allies, enemies);
+            assert.equal(result.crowded, companionCount > 6);
+            measurements.push({ width, background, companions: companionCount, ...result });
+            if (output && width === 390 && ['abandoned_market', 'gothic_cathedral'].includes(background)) {
+              fs.mkdirSync(output, { recursive: true });
+              await page.screenshot({ path: path.join(output, `${background}-${width}-${companionCount}.png`), fullPage: true });
+            }
+          });
+        }
+        await test(`solo and background-free formations at ${width}px`, async () => {
+          const allies = units('ally', 0, 1), enemies = units('enemy', 0, 1);
+          for (const background of ['river_dock', '']) { await render(page, allies, enemies, background); check(await geometry(page), width, allies, enemies); }
+        });
+        await test(`four principal rows at ${width}px`, async () => {
+          const allies = units('ally', 0, 6), enemies = units('enemy', 0, 6);
+          await render(page, allies, enemies, 'abandoned_market');
+          check(await geometry(page), width, allies, enemies);
+        });
+        assert.deepEqual(errors, [], 'fixture has no browser exceptions');
+      } finally { await page.close(); }
+    }
+    await test('live summons, mythical transformation and resize preserve original portraits', async () => {
+      const { page, errors } = await pageFixture(browser, 390);
+      try {
+        const originalAllies = units('ally'), originalEnemies = units('enemy');
+        await render(page, originalAllies, originalEnemies, 'abandoned_market', true);
+        await page.evaluate(() => {
+          window.originalCard = document.querySelector('[data-unit-id="ally_character_0"]');
+          window.originalImage = window.originalCard.querySelector('img');
+        });
+        const allies = units('ally', 12), enemies = units('enemy', 12);
+        allies[0].inForm = true; allies[0].shield = 30;
+        enemies[1].hp = 0; enemies[1].alive = false;
+        await page.evaluate(({ allies, enemies }) => {
+          window.fixtureProps = { ...window.fixtureProps, shownCount: 1, flattenedRows: [{ type: 'system', text: 'Companions enter on both sides.', resources: [...allies, ...enemies] }] };
+          updateBattleLogComponent(document.querySelector('.battle-log-wrap'), window.fixtureProps);
+        }, { allies, enemies });
+        await settle(page);
+        for (const width of [390, 768, 320]) {
+          await page.setViewportSize({ width, height: 1100 });
+          await page.evaluate(() => layoutBattlefields(document));
+          await settle(page); check(await geometry(page), width, allies, enemies);
+        }
+        assert(await page.evaluate(() => window.originalCard === document.querySelector('[data-unit-id="ally_character_0"]') && window.originalImage === window.originalCard.querySelector('img')));
+        assert((await page.locator('[data-unit-id="ally_character_0"] img').getAttribute('src')).includes('fool_mythical'));
+        assert(await page.locator('[data-unit-id="enemy_character_1"]').evaluate(node => node.classList.contains('dead')));
+        assert.deepEqual(errors, []);
+      } finally { await page.close(); }
+    });
+    await test('missing portraits and generic enemy avatars fit character and companion slots', async () => {
+      const { page, errors } = await pageFixture(browser, 320, true);
+      try {
+        const allies = units('ally', 2), enemies = units('enemy', 2);
+        delete enemies[0].path;
+        await render(page, allies, enemies, 'gothic_cathedral');
+        const result = await geometry(page); check(result, 320, allies, enemies);
+        assert(result.cards.every(card => card.isFallback), 'all failed portraits and generic enemies show a fallback');
+        assert.deepEqual(errors, []);
+      } finally { await page.close(); }
+    });
+  } finally { await browser.close(); }
+  if (output) { fs.mkdirSync(output, { recursive: true }); fs.writeFileSync(path.join(output, 'battlefield-safe-layout.json'), JSON.stringify(measurements, null, 2) + '\n'); }
+  console.log(`\n${passed} passed, ${failed} failed`);
+  process.exitCode = failed ? 1 : 0;
+})().catch(error => { console.error(error); process.exitCode = 1; });

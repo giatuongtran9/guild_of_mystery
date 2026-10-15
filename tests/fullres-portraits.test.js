@@ -49,7 +49,7 @@ function pointer(w,canvas,type,id,x,y=100) {const event=new w.Event(type,{bubble
     const {c,key,render}=prefix(),revised=key.replace('/characters/','/revisions/')+'?v=0123456789abcdef';
     c.G9_DATA.runtimeAssets.entries[key].full.src=revised;
     assert(render().includes(`src="${revised}"`));
-    assert(render({variant:'battle'}).includes(`data-src="${revised}"`));
+    assert(render({variant:'battle'}).includes(`src="${revised}"`));
     assert(render({variant:'battle'}).includes('width="1254" height="1254"'));
     c.G9_DATA.runtimeAssets.entries[key].full.src=revised.replace('fool_seq9','fool_seq8');
     assert(!render().includes('/revisions/'));
@@ -68,7 +68,7 @@ function pointer(w,canvas,type,id,x,y=100) {const event=new w.Event(type,{bubble
     const {c,key,render}=prefix(),hash='0123456789abcdef';
     const revised=key.replace('/characters/','/revisions/').replace('.png','.'+hash+'.png')+'?v='+hash;
     c.G9_DATA.runtimeAssets.entries[key].full.src=revised;
-    assert(render({variant:'battle'}).includes(`data-src="${revised}"`));
+    assert(render({variant:'battle'}).includes(`src="${revised}"`));
     c.G9_DATA.runtimeAssets.entries[key].full.src=revised.replace('?v='+hash,'?v=1111111111111111');
     assert(!render({variant:'battle'}).includes('/revisions/'));
     const f=await fixture();try{

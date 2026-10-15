@@ -61,14 +61,16 @@ for (const path of g.PATH_KEYS) {
       assert.deepStrictEqual(e.agent.stats, e.stats);
       assert.strictEqual(e.agent.sp, e.sp);
       assert.strictEqual(e.agent.maxSP, e.maxSP);
+      assert.strictEqual(e.sp, e.maxSP, 'generated awakened enemies must enter with full SP');
       assert.strictEqual(g.unlockedAbilities(e.agent).length, 10 - sequence);
       assert.doesNotThrow(() => JSON.stringify(e), 'combat unit must serialize without cycles');
     });
   }
 }
 
-test('ordinary enemy initial SP stays zero; explicit authored profile starts at its configured SP', () => {
-  assert.strictEqual(g.makeEnemy(9, () => .5, 0, 'error').sp, 0);
+test('generated awakened enemies start with full SP; explicit authored profile retains its configured SP', () => {
+  const generated = g.makeEnemy(9, () => .5, 0, 'error');
+  assert.strictEqual(generated.sp, generated.maxSP);
   const a = agent('fool', 8), b = agent('door', 8, 'B');
   a.stats = { hp: 1e6, atk: 1, def: 1, int: 1 };
   b.stats = { hp: 1e6, atk: 1, def: 1, int: 100 };
@@ -183,8 +185,10 @@ test('SP drains reduce the same resource used by an allied caster on its next ac
   ub.agent.sp = 30;
   const spec = clone(g.activeSpecs(ua.agent).find(s => s.effectId === 'fines_penalties'));
   g.applyStructuredAbility(ua.agent, ua, ub, state, [], () => .99, spec);
-  assert.strictEqual(ub.agent.sp, 20);
-  assert.strictEqual(ub.sp, 20, 'wrapper SP differs from its caster resource');
+  const drain = g.abilityEffects(spec).find(effect => effect.type === 'sp_drain');
+  const expected = Math.max(0, 30 - Math.round(Number(drain.amount || 0) + Number(drain.spRatio || 0) * ub.agent.maxSP));
+  assert.strictEqual(ub.agent.sp, expected);
+  assert.strictEqual(ub.sp, expected, 'wrapper SP differs from its caster resource');
 });
 
 test('a +50% cost penalty deducts and logs the increased cost rather than only blocking readiness', () => {

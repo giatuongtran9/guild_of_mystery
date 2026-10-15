@@ -450,7 +450,8 @@ function makeEnemy(seq,r,i,pathHint=null){
  const tier=seq===10?null:tierFor(path,seq);
  const abilities=seq===10?[]:pathOf(path).sequences.filter(t=>t.sequence>=seq).flatMap(t=>(t.abilities||[]).map(a=>({sequence:t.sequence,name:t.name,ability:a.text||t.abilityText||t.ability,type:a.type,effectId:a.effectId,damage:a.damage||null,effects:a.effects||[],effects:a.effects||[]})));
  const name=isHuman?pickR(r,["Angry Suspect","Desperate Thief","Street Tough","Cornered Burglar"]):pickR(r,enemyNames);
- return makeCombatUnit({id:`enemy_${i}`,name,undead:!isHuman&&(G9D.enemies.undead_names||[]).includes(name),sequence:seq,path,awakened:!isHuman,occupation:isHuman?pickR(r,["Dockworker","Clerk","Thief","Butcher","Servant"]):null,humanStats:human,resistanceInt:stats.int,hp:stats.hp,maxHp:stats.hp,atk:stats.atk,def:stats.def,int:stats.int,stats:{hp:stats.hp,atk:stats.atk,def:stats.def,int:stats.int},abilities,abilityHistory:abilities,trait,traits:{name:trait,desc:TRAITS[trait].desc},statVariance,speedVariance:statVariance.speed,status:[],statusMeta:{},alive:true,distance:Math.round(5+r()*7),thread:null,weaponId:isHuman?pickR(r,['none','knife','club']):'none',weaponMastery:{},sp:0,maxSP:0,cooldowns:{},resistances:{...(G9D.balance.element_resistance_rules?.path_resistances?.[path]||{})},elementResistances:{}})
+ // Omitted SP starts awakened foes full; ordinary humans retain zero.
+ return makeCombatUnit({id:`enemy_${i}`,name,undead:!isHuman&&(G9D.enemies.undead_names||[]).includes(name),sequence:seq,path,awakened:!isHuman,occupation:isHuman?pickR(r,["Dockworker","Clerk","Thief","Butcher","Servant"]):null,humanStats:human,resistanceInt:stats.int,hp:stats.hp,maxHp:stats.hp,atk:stats.atk,def:stats.def,int:stats.int,stats:{hp:stats.hp,atk:stats.atk,def:stats.def,int:stats.int},abilities,abilityHistory:abilities,trait,traits:{name:trait,desc:TRAITS[trait].desc},statVariance,speedVariance:statVariance.speed,status:[],statusMeta:{},alive:true,distance:Math.round(5+r()*7),thread:null,weaponId:isHuman?pickR(r,['none','knife','club']):'none',weaponMastery:{},sp:isHuman?0:undefined,cooldowns:{},resistances:{...(G9D.balance.element_resistance_rules?.path_resistances?.[path]||{})},elementResistances:{}})
 }
 
 // Named encounters opt in to authored profiles. Random contracts and the
@@ -470,6 +471,8 @@ function makeAuthoredEnemy(spec,r,i){
  e.weaponMastery=cloneE(spec.weaponMastery||{});
  ensureCombatResource(e.agent);
  if(spec.sp!==undefined){if(!Number.isFinite(spec.sp)||spec.sp<0)throw new Error('Invalid authored enemy SP');e.sp=Math.min(e.maxSP,spec.sp);}
+ // Authored traits can change Max SP after the generated profile was created.
+ else e.sp=e.maxSP;
  if(spec.meter!==undefined){if(!Number.isFinite(spec.meter)||spec.meter<0||spec.meter>100)throw new Error('Invalid authored enemy charge');setMeterValue(e.agent,e.path,spec.meter);}
  if(spec.startingHp!==undefined){if(!Number.isFinite(spec.startingHp)||spec.startingHp<=0||spec.startingHp>e.maxHp)throw new Error('Invalid authored enemy starting HP');e.hp=Math.round(spec.startingHp);}
  if(spec.pathwayInventory){e.agent.pathwayInventory=cloneE(spec.pathwayInventory);ensurePathwayInventory(e.agent);}
