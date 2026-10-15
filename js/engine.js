@@ -589,12 +589,13 @@ function settleFatalDamage(unit,state,lines=[],source=null,opt={}){
  if(mythicalBeforeFatal(unit,source,state,lines,state?.rng))return {dead:false,revived:false};
  if(traitBeforeFatal(unit,source,state,lines,opt))return {dead:false,revived:false,traitSurvival:true};
  unit.alive=false;
+ const revived=!!tryRevive(unit,lines,state);
+ if(revived){return {dead:false,revived:true};}
  const text=`${unit.name} falls.`;
  lines.push({text,kind:'victory'});
  emitCombatEvent(state,{round:state?.currentRound||1,type:'death',actorId:source?.id,actorName:source?.name,actorTeam:source?teamOf(source,state):undefined,targetId:unit.id,targetName:unit.name,targetTeam:teamOf(unit,state),text});
- const revived=!!tryRevive(unit,lines,state);
- if(!revived){pathwayVesselDestroyed(unit,state);dismissPathwayOwnedUnits(unit,state);signatureFinalDeath(unit,source,state,lines,state?.rng);mythicalFinalDeath(unit,source,state,lines,state?.rng);}
- return {dead:!unit.alive,revived};
+ pathwayVesselDestroyed(unit,state);dismissPathwayOwnedUnits(unit,state);signatureFinalDeath(unit,source,state,lines,state?.rng);mythicalFinalDeath(unit,source,state,lines,state?.rng);
+ return {dead:true,revived:false};
 }
 function resolveIncoming(attacker,defender,dmg,state,lines=[],r,opt={}){if(!lines)lines=[];
  weaponBeforeIncoming(defender,state,lines,opt);
