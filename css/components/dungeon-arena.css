@@ -1821,3 +1821,43 @@
     margin-bottom: 0;
   }
 }
+
+/* Larger mobile character art; preserve room for two rows on each side. */
+@media (max-width: 560px) {
+  .gm-dungeon-arena {
+    height: 640px;
+    min-height: 640px;
+  }
+
+  .gm-stage-playfield {
+    height: 640px;
+    min-height: 640px;
+    grid-template-rows: 60fr 40fr;
+  }
+
+  .gm-arena-side .gm-unit-sprite-anchor {
+    flex-basis: 96px;
+    height: 96px;
+  }
+
+  .gm-arena-side .gm-unit-sprite {
+    width: 48px;
+    height: 96px;
+  }
+
+  .gm-rank-enemies {
+    grid-template-rows: repeat(2, 118px);
+    height: 243px;
+  }
+
+  .gm-rank-allies {
+    grid-template-rows: repeat(2, 118px);
+    height: 240px;
+    margin-bottom: 6px;
+  }
+
+  .gm-arena-side-allies {
+    padding-top: 4px;
+    padding-bottom: 6px;
+  }
+}
