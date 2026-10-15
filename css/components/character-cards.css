@@ -205,11 +205,6 @@
   z-index: 2;
 }
 
-.stats span small,
-.big-stats small {
-  opacity: .55;
-  font-weight: 500;
-}
 /* Trait identity is written as well as colored. */
 .trait-badge{display:inline-block;padding:3px 8px;border:1px solid currentColor;border-radius:999px;font-size:12px;font-weight:700;line-height:1.4}
 .trait-normal{color:#d5d7df}.trait-rare{color:#8ebcff}.trait-epic{color:#d3a3ff}.trait-legendary{color:#f5cf74}.trait-legacy{color:#b5b2a9}

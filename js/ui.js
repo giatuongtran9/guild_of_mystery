@@ -131,10 +131,6 @@ function prioritizeVisiblePartyPortraits() {
     if (visible && (!bounds || (box.right > bounds.left && box.left < bounds.right && box.bottom > bounds.top && box.top < bounds.bottom))) {
       image.loading = 'eager';
       image.fetchPriority = !rank || image.closest('.ally') ? 'high' : 'auto';
-      if (image.dataset?.src) {
-        image.src = image.dataset.src;
-        delete image.dataset.src;
-      }
     } else if (rank) {
       image.loading = 'lazy';
       image.fetchPriority = 'auto';
@@ -174,7 +170,7 @@ function getCombatSprite(u, options = {}) {
     ? Number.isInteger(art.width) && art.width > 0 && Number.isInteger(art.height) && art.height > 0 && typeof art.src === 'string' && [canonical, canonical.replace('/characters/', '/revisions/'), canonical.replace('/characters/', '/revisions/').replace(/\.png$/, '.' + art.src.slice(-16) + '.png')].some(source => art.src.startsWith(source + '?v=') && /^[a-f0-9]{16}$/.test(art.src.slice(source.length + 3)))
     : art.width === size && art.height === size && new RegExp(`^data/assets/runtime/characters/${spritePath}/${stem}\\.${size}\\.[a-f0-9]{16}\\.(png|webp)$`).test(art.src));
   const src = valid ? art.src : original;
-  // Battle sprites are few and must appear immediately on mobile; do not defer their URL into data-src.
+  // Start battle artwork immediately; viewport priority also serves campaign portraits.
   const loading = options.variant === 'battle' || options.loading === 'eager' ? 'eager' : 'lazy';
   const priority = loading === 'eager' && (options.priority === 'high' || options.variant === 'battle') ? ' fetchpriority="high"' : '';
   const hide = "this.onerror=null;this.style.display='none';const fb=this.parentElement.querySelector('.combat-sprite-fallback');if(fb)fb.style.display='flex';";
@@ -196,6 +192,53 @@ function battlefieldImageFor(quest = {}, isSim = false) {
     if (match) return match;
   }
   return image(config.defaultImage);
+}
+
+// Clear-floor bounds in source-image coordinates, excluding foreground props.
+// The scene is framed around these bounds so whole sprites stay on the ground.
+const BATTLEFIELD_GROUND = {
+  'abandoned_market.png': [0.10, 0.46, 0.90, 0.91],
+  'foggy_town.png': [0.08, 0.51, 0.92, 0.94],
+  'clockmaker_alley.png': [0.10, 0.58, 0.90, 0.93],
+  'gothic_cathedral.png': [0.10, 0.68, 0.90, 0.93],
+  'ruined_temple.png': [0.14, 0.57, 0.86, 0.84],
+  'sewer_vault.png': [0.10, 0.58, 0.90, 0.94],
+  'river_dock.png': [0.09, 0.45, 0.91, 0.90]
+};
+
+function isBattleCompanion(unit) {
+  return !!unit.summoned || ['marionette', 'beast', 'device', 'turret', 'spirit'].includes(unit.unitType);
+}
+
+function layoutBattlefields(root = document) {
+  const arenas = root.matches?.('.gm-dungeon-arena') ? [root] : root.querySelectorAll('.gm-dungeon-arena');
+  for (const arena of arenas) {
+    const stage = arena.querySelector('.gm-stage-playfield');
+    const crowded = [...arena.querySelectorAll('.gm-companion-formation')].some(group => group.children.length > 6);
+    arena.classList.toggle('crowded', crowded);
+    const image = arena.querySelector('.gm-battlefield-image');
+    if (!stage || !image) continue;
+    const width = arena.getBoundingClientRect().width;
+    if (!width) continue;
+    const filename = image.getAttribute('src').split(/[?#]/)[0].split('/').pop();
+    const [left, top, right, bottom] = BATTLEFIELD_GROUND[filename] || [0.10, 0.55, 0.90, 0.94];
+    const height = stage.getBoundingClientRect().height;
+    const scenery = parseFloat(getComputedStyle(stage).paddingTop);
+    const floorTop = Math.max(0, scenery - 8);
+    const aspect = image.naturalWidth && image.naturalHeight ? image.naturalWidth / image.naturalHeight : 1;
+    // Size the background's safe floor to cover every naturally wrapping row.
+    const imageHeight = Math.max(
+      (height - floorTop + 8) / (bottom - top),
+      width / ((right - left) * aspect),
+      floorTop / top
+    );
+    const imageWidth = imageHeight * aspect;
+    Object.assign(image.style, {
+      width: `${imageWidth}px`, height: `${imageHeight}px`,
+      left: `${width / 2 - (left + right) / 2 * imageWidth}px`,
+      top: `${floorTop - top * imageHeight}px`
+    });
+  }
 }
 
 function battleResourceMarkup(data) {
@@ -223,7 +266,8 @@ function renderCombatEntity(u, team, index, hpMap) {
 
     const sprite = (team === 'ally' || u.path || u.campaignEnemy || data.inForm) ? getCombatSprite({ ...u, ...data }, { variant: 'battle' }) : `<div class="combat-enemy-avatar"><span class="enemy-skull">💀</span></div>`;
 
-    return `<div class="gm-arena-unit ${team} ${dead ? 'dead' : ''} ${data.inForm ? 'mythical' : ''}" data-unit-index="${index}" data-unit-id="${esc(u.id || u.name)}" data-form-art="${!!data.inForm}">
+    const companion = isBattleCompanion({ ...u, ...data });
+    return `<div class="gm-arena-unit ${team} ${companion ? 'companion' : ''} ${dead ? 'dead' : ''} ${data.inForm ? 'mythical' : ''}" data-unit-role="${companion ? 'companion' : 'character'}" data-unit-index="${index}" data-unit-id="${esc(u.id || u.name)}" data-form-art="${!!data.inForm}">
       <div class="gm-unit-sprite-anchor">
         <div class="gm-unit-shadow"></div>
         <div class="gm-unit-sprite">${sprite}</div>
@@ -253,24 +297,32 @@ function renderCombatEntity(u, team, index, hpMap) {
 }
 
 function renderHpStrip(hpMap, allies, enemies, battlefieldImage = '') {
+  const formation = (units, team) => {
+    const groups = { character: [], companion: [] };
+    for (const [index, unit] of (units || []).entries()) {
+      const data = (unit.id && hpMap[unit.id]) || (unit.name && hpMap[unit.name]) || unit;
+      groups[isBattleCompanion({ ...unit, ...data }) ? 'companion' : 'character'].push(renderCombatEntity(unit, team, index, hpMap));
+    }
+    return `<div class="gm-character-formation">${groups.character.join('')}</div><div class="gm-companion-formation">${groups.companion.join('')}</div>`;
+  };
   return `<div class="gm-dungeon-arena" aria-label="Guild Master Dungeon Arena">
     <div class="gm-dungeon-backdrop" aria-hidden="true">
-      ${battlefieldImage ? `<img class="gm-battlefield-image" src="${esc(battlefieldImage)}" alt="" onerror="this.hidden=true">` : ''}
+      ${battlefieldImage ? `<img class="gm-battlefield-image" src="${esc(battlefieldImage)}" alt="" onload="layoutBattlefields(this.closest('.gm-dungeon-arena'))" onerror="this.hidden=true">` : ''}
     </div>
 
-    <!-- Guild on the left; enemies on the right. Each side has a 3 x 2 grid. -->
+    <!-- Enemies above Guild; compact companions have their own wrapping rows. -->
     <div class="gm-stage-playfield">
       <section class="gm-arena-side gm-arena-side-allies" aria-label="Guild members">
         <h3 class="gm-arena-side-title">Guild</h3>
         <div class="gm-rank-row gm-rank-allies" role="group" aria-label="Guild formation">
-          ${(allies || []).map((a, i) => renderCombatEntity(a, 'ally', i, hpMap)).join('')}
+          ${formation(allies, 'ally')}
         </div>
       </section>
 
       <section class="gm-arena-side gm-arena-side-enemies" aria-label="Enemies">
         <h3 class="gm-arena-side-title">Enemies</h3>
         <div class="gm-rank-row gm-rank-enemies" role="group" aria-label="Enemy formation">
-          ${(enemies || []).map((e, i) => renderCombatEntity(e, 'enemy', i, hpMap)).join('')}
+          ${formation(enemies, 'enemy')}
         </div>
       </section>
     </div>
@@ -412,7 +464,8 @@ function updateBattleLogComponent(wrap, props) {
     const present = new Set(Array.from(rank.querySelectorAll('.gm-arena-unit'), node => node.dataset.unitId));
     for (const data of new Set(Object.values(hpMap))) {
       if (data.team === team && data.id && !present.has(data.id)) {
-        rank.insertAdjacentHTML('beforeend', renderCombatEntity(data, team, units.length, hpMap));
+        const group = rank.querySelector(isBattleCompanion(data) ? '.gm-companion-formation' : '.gm-character-formation');
+        group.insertAdjacentHTML('beforeend', renderCombatEntity(data, team, units.length, hpMap));
         present.add(data.id);
       }
     }
@@ -420,6 +473,11 @@ function updateBattleLogComponent(wrap, props) {
       const u = units.find(unit => (unit.id || unit.name) === node.dataset.unitId) || hpMap[node.dataset.unitId] || units[Number(node.dataset.unitIndex)];
       if (!u) continue;
       const data = hpMap[u.id] || hpMap[u.name] || u;
+      const companion = isBattleCompanion({ ...u, ...data });
+      node.classList.toggle('companion', companion);
+      node.dataset.unitRole = companion ? 'companion' : 'character';
+      const group = rank.querySelector(companion ? '.gm-companion-formation' : '.gm-character-formation');
+      if (node.parentElement !== group) group.append(node);
       const hp = Math.max(0, data.curHp ?? u.hp ?? u.maxHp ?? 100);
       const maxHp = Math.max(1, data.maxHp || u.maxHp || 100);
       const shieldPct = Math.min(100, Math.round((data.curShield || 0) / maxHp * 100));
@@ -445,7 +503,7 @@ function updateBattleLogComponent(wrap, props) {
         holder.innerHTML = getCombatSprite({ ...u, ...data }, { variant: 'battle' });
         const next = holder.querySelector('img'), image = node.querySelector('.combat-sprite-img');
         if (image) {
-          for (const attribute of ['src', 'data-src', 'width', 'height', 'alt', 'onerror']) {
+          for (const attribute of ['src', 'width', 'height', 'alt', 'onerror']) {
             const value = next.getAttribute(attribute);
             if (value === null) image.removeAttribute(attribute);
             else image.setAttribute(attribute, value);
@@ -487,8 +545,9 @@ function updateBattleLogComponent(wrap, props) {
   const image = backdrop.querySelector('img');
   if (!props.battlefieldImage) image?.remove();
   else if (!image || image.getAttribute('src') !== props.battlefieldImage) {
-    backdrop.innerHTML = `<img class="gm-battlefield-image" src="${esc(props.battlefieldImage)}" alt="" onerror="this.hidden=true">`;
+    backdrop.innerHTML = `<img class="gm-battlefield-image" src="${esc(props.battlefieldImage)}" alt="" onload="layoutBattlefields(this.closest('.gm-dungeon-arena'))" onerror="this.hidden=true">`;
   }
+  layoutBattlefields(wrap);
   viewport.scrollTop = follow ? viewport.scrollHeight : top;
   viewport.scrollLeft = left;
 }
@@ -561,6 +620,7 @@ if (typeof document !== 'undefined') (() => {
       el.scrollTop = position.follow ? el.scrollHeight : position.top;
       el.scrollLeft = position.left;
     }
+    layoutBattlefields(app);
     window.scrollTo(pagePosition.x, pagePosition.y);
     if (typeof prioritizeVisiblePartyPortraits === 'function') prioritizeVisiblePartyPortraits();
     scheduleTicker();
@@ -737,7 +797,7 @@ if (typeof document !== 'undefined') (() => {
   function statusBar(label,value){return `<div class="meter"><div><span>${label}</span><b>${Math.round(value||0)}/100</b></div><i><em style="width:${Math.min(100,Math.max(0,value||0))}%"></em></i></div>`}
 
   function traitDetails(a){return `<div class="trait-details">${traitBadge(a)} <b>${esc(traitName(a))}</b><p>${esc(traitDescription(a))}</p>${a.traitSource==='catalog_v1'&&!traitActive(a)?'<small>Activates after awakening.</small>':''}</div>`;}
-  function agentCard(a){const dead=a.status!=='active';return `<article class="agent ${dead?'dead':''} ${a.awakened?'':'unawakened'}" onclick="window.G9.dossier('${a.id}')"><div class="portrait">${esc(a.name.slice(0,1))}</div><div class="agent-main"><div class="agent-title"><div><h3>${esc(a.name)}</h3><p>${esc(a.occupation||'Ordinary person')} · ${a.awakened?esc(pathName(a.path))+' · Sequence '+a.sequence+' — '+esc(tierName(a.path,a.sequence)):'Unawakened'}</p></div><span class="status ${a.status}">${a.awakened?'active':'unawakened'}</span></div>${a.awakened?`<div class="stats">${(()=>{const s=combatDisplayStats(a),b=a.stats;return statPair('HP',s.hp,b.hp)+statPair('SP',Math.round(a.sp??maxSPFor(a)),maxSPFor(a))+statPair('ATK',s.atk,b.atk)+statPair('DEF',s.def,b.def)+statPair('INT',s.int,b.int)})()}</div>`:''}${statusBar('Madness',a.madness)}${statusBar('Corruption',a.corruption)}${statusBar('Injuries',a.injuries)}${a.madness>=50?'<p class="warning">At 50+ Madness, each action has an 18% chance to be lost. At 100 after a contract, the character is permanently lost.</p>':''}${a.injuries>0?'<p class="muted">Injuries reduce effective HP and other stats by up to 30% until treated.</p>':''}${a.awakened?statusBar('Digesting',a.digest):`<p class="muted">Choose any Pathway when awakening. Combat stats are revealed after awakening.</p>`}${traitDetails(a)}<div class="agent-actions">${!dead&&a.awakened&&a.unitType!=='marionette'&&a.sequence>0?`<button onclick="event.stopPropagation();window.G9.advance('${a.id}')">Advance</button>`:''}${!dead&&(a.injuries||0)>0?`<button onclick="event.stopPropagation();window.G9.heal('${a.id}')">Heal</button>`:''}</div></div></article>`}
+  function agentCard(a){const dead=a.status!=='active';return `<article class="agent ${dead?'dead':''} ${a.awakened?'':'unawakened'}" onclick="window.G9.dossier('${a.id}')"><div class="portrait">${esc(a.name.slice(0,1))}</div><div class="agent-main"><div class="agent-title"><div><h3>${esc(a.name)}</h3><p>${esc(a.occupation||'Ordinary person')} · ${a.awakened?esc(pathName(a.path))+' · Sequence '+a.sequence+' — '+esc(tierName(a.path,a.sequence)):'Unawakened'}</p></div><span class="status ${a.status}">${a.awakened?'active':'unawakened'}</span></div>${a.awakened?`<div class="stats">${(()=>{const s=combatDisplayStats(a);return statPair('HP',s.hp)+statPair('SP',`${Math.round(a.sp??maxSPFor(a))} / ${maxSPFor(a)}`)+statPair('ATK',s.atk)+statPair('DEF',s.def)+statPair('INT',s.int)})()}</div>`:''}${statusBar('Madness',a.madness)}${statusBar('Corruption',a.corruption)}${statusBar('Injuries',a.injuries)}${a.madness>=50?'<p class="warning">At 50+ Madness, each action has an 18% chance to be lost. At 100 after a contract, the character is permanently lost.</p>':''}${a.injuries>0?'<p class="muted">Injuries reduce effective HP and other stats by up to 30% until treated.</p>':''}${a.awakened?statusBar('Digesting',a.digest):`<p class="muted">Choose any Pathway when awakening. Combat stats are revealed after awakening.</p>`}${traitDetails(a)}<div class="agent-actions">${!dead&&a.awakened&&a.unitType!=='marionette'&&a.sequence>0?`<button onclick="event.stopPropagation();window.G9.advance('${a.id}')">Advance</button>`:''}${!dead&&(a.injuries||0)>0?`<button onclick="event.stopPropagation();window.G9.heal('${a.id}')">Heal</button>`:''}</div></div></article>`}
   function recruit(){return `<section class="panel recruitment-office"><div class="section-head"><div><h2>Recruitment Office</h2><p>Refresh the four visible candidates, then choose whom to hire.</p></div><button ${state.funds<TRAIT_DATA.refreshCost||recruitReveal?'disabled':''} onclick="window.G9.refreshRecruit()">Refresh · £${TRAIT_DATA.refreshCost}</button></div><p class="recruit-odds">Per candidate: <span>Normal ${TRAIT_DATA.weights.normal}%</span> · <span>Rare ${TRAIT_DATA.weights.rare}%</span> · <span>Epic ${TRAIT_DATA.weights.epic}%</span> · <span>Legendary ${TRAIT_DATA.weights.legendary}%</span></p><div class="recruit-grid ${recruitReveal?'recruit-reveal':''}">${state.recruitPool.map(a=>`<article class="recruit" data-trait-tier="${traitRarity(a)}" onclick="window.G9.recruitInfo('${a.id}')"><div class="portrait large">${esc(a.name.slice(0,1))}</div><h3>${esc(a.name)}</h3><p>${esc(a.occupation)}</p><p class="muted">Combat stats are revealed after awakening.</p>${traitDetails(a)}<button class="primary" onclick="event.stopPropagation();window.G9.hire('${a.id}')">Hire · £${TRAIT_DATA.hireCost}</button></article>`).join('')}</div>${recruitReveal?'<button class="small" onclick="window.G9.skipRecruitReveal()">Skip reveal</button>':''}<p class="muted office-note">Free automatic refresh: ${state.recruitRefreshDay-state.day>0?`in ${state.recruitRefreshDay-state.day} real day(s)`:'available now'}. Hiring every candidate refills the office for free. Paid refresh does not advance the day.</p></section>`}
 
   function quests(){const rep=state.reputation;const tier=esc(reputationRank(rep).name);const target=questCountForReputation(rep);return `<section class="panel"><div class="section-head"><div><h2>Contract Board</h2><p>Reputation ${rep} · ${tier} · ${state.quests.length}/${target} contracts available.</p><p class="muted">Daily refresh at local midnight. Completed slots refill while stock remains. Used copies return after ${CONTRACT_POOL.returnDays} real days; declined copies return immediately. Beginner and progression posts are protected while their pool has stock.</p></div><button ${state.funds<CONTRACT_POOL.refreshCost||state.pendingContract||state.campaign?.pending?'disabled':''} onclick="window.G9.refreshContracts()">Refresh · £${CONTRACT_POOL.refreshCost}</button></div><details class="ledger"><summary>Contract odds & remaining copies</summary><p>Random-post odds for ${tier}, before depleted Sequences are excluded. Guaranteed beginner and progression posts change the final board mix.</p><div class="material-grid">${Object.entries(reputationRank(rep).sequenceOdds).sort((a,b)=>Number(b[0])-Number(a[0])).map(([seq,odds])=>`<div><b>Sequence ${seq}</b><p>${odds}% · ${contractPoolStock(state,Number(seq))} copies available</p></div>`).join('')}</div></details>${!state.quests.length?'<p class="muted">No contract copies are available. Cooling copies return automatically after three real days.</p>':''}${state.quests.map(q=>`<article class="quest" onclick="window.G9.plan('${q.id}')"><div>${q.difficultySequence<rosterProfile(activeRoster()).bestSequence?'<span class="warning-symbol" title="This threat is stronger than your highest-Sequence active agent.">⚠</span>':''}<span class="tag">${q.difficultySequence===10?'NORMAL':`SEQ ${q.difficultySequence}`}</span><span class="tag">${q.tags?.[0]?.toUpperCase()||'CONTRACT'}</span>${q.requiredPath?`<span class="tag">${esc(pathName(q.requiredPath))}</span>`:''}<h3>${esc(q.name)}</h3><p>${esc(q.brief)}</p><small>Reward £${q.rewards.funds} · +${q.rewards.reputation} reputation</small></div><button onclick="event.stopPropagation();window.G9.plan('${q.id}')">Open Contract</button><button class="small danger-btn" onclick="event.stopPropagation();window.G9.decline('${q.id}')">Decline</button></article>`).join('')}</section>`}
@@ -750,7 +810,7 @@ function marketPage(){const odds=marketWeaponOdds(state.reputation);return `<sec
   const displayAgent={...a,stats:base},pm=passiveCombatModifier(displayAgent),w=weaponStats(displayAgent);
   return {hp:Math.round(base.hp*(pm.hp||1)),atk:Math.round(base.atk*pm.atk+w.atk),def:Math.round(base.def*pm.def),int:Math.round(base.int*pm.int),spd:Math.round(speedFor(displayAgent))};
 }
-function statPair(label,final,base){return `<span>${label} <b>${final}</b> <small>(${base})</small></span>`;}
+function statPair(label,value){return `<span>${label} <b>${value}</b></span>`;}
 
 function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id==='none'||w.id===a.weaponId||(state.weapons[w.id]||0)>0).map(w=>`<option value="${w.id}" ${a.weaponId===w.id?'selected':''}>${esc(w.name)} (+${w.atk} ATK) · ${state.weapons[w.id]||0} available</option>`).join('');return `<label class="equipment-select"><span>Equip Weapon</span><select onchange="window.G9.setWeapon(${esc(JSON.stringify(a.id))},this.value)">${options}</select></label>`}
   function pathwayInventoryPanel(a){
@@ -799,11 +859,11 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
       <div class="eyebrow">CHARACTER DOSSIER</div><h2 id="dossier-title" tabindex="-1">${esc(a.name)}</h2>
       <div class="dossier-identity"><div class="dossier-portrait">${portrait}</div><div class="dossier-progression"><p class="dossier-path">${a.awakened?esc(pathName(a.path)):'Ordinary person'}</p><p class="dossier-rank">${a.awakened?`Sequence ${a.sequence} — ${esc(tier.name)}`:'Unawakened'}</p><p class="muted">${esc(a.occupation||'Ordinary person')}</p>${a.awakened?statusBar('Digesting',a.digest):'<p class="muted">Choose a Pathway to begin.</p>'}</div></div>
       ${a.awakened?`<section class="dossier-equipment" aria-label="Equipment"><div class="dossier-equipment-slot" title="${esc(weapon.name)}"><span aria-hidden="true">${weapon.kind==='gun'?'⌁':weapon.kind==='unarmed'?'◇':'†'}</span><small>Weapon</small></div><div class="dossier-equipment-copy"><b>${esc(weapon.name)}</b><small class="trait-${weapon.tier||'normal'}">${esc((weapon.tier||'normal').toUpperCase())} · ${esc(weapon.text)}</small><small>Weapon ATK: +${weapon.atk} · ${weapon.kind==='gun'?'Gun':weapon.kind==='unarmed'?'Bare Hand':'Melee'} Mastery Lv.${weaponStats(a).mastery}</small>${equipmentPicker(a)}</div></section>`:''}
-      ${a.awakened?`<div class="big-stats dossier-stats">${[['HP',eff.hp],['SP',Math.round(a.sp??maxSPFor(a))],['ATK',eff.atk],['DEF',eff.def],['INT',eff.int],['Speed',cr?cr.speed.toFixed(1):eff.spd||'—']].map(x=>`<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div>`:'<p class="muted">Combat stats are revealed after awakening.</p>'}
+      ${a.awakened?`<div class="big-stats dossier-stats">${[['HP',eff.hp],['SP',`${Math.round(a.sp??maxSPFor(a))} / ${maxSPFor(a)}`],['ATK',eff.atk],['DEF',eff.def],['INT',eff.int],['Speed',cr?cr.speed.toFixed(1):eff.spd||'—']].map(x=>`<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div>`:'<p class="muted">Combat stats are revealed after awakening.</p>'}
       ${a.awakened?`<details class="dossier-details dossier-abilities" data-dossier-section="abilities" ${openSection('abilities')}><summary>Abilities <span class="dossier-section-count">${abilities.length} unlocked</span></summary><div class="dossier-skill-tabs" role="tablist" aria-label="Active and passive abilities">${tabMarkup('active')}${tabMarkup('passive')}</div><section class="dossier-skill-panel" id="dossier-skill-panel" role="tabpanel" tabindex="0" aria-labelledby="dossier-tab-${skillType}">${skills.length?skills.map(skill=>`<article class="dossier-ability" data-sequence="${skill.sequence}" data-ability-type="${skill.type}"><h3>Sequence ${skill.sequence} — ${esc(skill.name)}</h3><p>${esc(nativeAbilityCooldown(a,skill)!==Number(skill.cooldown||0)?traitAbilityDescription(a,{...skill,cooldown:nativeAbilityCooldown(a,skill)},a.path,skill.sequence):skill.text)}</p><small>${skill.type==='active'?(abilityEffects(skill).some(e=>e.type==='signature'&&['door_record','tower_imitation'].includes(e.rule))?'Stored skill SP and cooldown':`${a.traitSource==='catalog_v1'||Number(weapon.skillCostMultiplier||1)!==1?'Adjusted cost shown above':`SP ${skill.costSP||0}`} · Cooldown ${nativeAbilityCooldown(a,skill)} turns`):'Always active'}${skill.damage?` · ${esc(abilityDamageText(skill))}`:''}</small></article>`).join(''):`<p class="muted">No ${skillType} abilities yet.</p>`}</section></details>`:''}
       ${pathwayCollection(a)?`<details class="dossier-details dossier-inventory" data-dossier-section="inventory" ${openSection('inventory')}><summary id="dossier-inventory-title">Pathway Inventory <span class="dossier-section-count">${a.pathwayInventory?.assets?.length||0} stored</span></summary>${pathwayInventoryPanel(a)}</details>`:''}
       ${!a.awakened?`<details class="dossier-details" data-dossier-section="awakening" open><summary>Awakening — Sequence 9</summary><p>This character is an ordinary human. Sequence 9 begins their supernatural pathway; it is not an ordinary-human tier. Choose any Pathway; combat stats and individual variation are revealed after awakening.</p><div class="path-grid">${pathButtons}</div></details>`:''}
-      <details class="dossier-details" data-dossier-section="condition" ${openSection('condition')}><summary>Condition & combat details</summary>${statusBar('Madness',a.madness)}<p class="${a.madness>=50?'warning':'muted'}">At 50+ Madness: an 18% chance to lose each action. At 100 after a contract: permanent loss. Contract victory reduces Madness by 3; failure adds 12. Treating injuries also reduces it by 15.</p>${statusBar('Corruption',a.corruption)}<p class="muted">Corruption marks targets for anti-corruption vulnerability effects, including Sun purification. Normal contracts do not increase this meter.</p>${statusBar('Injuries',a.injuries)}${a.injuries>0?'<p class="muted">Injuries reduce effective HP and other stats by up to 30% until treated.</p>':''}${cr?`<div class="combat-rates"><span>Crit ${Math.round(cr.crit*100)}%</span><span>Crit Damage +${Math.round(cr.critDamage*100)}%</span><span>Dodge ${Math.round(cr.dodge*100)}%</span><span>Counter ${Math.round(cr.counter*100)}%</span><span>Speed ${cr.speed.toFixed(1)} · AV ${cr.av.toFixed(1)}</span><span>Archetype ${archetypeOf(a.path)}</span><span>Basic attack: ${archetypeOf(a.path)==='Physical'?'ATK':archetypeOf(a.path)==='Agility'?'75% ATK + 35% INT':'80% INT'}, plus weapon damage</span>${pathwayIncomingDamageScale(a)!==1?`<span>Pathway damage received ×${pathwayIncomingDamageScale(a).toFixed(2)} after shields</span>`:''}${Object.entries(GLOBAL_COMBAT.native_ability_damage_by_pathway_sequence?.[a.path]?.[a.sequence]||{}).map(([id,m])=>`<span>${esc(unlockedAbilities(a).find(s=>(s.effectId||s.id)===id)?.name||id)} native damage ×${Number(m).toFixed(2)} after defense</span>`).join('')}<span>Max SP ${maxSPFor(a)}</span><span>Element Resistance: ${Object.entries(cr.resistances||{}).map(([k,v])=>`${esc(k)} ${v>0?'+':''}${Math.round(v)}%`).join(' · ')||'None'}</span>${cr.passives?.length?`<span>Passives: ${cr.passives.map(esc).join(' · ')}</span>`:''}</div><div class="special-meter"><b>${esc(specialStatFor(a.path,a.sequence,a).name)} ${Math.round(specialStatFor(a.path,a.sequence,a).value)}/100</b><small>Gain: ${esc(specialStatFor(a.path,a.sequence,a).gain)} · Spend: ${esc(specialStatFor(a.path,a.sequence,a).spend)}</small></div>`:''}<p class="muted">Weapon Mastery: Gun ${weaponMasteryValue(a,'gun')} · Melee ${weaponMasteryValue(a,'weapon')} · Bare Hand ${weaponMasteryValue(a,'unarmed')}. Mastery is permanently attached to this character; changing weapons does not reset it.</p>${weapon.kind==='gun'?`<p class="muted">Gun Accuracy: ${Math.round((1-weaponStats(a).masteryMiss)*100)}%</p>`:''}${weapon.bleed?`<p class="muted">Bleed: ${Math.round(weapon.bleed*100)}% if target survives</p>`:''}${a.awakened?`<p class="muted">Current ATK: ${eff.atk} (base ${a.stats.atk})</p>`:''}${a.status==='active'&&a.injuries>0?`<button type="button" onclick="window.G9.heal(${actionId})">Treat injuries</button>`:''}</details>
+      <details class="dossier-details" data-dossier-section="condition" ${openSection('condition')}><summary>Condition & combat details</summary>${statusBar('Madness',a.madness)}<p class="${a.madness>=50?'warning':'muted'}">At 50+ Madness: an 18% chance to lose each action. At 100 after a contract: permanent loss. Contract victory reduces Madness by 3; failure adds 12. Treating injuries also reduces it by 15.</p>${statusBar('Corruption',a.corruption)}<p class="muted">Corruption marks targets for anti-corruption vulnerability effects, including Sun purification. Normal contracts do not increase this meter.</p>${statusBar('Injuries',a.injuries)}${a.injuries>0?'<p class="muted">Injuries reduce effective HP and other stats by up to 30% until treated.</p>':''}${cr?`<div class="combat-rates"><span>Crit ${Math.round(cr.crit*100)}%</span><span>Crit Damage +${Math.round(cr.critDamage*100)}%</span><span>Dodge ${Math.round(cr.dodge*100)}%</span><span>Counter ${Math.round(cr.counter*100)}%</span><span>Speed ${cr.speed.toFixed(1)} · AV ${cr.av.toFixed(1)}</span><span>Archetype ${archetypeOf(a.path)}</span><span>Basic attack: ${archetypeOf(a.path)==='Physical'?'ATK':archetypeOf(a.path)==='Agility'?'75% ATK + 35% INT':'80% INT'}, plus weapon damage</span>${pathwayIncomingDamageScale(a)!==1?`<span>Pathway damage received ×${pathwayIncomingDamageScale(a).toFixed(2)} after shields</span>`:''}${Object.entries(GLOBAL_COMBAT.native_ability_damage_by_pathway_sequence?.[a.path]?.[a.sequence]||{}).map(([id,m])=>`<span>${esc(unlockedAbilities(a).find(s=>(s.effectId||s.id)===id)?.name||id)} native damage ×${Number(m).toFixed(2)} after defense</span>`).join('')}<span>Max SP ${maxSPFor(a)}</span><span>Element Resistance: ${Object.entries(cr.resistances||{}).map(([k,v])=>`${esc(k)} ${v>0?'+':''}${Math.round(v)}%`).join(' · ')||'None'}</span>${cr.passives?.length?`<span>Passives: ${cr.passives.map(esc).join(' · ')}</span>`:''}</div><div class="special-meter"><b>${esc(specialStatFor(a.path,a.sequence,a).name)} ${Math.round(specialStatFor(a.path,a.sequence,a).value)}/100</b><small>Gain: ${esc(specialStatFor(a.path,a.sequence,a).gain)} · Spend: ${esc(specialStatFor(a.path,a.sequence,a).spend)}</small></div>`:''}<p class="muted">Weapon Mastery: Gun ${weaponMasteryValue(a,'gun')} · Melee ${weaponMasteryValue(a,'weapon')} · Bare Hand ${weaponMasteryValue(a,'unarmed')}. Mastery is permanently attached to this character; changing weapons does not reset it.</p>${weapon.kind==='gun'?`<p class="muted">Gun Accuracy: ${Math.round((1-weaponStats(a).masteryMiss)*100)}%</p>`:''}${weapon.bleed?`<p class="muted">Bleed: ${Math.round(weapon.bleed*100)}% if target survives</p>`:''}${a.status==='active'&&a.injuries>0?`<button type="button" onclick="window.G9.heal(${actionId})">Treat injuries</button>`:''}</details>
       ${next?`<details class="dossier-details" data-dossier-section="advancement" ${openSection('advancement')}><summary>Advancement</summary><p>Next: <b>Sequence ${a.sequence-1} — ${esc(next.next.name)}</b>. Digesting: ${Math.round(a.digest||0)}%.</p><div class="requirement-box"><b>Requirements</b><span>Digesting: ${next.ready?'Complete':'Not complete'}</span><span>${esc(next.mat)}: ${state.materials[next.mat]||0}/${next.materialCost}</span><span>Funds: £${state.funds.toLocaleString()}/£${next.fundsCost}</span></div><button type="button" class="primary full" onclick="window.G9.advance(${actionId})">Review Advancement</button></details>`:''}
       ${a.awakened&&a.sequence===0?'<p class="gold-note">Sequence 0 — Deity. No further advancement.</p>':''}
       ${a.unitType==='marionette'?`<p class="dossier-restriction"><b>Owner:</b> ${esc(state.roster.find(x=>x.id===a.ownerId)?.name||a.ownerId||'Unknown')}<br>${esc((a.permanentTraits||['Marionette','Cannot advance','Permanent death']).join(' · '))}</p>`:''}
@@ -962,7 +1022,7 @@ teamB: opponents.map((o, i) => ({
     reset:()=>{if(!confirm('Erase the current guild and begin again?'))return;const fresh=newGame();if(!saveGame(fresh,{reset:true}))return toast('The new guild could not be saved. The previous save is still available.');state=fresh;window.G9.selectedIds=[];run=null;planning=null;selected=null;chapterSelectionMission=null;clearTimeout(tickerTimer);tickerTimer=null;tab='campaign';render()}
   };
   window.addEventListener('scroll',prioritizeVisiblePartyPortraits,{capture:true,passive:true});
-  window.addEventListener('resize',prioritizeVisiblePartyPortraits);
+  window.addEventListener('resize',()=>{layoutBattlefields(app);prioritizeVisiblePartyPortraits();});
   document.addEventListener('keydown',event=>{
     const dialog=portraitViewer?.dialog||(selected&&app.querySelector('.character-dossier'));if(!dialog)return;
     if(event.key==='Escape'){event.preventDefault();portraitViewer?closePortrait():window.G9.closeDossier();return;}

@@ -23,8 +23,8 @@ The root `style.css` remains a compatibility entry point with the same ordered i
 | `components/party-selector.css` | Assignment rows, choices and solo bonus | `.assign-row`, `.choice`, `.party-solo-bonus` |
 | `components/pathway-preview.css` | Pathway picker, introductions and sequence previews | `.pathway-picker`, `.preview-ability`, `.path-choice` |
 | `components/battle-simulator.css` | Simulator controls, results and damage table | `.sim-unit`, `.sim-result`, `.balance-table` |
-| `components/battle-log.css` | Battle messages, HP strip, outcomes and playback controls | `.battle-log-wrap`, `.b-row`, `.hp-card`, `.ticker` |
-| `components/dungeon-arena.css` | Dungeon backdrop, torches, sprites and floating gauges | `.gm-dungeon-arena`, `.gm-torch`, `.combat-sprite-img`, `.gm-float-gauge` |
+| `components/battle-log.css` | Battle messages, outcomes and playback controls | `.battle-log-wrap`, `.b-row`, `.battle-toolbar`, `.battle-ticker-viewport` |
+| `components/dungeon-arena.css` | Battlefield scenery, character and companion formations, sprites and floating gauges | `.gm-dungeon-arena`, `.gm-character-formation`, `.gm-companion-formation`, `.combat-sprite-img`, `.gm-float-gauge` |
 | `components/feedback.css` | Loading, toast, warning and empty states | `.loading-screen`, `.toast`, `.warning`, `.empty` |
 | `utilities.css` | Small shared helpers | `.muted`, `.compact`, `.full`, `.gold-note`, `.dead` |
 
@@ -36,13 +36,11 @@ The root `style.css` remains a compatibility entry point with the same ordered i
 - Put shared button styles in `buttons.css`; put component-specific button styles in that component's file.
 - Keep grouped selectors within one owner. If a shared rule targets multiple components, repeat its declarations in each owning file.
 - Repeated selectors inside a file currently preserve the original cascade. Inspect their combined behavior before consolidating them; shorthands and `!important` affect the result.
+- The battlefield uses one responsive formation layout. Its source-image geometry is set by the UI; keep character and companion sizes square and let formations wrap without clipping deployed units.
 - Add a new component stylesheet to both `index.html` and the compatibility imports in `style.css`, in the same order, and update this map.
 - Relative `url(...)` paths resolve from the stylesheet's location. A component stylesheet should use `../../data/assets/...` for assets under `data/assets/`.
 
 ## Preserving appearance
 
-This refactor retains the existing selectors, declaration values, breakpoints, animations and important flags.
-The existing references to `--accent`, `--text` and `--panel-2` are also retained, including their original fallback behavior; the defined theme tokens are `--gold`, `--bone` and `--panel2`.
-Changing those references is a separate visual change.
-
 When editing, check the affected component at desktop and narrow mobile widths, including hover/selected states and modal variants.
+Image defaults are shared by battlefield, campaign and dossier portraits; verify all three when changing those defaults.
