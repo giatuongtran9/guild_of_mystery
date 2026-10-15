@@ -512,3 +512,133 @@
     height: 40px;
   }
 }
+
+/* Keep formations on the lower battlefield floor and scale the arena for phones. */
+.gm-dungeon-arena {
+  min-height: 480px;
+}
+
+.gm-stage-playfield {
+  min-height: 480px;
+}
+
+.gm-arena-side {
+  position: relative;
+  justify-content: flex-end;
+}
+
+.gm-arena-side-title {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.gm-rank-row {
+  flex: 0 0 58%;
+  height: 58%;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  align-content: end;
+}
+
+.gm-arena-unit {
+  align-self: center;
+}
+
+@media (max-width: 560px) {
+  .gm-dungeon-arena {
+    min-height: 420px;
+  }
+
+  .gm-stage-playfield {
+    min-height: 420px;
+    height: 420px;
+    padding: 10px 7px;
+    gap: 5px;
+  }
+
+  .gm-arena-side {
+    gap: 4px;
+  }
+
+  .gm-arena-side-enemies {
+    padding-left: 5px;
+  }
+
+  .gm-rank-row {
+    flex: 0 0 58%;
+    height: 58%;
+    gap: 4px 2px;
+    overflow-y: hidden;
+  }
+
+  .gm-unit-sprite,
+  .gm-unit-sprite-anchor {
+    width: 36px;
+    height: 36px;
+  }
+
+  .gm-unit-shadow {
+    width: 34px;
+    height: 8px;
+  }
+
+  .gm-unit-name-label {
+    min-height: 1.2em;
+    margin-bottom: 0;
+  }
+
+  .unit-name {
+    font-size: 0.62rem;
+    -webkit-line-clamp: 1;
+  }
+
+  .gm-float-gauge {
+    margin-top: 2px;
+  }
+
+  .gm-float-track {
+    height: 4px;
+  }
+
+  .gm-float-num {
+    margin-top: 1px;
+    font-size: 0.56rem;
+  }
+
+  .gm-unit-resources {
+    margin-top: 2px;
+    font-size: 0.56rem;
+    line-height: 1.05;
+  }
+}
+
+@media (max-width: 380px) {
+  .gm-dungeon-arena {
+    min-height: 400px;
+  }
+
+  .gm-stage-playfield {
+    min-height: 400px;
+    height: 400px;
+    padding-right: 5px;
+    padding-left: 5px;
+    gap: 3px;
+  }
+
+  .gm-arena-side-enemies {
+    padding-left: 3px;
+  }
+
+  .gm-unit-sprite,
+  .gm-unit-sprite-anchor {
+    width: 32px;
+    height: 32px;
+  }
+
+  .unit-name,
+  .gm-float-num,
+  .gm-unit-resources {
+    font-size: 0.52rem;
+  }
+}
