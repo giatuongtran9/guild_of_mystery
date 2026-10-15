@@ -449,21 +449,21 @@
     ]
   },
   "battlefields": {
-    "defaultImage": null,
-    "simulatorImage": null,
+    "defaultImage": "data/assets/battlefields/river_dock.png",
+    "simulatorImage": "data/assets/battlefields/abandoned_market.png",
     "encounters": {
-      "A Missing Cat": null,
-      "The Stolen Heirloom": null,
-      "Murder at Bell House": null,
-      "The Whispering Tenant": null,
-      "A Vanished Watchman": null,
-      "The Chapel Below": null,
-      "The Red Ledger": null
+      "A Missing Cat": "data/assets/battlefields/foggy_town.png",
+      "The Stolen Heirloom": "data/assets/battlefields/abandoned_market.png",
+      "Murder at Bell House": "data/assets/battlefields/gothic_cathedral.png",
+      "The Whispering Tenant": "data/assets/battlefields/clockmaker_alley.png",
+      "A Vanished Watchman": "data/assets/battlefields/foggy_town.png",
+      "The Chapel Below": "data/assets/battlefields/sewer_vault.png",
+      "The Red Ledger": "data/assets/battlefields/ruined_temple.png"
     },
     "environments": {
-      "South Wharf": null,
-      "Old Market": null,
-      "Clockmaker’s Row": null
+      "South Wharf": "data/assets/battlefields/river_dock.png",
+      "Old Market": "data/assets/battlefields/abandoned_market.png",
+      "Clockmaker’s Row": "data/assets/battlefields/clockmaker_alley.png"
     }
   },
   "pool": {
