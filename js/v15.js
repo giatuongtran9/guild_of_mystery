@@ -132,9 +132,9 @@ function tryRevive(t, lines=[], state) {
   const rev = (spec.effects||[]).find(e => e.type==='revive' && e.self);
   t._revived = true; t.alive = true; t.inCombat = true;
   // Resurrection is the explicit exception to no_heal's living-unit guard.
-  t.hp = Math.min(t.maxHp,Math.max(1,Math.round(t.maxHp*Number(rev.hpRatio??defaultHpRatio))));
+    t.hp = Math.min(t.maxHp,Math.max(1,Math.round(t.maxHp*Number(rev.hpRatio??defaultHpRatio))));
   ag.sp = rev.consumeAllSP ? 0 : Math.max(spFloor,Math.round((ag.sp||0)*spRatio));
-  if(Number(rev.exhaustionDuration)>0)addStatus(t,'spiritual_exhaustion',Number(rev.exhaustionDuration),spec.id);
+  if(typeof t.sp === 'number') t.sp = ag.sp;
   let msg = rev?.reviveText
     ? rev.reviveText.replace('{name}', t.name).replace('{hp}', t.hp)
     : `${t.name} is revived by ${spec.text.split(' — ')[0]} with ${t.hp} HP.`;
@@ -153,6 +153,23 @@ function tryRevive(t, lines=[], state) {
       hpAfter: t.hp,
       text: msg
     });
+  }
+  if(Number(rev.exhaustionDuration)>0){
+    addStatus(t,'spiritual_exhaustion',Number(rev.exhaustionDuration),spec.id);
+    if(state){
+      const allCombatants = [...(state.allies||[]), ...(state.enemies||[])];
+      for(const u of allCombatants){
+        if(u && u.alive){
+          const uAg = getCombatAgent(u);
+          const currentSp = typeof uAg.sp === 'number' ? uAg.sp : (typeof u.sp === 'number' ? u.sp : 0);
+          const cut = Math.floor(currentSp * 0.5);
+          const nextSp = Math.max(0, currentSp - cut);
+          if(uAg && typeof uAg.sp === 'number') uAg.sp = nextSp;
+          if(typeof u.sp === 'number') u.sp = nextSp;
+        }
+      }
+      lines.push({ text: `Spiritual Exhaustion ripples across the battlefield, reducing everyone's SP by 50%.`, kind: 'status' });
+    }
   }
   return true;
 }
