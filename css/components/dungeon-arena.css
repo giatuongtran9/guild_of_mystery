@@ -1766,3 +1766,58 @@
     margin-bottom: 11px;
   }
 }
+
+/* Mobile readability update: 72px sprites, compact gauges, cleaner team labels. */
+@media (max-width: 560px) {
+  .gm-arena-side .gm-unit-sprite-anchor {
+    flex-basis: 72px;
+    height: 72px;
+  }
+
+  .gm-arena-side .gm-unit-sprite {
+    width: 36px;
+    height: 72px;
+  }
+
+  .gm-arena-side .gm-arena-unit .combat-sprite-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center bottom;
+  }
+
+  .gm-arena-side-enemies {
+    border-bottom: 0;
+  }
+
+  .gm-arena-side-allies .gm-arena-side-title {
+    display: none;
+  }
+
+  .gm-arena-side .gm-arena-unit.enemy .gm-unit-name-label .unit-name {
+    color: #f06464;
+  }
+
+  /* Keep the bars, but remove the numeric values shown with them. */
+  .gm-arena-side .gm-unit-info .gm-float-num {
+    display: none;
+  }
+
+  .gm-rank-enemies {
+    grid-template-rows: repeat(2, 94px);
+    height: 195px;
+    gap: 7px 2px;
+  }
+
+  .gm-arena-side-allies {
+    padding-top: 4px;
+    padding-bottom: 6px;
+  }
+
+  .gm-rank-allies {
+    grid-template-rows: repeat(2, 88px);
+    height: 180px;
+    gap: 4px 2px;
+    margin-bottom: 0;
+  }
+}
