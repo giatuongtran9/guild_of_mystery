@@ -257,20 +257,21 @@ function renderHpStrip(hpMap, allies, enemies, battlefieldImage = '') {
       ${battlefieldImage ? `<img class="gm-battlefield-image" src="${esc(battlefieldImage)}" alt="" onerror="this.hidden=true">` : ''}
     </div>
 
-    <!-- Arena Stage Playfield -->
+    <!-- Guild on the left; enemies on the right. Each side has a 3 x 2 grid. -->
     <div class="gm-stage-playfield">
-      <!-- Enemy formation (opposite / back row) -->
-      <div class="gm-rank-row gm-rank-enemies">
-        ${(enemies || []).map((e, i) => renderCombatEntity(e, 'enemy', i, hpMap)).join('')}
-      </div>
+      <section class="gm-arena-side gm-arena-side-allies" aria-label="Guild members">
+        <h3 class="gm-arena-side-title">Guild</h3>
+        <div class="gm-rank-row gm-rank-allies" role="group" aria-label="Guild formation">
+          ${(allies || []).map((a, i) => renderCombatEntity(a, 'ally', i, hpMap)).join('')}
+        </div>
+      </section>
 
-      <!-- Mid-room distance spacer -->
-      <div class="gm-arena-midline"></div>
-
-      <!-- Ally Beyonders party (foreground / bottom row) -->
-      <div class="gm-rank-row gm-rank-allies">
-        ${(allies || []).map((a, i) => renderCombatEntity(a, 'ally', i, hpMap)).join('')}
-      </div>
+      <section class="gm-arena-side gm-arena-side-enemies" aria-label="Enemies">
+        <h3 class="gm-arena-side-title">Enemies</h3>
+        <div class="gm-rank-row gm-rank-enemies" role="group" aria-label="Enemy formation">
+          ${(enemies || []).map((e, i) => renderCombatEntity(e, 'enemy', i, hpMap)).join('')}
+        </div>
+      </section>
     </div>
   </div>`;
 }
