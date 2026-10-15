@@ -134,4 +134,99 @@ const castEvents = res2v2.events.filter(e => e.type === 'cast' || e.type === 'ba
 assert(castEvents.length > 0, 'Structured cast / basic_attack action events must be present');
 console.log(`✓ Structured events intact (${res2v2.events.length} total events across ${roundEvents.length} rounds, ${castEvents.length} actions)`);
 
+// 7. Test Battle Log UI Enhancements (Multi-Hit, Mythical Form, Round Summary)
+console.log('Checking battle log UI enhancements (multi-hit, mythical form, round summary)...');
+
+// Helper to extract function body from js/ui.js for testing in Node
+const fs = require('fs');
+const uiSrc = fs.readFileSync(__dirname + '/../js/ui.js', 'utf8');
+
+function extractFunc(name) {
+  const match = uiSrc.match(new RegExp('(function\\s+' + name + '\\s*\\([^\\)]*\\)\\s*\\{[\\s\\S]*?\\n\\})\\n\\s*\\n', 'm'))
+    || uiSrc.match(new RegExp('(function\\s+' + name + '\\s*\\([^\\)]*\\)\\s*\\{[\\s\\S]*?\\n\\})\\n\\s*(?:function|const|let|var)', 'm'));
+  if (!match) throw new Error('Could not extract ' + name);
+  return new Function('esc', 'abbrNum', 'return (' + match[1] + ')')((s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))), (n=>Number(n).toLocaleString()));
+}
+
+const flattenTurnRowsFn = extractFunc('flattenTurnRows');
+const renderTurnRowHtmlFn = extractFunc('renderTurnRowHtml');
+
+// Check round summary calculation
+const mockGroupedRounds = [{
+  round: 1,
+  initiative: 'Mock Init',
+  rows: [
+    { actorTeam: 'ally', damages: [{ targetTeam: 'enemy', amount: 150, absorbed: 50 }] },
+    { actorTeam: 'enemy', damages: [{ targetTeam: 'ally', hpLoss: 80 }] }
+  ]
+}];
+const flattened = flattenTurnRowsFn(mockGroupedRounds);
+assert.strictEqual(flattened[0].isRoundHeader, true);
+assert.strictEqual(flattened[0].roundStats.allyHpLoss, 80);
+assert.strictEqual(flattened[0].roundStats.enemyHpLoss, 100);
+
+const headerHtml = renderTurnRowHtmlFn(flattened[0], true);
+assert(headerHtml.includes('round-summary-pill'), 'Header must include round summary pill');
+assert(headerHtml.includes('Allies −80'), 'Header must state ally HP lost');
+assert(headerHtml.includes('Enemies −100'), 'Header must state enemy HP lost');
+console.log('✓ Round summary stats correctly calculate and render ally/enemy damage totals');
+
+// Check multi-hit turn aggregation & collapse
+const multiHitRow = {
+  actorName: 'Gerry',
+  actorTeam: 'ally',
+  ability: 'Flurry of Blows',
+  damages: [
+    { targetName: 'Shadow Beast', targetTeam: 'enemy', amount: 40, damageType: 'slash' },
+    { targetName: 'Shadow Beast', targetTeam: 'enemy', amount: 45, damageType: 'slash' },
+    { targetName: 'Shadow Beast', targetTeam: 'enemy', amount: 50, absorbed: 10, damageType: 'slash' }
+  ]
+};
+const multiHitHtml = renderTurnRowHtmlFn(multiHitRow, true);
+assert(multiHitHtml.includes('b-multihit-group'), 'Multi-hit turn must be wrapped in b-multihit-group details');
+assert(multiHitHtml.includes('3 HITS'), 'Multi-hit summary must display combo badge with count');
+assert(multiHitHtml.includes('−125 HP'), 'Multi-hit summary must aggregate total HP loss (40 + 45 + 40 = 125)');
+assert(multiHitHtml.includes('−10 Shield'), 'Multi-hit summary must aggregate total shield absorbed');
+assert(multiHitHtml.includes('b-multihit-breakdown'), 'Multi-hit turn must contain detailed breakdown');
+assert(multiHitHtml.includes('Hit 1') && multiHitHtml.includes('Hit 2') && multiHitHtml.includes('Hit 3'), 'Breakdown must list individual hits');
+console.log('✓ Multi-hit turns cleanly collapse into aggregated summaries with detailed breakdowns');
+
+// Check single hit preserves standard row
+const singleHitRow = {
+  actorName: 'Gerry',
+  actorTeam: 'ally',
+  ability: 'Heavy Strike',
+  damages: [
+    { targetName: 'Shadow Beast', targetTeam: 'enemy', amount: 80, damageType: 'slash' }
+  ]
+};
+const singleHitHtml = renderTurnRowHtmlFn(singleHitRow, true);
+assert(!singleHitHtml.includes('b-multihit-group'), 'Single hit must not be grouped into details');
+assert(singleHitHtml.includes('−80 HP'), 'Single hit must render standard damage outcome');
+console.log('✓ Single-hit turns preserve standard sub-outcome row format');
+
+// Check Mythical Form styling
+const mythicalStoryRow = {
+  type: 'story',
+  subtype: 'mythical_form',
+  text: 'The Ancient Sun God manifests in radiant glory!'
+};
+const mythicalStoryHtml = renderTurnRowHtmlFn(mythicalStoryRow, false);
+assert(mythicalStoryHtml.includes('b-row-mythical'), 'Mythical story row must have b-row-mythical class');
+assert(mythicalStoryHtml.includes('MYTHICAL FORM AWAKENING'), 'Mythical banner tag must render');
+assert(mythicalStoryHtml.includes('Ancient Sun God'), 'Mythical story text must render');
+
+const mythicalTurnRow = {
+  actorName: 'Amon',
+  actorTeam: 'enemy',
+  ability: 'Mythical Theft',
+  subrows: [
+    { type: 'mythical', text: 'Amon awakens his Mythical Form!' }
+  ]
+};
+const mythicalTurnHtml = renderTurnRowHtmlFn(mythicalTurnRow, false);
+assert(mythicalTurnHtml.includes('mythical-turn') || mythicalTurnHtml.includes('b-row-mythical'), 'Turn with mythical awakening must have mythical row class');
+assert(mythicalTurnHtml.includes('MYTHICAL FORM AWAKENING'), 'Turn must render awakening banner');
+console.log('✓ Mythical Form turns display prominent atmospheric awakening banner and styling');
+
 console.log('All Battle Log unit tests passed successfully!');
