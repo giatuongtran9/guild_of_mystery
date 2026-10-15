@@ -1421,11 +1421,14 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
   else if(e.type==='reflect'){{const d=fxDuration(e,'reflect');actor._reflect={mode:e.mode==='stat'?'stat':'share',stat:String(e.stat||'INT').toUpperCase(),multiplier:Number(e.multiplier||0),share:Number(e.share||0),element:e.element||'physical',incomingCategory:e.incomingCategory||null,negate:!!e.negate,untilTurn:d==='next_turn',rounds:d==='next_turn'?0:Number(d),_grace:!!actor._acting};lines.push({text:`${actor.name} is wrapped in a reflecting ward${e.negate?' that negates incoming damage':''} ${durationText(d)}.`,kind:'status'});}}
   else if(e.type==='taunt'){const d=fxDuration(e,'taunt');if(d==='next_turn')actor._tauntUntilTurn=true;else{actor._taunt=Math.max(actor._taunt||0,Number(d));actor._tauntGrace=!!actor._acting;}lines.push({text:`${actor.name} taunts the enemy ${durationText(d)}.`,kind:'status'});}
   else if(e.type==='sp_siphon'){
-    const drainAmt=Number(e.amount||0);
+    const flatAmt=Number(e.amount||0);
+    const spRatio=Number(e.spRatio||0);
     let totalSiphoned=0;
     for(const t of targets){
       if(!t.alive)continue;
       const tAgent=getCombatAgent(t);
+      const targetMaxSP=Number(tAgent.maxSP||t.maxSP||0);
+      const drainAmt=Math.round(flatAmt+spRatio*targetMaxSP);
       const drained=Math.min(Math.max(0,Number(tAgent.sp)||0),Math.max(0,drainAmt));
       tAgent.sp=Math.max(0,(tAgent.sp||0)-drained);
       t.sp=tAgent.sp;
@@ -1435,7 +1438,15 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
     if(actor!==agent&&actor)actor.sp=agent.sp;
     lines.push({text:`${actor.name} siphons ${totalSiphoned} SP from enemies.`,kind:'status'});
   }
-  else if(e.type==='sp_drain')for(const t of targets){const a=getCombatAgent(t);a.sp=Math.max(0,(a.sp||0)-Number(e.amount||0));t.sp=a.sp;}
+  else if(e.type==='sp_drain')for(const t of targets){
+    const a=getCombatAgent(t);
+    const flatAmt=Number(e.amount||0);
+    const spRatio=Number(e.spRatio||0);
+    const targetMaxSP=Number(a.maxSP||t.maxSP||0);
+    const drainAmt=Math.round(flatAmt+spRatio*targetMaxSP);
+    a.sp=Math.max(0,(a.sp||0)-drainAmt);
+    t.sp=a.sp;
+  }
   else if(e.type==='sp_cost_increase')for(const t of targets){t._spCostMultiplier=Math.max(t._spCostMultiplier||0,Number(e.amount||0));setCombatDuration(t,'_spCostDuration',Number(e.duration||1));}
   else if(e.type==='cooldown_increase')for(const t of targets){t._cooldownPenalty=Math.max(t._cooldownPenalty||0,Number(e.amount||0));setCombatDuration(t,'_cooldownDuration',Number(e.duration||1));}
   else if(e.type==='steal_stat')for(const t of targets){const stat=e.stat,amount=Number(e.amount||0);if(stat==='hp'){const hp=Math.min(Math.max(0,t.hp-1),Math.round(t.maxHp*amount));t.hp-=hp;recordThreadDamage(t,hp,state,lines);const restored=recoverHP(actor,hp);emitCombatEvent(state,{round:state?.currentRound||1,type:'damage',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),amount:hp,damageType:'physical',hpAfter:t.hp,maxHp:t.maxHp});if(restored>0)emitCombatEvent(state,{round:state?.currentRound||1,type:'heal',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:actor.id,targetName:actor.name,targetTeam:teamOf(actor,state),amount:restored,hpAfter:actor.hp,maxHp:actor.maxHp});}else if(['atk','def','int'].includes(stat)){const d=fxDuration(e,'steal_stat');addFx(t,'debuff',stat,1-amount,d);addFx(actor,'buff',stat,1+amount,d);const baseStat=(t.agent?.stats?.[stat]||t[stat]||0);const curStat=Math.max(0,Math.round(baseStat*(1-amount)));emitCombatEvent(state,{round:state?.currentRound||1,type:'status',subtype:'steal_stat',stat:stat.toUpperCase(),curVal:curStat,maxVal:baseStat,actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`Steals ${Math.round(amount*100)}% ${stat.toUpperCase()} from ${t.name} ${durationText(d)}`});}}
@@ -1784,8 +1795,8 @@ function abilityDescription(spec,path,sequence){
     case 'vulnerability_if_buffed':parts.push(`If the target has a stat buff, it takes +${pct} incoming damage ${d}`);break;
     case 'vulnerability_vs_corrupted':parts.push(`An Undead target, or a target with corruption or the Madness Prone trait, takes +${pct} incoming damage ${d}`);break;
     case 'steal_stat':parts.push(e.stat==='hp'?`Removes up to ${pct} enemy Max HP and restores the amount removed to you; cannot kill by this siphon`:`Lowers target ${stat} by ${pct} and raises your own ${stat} by ${pct} ${ruleDuration(fxDuration(e,'steal_stat'))}`);break;
-    case 'sp_drain':parts.push(`Immediately drains up to ${ruleNumber(n)} target SP`);break;
-    case 'sp_siphon':parts.push(`Immediately steals up to ${ruleNumber(n)} SP per target, capped at your maximum SP`);break;
+    case 'sp_drain':parts.push(`Immediately drains up to ${ruleNumber(n)} target SP${Number(e.spRatio)>0?` plus ${rulePercent(e.spRatio)} of target Max SP`:''}`);break;
+    case 'sp_siphon':parts.push(`Immediately steals up to ${ruleNumber(n)} SP${Number(e.spRatio)>0?` plus ${rulePercent(e.spRatio)} target Max SP`:''} per target, capped at your maximum SP`);break;
     case 'sp_cost_increase':parts.push(`Increases target skill SP costs by ${pct} for ${e.duration||1} turns`);break;
     case 'cooldown_increase':parts.push(`Adds ${ruleNumber(n)} turn to newly assigned target skill cooldowns for ${e.duration||1} turns`);break;
     case 'skill_misfire':parts.push(`Target skills have a ${rulePercent(e.chance||.3)} misfire chance for ${e.duration||2} turns; SP and cooldown are still spent`);break;
