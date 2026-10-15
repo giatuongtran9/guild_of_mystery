@@ -3,10 +3,19 @@ const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({ '&':'&amp;','<':'&lt;','>':'
 function flattenTurnRows(groupedRounds) {
   const flattened = [];
   for (const gr of groupedRounds) {
-    flattened.push({ isRoundHeader: true, round: gr.round, initiative: gr.initiative, resources: gr.resources });
-    for (const row of gr.rows) {
-      flattened.push(row);
+    let allyHpLoss = 0;
+    let enemyHpLoss = 0;
+    for (const r of (gr.rows || [])) {
+      const damages = [...(r.damages || []), ...(r.reflects || []), ...(r.reactions || [])];
+      for (const d of damages) {
+        const loss = d.hpLoss ?? Math.max(0, (d.amount || 0) - (d.absorbed || 0));
+        const targetTeam = d.targetTeam || ((d.actorTeam || r.actorTeam) === 'ally' ? 'enemy' : 'ally');
+        if (targetTeam === 'ally') allyHpLoss += loss;
+        else enemyHpLoss += loss;
+      }
     }
+    flattened.push({ isRoundHeader: true, round: gr.round, initiative: gr.initiative, resources: gr.resources, roundStats: { allyHpLoss, enemyHpLoss } });
+    for (const row of gr.rows) flattened.push(row);
   }
   return flattened;
 }
@@ -268,147 +277,68 @@ function renderHpStrip(hpMap, allies, enemies, battlefieldImage = '') {
 
 function renderTurnRowHtml(row, showDetails) {
   if (row.isRoundHeader) {
-    return `<div class="battle-round-title">
-      <span class="round-badge">── Round ${row.round} ──</span>
-      ${showDetails && row.initiative ? `<span class="round-init">Init: ${esc(row.initiative)}</span>` : ''}
-    </div>`;
+    const stats = row.roundStats;
+    const statsHtml = stats && (stats.allyHpLoss > 0 || stats.enemyHpLoss > 0)
+      ? `<span class="round-summary-pill"><span class="ally-dmg" title="Ally HP lost">Allies −${abbrNum(stats.allyHpLoss)}</span><span class="enemy-dmg" title="Enemy HP lost">Enemies −${abbrNum(stats.enemyHpLoss)}</span></span>` : '';
+    return `<div class="battle-round-title"><span class="round-badge">── Round ${row.round} ──</span>${statsHtml}${showDetails && row.initiative ? `<span class="round-init">Init: ${esc(row.initiative)}</span>` : ''}</div>`;
   }
-
-  if (row.isSkip) {
-    return `<div class="b-row skip-row ${row.actorTeam}-turn">
-      <span class="b-actor ${row.actorTeam}">${esc(row.actorName)}</span>
-      <span class="muted">${esc(row.text || 'loses action to status')}</span>
-    </div>`;
-  }
-
-  if (row.isMiss) {
-    return `<div class="b-row ${row.actorTeam}-turn">
-      <span class="b-actor ${row.actorTeam}">${esc(row.actorName)}</span>
-      <span class="b-arrow">→</span>
-      <span class="b-target ${row.targetTeam || 'enemy'}">${esc(row.targetName || 'Enemy')}</span>
-      <span class="b-outcome miss">💨 ${esc(row.text || 'Missed')}</span>
-    </div>`;
-  }
+  if (row.isSkip) return `<div class="b-row skip-row ${row.actorTeam}-turn"><span class="b-actor ${row.actorTeam}">${esc(row.actorName)}</span><span class="muted">${esc(row.text || 'loses action to status')}</span></div>`;
+  if (row.isMiss) return `<div class="b-row ${row.actorTeam}-turn"><span class="b-actor ${row.actorTeam}">${esc(row.actorName)}</span><span class="b-arrow">→</span><span class="b-target ${row.targetTeam || 'enemy'}">${esc(row.targetName || 'Enemy')}</span><span class="b-outcome miss">💨 ${esc(row.text || 'Missed')}</span></div>`;
 
   if (row.type === 'thread' || row.type === 'status') {
     const isTh = row.type === 'thread';
     let extra = '';
     if (showDetails) {
-      if (row.curVal !== undefined && row.maxVal !== undefined && row.stat) {
-        extra = ` (${row.stat} ${abbrNum(row.curVal)}/${abbrNum(row.maxVal)})`;
-      } else if (row.subtype === 'freeze' || row.isFreeze || (row.text && row.text.includes('afflicted with freeze'))) {
-        if (!row.text.includes('DEF') && !row.text.includes('SPEED')) {
-          extra = ` (- 10% DEF/ 20% SPEED)`;
-        }
+      if (row.curVal !== undefined && row.maxVal !== undefined && row.stat) extra = ` (${row.stat} ${abbrNum(row.curVal)}/${abbrNum(row.maxVal)})`;
+      else if (row.subtype === 'freeze' || row.isFreeze || (row.text && row.text.includes('afflicted with freeze'))) {
+        if (!row.text.includes('DEF') && !row.text.includes('SPEED')) extra = ` (- 10% DEF/ 20% SPEED)`;
       }
     }
-    return `<div class="b-row ${isTh ? 'b-subline thread' : 'b-subline status'}">
-      <span>${isTh ? '🧵' : '⏳'} ${esc(row.text)}${extra}</span>
-    </div>`;
+    return `<div class="b-row ${isTh ? 'b-subline thread' : 'b-subline status'}"><span>${isTh ? '🧵' : '⏳'} ${esc(row.text)}${extra}</span></div>`;
   }
-
-  if (row.type === 'death') {
-    return `<div class="b-row death-row">
-      <span>${row.converted?'🧵':'💀'} <b>${esc(row.targetName || 'Unit')}</b> ${row.converted?'is converted into a Marionette.':'falls.'}</span>
-    </div>`;
-  }
-
+  if (row.type === 'death') return `<div class="b-row death-row"><span>${row.converted?'🧵':'💀'} <b>${esc(row.targetName || 'Unit')}</b> ${row.converted?'is converted into a Marionette.':'falls.'}</span></div>`;
   if (row.type === 'story' || row.type === 'system') {
-    return `<div class="b-row" style="color:var(--muted);font-style:italic">
-      <span>${esc(row.text)}</span>
-    </div>`;
+    const mythical = row.subtype === 'mythical_form' || /mythical (creature )?form/i.test(row.text || '');
+    if (mythical) return `<div class="b-row b-row-mythical"><div class="b-mythical-banner"><span class="b-mythical-icon" aria-hidden="true">👁️</span><div class="b-mythical-body"><span class="b-mythical-tag">MYTHICAL FORM AWAKENING</span><span class="b-mythical-desc">${esc(row.text)}</span></div></div></div>`;
+    return `<div class="b-row" style="color:var(--muted);font-style:italic"><span>${esc(row.text)}</span></div>`;
   }
+  if (row.type === 'result') return `<div class="b-row" style="font-weight:bold;color:${row.success ? 'var(--green)' : 'var(--red)'}"><span>${esc(row.text)}</span></div>`;
 
-  if (row.type === 'result') {
-    return `<div class="b-row" style="font-weight:bold;color:${row.success ? 'var(--green)' : 'var(--red)'}">
-      <span>${esc(row.text)}</span>
-    </div>`;
-  }
-
-  // Merged action row (tree style)
   const actorClass = row.actorTeam || 'ally';
-  const damagesHtml = [...(row.damages || []), ...(row.reflects || []), ...(row.reactions || [])].map(d => {
-    const isReaction = (row.reactions || []).includes(d);
-    const targetClass = d.targetTeam || ((d.actorTeam || actorClass) === 'ally' ? 'enemy' : 'ally');
+  const directDamages = row.damages || [];
+  const hitGroups = [];
+  for (const d of directDamages) {
+    const key = d.targetId || d.targetName || 'target';
+    const last = hitGroups[hitGroups.length - 1];
+    if (last && last.key === key) last.hits.push(d);
+    else hitGroups.push({ key, targetId: d.targetId, targetName: d.targetName, targetTeam: d.targetTeam, hits: [d] });
+  }
+  const renderDamage = d => {
     const hpLoss = d.hpLoss ?? Math.max(0, (d.amount || 0) - (d.absorbed || 0));
-    const exact = Number(hpLoss).toLocaleString();
-    const badges = [
-      d.critical ? '<span class="b-badge crit" title="Critical Hit">💥 CRIT</span>' : '',
-      d.trueDamage ? '<span class="b-badge true-dmg" title="True Damage">⚡ TRUE</span>' : '',
-      d.instantKill ? '<span class="b-badge execute" title="Execute">☠️ EXECUTE</span>' : '',
-      d.isReflect ? '<span class="b-badge reflect" style="background:#5e35b1;color:#fff">🔄 REFLECT</span>' : '',
-      d.isDrain ? '<span class="b-badge drain" style="background:#4a1259;color:#f3d7ff">🩸 DRAIN</span>' : ''
-    ].filter(Boolean).join(' ');
-
-    const hpDetail = (showDetails && d.hpAfter !== undefined && d.maxHp) ? ` (HP ${abbrNum(d.hpAfter)}/${abbrNum(d.maxHp)})` : '';
-    return `<div class="b-sub-outcome">
-      <span class="b-tree-branch">↳</span>
-      ${isReaction ? `<span class="b-badge">Reaction · ${esc(d.actorName || 'Unit')}</span>` : ''}
-      <span class="b-arrow">→</span>
-      <span class="b-target ${targetClass}">${esc(d.targetName || 'Target')}</span>
-      <span class="b-outcome damage" title="HP loss: ${exact}">−${abbrNum(hpLoss)} HP <small>${esc(d.damageType || 'dmg')}</small>${hpDetail}</span>
-      ${d.absorbed ? `<span class="b-outcome shield">−${abbrNum(d.absorbed)} Shield</span>` : ''}
-      ${badges}
-    </div>`;
+    const badges = [d.critical ? '<span class="b-badge crit" title="Critical Hit">💥 CRIT</span>' : '', d.trueDamage ? '<span class="b-badge true-dmg" title="True Damage">⚡ TRUE</span>' : '', d.instantKill ? '<span class="b-badge execute" title="Execute">☠️ EXECUTE</span>' : '', d.isReflect ? '<span class="b-badge reflect">🔄 REFLECT</span>' : '', d.isDrain ? '<span class="b-badge drain">🩸 DRAIN</span>' : ''].filter(Boolean).join(' ');
+    const hpDetail = showDetails && d.hpAfter !== undefined && d.maxHp ? ` (HP ${abbrNum(d.hpAfter)}/${abbrNum(d.maxHp)})` : '';
+    return `<div class="b-sub-outcome"><span class="b-tree-branch">↳</span><span class="b-arrow">→</span><span class="b-target ${d.targetTeam || (actorClass === 'ally' ? 'enemy' : 'ally')}">${esc(d.targetName || 'Target')}</span><span class="b-outcome damage" title="HP loss: ${Number(hpLoss).toLocaleString()}">−${abbrNum(hpLoss)} HP <small>${esc(d.damageType || 'dmg')}</small>${hpDetail}</span>${d.absorbed ? `<span class="b-outcome shield">−${abbrNum(d.absorbed)} Shield</span>` : ''}${badges}</div>`;
+  };
+  const directDamageHtml = hitGroups.map(group => {
+    if (group.hits.length === 1) return renderDamage(group.hits[0]);
+    const total = group.hits.reduce((sum, h) => sum + (h.hpLoss ?? Math.max(0, (h.amount || 0) - (h.absorbed || 0))), 0);
+    const absorbed = group.hits.reduce((sum, h) => sum + (h.absorbed || 0), 0);
+    return `<details class="b-multihit-group"><summary class="b-sub-outcome b-multihit-summary"><span class="b-tree-branch">↳</span><span class="b-arrow">→</span><span class="b-target ${group.targetTeam || (actorClass === 'ally' ? 'enemy' : 'ally')}">${esc(group.targetName || 'Target')}</span><span class="b-outcome damage" title="Total HP loss: ${Number(total).toLocaleString()}">−${abbrNum(total)} HP <small>${esc(group.hits[0].damageType || 'dmg')}</small></span>${absorbed ? `<span class="b-outcome shield">−${abbrNum(absorbed)} Shield</span>` : ''}<span class="b-badge combo">⚡ ${group.hits.length} HITS</span><span class="b-multihit-toggle" aria-hidden="true">▾</span></summary><div class="b-multihit-breakdown">${group.hits.map((h, i) => `<div class="b-multihit-item"><span class="b-hit-num">Hit ${i + 1}</span>${renderDamage(h)}</div>`).join('')}</div></details>`;
   }).join('');
-
-  const healsHtml = (row.heals || []).map(h => {
-    return `<div class="b-sub-outcome">
-      <span class="b-tree-branch">↳</span>
-      ${h.actorId && h.actorId !== row.actorId ? `<span class="b-badge">Recovery · ${esc(h.actorName || 'Unit')}</span>` : ''}
-      <span class="b-arrow">→</span>
-      <span class="b-target ${h.targetTeam || actorClass}">${esc(h.targetName || 'Target')}</span>
-      <span class="b-outcome heal" title="Recovered ${h.amount} HP">+${abbrNum(h.amount)} HP</span>
-    </div>`;
-  }).join('');
-
-  const shieldsHtml = (row.shields || []).map(s => {
-    return `<div class="b-sub-outcome">
-      <span class="b-tree-branch">↳</span>
-      ${s.actorId && s.actorId !== row.actorId ? `<span class="b-badge">Shield · ${esc(s.actorName || 'Unit')}</span>` : ''}
-      <span class="b-arrow">→</span>
-      <span class="b-target ${s.targetTeam || actorClass}">${esc(s.targetName || 'Target')}</span>
-      <span class="b-outcome shield" title="Gained ${s.amount} shield">🛡️ +${abbrNum(s.amount)} Shield</span>
-    </div>`;
-  }).join('');
-
-  const detailsHtml = showDetails && (row.costSP !== undefined || row.cooldown !== undefined)
-    ? `<span class="b-details-info">[Cost: ${row.costHP?`${row.costHP} HP`:`${row.costSP || 0} SP`} | ${row.cooldown || 0} CD]</span>`
-    : '';
-
+  const otherDamagesHtml = [...(row.reflects || []), ...(row.reactions || [])].map(d => `${d.actorName && (row.reactions || []).includes(d) ? `<span class="b-badge">Reaction · ${esc(d.actorName)}</span>` : ''}${renderDamage(d)}`).join('');
+  const damagesHtml = directDamageHtml + otherDamagesHtml;
+  const healsHtml = (row.heals || []).map(h => `<div class="b-sub-outcome"><span class="b-tree-branch">↳</span>${h.actorId && h.actorId !== row.actorId ? `<span class="b-badge">Recovery · ${esc(h.actorName || 'Unit')}</span>` : ''}<span class="b-arrow">→</span><span class="b-target ${h.targetTeam || actorClass}">${esc(h.targetName || 'Target')}</span><span class="b-outcome heal" title="Recovered ${h.amount} HP">+${abbrNum(h.amount)} HP</span></div>`).join('');
+  const shieldsHtml = (row.shields || []).map(s => `<div class="b-sub-outcome"><span class="b-tree-branch">↳</span>${s.actorId && s.actorId !== row.actorId ? `<span class="b-badge">Shield · ${esc(s.actorName || 'Unit')}</span>` : ''}<span class="b-arrow">→</span><span class="b-target ${s.targetTeam || actorClass}">${esc(s.targetName || 'Target')}</span><span class="b-outcome shield">🛡️ +${abbrNum(s.amount)} Shield</span></div>`).join('');
+  const detailsHtml = showDetails && (row.costSP !== undefined || row.cooldown !== undefined) ? `<span class="b-details-info">[Cost: ${row.costHP ? `${row.costHP} HP` : `${row.costSP || 0} SP`} | ${row.cooldown || 0} CD]</span>` : '';
   const subrows = (row.subrows || []).filter(s => s.type !== 'reaction' || !(row.reactions || []).length);
-  const sublinesHtml = subrows.length
-    ? `<div class="b-sublines">${subrows.map(s => {
-        let extra = '';
-        if (showDetails) {
-          if (s.curVal !== undefined && s.maxVal !== undefined && s.stat) {
-            extra = ` (${s.stat} ${abbrNum(s.curVal)}/${abbrNum(s.maxVal)})`;
-          } else if (s.subtype === 'freeze' || s.isFreeze || (s.text && s.text.includes('afflicted with freeze'))) {
-            if (!s.text.includes('DEF') && !s.text.includes('SPEED')) {
-              extra = ` (- 10% DEF/ 20% SPEED)`;
-            }
-          }
-        }
-        return `<span class="b-subline ${s.type==='thread'?'thread':'status'}">${s.type==='thread'?'🧵':s.type==='mythical'?'✨':s.type==='reflect'?'↩️':'•'} ${esc(s.text)}${extra}</span>`;
-      }).join('')}</div>`
-    : '';
-
-  const deathsHtml = (row.deaths && row.deaths.length)
-    ? row.deaths.map(d => `<div class="b-sublines"><span class="b-subline" style="color:#ff8b8b;font-weight:600">${d.converted?'🧵':'💀'} ${esc(d.targetName)} ${d.converted?'is converted into a Marionette.':'falls.'}</span></div>`).join('')
-    : '';
-
+  const mythicalSubrows = subrows.filter(s => s.type === 'mythical');
+  const normalSubrows = subrows.filter(s => s.type !== 'mythical');
+  const mythicalHtml = mythicalSubrows.map(m => `<div class="b-mythical-banner"><span class="b-mythical-icon" aria-hidden="true">👁️</span><div class="b-mythical-body"><span class="b-mythical-tag">MYTHICAL FORM AWAKENING</span><span class="b-mythical-desc">${esc(m.text)}</span></div></div>`).join('');
+  const sublinesHtml = normalSubrows.length ? `<div class="b-sublines">${normalSubrows.map(s => { let extra=''; if(showDetails){ if(s.curVal!==undefined&&s.maxVal!==undefined&&s.stat)extra=` (${s.stat} ${abbrNum(s.curVal)}/${abbrNum(s.maxVal)})`; else if(s.subtype==='freeze'||s.isFreeze||(s.text&&s.text.includes('afflicted with freeze'))){if(!s.text.includes('DEF')&&!s.text.includes('SPEED'))extra=' (- 10% DEF/ 20% SPEED)';}} return `<span class="b-subline ${s.type==='thread'?'thread':'status'}">${s.type==='thread'?'🧵':s.type==='reflect'?'↩️':'•'} ${esc(s.text)}${extra}</span>`;}).join('')}</div>` : '';
+  const deathsHtml = (row.deaths || []).map(d => `<div class="b-sublines"><span class="b-subline" style="color:#ff8b8b;font-weight:600">${d.converted?'🧵':'💀'} ${esc(d.targetName)} ${d.converted?'is converted into a Marionette.':'falls.'}</span></div>`).join('');
   const hasOutcomes = !!(damagesHtml || healsHtml || shieldsHtml);
-
-  return `<div class="b-row ${actorClass}-turn">
-    <div class="b-turn-header">
-      <span class="b-actor ${actorClass}">${esc(row.actorName)}</span>
-      <span class="b-ability">· ${esc(row.ability)}</span>
-      ${detailsHtml}
-    </div>
-    ${hasOutcomes ? `<div class="b-outcomes-block">${damagesHtml}${healsHtml}${shieldsHtml}</div>` : ''}
-    ${sublinesHtml}
-    ${deathsHtml}
-  </div>`;
+  const isMythicalTurn = mythicalSubrows.length > 0 || (row.reactions || []).some(r => r.subtype === 'mythical_authority') || /mythical/i.test(row.ability || '');
+  return `<div class="b-row ${actorClass}-turn ${isMythicalTurn ? 'b-row-mythical mythical-turn' : ''}"><div class="b-turn-header"><span class="b-actor ${actorClass}">${esc(row.actorName)}</span><span class="b-ability">· ${esc(row.ability)}</span>${detailsHtml}</div>${mythicalHtml}${hasOutcomes ? `<div class="b-outcomes-block">${damagesHtml}${healsHtml}${shieldsHtml}</div>` : ''}${sublinesHtml}${deathsHtml}</div>`;
 }
 
 function battleOutcomeLabel(outcome, success, isSim = false) {
