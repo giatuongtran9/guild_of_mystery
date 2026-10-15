@@ -1749,3 +1749,20 @@
     line-height: 1;
   }
 }
+
+/* Small mobile fit tweak: enlarge every unit slightly and lift the Guild row. */
+@media (max-width: 560px) {
+  .gm-arena-side .gm-unit-sprite-anchor {
+    flex-basis: 44px;
+    height: 44px;
+  }
+
+  .gm-arena-side .gm-unit-sprite {
+    width: 44px;
+    height: 44px;
+  }
+
+  .gm-rank-allies {
+    margin-bottom: 11px;
+  }
+}
