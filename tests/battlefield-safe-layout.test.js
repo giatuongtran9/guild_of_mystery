@@ -10,7 +10,7 @@ const source = fs.readFileSync(path.join(root, 'js/ui.js'), 'utf8').split('// ==
 const styles = Array.from(fs.readFileSync(path.join(root, 'index.html'), 'utf8').matchAll(/href="(css\/[^"?]+\.css)/g), m => fs.readFileSync(path.join(root, m[1]), 'utf8')).join('\n');
 const contracts = JSON.parse(fs.readFileSync(path.join(root, 'data/contracts.json'), 'utf8'));
 const backgrounds = ['abandoned_market', 'clockmaker_alley', 'foggy_town', 'gothic_cathedral', 'river_dock', 'ruined_temple', 'sewer_vault'];
-// Bounds independently reviewed against the original scene artwork. Geometry
+// Bounds independently reviewed against the portrait scene artwork. Geometry
 // assertions must not trust the renderer to declare its own safe area.
 const clearFloor = Object.fromEntries(backgrounds.map(name => [name, [0.04, 0.23, 0.96, 0.97]]));
 // The temple's pillar bases extend below the other scenes' clear-floor edge.
@@ -110,6 +110,8 @@ async function geometry(page) {
     return {
       frame, canvas, imageBox, sourceGround, ground, crowded: arena.classList.contains('crowded'),
       imageRatio: imageBox ? image.naturalWidth / image.naturalHeight : null,
+      imageFit: imageBox ? getComputedStyle(image).objectFit : null,
+      bottomGap: parseFloat(getComputedStyle(arena).getPropertyValue('--gm-guild-bottom-gap')),
       scroll: { width: arena.scrollWidth, height: arena.scrollHeight, clientWidth: arena.clientWidth, clientHeight: arena.clientHeight, keyboardFocusable: arena.tabIndex === 0 },
       documentWidth: document.documentElement.scrollWidth,
       cards: Array.from(arena.querySelectorAll('.gm-arena-unit'), card => {
@@ -124,6 +126,7 @@ async function geometry(page) {
           isFallback: visibleArt !== art,
           display: getComputedStyle(card).display, visibility: getComputedStyle(card).visibility,
           info: box(card.querySelector('.gm-unit-info')),
+          nameBorderBottom: parseFloat(getComputedStyle(card.querySelector('.gm-unit-name-label')).borderBottomWidth),
           gauges: Array.from(card.querySelectorAll('.gm-float-track'), box),
           inExpectedFormation: !!card.closest(card.dataset.unitRole === 'companion' ? '.gm-companion-formation' : '.gm-character-formation')
         };
@@ -143,9 +146,12 @@ function check(result, width, allies, enemies) {
   assert.equal(result.cards.length, allies.length + enemies.length, 'every deployed unit has a card');
   assert(result.ground.right > result.ground.left && result.ground.bottom > result.ground.top, 'safe floor exists on complete canvas');
   assert(result.scroll.keyboardFocusable, 'battlefield panning is keyboard accessible');
+  assert(Math.abs(result.canvas.width - result.scroll.clientWidth) < 1, 'battlefield fills the current responsive box without side gaps');
+  assert(result.scroll.width <= result.scroll.clientWidth + 1, 'formations require no horizontal panning');
+  assert.equal(result.bottomGap, width <= 560 ? 32 : 48, 'responsive bottom clearance matches the approved spacing');
   if (result.imageBox) {
-    for (const side of ['left', 'top', 'right', 'bottom']) assert(Math.abs(result.imageBox[side] - result.canvas[side]) < 1, 'complete image fills the proportional canvas without cropping');
-    assert(Math.abs(result.canvas.width / result.canvas.height - result.imageRatio) < .001, 'image retains its natural proportions');
+    for (const side of ['left', 'top', 'right', 'bottom']) assert(Math.abs(result.imageBox[side] - result.canvas[side]) < 1, 'complete image fills the responsive canvas without cropping or side gaps');
+    assert.equal(result.imageFit, 'fill', 'scenery stretches to the complete canvas instead of leaving letterboxing');
     assert(Math.abs(result.imageRatio - 9 / 16) < .002, 'battlefield artwork uses the approved 9:16 portrait format');
   }
   const expected = new Map([...allies, ...enemies].map(unit => [unit.id, unit]));
@@ -161,6 +167,7 @@ function check(result, width, allies, enemies) {
     inside(card.card, result.ground, `${card.id} complete card on floor`);
     inside(card.art, card.sprite, `${card.id} artwork fits its square`);
     inside(card.info, card.card, `${card.id} information remains visible`);
+    assert.equal(card.nameBorderBottom, 0, `${card.id} has no mythical name underline`);
     for (const gauge of card.gauges) {
       assert(gauge.width > 0 && gauge.height > 0, `${card.id} gauge remains visible`);
       inside(gauge, card.card, `${card.id} gauge fits card`);
@@ -175,8 +182,12 @@ function check(result, width, allies, enemies) {
   const enemy = result.cards.filter(card => card.team === 'enemy'), guild = result.cards.filter(card => card.team === 'ally');
   if (enemy.length) assert(Math.abs(Math.min(...enemy.map(card => card.card.top)) - (result.ground.top + 8)) < 1,
     'enemy formation stays anchored to the top of the clear floor with 8px padding');
-  if (guild.length) assert(Math.abs(Math.max(...guild.map(card => card.card.bottom)) - (result.ground.bottom - 8)) < 1,
-    'guild formation stays anchored to the bottom of the clear floor with 8px padding');
+  if (guild.length) {
+    const expectedClearance = Math.max(result.bottomGap, result.canvas.height * (1 - result.sourceGround.bottom) + 8);
+    const actualClearance = result.canvas.bottom - Math.max(...guild.map(card => card.card.bottom));
+    assert(Math.abs(actualClearance - expectedClearance) < 1,
+      'lowest complete guild card, including bars, leaves the requested bottom room while staying on the clear floor');
+  }
   if (enemy.length && guild.length) assert(Math.max(...enemy.map(card => card.card.bottom)) + 16 <= Math.min(...guild.map(card => card.card.top)) + 1,
     'opposing formations retain at least 16px separation at every breakpoint');
 }
@@ -263,6 +274,31 @@ async function test(label, fn) {
         assert(await page.evaluate(() => window.originalCard === document.querySelector('[data-unit-id="ally_character_0"]') && window.originalImage === window.originalCard.querySelector('img')));
         assert((await page.locator('[data-unit-id="ally_character_0"] img').getAttribute('src')).includes('fool_mythical'));
         assert(await page.locator('[data-unit-id="enemy_character_1"]').evaluate(node => node.classList.contains('dead')));
+        assert.deepEqual(errors, []);
+      } finally { await page.close(); }
+    });
+    await test('short phones with reserved scrollbars fill the box and preserve vertical reading position', async () => {
+      const { page, errors } = await pageFixture(browser, 390);
+      try {
+        await page.setViewportSize({ width: 390, height: 568 });
+        await page.addStyleTag({ content: '.gm-dungeon-arena { scrollbar-gutter: stable; }' });
+        const allies = units('ally', 12), enemies = units('enemy', 12);
+        await render(page, allies, enemies, 'abandoned_market', true);
+        const result = await geometry(page); check(result, 390, allies, enemies);
+        assert(result.scroll.height > result.scroll.clientHeight, 'crowded short screen needs vertical panning');
+        await checkPanReachability(page);
+        const position = await page.evaluate(() => {
+          const arena = document.querySelector('.gm-dungeon-arena');
+          arena.scrollTop = arena.scrollHeight;
+          const before = arena.scrollTop;
+          window.fixtureProps = { ...window.fixtureProps, shownCount: 1, flattenedRows: [{ type: 'system', text: 'The battle continues.' }] };
+          updateBattleLogComponent(document.querySelector('.battle-log-wrap'), window.fixtureProps);
+          return { before, after: arena.scrollTop };
+        });
+        assert(Math.abs(position.before - position.after) < 1, 'playback preserves the battlefield scroll position');
+        await page.setViewportSize({ width: 320, height: 480 });
+        await settle(page); check(await geometry(page), 320, allies, enemies);
+        await checkPanReachability(page);
         assert.deepEqual(errors, []);
       } finally { await page.close(); }
     });
