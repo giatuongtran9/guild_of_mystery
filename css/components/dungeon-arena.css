@@ -211,6 +211,129 @@
   height: 100%;
 }
 
+/* Playback owns cue lifetimes. Keep feedback inside the artwork anchor so
+   character sizes, formation geometry and gauge positions never change. */
+.gm-unit-sprite-anchor:is(.gm-cue-actor, .gm-cue-target, .gm-cue-damage,
+  .gm-cue-heal, .gm-cue-shield, .gm-cue-break, .gm-cue-miss, .gm-cue-control,
+  .gm-cue-mythical, .gm-cue-arrive, .gm-cue-death, .gm-cue-revive)::after {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  inset: 2px;
+  box-sizing: border-box;
+  border: 1px solid var(--gm-cue-color, #d8e6ef);
+  border-radius: 3px;
+  background: var(--gm-cue-wash, transparent);
+  box-shadow: inset 0 0 8px var(--gm-cue-glow, transparent);
+  pointer-events: none;
+}
+
+.gm-unit-sprite-anchor.gm-cue-actor {
+  --gm-cue-color: #d8e6ef;
+  --gm-cue-glow: rgba(186, 216, 235, 0.22);
+}
+
+.gm-unit-sprite-anchor.gm-cue-target {
+  --gm-cue-color: #edaf9a;
+  --gm-cue-glow: rgba(225, 117, 89, 0.2);
+}
+
+.gm-unit-sprite-anchor.gm-cue-damage {
+  --gm-cue-color: #f39991;
+  --gm-cue-wash: rgba(225, 69, 60, 0.17);
+  --gm-cue-glow: rgba(225, 69, 60, 0.36);
+}
+
+.gm-unit-sprite-anchor.gm-cue-heal,
+.gm-unit-sprite-anchor.gm-cue-revive {
+  --gm-cue-color: #9ee5b3;
+  --gm-cue-wash: rgba(76, 179, 111, 0.12);
+  --gm-cue-glow: rgba(76, 179, 111, 0.34);
+}
+
+.gm-unit-sprite-anchor.gm-cue-shield {
+  --gm-cue-color: #b6ddf2;
+  --gm-cue-wash: rgba(98, 169, 213, 0.12);
+  --gm-cue-glow: rgba(98, 169, 213, 0.36);
+}
+
+.gm-unit-sprite-anchor.gm-cue-break {
+  --gm-cue-color: #d4e4ef;
+  --gm-cue-wash: rgba(177, 209, 232, 0.12);
+  --gm-cue-glow: rgba(177, 209, 232, 0.25);
+}
+
+.gm-unit-sprite-anchor.gm-cue-break::after,
+.gm-unit-sprite-anchor.gm-cue-miss::after {
+  border-style: dashed;
+}
+
+.gm-unit-sprite-anchor.gm-cue-miss {
+  --gm-cue-color: #c5cfdb;
+  --gm-cue-wash: transparent;
+  --gm-cue-glow: transparent;
+}
+
+.gm-unit-sprite-anchor.gm-cue-control {
+  --gm-cue-color: #ccafe9;
+  --gm-cue-wash: rgba(137, 96, 182, 0.17);
+  --gm-cue-glow: rgba(137, 96, 182, 0.35);
+}
+
+.gm-unit-sprite-anchor.gm-cue-mythical {
+  --gm-cue-color: #e4c5f4;
+  --gm-cue-wash: rgba(175, 119, 207, 0.17);
+  --gm-cue-glow: rgba(194, 147, 223, 0.45);
+}
+
+.gm-unit-sprite-anchor.gm-cue-arrive {
+  --gm-cue-color: #b7d4df;
+  --gm-cue-wash: rgba(121, 170, 188, 0.12);
+  --gm-cue-glow: rgba(121, 170, 188, 0.32);
+}
+
+.gm-unit-sprite-anchor.gm-cue-death {
+  --gm-cue-color: #ad9b9b;
+  --gm-cue-wash: rgba(48, 26, 30, 0.24);
+  --gm-cue-glow: rgba(36, 18, 23, 0.4);
+}
+
+/* Effects are independent of the formation DOM and cannot change its layout.
+   Coordinates supplied by playback identify each effect's center. */
+.gm-battle-fx-layer {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.gm-battle-fx,
+.gm-battle-fx-number {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.gm-battle-fx {
+  width: 8px;
+  height: 8px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 2px;
+  background: var(--gm-fx-color, #dce9f0);
+  box-shadow: 0 0 5px var(--gm-fx-color, #dce9f0);
+}
+
+.gm-battle-fx-number {
+  max-width: calc(100% - 8px);
+  color: var(--gm-fx-color, #f0e9df);
+  font: 700 13px/1.2 system-ui, sans-serif;
+  white-space: nowrap;
+  text-shadow: -1px -1px 0 #11151a, 1px -1px 0 #11151a,
+    -1px 1px 0 #11151a, 1px 1px 0 #11151a, 0 2px 3px #11151a;
+}
+
 .gm-arena-unit .combat-sprite-img {
   display: block;
   flex: 0 0 100%;
@@ -297,6 +420,17 @@
 .gm-float-fill {
   height: 100%;
   transition: width 0.3s ease;
+}
+
+/* Ordered playback sets each intermediate value at its own impact. Letting a
+   previous width transition continue would blur those event boundaries. */
+.battle-log-wrap[data-animated="true"] .gm-float-fill,
+.battle-log-wrap[data-paused="true"] .gm-float-fill {
+  transition: none;
+}
+
+.battle-log-wrap[data-paused="true"] .typing {
+  animation: none;
 }
 
 .gm-float-fill.hp {
@@ -404,8 +538,16 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .battle-log-wrap .typing {
+    animation: none;
+  }
+
   .gm-float-fill,
-  .gm-arena-unit {
+  .gm-arena-unit,
+  .gm-unit-sprite,
+  .gm-unit-sprite-anchor::after,
+  .gm-battle-fx,
+  .gm-battle-fx-number {
     transition: none;
   }
 }

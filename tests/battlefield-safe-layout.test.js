@@ -314,6 +314,135 @@ async function test(label, fn) {
         assert.deepEqual(errors, []);
       } finally { await page.close(); }
     });
+    for (const width of [390, 1440]) await test(`real combat motion preserves crowded formation geometry at ${width}px`, async () => {
+      const { page, errors } = await pageFixture(browser, width);
+      try {
+        await page.setViewportSize({ width, height: 568 });
+        const allies = units('ally', 12), enemies = units('enemy', 12);
+        await render(page, allies, enemies, 'abandoned_market', true);
+        check(await geometry(page), width, allies, enemies);
+        for (const id of ['enemy_character_0', 'enemy_companion_0']) {
+          const result = await page.evaluate(id => {
+            const wrap = document.querySelector('.battle-log-wrap');
+            const arena = wrap.querySelector('.gm-dungeon-arena');
+            const card = wrap.querySelector(`[data-unit-id="${id}"]`);
+            const anchor = card.querySelector('.gm-unit-sprite-anchor');
+            const rect = node => {
+              const r = node.getBoundingClientRect();
+              return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, height: r.height };
+            };
+            const capture = () => ({
+              card: rect(card), anchor: rect(anchor), sprite: rect(card.querySelector('.gm-unit-sprite')),
+              art: rect(card.querySelector('.combat-sprite-img')),
+              gauges: [...card.querySelectorAll('.gm-float-track')].map(rect),
+              cards: [...wrap.querySelectorAll('.gm-arena-unit')].map(rect),
+              scrollTop: arena.scrollTop, scrollLeft: arena.scrollLeft
+            });
+            // Both the source artwork and its companion row must actually be
+            // visible: the effects controller deliberately skips offscreen work.
+            arena.scrollIntoView({ block: 'start' });
+            const frame = rect(arena), selected = rect(card);
+            arena.scrollTop += selected.top - frame.top - (arena.clientHeight - selected.height) / 2;
+            const before = capture();
+            const effects = createBattleEffects(wrap);
+            const row = { type: 'action', actorId: id, actorName: id, actorTeam: 'enemy', attackKind: 'gun',
+              timeline: [{ type: 'damage', event: { actorId: id, targetId: id, hpLoss: 10, amount: 10, damageType: 'physical' } }] };
+            const playing = { turnRows: [row], currentTurn: 0, eventCount: null };
+            effects.show(advanceBattlePresentation(playing));
+            effects.pause();
+            const animations = arena.getAnimations({ subtree: true });
+            for (const animation of animations) animation.currentTime = Number(animation.effect.getTiming().duration) / 2;
+            const during = capture();
+            const actorCue = anchor.classList.contains('gm-cue-actor');
+            const pointerEvents = [...wrap.querySelectorAll('.gm-battle-fx-layer, .gm-battle-fx, .gm-battle-fx-number')]
+              .map(node => getComputedStyle(node).pointerEvents);
+            const canvas = rect(wrap.querySelector('.gm-battlefield-canvas'));
+            const ground = { left: canvas.left + canvas.width * .04, right: canvas.left + canvas.width * .96,
+              top: canvas.top + canvas.height * .23, bottom: canvas.top + canvas.height * .97 };
+            // A subsequent hit replaces the cast/projectile and produces a
+            // number, testing cleanup of both kinds of transient overlay.
+            effects.show(advanceBattlePresentation(playing));
+            effects.pause();
+            const number = wrap.querySelector('.gm-battle-fx-number');
+            const damageCue = anchor.classList.contains('gm-cue-damage');
+            const numberPointer = number && getComputedStyle(number).pointerEvents;
+            effects.clear();
+            return { before, during, ground, actorCue, damageCue, pointerEvents, numberPointer,
+              animationCount: animations.length, restored: capture(),
+              remainingEffects: wrap.querySelectorAll('.gm-battle-fx-layer, [class*="gm-cue-"]').length,
+              remainingAnimations: arena.getAnimations({ subtree: true }).length,
+              horizontalOverflow: arena.scrollWidth - arena.clientWidth,
+              documentWidth: document.documentElement.scrollWidth };
+          }, id);
+          const size = id.includes('companion') ? (width <= 560 ? 28 : 40) : width <= 560 ? 64 : 96;
+          assert.equal(result.before.anchor.width, size, `${id} retains its approved ${size}px anchor`);
+          assert.equal(result.before.anchor.height, size);
+          assert(result.animationCount > 0, 'a visible cast creates real browser animations');
+          assert(result.actorCue && result.damageCue, 'cast and hit display their own state cues');
+          assert.notDeepEqual(result.during.sprite, result.before.sprite, 'midpoint captures moving artwork rather than a finished animation');
+          inside(result.during.art, result.during.anchor, `${id} moving artwork remains inside its fixed anchor`, .1);
+          inside(result.during.art, result.ground, `${id} moving artwork remains on the clear floor`, .1);
+          assert.deepEqual(result.during.cards, result.before.cards, 'all formation cards remain stationary during the cast');
+          assert.deepEqual(result.during.gauges, result.before.gauges, 'gauges do not follow sprite motion');
+          assert.equal(result.during.scrollTop, result.before.scrollTop, 'cast preserves explicit vertical reading position');
+          assert.equal(result.during.scrollLeft, result.before.scrollLeft, 'cast preserves horizontal position');
+          assert(result.pointerEvents.length > 1 && result.pointerEvents.every(value => value === 'none'), 'projectile and effect layer cannot intercept input');
+          assert.equal(result.numberPointer, 'none', 'damage numbers cannot intercept input');
+          assert.equal(result.remainingEffects, 0, 'clear removes overlays and cue classes');
+          assert.equal(result.remainingAnimations, 0, 'clear cancels browser animations');
+          assert.deepEqual(result.restored, result.before, 'clear restores the original artwork and stable formation');
+          assert(result.horizontalOverflow <= 1 && result.documentWidth <= width, 'motion introduces no horizontal overflow');
+        }
+        assert.deepEqual(errors, [], 'motion fixture has no browser exceptions');
+      } finally { await page.close(); }
+    });
+    await test('reduced-motion combat keeps ordered HP feedback and cues without browser animations', async () => {
+      const { page, errors } = await pageFixture(browser, 390);
+      try {
+        await page.emulateMedia({ reducedMotion: 'reduce' });
+        const allies = units('ally', 12), enemies = units('enemy', 12);
+        await render(page, allies, enemies, 'abandoned_market', true);
+        const result = await page.evaluate(() => {
+          const wrap = document.querySelector('.battle-log-wrap'), arena = wrap.querySelector('.gm-dungeon-arena');
+          arena.scrollIntoView({ block: 'start' });
+          arena.scrollTop = 0;
+          const target = wrap.querySelector('[data-unit-id="enemy_character_0"]');
+          const effects = createBattleEffects(wrap);
+          const event = { actorId: 'enemy_character_0', targetId: 'enemy_character_0',
+            actorName: 'enemy character 0', targetName: 'enemy character 0', hpLoss: 10, hpAfter: 90, amount: 10, damageType: 'physical' };
+          const row = { type: 'action', actorId: event.actorId, actorName: event.actorName, actorTeam: 'enemy',
+            ability: 'Fixture strike', timeline: [{ type: 'damage', event }] };
+          const playing = { turnRows: [row], currentTurn: 0, eventCount: null };
+          const refresh = () => {
+            window.fixtureProps = { ...window.fixtureProps, flattenedRows: playing.turnRows,
+              shownCount: playing.currentTurn, eventCount: playing.eventCount, animated: true };
+            updateBattleLogComponent(wrap, window.fixtureProps);
+          };
+          const cast = advanceBattlePresentation(playing); refresh(); effects.show(cast);
+          const castHp = target.querySelector('.gm-float-fill.hp').style.width;
+          const castCue = target.querySelector('.gm-unit-sprite-anchor').classList.contains('gm-cue-actor');
+          const impact = advanceBattlePresentation(playing); refresh(); effects.show(impact);
+          const result = { castHp, castCue, impactHp: target.querySelector('.gm-float-fill.hp').style.width,
+            impactCue: target.querySelector('.gm-unit-sprite-anchor').classList.contains('gm-cue-damage'),
+            number: wrap.querySelector('.gm-battle-fx-number')?.textContent,
+            animations: arena.getAnimations({ subtree: true }).length,
+            transition: getComputedStyle(target.querySelector('.gm-float-fill.hp')).transitionDuration,
+            hasProjectile: !!wrap.querySelector('.gm-battle-fx') };
+          effects.clear();
+          result.remainingEffects = wrap.querySelectorAll('.gm-battle-fx-layer, [class*="gm-cue-"]').length;
+          return result;
+        });
+        assert.equal(result.castHp, '100%', 'casting does not expose future impact HP');
+        assert.equal(result.impactHp, '90%', 'impact applies its recorded HP despite reduced motion');
+        assert(result.castCue && result.impactCue, 'reduced motion retains actor and impact cues');
+        assert.equal(result.number, '−10', 'readable damage feedback remains available');
+        assert.equal(result.animations, 0, 'reduced motion creates no browser animations');
+        assert.equal(result.transition, '0s', 'HP does not animate through intermediate values');
+        assert.equal(result.hasProjectile, false, 'reduced motion omits projectile movement');
+        assert.equal(result.remainingEffects, 0, 'reduced-motion feedback can be cleared');
+        assert.deepEqual(errors, [], 'reduced-motion fixture has no browser exceptions');
+      } finally { await page.close(); }
+    });
   } finally { await browser.close(); }
   if (output) { fs.mkdirSync(output, { recursive: true }); fs.writeFileSync(path.join(output, 'battlefield-safe-layout.json'), JSON.stringify(measurements, null, 2) + '\n'); }
   console.log(`\n${passed} passed, ${failed} failed`);
