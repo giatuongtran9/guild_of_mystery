@@ -25,6 +25,7 @@ async function fixture(sim = false) {
   w.setInterval=()=>1;w.clearInterval=()=>{};w.scrollTo = (x, y) => { w.scrollX = x; w.scrollY = y; };
   let timerId = 0;
   const timers = new Map();
+  w.performance.now = () => 0;
   w.setTimeout = (fn, delay) => { timers.set(++timerId, { fn, delay }); return timerId; };
   w.clearTimeout = id => timers.delete(id);
   const tick = () => {
@@ -125,10 +126,10 @@ async function main() {
   });
   await test('speed changes preserve all battle nodes and replace one timer', f => {
     f.w.G9.setTickerSpeed(2); assertStable(f); assert.equal(f.timers.size, 1);
-    assert.equal(f.timers.values().next().value.delay, 250);
+    assert.equal(f.timers.values().next().value.delay, 150);
     assert.equal(f.nodes.toolbar.querySelector('.speed-controls button.active').textContent, '2x');
     f.w.G9.setTickerSpeed(4); assertStable(f); assert.equal(f.timers.size, 1);
-    assert.equal(f.timers.values().next().value.delay, 100);
+    assert.equal(f.timers.values().next().value.delay, 75);
   });
   await test('Details toggle updates row detail text while preserving portraits and reading position', f => {
     for (let i = 0; i < 35; i++) f.tick();

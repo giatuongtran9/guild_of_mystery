@@ -32,6 +32,7 @@ async function browserFixture(outcome) {
   w.setInterval=()=>1;w.clearInterval=()=>{};w.scrollTo = () => {};
   let id = 0;
   const timers = new Map();
+  w.performance.now = () => 0;
   w.setTimeout = (fn, delay) => { timers.set(++id, { fn, delay }); return id; };
   w.clearTimeout = timer => timers.delete(timer);
   const save = g.newGame();
@@ -224,7 +225,7 @@ async function main() {
   }, true);
   await test('paused speed changes do not start timer; Read pace stays available', f => {
     f.w.G9.toggleTickerPause(); f.w.G9.setTickerSpeed(.5); assert.equal(f.timers.size, 0);
-    f.w.G9.toggleTickerPause(); assert.equal(f.timers.size, 1); assert.equal(f.timers.values().next().value.delay, 1600);
+    f.w.G9.toggleTickerPause(); assert.equal(f.timers.size, 1); assert.equal(f.timers.values().next().value.delay, 600);
   }, true);
   await test('stale scheduled callback cannot advance a paused battle', f => {
     const stale = f.timers.values().next().value.fn;

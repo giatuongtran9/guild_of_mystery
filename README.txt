@@ -2,9 +2,10 @@ Guild of Mystery — v17 JSON Data Layer
 
 Combat animation and playback
   Battles replay their already-resolved combat events in chronological order.
-  At Read, 1x and 2x, casts reveal each hit, awakening, shield, reaction and
-  defeat separately, including their intermediate HP and SP values. At 4x,
-  each action uses one compact visual cue while retaining the complete log.
+  At every speed, casts reveal each hit, awakening, shield, reaction and defeat
+  separately, including intermediate HP and SP. Typical actions take 2 seconds
+  at 1x, 4 seconds in Read, 1 second at 2x and 0.5 seconds at 4x. Awakenings and
+  reactions get extra reading time. Faster playback simplifies visual motion.
   Existing artwork supports brief attack motions, impact and recovery cues,
   projectiles, companion arrival, and Mythical transformation feedback.
   Character cards and gauges remain fixed in their approved battlefield slots.
@@ -12,8 +13,15 @@ Combat animation and playback
   cancels effects and exposes the already-saved outcome. Reduced motion keeps
   static cues and immediate gauge updates. Animation never resolves damage,
   rolls randomness, changes companion scaling, or settles an outcome.
+  Signature feedback: Fool threads show their actual target and progress;
+  Door powers open portals; retained Hanged Man souls manifest a silhouette;
+  Paragon devices flash when firing; Moon commands identify the real recipient;
+  Chained curse links pulse on their actual echo. Faint connections last only
+  while the recorded binding or curse is active and follow battlefield reflow.
+  Pause and speed changes preserve the remaining reading time in the phase.
   Runtime: js/ui.js and css/components/dungeon-arena.css.
   Checks: tests/combat-animation.test.js, combat-animation-controls.test.js,
+  combat-signature-effects.test.js, signature-presentation-events.test.js,
   battlefield-safe-layout.test.js, phase2-battle.test.js and phase4-ui.test.js.
 
 Opening campaign: The Whispering District

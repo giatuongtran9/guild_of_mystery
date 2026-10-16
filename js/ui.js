@@ -36,32 +36,263 @@ function battlePresentationRows(rows, shownCount, eventCount) {
   return visible;
 }
 
-function advanceBattlePresentation(playing, fast = false) {
+// Hold each visible stage, including the final impact, before exposing the
+// completed action. Ordinary casts total two seconds; reactions and awakenings
+// get their own reading time. All speeds use this same clock.
+function battlePresentationDelay(playing, speed = 1) {
+  const row = playing.turnRows[playing.currentTurn];
+  if (!row) return 0;
+  const rate = [.5, 1, 2, 4].includes(Number(speed)) ? Number(speed) : 1;
+  const timeline = row.timeline || [];
+  const count = playing.eventCount;
+  if (!timeline.length) return (row.isRoundHeader ? 300 : row.type === 'turn' ? 2000 : 750) / rate;
+  if (!Number.isInteger(count)) return 0;
+  const periodic = !!timeline[0]?.event.isDot;
+  if (count === 0) return (periodic ? 0 : 600) / rate;
+  const weights = { damage: 450, reaction: 650, reflect: 550, heal: 400,
+    shield: 400, mythical: 900, death: 700, revive: 600, note: 180 };
+  const holds = timeline.map(step => Math.max(weights[step.type] || 180,
+    step.event.presentationEffect && !step.event.presentationEffect.endsWith('_end') ? 500 : step.event.type === 'thread' ? 350 : 0));
+  const total = (periodic ? 0 : 600) + holds.reduce((sum, value) => sum + value, 0);
+  const padding = count === timeline.length ? Math.max(0, (periodic ? 650 : 2000) - total) : 0;
+  return ((holds[count - 1] || 0) + padding) / rate;
+}
+
+function advanceBattlePresentation(playing) {
   const row = playing.turnRows[playing.currentTurn];
   if (!row) return null;
   const timeline = row.timeline || [];
-  if (fast || !timeline.length) {
+  if (!timeline.length) {
     playing.currentTurn++;
     playing.eventCount = null;
-    // Fast playback keeps the log exact but uses one concise visual cue.
-    const last = [...timeline].reverse().find(step => ['death', 'revive', 'mythical', 'damage', 'reaction', 'heal', 'shield'].includes(step.type));
-    return last ? { ...last, row } : { type: 'row', event: row, row };
+    return { type: 'row', event: row, row };
   }
   if (!Number.isInteger(playing.eventCount)) {
     playing.eventCount = 0;
     // Periodic damage has no fresh attack or casting action to animate.
     if (!timeline[0]?.event.isDot) return { type: 'cast', event: row, row, next: timeline[0] };
   }
-  const step = timeline[playing.eventCount++];
   if (playing.eventCount >= timeline.length) {
     playing.currentTurn++;
     playing.eventCount = null;
+    return { type: 'settle', event: row, row };
   }
-  return { ...step, row, next: Number.isInteger(playing.eventCount) ? timeline[playing.eventCount] : null };
+  const step = timeline[playing.eventCount++];
+  return { ...step, row, next: timeline[playing.eventCount] || null };
+}
+
+// Presentation only: every endpoint and trigger comes from the resolved replay.
+function createPathwayEffects(wrap) {
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const animations = new Set();
+  const sourceColors = { fool: '#c5badf', door: '#91d1df', hanged_man: '#b0c897',
+    paragon: '#e7bc79', moon: '#c8b9e8', chained: '#b998d0', sun: '#ead291',
+    tyrant: '#a9cfe5', red_priest: '#df9b7a', demoness: '#cab0df', death: '#a6bebc' };
+  let hpMap = Object.create(null), links = null, transient = null, speed = 1, paused = false;
+  const reduced = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const canvas = () => wrap.querySelector('.gm-battlefield-canvas');
+  const unit = id => id == null ? null : [...wrap.querySelectorAll('.gm-arena-unit')]
+    .find(node => node.dataset.unitId === String(id));
+  const state = id => id == null ? null : hpMap[id];
+  const anchor = node => node?.querySelector('.gm-unit-sprite-anchor');
+  const alive = id => {
+    const entry = state(id);
+    return !!entry && !!unit(id) && entry.alive !== false && entry.inCombat !== false && (entry.curHp ?? entry.hp ?? 1) > 0;
+  };
+  function visible(id) {
+    const box = anchor(unit(id))?.getBoundingClientRect();
+    const arena = wrap.querySelector('.gm-dungeon-arena')?.getBoundingClientRect();
+    return !!box && !!arena && box.width > 0 && box.height > 0
+      && box.right > Math.max(0, arena.left) && box.left < Math.min(window.innerWidth, arena.right)
+      && box.bottom > Math.max(0, arena.top) && box.top < Math.min(window.innerHeight, arena.bottom);
+  }
+  function point(id) {
+    const box = anchor(unit(id))?.getBoundingClientRect(), field = canvas()?.getBoundingClientRect();
+    if (!box || !field || !box.width || !box.height || !field.width || !field.height) return null;
+    return { x: box.left - field.left + box.width / 2, y: box.top - field.top + box.height / 2,
+      radius: Math.max(8, Math.min(box.width, box.height) * .38) };
+  }
+  function svgElement(tag, attrs = {}) {
+    const node = document.createElementNS(svgNS, tag);
+    for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, String(value));
+    return node;
+  }
+  function layer(persistent) {
+    let node = persistent ? links : transient;
+    const field = canvas();
+    if (!field) return null;
+    if (!node?.isConnected) {
+      node = svgElement('svg', { class: persistent ? 'gm-pathway-links' : 'gm-pathway-fx-layer',
+        'aria-hidden': 'true', focusable: 'false', preserveAspectRatio: 'none' });
+      field.append(node);
+      if (persistent) links = node; else transient = node;
+    }
+    const box = field.getBoundingClientRect();
+    node.setAttribute('viewBox', `0 0 ${Math.max(1, box.width)} ${Math.max(1, box.height)}`);
+    node.setAttribute('data-reduced-motion', String(reduced()));
+    return node;
+  }
+  function identify(node, effect, ownerId, targetId) {
+    node.setAttribute('data-effect', effect);
+    if (ownerId != null) node.setAttribute('data-owner-id', String(ownerId));
+    if (targetId != null) node.setAttribute('data-target-id', String(targetId));
+    return node;
+  }
+  function curve(a, b, direction = 1) {
+    const bend = direction * Math.min(16, Math.hypot(b.x - a.x, b.y - a.y) * .08);
+    return `M ${a.x} ${a.y} Q ${(a.x + b.x) / 2 + bend} ${(a.y + b.y) / 2} ${b.x} ${b.y}`;
+  }
+  function cancelAnimations() {
+    for (const animation of [...animations]) animation.cancel();
+    animations.clear();
+  }
+  function clearTransient() {
+    cancelAnimations(); transient?.remove(); transient = null;
+  }
+  function animate(node, frames, duration) {
+    if (!node?.animate || reduced() || speed >= 4) return;
+    const animation = node.animate(frames, { duration, easing: 'ease-out', fill: 'none' });
+    animation.playbackRate = speed;
+    animations.add(animation);
+    if (paused) animation.pause();
+    animation.onfinish = () => { animations.delete(animation); animation.cancel(); node.remove(); };
+    animation.oncancel = () => animations.delete(animation);
+  }
+  function append(node, effect, ownerId, targetId, duration) {
+    const targetLayer = layer(false);
+    if (!targetLayer || targetLayer.childElementCount >= 6) return null;
+    identify(node, effect, ownerId, targetId); targetLayer.append(node);
+    animate(node, [{ opacity: .85 }, { opacity: .5, offset: .7 }, { opacity: 0 }], duration);
+    return node;
+  }
+  function ring(id, effect, className, color, ownerId, duration) {
+    if (!visible(id)) return;
+    const p = point(id);
+    if (!p) return;
+    append(svgElement('circle', { class: className, cx: p.x, cy: p.y, r: p.radius,
+      style: `--gm-pathway-color:${color}` }), effect, ownerId ?? id, id, duration);
+  }
+  function connection(ownerId, targetId, effect, color, duration, className = 'gm-pathway-pulse') {
+    if (!visible(ownerId) || !visible(targetId)) return;
+    const a = point(ownerId), b = point(targetId);
+    if (!a || !b) return;
+    append(svgElement('path', { class: className, d: curve(a, b, effect.startsWith('curse') ? -1 : 1),
+      style: `--gm-pathway-color:${color}` }), effect, ownerId, targetId, duration);
+  }
+  function sync(nextMap) {
+    hpMap = nextMap || Object.create(null);
+    if (!canvas()) return;
+    const pending = [];
+    // Iterate stable DOM IDs once: hpMap also contains name aliases.
+    for (const node of wrap.querySelectorAll('.gm-arena-unit[data-unit-id]')) {
+      const id = node.dataset.unitId, entry = state(id);
+      if (!entry || !alive(id)) continue;
+      for (const [kind, detail] of [['thread', entry.threadProgress], ['curse', entry.curseLink]]) {
+        const ownerId = detail?.ownerId;
+        if (ownerId == null || !alive(ownerId) || ownerId === id || (kind === 'curse' && detail.turns <= 0)) continue;
+        const a = point(ownerId), b = point(id);
+        if (!a || !b) continue;
+        pending.push({ id, ownerId, kind, detail, a, b });
+      }
+    }
+    if (!pending.length) { links?.remove(); links = null; return; }
+    const targetLayer = layer(true);
+    if (!targetLayer) return;
+    targetLayer.replaceChildren();
+    for (const { id, ownerId, kind, detail, a, b } of pending.slice(0, 32)) {
+      const color = sourceColors[kind === 'thread' ? 'fool' : 'chained'];
+      const path = identify(svgElement('path', { class: `gm-pathway-${kind}`, d: curve(a, b, kind === 'curse' ? -1 : 1),
+        style: `--gm-pathway-color:${color}` }), kind, ownerId, id);
+      targetLayer.append(path);
+      if (kind === 'thread' && Number.isFinite(detail.max) && detail.max > 0) {
+        const value = Math.max(0, Math.min(detail.max, Number(detail.value) || 0));
+        const label = identify(svgElement('text', { class: 'gm-pathway-progress',
+          x: (a.x + b.x) / 2 + 8, y: (a.y + b.y) / 2 - 5,
+          'text-anchor': 'middle', style: `--gm-pathway-color:${color}` }), 'thread-progress', ownerId, id);
+        label.textContent = `${Math.round(value)}/${Math.round(detail.max)}`;
+        targetLayer.append(label);
+      }
+    }
+  }
+  function show(cue, playbackSpeed = 1, timingMs = 280) {
+    clearTransient(); speed = Math.max(.1, Number(playbackSpeed) || 1);
+    if (!cue) return;
+    const event = cue.event || {}, row = cue.row || event;
+    const actorId = event.actorId ?? row.actorId;
+    const ownerId = event.ownerId ?? actorId;
+    const targetId = event.targetId ?? row.targetId;
+    const actor = state(actorId), effect = event.presentationEffect;
+    const type = cue.type === 'row' ? event.type : cue.type;
+    const cast = type === 'cast' || (cue.type === 'row' && !!row.abilityId);
+    const duration = Math.max(240, Math.min(700, Number(timingMs) || 450));
+    const power = event.ownedPower || row.ownedPower;
+    // Explicit outcome markers take priority over inferred casting decoration.
+    // In compact playback this also limits each action to one signature cue.
+    if (effect === 'beast_command') {
+      connection(ownerId, targetId, effect, sourceColors.moon, duration, 'gm-pathway-command');
+      if (speed < 4) ring(targetId, effect, 'gm-pathway-command', sourceColors.moon, ownerId, duration);
+      return;
+    }
+    if (effect === 'device_mark') {
+      const companionId = event.companionId;
+      if (state(companionId)?.companion?.kind === 'device') {
+        connection(companionId, targetId, effect, sourceColors.paragon, duration);
+        if (speed < 4) ring(companionId, effect, 'gm-pathway-muzzle', sourceColors.paragon, ownerId, duration);
+      }
+      return;
+    }
+    if (effect === 'curse_link' || effect === 'curse_echo') {
+      connection(ownerId, targetId, effect, sourceColors.chained, duration);
+      return;
+    }
+    if (type === 'thread' || event.type === 'thread') {
+      const threadOwner = event.ownerId ?? state(targetId)?.threadProgress?.ownerId ?? actorId;
+      connection(threadOwner, targetId, 'thread', sourceColors.fool, duration);
+      return;
+    }
+    if (power === 'soul' && (cast || event.ownedPower === 'soul')) {
+      if (!visible(actorId)) return;
+      const p = point(actorId);
+      if (!p) return;
+      const radius = Math.min(14, p.radius * .65), color = sourceColors[event.sourcePath || row.sourcePath] || '#b7bdcf';
+      const soul = svgElement('path', { class: 'gm-pathway-soul',
+        d: `M ${p.x} ${p.y - radius} C ${p.x - radius} ${p.y - radius}, ${p.x - radius} ${p.y + radius * .5}, ${p.x - radius * .6} ${p.y + radius} L ${p.x - radius * .2} ${p.y + radius * .65} L ${p.x + radius * .2} ${p.y + radius} L ${p.x + radius * .55} ${p.y + radius * .65} C ${p.x + radius} ${p.y}, ${p.x + radius} ${p.y - radius}, ${p.x} ${p.y - radius} Z`,
+        style: `--gm-pathway-color:${color}` });
+      append(soul, 'soul', actorId, actorId, duration);
+      return;
+    }
+    if (cast && (power === 'record' || (actor?.path === 'door' && row.abilityId !== 'basic_attack' && !row.attackKind && (row.abilityId || row.sourceAbilityId)))) {
+      ring(actorId, 'portal', 'gm-pathway-portal', sourceColors.door, actorId, duration);
+      if (speed < 4 && targetId != null && targetId !== actorId) ring(targetId, 'portal', 'gm-pathway-portal', sourceColors.door, actorId, duration);
+      return;
+    }
+    if (['cast', 'damage'].includes(type) && actor?.companion?.kind === 'device') {
+      // A historical machine is intentionally a different companion kind.
+      const deviceOwner = actor.companion.ownerId;
+      const p = point(actorId);
+      if (!p || !visible(actorId)) return;
+      const radius = Math.min(6, p.radius * .4);
+      append(svgElement('path', { class: 'gm-pathway-muzzle',
+        d: `M ${p.x - radius} ${p.y} L ${p.x + radius} ${p.y} M ${p.x} ${p.y - radius} L ${p.x} ${p.y + radius}`,
+        style: `--gm-pathway-color:${sourceColors.paragon}` }), 'muzzle', deviceOwner, actorId, duration);
+      if (speed < 4 && targetId != null) connection(actorId, targetId, 'device-shot', sourceColors.paragon, duration);
+    }
+  }
+  return { sync, show,
+    clear: () => { clearTransient(); links?.remove(); links = null; hpMap = Object.create(null); paused = false; },
+    pause: () => { paused = true; for (const animation of animations) animation.pause(); },
+    resume: () => { paused = false; for (const animation of animations) animation.play(); },
+    setSpeed: value => { speed = Math.max(.1, Number(value) || 1); for (const animation of animations) animation.playbackRate = speed; }
+  };
 }
 
 function createBattleEffects(wrap) {
   const animations = new Set(), touched = new Set();
+  const pathwayEffects = createPathwayEffects(wrap);
+  const arena = wrap.querySelector('.gm-dungeon-arena');
+  let currentMap = Object.create(null);
+  const reflow = () => pathwayEffects.sync(currentMap);
+  arena?.addEventListener('gm-battlefield-layout', reflow);
   let layer = null, rate = 1, ending = false;
   const reduced = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const unit = (id, name) => [...wrap.querySelectorAll('.gm-arena-unit')]
@@ -86,15 +317,19 @@ function createBattleEffects(wrap) {
     animation.onfinish = () => {
       animations.delete(animation); animation.cancel();
       if (node.matches('.gm-battle-fx, .gm-battle-fx-number')) node.remove();
-      if (ending && !animations.size) clear();
+      if (ending && !animations.size) clearTransient();
     };
     animation.oncancel = () => animations.delete(animation);
   }
-  function clear() {
+  function clearTransient() {
     for (const animation of [...animations]) animation.cancel();
     animations.clear();
     for (const a of touched) for (const name of [...a.classList]) if (name.startsWith('gm-cue-')) a.classList.remove(name);
     touched.clear(); layer?.remove(); layer = null;
+  }
+  function clear() {
+    clearTransient(); pathwayEffects.clear(); currentMap = Object.create(null);
+    arena?.removeEventListener('gm-battlefield-layout', reflow);
   }
   function overlay() {
     if (!layer) {
@@ -115,16 +350,16 @@ function createBattleEffects(wrap) {
     element.className = 'gm-battle-fx-number'; element.textContent = text;
     element.style.cssText = `left:${p.x}px;top:${p.y}px;--gm-fx-color:${color}`;
     overlay().append(element);
-    animate(element, [{ opacity: 1, transform: 'translate(-50%,-50%)' }, { opacity: 0, transform: 'translate(-50%,calc(-50% - 6px))' }], 260);
+    animate(element, [{ opacity: 1, transform: 'translate(-50%,-50%)' }, { opacity: 1, offset: .55 }, { opacity: 0, transform: 'translate(-50%,calc(-50% - 6px))' }], 850);
   }
-  function travel(from, to, color) {
+  function travel(from, to, color, duration) {
     if (reduced() || rate >= 4 || !isVisible(anchor(from)) || !isVisible(anchor(to))) return;
     const a = point(from), b = point(to), element = document.createElement('span');
     element.className = 'gm-battle-fx';
     element.style.cssText = `left:${b.x}px;top:${b.y}px;--gm-fx-color:${color}`;
     overlay().append(element);
     animate(element, [{ opacity: .85, transform: `translate(calc(-50% + ${a.x-b.x}px),calc(-50% + ${a.y-b.y}px))` },
-      { opacity: 0, transform: 'translate(-50%,-50%)' }], rate === .5 ? 200 : 150);
+      { opacity: 0, transform: 'translate(-50%,-50%)' }], duration);
   }
   function motion(node, kind) {
     if (!node) return;
@@ -138,8 +373,9 @@ function createBattleEffects(wrap) {
       { transform: kind === 'cast' ? `translate(0,${direction*nudge}px) scale(.94)` : `translate(${nudge}px,0) scale(.94)` },
       { transform: 'translate(0,0) scale(1)' }]);
   }
-  function show(cue, speed = 1) {
-    clear(); rate = Number(speed) || 1;
+  function show(cue, speed = 1, timingMs = 600) {
+    clearTransient(); rate = Number(speed) || 1;
+    pathwayEffects.show(cue, rate, timingMs);
     if (!cue) return;
     ending = !!cue.isDone;
     const event = cue.event || {}, row = cue.row || event;
@@ -148,11 +384,11 @@ function createBattleEffects(wrap) {
     const type = cue.type === 'row' ? (event.subtype === 'mythical_form' ? 'mythical' : event.type) : cue.type;
     const colors = { physical: '#f2c39b', fire: '#f39463', lightning: '#acdafa', dark: '#c6a0e8', corrosion: '#b1d982', frost: '#abd9ee', true: '#eee3cd' };
     const color = colors[event.damageType] || '#c8b5ed';
-    if (!event.isDot) mark(actor, 'actor');
+    if (!event.isDot && type !== 'settle') mark(actor, 'actor');
     const next = cue.next?.event;
     if (next && ['damage', 'reaction', 'reflect'].includes(cue.next.type) && !next.isDot
       && (row.attackKind === 'gun' || next.damageType !== 'physical')) {
-      travel(unit(next.actorId || row.actorId, next.actorName || row.actorName), unit(next.targetId, next.targetName), colors[next.damageType] || color);
+      travel(unit(next.actorId || row.actorId, next.actorName || row.actorName), unit(next.targetId, next.targetName), colors[next.damageType] || color, timingMs);
     }
     if (type === 'cast') motion(actor, 'cast');
     else if (['damage', 'reaction', 'reflect'].includes(type)) {
@@ -173,12 +409,14 @@ function createBattleEffects(wrap) {
     } else if (type === 'thread' || event.type === 'thread' || event.status || row.isSkip
       || ['cc_loss', 'madness_loss', 'banished'].includes(event.subtype)) mark(target || actor, 'control');
     for (const node of cue.arrivals || []) { mark(node, 'arrive'); motion(node, 'arrive'); }
-    if (ending && !animations.size) clear();
+    if (ending && !animations.size) clearTransient();
   }
   return { show, clear,
-    pause: () => { for (const a of animations) a.pause(); },
-    resume: () => { for (const a of animations) a.play(); },
-    setSpeed: speed => { rate = Number(speed) || 1; if (rate >= 4) clear(); else for (const a of animations) a.playbackRate = rate; }
+    sync: map => { currentMap = map || Object.create(null); pathwayEffects.sync(currentMap); },
+    reflow: () => { clearTransient(); pathwayEffects.show(null); pathwayEffects.sync(currentMap); },
+    pause: () => { for (const a of animations) a.pause(); pathwayEffects.pause(); },
+    resume: () => { for (const a of animations) a.play(); pathwayEffects.resume(); },
+    setSpeed: speed => { rate = Number(speed) || 1; if (rate >= 4) clearTransient(); else for (const a of animations) a.playbackRate = rate; pathwayEffects.setSpeed(rate); }
   };
 }
 
@@ -195,7 +433,14 @@ function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
     if (e.name) hpMap[e.name] = entry;
   }
 
+  function applyLinkState(event) {
+    const target = event.targetId ? hpMap[event.targetId] : hpMap[event.targetName];
+    if (!target) return;
+    if (Object.hasOwn(event, 'threadState')) target.threadProgress = event.threadState ? { ...event.threadState } : null;
+    if (Object.hasOwn(event, 'curseLink')) target.curseLink = event.curseLink ? { ...event.curseLink } : null;
+  }
   for (const row of shownRows) {
+    applyLinkState(row);
     const caster = row.actorId ? hpMap[row.actorId] : hpMap[row.actorName];
     if (row.subtype === 'mythical_form' && caster) caster.inForm = true;
     // A cast may close before another cast without a resource snapshot between
@@ -212,6 +457,7 @@ function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
       ...(row.revives || []).map(event => ({ type: 'revive', event }))
     ];
     for (const { type, event } of steps) {
+      applyLinkState(event);
       if (type === 'mythical') {
         const changed = event.actorId ? hpMap[event.actorId] : hpMap[event.actorName];
         if (changed) changed.inForm = true;
@@ -227,7 +473,7 @@ function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
       } else if (type === 'heal') {
         target.curHp = event.hpAfter ?? Math.min(target.maxHp, target.curHp + (event.amount || 0));
       } else if (type === 'death') {
-        target.curHp = 0; target.curShield = 0; target.alive = false;
+        target.curHp = 0; target.curShield = 0; target.alive = false; target.threadProgress = null; target.curseLink = null;
       } else if (type === 'revive') {
         target.curHp = event.hpAfter ?? (event.amount || 1); target.alive = true;
       } else if (event.subtype === 'shield_removed') {
@@ -236,7 +482,7 @@ function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
     }
     if (row.type === 'death' && (row.targetId || row.targetName)) {
       const target = row.targetId ? hpMap[row.targetId] : hpMap[row.targetName];
-      if (target) { target.curHp = 0; target.curShield = 0; target.alive = false; }
+      if (target) { target.curHp = 0; target.curShield = 0; target.alive = false; target.threadProgress = null; target.curseLink = null; }
     }
     if (row.type === 'revive' && (row.targetId || row.targetName)) {
       const target = row.targetId ? hpMap[row.targetId] : hpMap[row.targetName];
@@ -415,6 +661,7 @@ function layoutBattlefields(root = document) {
     arena.classList.toggle('scrollable', scrolls);
     const hint = arena.nextElementSibling;
     if (hint?.classList.contains('gm-battlefield-scroll-hint')) hint.hidden = !scrolls;
+    arena.dispatchEvent(new Event('gm-battlefield-layout'));
   }
 }
 
@@ -762,6 +1009,7 @@ function updateBattleLogComponent(wrap, props) {
     backdrop.innerHTML = `<img class="gm-battlefield-image" src="${esc(props.battlefieldImage)}" alt="" onload="layoutBattlefields(this.closest('.gm-dungeon-arena'))" onerror="this.hidden=true;layoutBattlefields(this.closest('.gm-dungeon-arena'))">`;
   }
   layoutBattlefields(wrap);
+  wrap._battleHpMap = hpMap;
   viewport.scrollTop = follow ? viewport.scrollHeight : top;
   viewport.scrollLeft = left;
 }
@@ -771,7 +1019,14 @@ if (typeof document !== 'undefined') (() => {
   'use strict';
   const loadedGame=loadGame();
   let state=loadedGame||newGame(), tab='hall', selected=null, previewPath=PATH_KEYS[0], planning=null, run=null, notice='', tickerTimer=null, tickerSpeed=1, showBattleDetails=false, simBattleDetails=false, simMode='1v1', simA=[{path:PATH_KEYS[0],sequence:9},{path:PATH_KEYS[0],sequence:9}], simB=[{path:PATH_KEYS[1]||PATH_KEYS[0],sequence:9},{path:PATH_KEYS[1]||PATH_KEYS[0],sequence:9}], simResult=null;
-  let battleEffects = null, battleEffectsWrap = null, battleEpoch = 0;
+  let battleEffects = null, battleEffectsWrap = null, battleEpoch = 0, tickerWait = null;
+  function stopTicker(preserve = false) {
+    if (preserve && tickerWait && tickerTimer) {
+      const elapsed = Math.max(0, performance.now() - tickerWait.started) * tickerWait.speed;
+      tickerWait.remaining = Math.max(0, tickerWait.remaining - elapsed);
+    } else if (!preserve) tickerWait = null;
+    clearTimeout(tickerTimer); tickerTimer = null;
+  }
   function clearBattleEffects() {
     battleEpoch++;
     battleEffects?.clear(); battleEffects = null; battleEffectsWrap = null;
@@ -819,7 +1074,7 @@ if (typeof document !== 'undefined') (() => {
     if(options.resetDossier)dossierOpenSections=new Set();
     else if(currentDossier?.dataset.agentId===selected)dossierOpenSections=new Set(Array.from(currentDossier.querySelectorAll('details[data-dossier-section][open]'),el=>el.dataset.dossierSection));
     if(options.openSection)dossierOpenSections.add(options.openSection);
-    clearTimeout(tickerTimer); tickerTimer = null;
+    stopTicker(true);
     clearBattleEffects();
     const pagePosition = { x: window.scrollX, y: window.scrollY };
     const scrollPositions = Array.from(app.querySelectorAll('.quest-modal, .battle-ticker-viewport, .character-dossier')).map(el => ({
@@ -843,6 +1098,9 @@ if (typeof document !== 'undefined') (() => {
     layoutBattlefields(app);
     window.scrollTo(pagePosition.x, pagePosition.y);
     if (typeof prioritizeVisiblePartyPortraits === 'function') prioritizeVisiblePartyPortraits();
+    const playing = run || (tab === 'simulator' ? simResult : null);
+    const battleWrap = app.querySelector(run ? '#battle-viewport' : '#sim-viewport')?.closest('.battle-log-wrap');
+    if (playing && battleWrap && playing.currentTurn < playing.turnRows.length) ensureBattleEffects(playing, battleWrap);
     scheduleTicker();
   }
   function closePortrait(){
@@ -908,28 +1166,41 @@ if (typeof document !== 'undefined') (() => {
     window.addEventListener('resize',viewer.resize);
     dialog.querySelector('button').focus({preventScroll:true});
   }
+  function ensureBattleEffects(playing, wrap) {
+    if (battleEffectsWrap !== wrap) {
+      clearBattleEffects(); battleEffectsWrap = wrap; battleEffects = createBattleEffects(wrap);
+    }
+    const isSim = !run;
+    const map = wrap._battleHpMap || calculateCurrentHp(isSim ? playing.teamA : playing.initialAllies,
+      isSim ? playing.teamB : playing.initialEnemies,
+      battlePresentationRows(playing.turnRows, playing.currentTurn, playing.eventCount));
+    battleEffects.sync(map);
+    if (playing.paused) battleEffects.pause();
+  }
   function scheduleTicker() {
     const playing = run || (tab === 'simulator' ? simResult : null);
     if (playing && !playing.paused && playing.currentTurn < playing.turnRows.length && !tickerTimer) {
       const wrap = app.querySelector(run ? '#battle-viewport' : '#sim-viewport')?.closest('.battle-log-wrap');
       if (!wrap) return;
-      if (battleEffectsWrap !== wrap) {
-        clearBattleEffects(); battleEffectsWrap = wrap; battleEffects = createBattleEffects(wrap);
-        if (!playing.entryShown && playing.currentTurn === 0) {
-          battleEffects.show({ type: 'entry', arrivals: [...wrap.querySelectorAll('.gm-arena-unit.companion')] }, tickerSpeed);
-          playing.entryShown = true;
-        }
+      ensureBattleEffects(playing, wrap);
+      if (!playing.entryShown && playing.currentTurn === 0) {
+        battleEffects.show({ type: 'entry', arrivals: [...wrap.querySelectorAll('.gm-arena-unit.companion')] }, tickerSpeed);
+        playing.entryShown = true;
       }
-      const phased = Number.isInteger(playing.eventCount);
-      const delay = tickerSpeed === .5 ? (phased ? 400 : 1600) : tickerSpeed === 4 ? 100
-        : tickerSpeed === 2 ? (phased ? 75 : 250) : (phased ? 150 : playing.currentTurn ? 250 : 500);
+      const phase = `${playing.currentTurn}:${playing.eventCount ?? 'start'}`;
+      if (!tickerWait || tickerWait.playing !== playing || tickerWait.phase !== phase) {
+        tickerWait = { playing, phase, remaining: battlePresentationDelay(playing), started: 0, speed: tickerSpeed };
+      }
+      tickerWait.started = performance.now(); tickerWait.speed = tickerSpeed;
+      const delay = tickerWait.remaining / tickerSpeed;
       const epoch = battleEpoch;
       const timer = setTimeout(() => {
         if (tickerTimer !== timer || epoch !== battleEpoch) return;
         tickerTimer = null;
         const current = run || (tab === 'simulator' ? simResult : null);
         if (current !== playing) return;
-        const cue = advanceBattlePresentation(playing, tickerSpeed === 4);
+        tickerWait = null;
+        const cue = advanceBattlePresentation(playing);
         refreshBattle(cue);
       }, delay);
       tickerTimer = timer;
@@ -956,10 +1227,9 @@ if (typeof document !== 'undefined') (() => {
       isSim,
       battlefieldImage: battlefieldImageFor(isSim ? {} : playing.quest, isSim)
     });
-    if (battleEffectsWrap !== wrap) {
-      clearBattleEffects(); battleEffectsWrap = wrap; battleEffects = createBattleEffects(wrap);
-    }
-    if (cue) battleEffects.show({ ...cue, isDone, arrivals: [...wrap.querySelectorAll('.gm-arena-unit')].filter(node => !existing.has(node)) }, tickerSpeed);
+    ensureBattleEffects(playing, wrap);
+    if (cue) battleEffects.show({ ...cue, isDone, arrivals: [...wrap.querySelectorAll('.gm-arena-unit')].filter(node => !existing.has(node)) }, tickerSpeed, battlePresentationDelay(playing));
+    if (isDone) battleEffects.clear();
     if (playing.paused) battleEffects.pause();
     const completion = app.querySelector('.battle-completion');
     if (!isSim && completion) completion.hidden = !isDone;
@@ -1179,12 +1449,11 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
     resumeCampaign:()=>{if(state.campaign.pending){run=campaignRunFromPending(state.campaign.pending);tab='campaign';render();}},
     settleCampaign:()=>{
       const outcome=chapterCommit(d=>campaignSettle(d));if(!outcome)return;
-      clearTimeout(tickerTimer);tickerTimer=null;run=null;planning=null;chapterSelectionMission=null;tab='campaign';render();
+      stopTicker();run=null;planning=null;chapterSelectionMission=null;tab='campaign';render();
     },
     setTickerSpeed: spd => {
+      stopTicker(true);
       tickerSpeed = [.5, 1, 2, 4].includes(Number(spd)) ? Number(spd) : 1;
-      clearTimeout(tickerTimer);
-      tickerTimer = null;
       battleEffects?.setSpeed(tickerSpeed);
       refreshBattle();
     },
@@ -1192,7 +1461,7 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
       const playing = run || (tab === 'simulator' ? simResult : null);
       if (!playing || playing.currentTurn >= playing.turnRows.length) return;
       playing.paused = !playing.paused;
-      clearTimeout(tickerTimer); tickerTimer = null;
+      stopTicker(true);
       if (playing.paused) battleEffects?.pause(); else battleEffects?.resume();
       refreshBattle();
     },
@@ -1200,7 +1469,7 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
       const playing = run || (tab === 'simulator' ? simResult : null);
       if (!playing || playing.currentTurn >= playing.turnRows.length) return;
       playing.paused = true;
-      clearTimeout(tickerTimer); tickerTimer = null;
+      stopTicker();
       clearBattleEffects(); playing.eventCount = null;
       while (playing.turnRows[playing.currentTurn]?.isRoundHeader) playing.currentTurn++;
       playing.currentTurn = Math.min(playing.turnRows.length, playing.currentTurn + 1);
@@ -1214,7 +1483,7 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
       simBattleDetails = !simBattleDetails;
       refreshBattle();
     },
-    tab:t=>{tab=t;render()},previewPath:path=>{if(PATH_KEYS.includes(path)){previewPath=path;render()}},simMode:m=>{simMode=m;render()},simSet:(team,i,key,value)=>{const arr=team==='A'?simA:simB;if(arr[i])arr[i][key]=value;render()},clearSimulation:()=>{simResult=null;render()},runSimulation:()=>{const seed=Date.now()%2147483647;const count=simMode==='1v1'?1:2;const mk=(x,i)=>{const a=makeAgent(Math.random,{sequence:x.sequence,path:x.path,trait:'Stout Vitality',...(x.traitId?{traitId:x.traitId}:{})});a.id=`sim_${i}_${x.path}_${x.sequence}`;a.name=`${pathOf(x.path).name} Seq ${x.sequence}`;a.awakened=true;a.path=x.path;a.sequence=x.sequence;a.injuries=0;a.weaponId='none';a.weaponMastery={};a.sp=maxSPFor(a);restatAgent(a);return a;};const members=simA.slice(0,count).map((x,i)=>mk(x,i));const opponents=simB.slice(0,count).map((x,i)=>({path:x.path,sequence:x.sequence,...(x.traitId?{traitId:x.traitId}:{})}));const q={id:'sim',name:`${simMode} Battle`,brief:'Battle Simulator',story:'A controlled simulation. No guild resources are changed.',objective:'combat',difficultySequence:Math.min(...opponents.map(x=>x.sequence)),encounter:true,mundane:false,rewards:{funds:0,reputation:0,materials:{}},enemyCount:count,requiredPath:opponents[0].path};const res=resolveQuest(members,q,seed,{individual:count===1,simulationOpponents:opponents});const snap=res.battleSnapshot||{allies:[],enemies:[]};const simTurns = flattenTurnRows(groupEventsToRows(res.events||[]));
+    tab:t=>{tab=t;render()},previewPath:path=>{if(PATH_KEYS.includes(path)){previewPath=path;render()}},simMode:m=>{simMode=m;render()},simSet:(team,i,key,value)=>{const arr=team==='A'?simA:simB;if(arr[i])arr[i][key]=value;render()},clearSimulation:()=>{stopTicker();simResult=null;render()},runSimulation:()=>{const seed=Date.now()%2147483647;const count=simMode==='1v1'?1:2;const mk=(x,i)=>{const a=makeAgent(Math.random,{sequence:x.sequence,path:x.path,trait:'Stout Vitality',...(x.traitId?{traitId:x.traitId}:{})});a.id=`sim_${i}_${x.path}_${x.sequence}`;a.name=`${pathOf(x.path).name} Seq ${x.sequence}`;a.awakened=true;a.path=x.path;a.sequence=x.sequence;a.injuries=0;a.weaponId='none';a.weaponMastery={};a.sp=maxSPFor(a);restatAgent(a);return a;};const members=simA.slice(0,count).map((x,i)=>mk(x,i));const opponents=simB.slice(0,count).map((x,i)=>({path:x.path,sequence:x.sequence,...(x.traitId?{traitId:x.traitId}:{})}));const q={id:'sim',name:`${simMode} Battle`,brief:'Battle Simulator',story:'A controlled simulation. No guild resources are changed.',objective:'combat',difficultySequence:Math.min(...opponents.map(x=>x.sequence)),encounter:true,mundane:false,rewards:{funds:0,reputation:0,materials:{}},enemyCount:count,requiredPath:opponents[0].path};const res=resolveQuest(members,q,seed,{individual:count===1,simulationOpponents:opponents});const snap=res.battleSnapshot||{allies:[],enemies:[]};const simTurns = flattenTurnRows(groupEventsToRows(res.events||[]));
     const simSummary = summarizeBattleEvents(res.events||[], snap);
     simResult={currentTurn:0,success:res.success,battleOutcome:res.battleOutcome||snap.outcome,rounds:(res.events&&res.events.length)?Math.max(1,...res.events.map(e=>e.round||1)):(res.lines?res.lines.filter(x=>/^· Round /.test(x.text)).length:1),lines:res.lines,events:res.events||[],turnRows:simTurns,summaryText:simSummary.summaryText,teamA: members.map((m, i) => ({
   ...m,
@@ -1238,7 +1507,7 @@ teamB: opponents.map((o, i) => ({
   maxHp: snap.enemies[i]?.maxHp ?? 100,
   alive: true,
   ...(snap.initialUnits || []).find(u => u.id === snap.enemies[i]?.id)
-})),balanceTrace:snap.balanceTrace||[]};render()},fastTicker:()=>{if(!run)return;clearBattleEffects();run.eventCount=null;run.currentTurn=Math.min(run.turnRows.length,run.currentTurn+5);clearTimeout(tickerTimer);tickerTimer=null;refreshBattle();},skipTicker:(isSim=false)=>{const playing=isSim?simResult:run;if(!playing)return;playing.currentTurn=playing.turnRows.length;playing.eventCount=null;clearTimeout(tickerTimer);tickerTimer=null;clearBattleEffects();refreshBattle();},dossier:id=>{dossierReturnFocus={id:document.activeElement?.id,action:document.activeElement?.getAttribute('onclick')};selected=id;dossierSkillType='active';render({resetDossier:true});document.getElementById('dossier-title')?.focus()},
+})),balanceTrace:snap.balanceTrace||[]};render()},fastTicker:()=>{if(!run)return;clearBattleEffects();run.eventCount=null;run.currentTurn=Math.min(run.turnRows.length,run.currentTurn+5);stopTicker();refreshBattle();},skipTicker:(isSim=false)=>{const playing=isSim?simResult:run;if(!playing)return;playing.currentTurn=playing.turnRows.length;playing.eventCount=null;stopTicker();clearBattleEffects();refreshBattle();},dossier:id=>{dossierReturnFocus={id:document.activeElement?.id,action:document.activeElement?.getAttribute('onclick')};selected=id;dossierSkillType='active';render({resetDossier:true});document.getElementById('dossier-title')?.focus()},
     closeDossier:()=>{selected=null;render();const previous=dossierReturnFocus;const opener=previous?.id?document.getElementById(previous.id):previous?.action?Array.from(app.querySelectorAll('[onclick]')).find(el=>el.getAttribute('onclick')===previous.action):null;(opener||app.querySelector('.tabs [aria-current="page"]'))?.focus();dossierReturnFocus=null},
     dossierSkillTab:type=>{const a=state.roster.find(x=>x.id===selected);if(!a||!['active','passive','inventory'].includes(type))return;if(type==='inventory'){if(!pathwayCollection(a))return;render({openSection:'inventory'});document.getElementById('dossier-inventory-title')?.focus();return;}if(!a.awakened)return;dossierSkillType=type;render({openSection:'abilities'});document.getElementById(`dossier-tab-${type}`)?.focus()},
     recruitInfo:id=>{const a=state.recruitPool.find(x=>x.id===id);if(a){toast(`${a.name}: ${a.occupation}. ${traitRarity(a)} — ${traitName(a)}. ${traitDescription(a)}`)}},
@@ -1263,11 +1532,11 @@ teamB: opponents.map((o, i) => ({
     const initialEnemies = result.battleSnapshot?.initialUnits?.filter(u=>u.team==='enemy') || (result.battleSnapshot?.enemies||[]).map(e=>({...e,team:'enemy',hp:e.maxHp,sp:0}));
     const turnRows = flattenTurnRows(groupEventsToRows(result.events||[]));
     const pending={quest:q,result,initialAllies,initialEnemies,turnRows,currentTurn:0,isSolo:individual};if(!commit(d=>{const outcome=reserveContractDispatch(d,q);if(!outcome.ok)return outcome;d.pendingContract=pending;})){planning=q;render();return;}run=clone(state.pendingContract);render()},
-    closeQuest:()=>{if(!run||run.currentTurn<run.turnRows.length)return;if(run.isCampaign)return window.G9.settleCampaign();if(!commit(d=>settleContract(d)))return;clearTimeout(tickerTimer);tickerTimer=null;run=null;planning=null;tab='hall';render()},
-    reset:()=>{if(!confirm('Erase the current guild and begin again?'))return;const fresh=newGame();if(!saveGame(fresh,{reset:true}))return toast('The new guild could not be saved. The previous save is still available.');state=fresh;window.G9.selectedIds=[];run=null;planning=null;selected=null;chapterSelectionMission=null;clearTimeout(tickerTimer);tickerTimer=null;tab='campaign';render()}
+    closeQuest:()=>{if(!run||run.currentTurn<run.turnRows.length)return;if(run.isCampaign)return window.G9.settleCampaign();if(!commit(d=>settleContract(d)))return;stopTicker();run=null;planning=null;tab='hall';render()},
+    reset:()=>{if(!confirm('Erase the current guild and begin again?'))return;const fresh=newGame();if(!saveGame(fresh,{reset:true}))return toast('The new guild could not be saved. The previous save is still available.');state=fresh;window.G9.selectedIds=[];run=null;planning=null;selected=null;chapterSelectionMission=null;stopTicker();tab='campaign';render()}
   };
   window.addEventListener('scroll',prioritizeVisiblePartyPortraits,{capture:true,passive:true});
-  window.addEventListener('resize',()=>{layoutBattlefields(app);prioritizeVisiblePartyPortraits();});
+  window.addEventListener('resize',()=>{layoutBattlefields(app);battleEffects?.reflow();prioritizeVisiblePartyPortraits();});
   document.addEventListener('keydown',event=>{
     const dialog=portraitViewer?.dialog||(selected&&app.querySelector('.character-dossier'));if(!dialog)return;
     if(event.key==='Escape'){event.preventDefault();portraitViewer?closePortrait():window.G9.closeDossier();return;}
