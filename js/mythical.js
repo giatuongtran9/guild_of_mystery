@@ -33,10 +33,12 @@ function mythicalNote(owner,target,state,lines,text,type='status',extra={}){
 }
 function mythicalHeal(owner,target,amount,state,lines){const beforeShield=target.shield||0;const restored=recoverHP(target,amount,{source:owner,state,lines,kind:'heal'});if(restored>0)mythicalNote(owner,target,state,lines,`${owner.name}'s ${MYTHICAL_AUTHORITIES[mythicalAgent(owner).path].name} restores ${restored} HP to ${target.name}.`,'heal',{amount:restored,hpAfter:target.hp,maxHp:target.maxHp});return restored+Math.max(0,(target.shield||0)-beforeShield);}
 function mythicalSpellDamage(owner,target,multiplier,element){return v15Damage('pure_caster_ability',{agent:mythicalAgent(owner),actor:owner,target,abilityMult:multiplier,damageSpec:{scaling:'INT',type:'elemental',element,multiplier}});}
-function mythicalHit(owner,target,amount,state,lines,r,damageType='physical'){
+function mythicalHit(owner,target,amount,state,lines,r,damageType='physical',options={}){
  if(!target?.alive||amount<=0)return null;
- const hit=resolveIncoming(owner,target,amount,state,lines,r,{damageType,indirect:true,mythical:true});
- mythicalNote(owner,target,state,lines,`${owner.name}'s mythical authority deals ${hit.hpLoss+hit.absorbed} ${damageType} damage to ${target.name}.`,'damage',{amount:hit.hpLoss+hit.absorbed,incoming:hit.incoming,absorbed:hit.absorbed,hpLoss:hit.hpLoss,shieldAfter:target.shield||0,hpAfter:target.hp,maxHp:target.maxHp,damageType});
+ const hit=resolveIncoming(owner,target,amount,state,lines,r,{...options,damageType,indirect:true,mythical:true});
+ const text=`${owner.name}'s mythical authority deals ${hit.hpLoss+hit.absorbed} ${damageType} damage to ${target.name}.`;
+ lines?.push({text,kind:'quirk'});
+ emitResolvedDamage(state,hit,{type:'damage',subtype:'mythical_authority',actorId:owner.id,actorName:owner.name,actorTeam:teamOf(owner,state),targetId:target.id,targetName:target.name,targetTeam:teamOf(target,state),text,amount:hit.hpLoss+hit.absorbed,incoming:hit.incoming,absorbed:hit.absorbed,hpLoss:hit.hpLoss,shieldAfter:target.shield||0,hpAfter:target.hp,maxHp:target.maxHp,damageType});
  return hit;
 }
 function mythicalControl(owner,state,lines,r,status,duration){
@@ -138,7 +140,9 @@ function mythicalAfterDamage(attacker,defender,result,state,lines=[],r=state?.rn
   const target=sameSideOf(attacker,state).filter(u=>u.alive&&u.hp<u.maxHp&&!hasStatus(u,'no_heal')).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];if(!target)continue;
   const cap=Math.round(owner.maxHp*cfg.turnCap),amount=Math.min(Math.round(lost*cfg.healingShare),cap-(authority.healingSpent||0));if(amount>0)authority.healingSpent=(authority.healingSpent||0)+mythicalHeal(owner,target,amount,state,lines);
  }
- if(mythicalActive(defender,'chained'))for(const target of foesOf(defender,state).filter(u=>u.alive&&u._mythicalCurseLink?.ownerId===defender.id&&hasStatus(u,'curse_link')))mythicalHit(defender,target,Math.round(lost*MYTHICAL_AUTHORITIES.chained.echo),state,lines,r,'dark');
+ // Actual HP loss already includes combat pacing. Apply only the recipient's
+ // defenses/vulnerability to the echo; stat-based authorities keep normal pacing.
+ if(mythicalActive(defender,'chained'))for(const target of foesOf(defender,state).filter(u=>u.alive&&u._mythicalCurseLink?.ownerId===defender.id&&hasStatus(u,'curse_link')))mythicalHit(defender,target,Math.round(lost*MYTHICAL_AUTHORITIES.chained.echo),state,lines,r,'dark',{pacingApplied:true});
 }
 function mythicalBeforeFatal(unit,source,state,lines=[],r=state?.rng){
  if(!mythicalActive(unit)||unit.hp>0)return false;const authority=unit._mythicalAuthority;if(authority.used)return false;

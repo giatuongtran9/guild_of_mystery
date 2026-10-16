@@ -3,12 +3,12 @@ const assert = require('assert');
 const g = require('../js/node-loader.js');
 const mk = (path, seq, id) => { const a = g.makeAgent(Math.random, { sequence: seq, path, trait: 'Stout Vitality' }); Object.assign(a, { id, name: g.pathOf(path).name + ' Seq ' + seq, awakened: true, path, sequence: seq, recommendedPath: path, injuries: 0, weaponId: 'none', weaponMastery: {} }); g.restatAgent(a); a.sp = g.maxSPFor(a); return a; };
 
-// --- synthetic: cast -> reflect (hits the caster) -> caster's own damage => ONE row
+// --- synthetic: cast -> caster's own damage -> reflect (hits the caster) => ONE row
 {
   const ev = [
     { round: 1, type: 'cast', actorId: 'D', actorName: 'Dream Eater', actorTeam: 'enemy', ability: "Reaper's Harvest", costSP: 35 },
-    { round: 1, type: 'damage', isReflect: true, actorId: 'F', actorName: 'Fool', targetId: 'D', targetName: 'Dream Eater', amount: 18349, damageType: 'fire', text: 'Fool reflects 18349 damage back at Dream Eater.' },
     { round: 1, type: 'damage', actorId: 'D', actorName: 'Dream Eater', targetId: 'F', targetName: 'Fool', amount: 15310, damageType: 'psychic' },
+    { round: 1, type: 'damage', isReflect: true, actorId: 'F', actorName: 'Fool', targetId: 'D', targetName: 'Dream Eater', amount: 18349, damageType: 'fire', text: 'Fool reflects 18349 damage back at Dream Eater.' },
   ];
   const rows = g.groupEventsToRows(ev)[0].rows;
   assert.strictEqual(rows.length, 1, 'cast + reflect + hit must be one row');
@@ -17,6 +17,7 @@ const mk = (path, seq, id) => { const a = g.makeAgent(Math.random, { sequence: s
   assert.strictEqual(rows[0].damages.length, 1, "the attacker's own damage stays in damages");
   assert.strictEqual(rows[0].reflects.length, 1, 'reflect is kept for HP tracking');
   assert.deepStrictEqual(rows[0].subrows.map(s => s.type), ['reflect']);
+  assert.deepStrictEqual(rows[0].timeline.map(s => s.type), ['damage', 'reflect']);
   assert(/reflects 18\.3K damage back at Dream Eater/.test(rows[0].subrows[0].text), rows[0].subrows[0].text);
 }
 // --- synthetic: reflect with no pending attack row (e.g. a DoT tick) still shows as its own row
@@ -49,6 +50,8 @@ for (let round = 1; round <= 32; round++) {
   const row = rows.find(r => (r.reflects || []).includes(reflected));
   assert(row && row.actorId === attacker.id, 'the answer belongs to the attack row that triggered it');
   assert((row.damages || []).some(e => e.targetId === defender.id), 'the same row retains the original hit');
+  assert(state.events.indexOf(row.damages[0]) < state.events.indexOf(reflected), 'the reflected hit follows the direct damage that caused it');
+  assert(row.timeline.findIndex(s => s.event === row.damages[0]) < row.timeline.findIndex(s => s.event === reflected));
   reflects++;
 }
 const q = { id: 's', name: 'x', brief: '', story: '', objective: 'combat', difficultySequence: 0, encounter: true, mundane: false, rewards: { funds: 0, reputation: 0, materials: {} }, enemyCount: 2, requiredPath: 'red_priest' };
@@ -69,7 +72,7 @@ for (let sd = 1; sd <= 200; sd++) {
   ev.forEach((e, i) => {
     if (!e.isReflect) return;
     let hit = null; // The causing attack connects the reflecting unit and its attacker, excluding nested reactions.
-    for (let j = i + 1; j < ev.length; j++) { if (ev[j].type === 'round_start') break; if (ev[j].type === 'damage' && !ev[j].isReflect && !ev[j].isSignature && ev[j].subtype !== 'mythical_authority' && ev[j].actorId === e.targetId && ev[j].targetId === e.actorId) { hit = ev[j]; break; } }
+    for (let j = i - 1; j >= 0; j--) { if (ev[j].type === 'round_start' || ev[j].type === 'cast') break; if (ev[j].type === 'damage' && !ev[j].isReflect && !ev[j].isSignature && ev[j].subtype !== 'mythical_authority' && ev[j].actorId === e.targetId && ev[j].targetId === e.actorId) { hit = ev[j]; break; } }
     if (!hit || hit.actorId !== e.targetId) return;
     reflects++;
     const row = rows.find(r => r.type === 'turn' && (r.reflects || []).includes(e));

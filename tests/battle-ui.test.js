@@ -42,6 +42,7 @@ async function main() {
   assert.equal(w.battlefieldImageFor(fixture.quests[0]), config.encounters['The Chapel Below']);
   assert.equal(w.battlefieldImageFor({ tags: ['urban'] }), config.environments.urban);
   assert.equal(w.battlefieldImageFor({ name: 'Unmatched' }), config.defaultImage);
+  config.simulatorImage = null;
   assert.equal(w.battlefieldImageFor({}, true), config.defaultImage);
   config.simulatorImage = 'data/assets/battlefields/training.webp';
   assert.equal(w.battlefieldImageFor({}, true), config.simulatorImage);

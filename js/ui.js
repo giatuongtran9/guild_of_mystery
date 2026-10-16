@@ -34,53 +34,38 @@ function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
   }
 
   for (const row of shownRows) {
-    if (row.shields) {
-      for (const s of row.shields) {
-        const target = (s.targetId ? hpMap[s.targetId] : hpMap[s.targetName]);
-        if (target) {
-          target.curShield = (target.curShield || 0) + (s.amount || 0);
-        }
-      }
-    }
-    if (row.damages || row.reflects || row.reactions) {
-      for (const d of [...(row.damages || []), ...(row.reflects || []), ...(row.reactions || [])]) {
-        const target = (d.targetId ? hpMap[d.targetId] : hpMap[d.targetName]);
-        if (target) {
-          if (d.absorbed) {
-            target.curShield = Math.max(0, (target.curShield || 0) - (d.absorbed || 0));
-          }
-          if (d.shieldAfter !== undefined) {
-            target.curShield = d.shieldAfter;
-          }
-          if (d.hpAfter !== undefined) target.curHp = d.hpAfter;
-          else target.curHp = Math.max(0, target.curHp - (d.hpLoss ?? Math.max(0, (d.amount || 0) - (d.absorbed || 0))));
-        }
-      }
-    }
-    if (row.heals) {
-      for (const h of row.heals) {
-        const target = (h.targetId ? hpMap[h.targetId] : hpMap[h.targetName]);
-        if (target) {
-          if (h.hpAfter !== undefined) target.curHp = h.hpAfter;
-          else target.curHp = Math.min(target.maxHp, target.curHp + (h.amount || 0));
-        }
-      }
-    }
-    if (row.deaths) {
-      for (const d of row.deaths) {
-        const target = (d.targetId ? hpMap[d.targetId] : hpMap[d.targetName]);
-        if (target) { target.curHp = 0; target.curShield = 0; }
-      }
-    }
-    if (row.revives) {
-      for (const rv of row.revives) {
-        const target = (rv.targetId ? hpMap[rv.targetId] : hpMap[rv.targetName]);
-        if (target) { target.curHp = rv.hpAfter !== undefined ? rv.hpAfter : (rv.amount || 1); }
+    // Follow the same causal steps as the log: a shield gained after a hit must
+    // survive that hit, and a later hit must consume an earlier recovery.
+    const steps = row.timeline || [
+      ...(row.shields || []).map(event => ({ type: 'shield', event })),
+      ...[...(row.damages || []), ...(row.reflects || []), ...(row.reactions || [])].map(event => ({ type: 'damage', event })),
+      ...(row.heals || []).map(event => ({ type: 'heal', event })),
+      ...(row.deaths || []).map(event => ({ type: 'death', event })),
+      ...(row.revives || []).map(event => ({ type: 'revive', event }))
+    ];
+    for (const { type, event } of steps) {
+      const target = event.targetId ? hpMap[event.targetId] : hpMap[event.targetName];
+      if (!target) continue;
+      if (['damage', 'reflect', 'reaction'].includes(type)) {
+        target.curShield = event.shieldAfter ?? Math.max(0, (target.curShield || 0) - (event.absorbed || 0));
+        target.curHp = event.hpAfter ?? Math.max(0, target.curHp - (event.hpLoss ?? Math.max(0, (event.amount || 0) - (event.absorbed || 0))));
+      } else if (type === 'shield') {
+        target.curShield = event.shieldAfter ?? (target.curShield || 0) + (event.amount || 0);
+      } else if (type === 'heal') {
+        target.curHp = event.hpAfter ?? Math.min(target.maxHp, target.curHp + (event.amount || 0));
+      } else if (type === 'death') {
+        target.curHp = 0; target.curShield = 0; target.alive = false;
+      } else if (type === 'revive') {
+        target.curHp = event.hpAfter ?? (event.amount || 1); target.alive = true;
       }
     }
     if (row.type === 'death' && (row.targetId || row.targetName)) {
-      const target = (row.targetId ? hpMap[row.targetId] : hpMap[row.targetName]);
-      if (target) { target.curHp = 0; target.curShield = 0; }
+      const target = row.targetId ? hpMap[row.targetId] : hpMap[row.targetName];
+      if (target) { target.curHp = 0; target.curShield = 0; target.alive = false; }
+    }
+    if (row.type === 'revive' && (row.targetId || row.targetName)) {
+      const target = row.targetId ? hpMap[row.targetId] : hpMap[row.targetName];
+      if (target) { target.curHp = row.hpAfter ?? (row.amount || 1); target.alive = true; }
     }
     for (const resource of row.resources || []) {
       const target = (resource.id ? hpMap[resource.id] : hpMap[resource.name]) || {};
@@ -194,18 +179,6 @@ function battlefieldImageFor(quest = {}, isSim = false) {
   return image(config.defaultImage);
 }
 
-// Clear-floor bounds in source-image coordinates, excluding foreground props.
-// The scene is framed around these bounds so whole sprites stay on the ground.
-const BATTLEFIELD_GROUND = {
-  'abandoned_market.png': [0.10, 0.46, 0.90, 0.91],
-  'foggy_town.png': [0.08, 0.51, 0.92, 0.94],
-  'clockmaker_alley.png': [0.10, 0.58, 0.90, 0.93],
-  'gothic_cathedral.png': [0.10, 0.68, 0.90, 0.93],
-  'ruined_temple.png': [0.14, 0.57, 0.86, 0.84],
-  'sewer_vault.png': [0.10, 0.58, 0.90, 0.94],
-  'river_dock.png': [0.09, 0.45, 0.91, 0.90]
-};
-
 function isBattleCompanion(unit) {
   return !!unit.summoned || ['marionette', 'beast', 'device', 'turret', 'spirit'].includes(unit.unitType);
 }
@@ -214,30 +187,57 @@ function layoutBattlefields(root = document) {
   const arenas = root.matches?.('.gm-dungeon-arena') ? [root] : root.querySelectorAll('.gm-dungeon-arena');
   for (const arena of arenas) {
     const stage = arena.querySelector('.gm-stage-playfield');
+    const canvas = arena.querySelector('.gm-battlefield-canvas');
     const crowded = [...arena.querySelectorAll('.gm-companion-formation')].some(group => group.children.length > 6);
     arena.classList.toggle('crowded', crowded);
     const image = arena.querySelector('.gm-battlefield-image');
-    if (!stage || !image) continue;
+    if (!stage || !canvas) continue;
     const width = arena.getBoundingClientRect().width;
     if (!width) continue;
-    const filename = image.getAttribute('src').split(/[?#]/)[0].split('/').pop();
-    const [left, top, right, bottom] = BATTLEFIELD_GROUND[filename] || [0.10, 0.55, 0.90, 0.94];
-    const height = stage.getBoundingClientRect().height;
-    const scenery = parseFloat(getComputedStyle(stage).paddingTop);
-    const floorTop = Math.max(0, scenery - 8);
-    const aspect = image.naturalWidth && image.naturalHeight ? image.naturalWidth / image.naturalHeight : 1;
-    // Size the background's safe floor to cover every naturally wrapping row.
-    const imageHeight = Math.max(
-      (height - floorTop + 8) / (bottom - top),
-      width / ((right - left) * aspect),
-      floorTop / top
-    );
-    const imageWidth = imageHeight * aspect;
-    Object.assign(image.style, {
-      width: `${imageWidth}px`, height: `${imageHeight}px`,
-      left: `${width / 2 - (left + right) / 2 * imageWidth}px`,
-      top: `${floorTop - top * imageHeight}px`
+    const filename = image?.getAttribute('src').split(/[?#]/)[0].split('/').pop();
+    const scenes = typeof G9D !== 'undefined' ? G9D.contracts.battlefields?.scenes : null;
+    const [left, top, right, bottom] = image && !image.hidden
+      ? scenes?.[filename]?.ground || [0.04, 0.23, 0.96, 0.97]
+      : [0, 0, 1, 1];
+    const aspect = image?.naturalWidth && image.naturalHeight ? image.naturalWidth / image.naturalHeight : 9 / 16;
+    const maxHeight = Math.min(window.innerHeight * 0.75, 900);
+    const scrollPosition = { left: arena.scrollLeft, top: arena.scrollTop };
+    Object.assign(stage.style, {
+      left: `${left * 100}%`, top: `${top * 100}%`,
+      width: `${(right - left) * 100}%`, height: `${(bottom - top) * 100}%`
     });
+    const fit = value => {
+      Object.assign(canvas.style, { width: `${value}px`, height: `${value / aspect}px` });
+      const style = getComputedStyle(stage);
+      const children = [...stage.children];
+      const requiredHeight = children.reduce((sum, side) => sum + side.getBoundingClientRect().height, 0)
+        + Math.max(0, children.length - 1) * (parseFloat(style.rowGap) || 0)
+        + (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
+      const widestCard = Math.max(0, ...[...stage.querySelectorAll('.gm-arena-unit')].map(card => card.getBoundingClientRect().width));
+      return requiredHeight <= stage.getBoundingClientRect().height - 1
+        && widestCard + (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0) <= stage.getBoundingClientRect().width;
+    };
+    // Keep the entire source image intact. Enlarge its canvas only when the
+    // fixed-size formations need more clear floor, then pan within the viewport.
+    let lower = Math.min(width, maxHeight * aspect), upper = lower;
+    if (!fit(lower)) {
+      do { upper *= 1.25; } while (!fit(upper) && upper < width * 16);
+      for (let step = 0; step < 8; step++) {
+        const middle = (lower + upper) / 2;
+        if (fit(middle)) upper = middle;
+        else lower = middle;
+      }
+      fit(Math.ceil(upper));
+    }
+    const canvasHeight = canvas.getBoundingClientRect().height;
+    arena.style.height = `${Math.min(canvasHeight, maxHeight)}px`;
+    // Preserve the reader's pan position across playback updates and summons.
+    arena.scrollLeft = scrollPosition.left;
+    arena.scrollTop = scrollPosition.top;
+    const scrolls = arena.scrollWidth > arena.clientWidth + 1 || arena.scrollHeight > arena.clientHeight + 1;
+    arena.classList.toggle('scrollable', scrolls);
+    const hint = arena.nextElementSibling;
+    if (hint?.classList.contains('gm-battlefield-scroll-hint')) hint.hidden = !scrolls;
   }
 }
 
@@ -305,9 +305,10 @@ function renderHpStrip(hpMap, allies, enemies, battlefieldImage = '') {
     }
     return `<div class="gm-character-formation">${groups.character.join('')}</div><div class="gm-companion-formation">${groups.companion.join('')}</div>`;
   };
-  return `<div class="gm-dungeon-arena" aria-label="Guild Master Dungeon Arena">
+  return `<div class="gm-dungeon-arena" role="region" tabindex="0" aria-label="Battlefield; scroll to explore when the formation needs more space">
+    <div class="gm-battlefield-canvas">
     <div class="gm-dungeon-backdrop" aria-hidden="true">
-      ${battlefieldImage ? `<img class="gm-battlefield-image" src="${esc(battlefieldImage)}" alt="" onload="layoutBattlefields(this.closest('.gm-dungeon-arena'))" onerror="this.hidden=true">` : ''}
+      ${battlefieldImage ? `<img class="gm-battlefield-image" src="${esc(battlefieldImage)}" alt="" onload="layoutBattlefields(this.closest('.gm-dungeon-arena'))" onerror="this.hidden=true;layoutBattlefields(this.closest('.gm-dungeon-arena'))">` : ''}
     </div>
 
     <!-- Enemies above Guild; compact companions have their own wrapping rows. -->
@@ -326,7 +327,8 @@ function renderHpStrip(hpMap, allies, enemies, battlefieldImage = '') {
         </div>
       </section>
     </div>
-  </div>`;
+    </div>
+  </div><p class="gm-battlefield-scroll-hint" hidden>Scroll to explore the full battlefield.</p>`;
 }
 
 function renderTurnRowHtml(row, showDetails) {
@@ -351,6 +353,7 @@ function renderTurnRowHtml(row, showDetails) {
     return `<div class="b-row ${isTh ? 'b-subline thread' : 'b-subline status'}"><span>${isTh ? '🧵' : '⏳'} ${esc(row.text)}${extra}</span></div>`;
   }
   if (row.type === 'death') return `<div class="b-row death-row"><span>${row.converted?'🧵':'💀'} <b>${esc(row.targetName || 'Unit')}</b> ${row.converted?'is converted into a Marionette.':'falls.'}</span></div>`;
+  if (row.type === 'revive') return `<div class="b-row"><span class="b-outcome heal">${esc(row.text || `${row.targetName || 'Unit'} revives.`)}</span></div>`;
   if (row.type === 'story' || row.type === 'system') {
     const mythical = row.subtype === 'mythical_form' || /mythical (creature )?form/i.test(row.text || '');
     if (mythical) return `<div class="b-row b-row-mythical"><div class="b-mythical-banner"><span class="b-mythical-icon" aria-hidden="true">👁️</span><div class="b-mythical-body"><span class="b-mythical-tag">MYTHICAL FORM AWAKENING</span><span class="b-mythical-desc">${esc(row.text)}</span></div></div></div>`;
@@ -359,40 +362,68 @@ function renderTurnRowHtml(row, showDetails) {
   if (row.type === 'result') return `<div class="b-row" style="font-weight:bold;color:${row.success ? 'var(--green)' : 'var(--red)'}"><span>${esc(row.text)}</span></div>`;
 
   const actorClass = row.actorTeam || 'ally';
-  const directDamages = row.damages || [];
-  const hitGroups = [];
-  for (const d of directDamages) {
-    const key = d.targetId || d.targetName || 'target';
-    const last = hitGroups[hitGroups.length - 1];
-    if (last && last.key === key) last.hits.push(d);
-    else hitGroups.push({ key, targetId: d.targetId, targetName: d.targetName, targetTeam: d.targetTeam, hits: [d] });
-  }
   const renderDamage = d => {
     const hpLoss = d.hpLoss ?? Math.max(0, (d.amount || 0) - (d.absorbed || 0));
     const badges = [d.critical ? '<span class="b-badge crit" title="Critical Hit">💥 CRIT</span>' : '', d.trueDamage ? '<span class="b-badge true-dmg" title="True Damage">⚡ TRUE</span>' : '', d.instantKill ? '<span class="b-badge execute" title="Execute">☠️ EXECUTE</span>' : '', d.isReflect ? '<span class="b-badge reflect">🔄 REFLECT</span>' : '', d.isDrain ? '<span class="b-badge drain">🩸 DRAIN</span>' : ''].filter(Boolean).join(' ');
     const hpDetail = showDetails && d.hpAfter !== undefined && d.maxHp ? ` (HP ${abbrNum(d.hpAfter)}/${abbrNum(d.maxHp)})` : '';
     return `<div class="b-sub-outcome"><span class="b-tree-branch">↳</span><span class="b-arrow">→</span><span class="b-target ${d.targetTeam || (actorClass === 'ally' ? 'enemy' : 'ally')}">${esc(d.targetName || 'Target')}</span><span class="b-outcome damage" title="HP loss: ${Number(hpLoss).toLocaleString()}">−${abbrNum(hpLoss)} HP <small>${esc(d.damageType || 'dmg')}</small>${hpDetail}</span>${d.absorbed ? `<span class="b-outcome shield">−${abbrNum(d.absorbed)} Shield</span>` : ''}${badges}</div>`;
   };
-  const directDamageHtml = hitGroups.map(group => {
-    if (group.hits.length === 1) return renderDamage(group.hits[0]);
-    const total = group.hits.reduce((sum, h) => sum + (h.hpLoss ?? Math.max(0, (h.amount || 0) - (h.absorbed || 0))), 0);
-    const absorbed = group.hits.reduce((sum, h) => sum + (h.absorbed || 0), 0);
-    return `<details class="b-multihit-group"><summary class="b-sub-outcome b-multihit-summary"><span class="b-tree-branch">↳</span><span class="b-arrow">→</span><span class="b-target ${group.targetTeam || (actorClass === 'ally' ? 'enemy' : 'ally')}">${esc(group.targetName || 'Target')}</span><span class="b-outcome damage" title="Total HP loss: ${Number(total).toLocaleString()}">−${abbrNum(total)} HP <small>${esc(group.hits[0].damageType || 'dmg')}</small></span>${absorbed ? `<span class="b-outcome shield">−${abbrNum(absorbed)} Shield</span>` : ''}<span class="b-badge combo">⚡ ${group.hits.length} HITS</span><span class="b-multihit-toggle" aria-hidden="true">▾</span></summary><div class="b-multihit-breakdown">${group.hits.map((h, i) => `<div class="b-multihit-item"><span class="b-hit-num">Hit ${i + 1}</span>${renderDamage(h)}</div>`).join('')}</div></details>`;
-  }).join('');
-  const otherDamagesHtml = [...(row.reflects || []), ...(row.reactions || [])].map(d => `${d.actorName && (row.reactions || []).includes(d) ? `<span class="b-badge">Reaction · ${esc(d.actorName)}</span>` : ''}${renderDamage(d)}`).join('');
-  const damagesHtml = directDamageHtml + otherDamagesHtml;
-  const healsHtml = (row.heals || []).map(h => `<div class="b-sub-outcome"><span class="b-tree-branch">↳</span>${h.actorId && h.actorId !== row.actorId ? `<span class="b-badge">Recovery · ${esc(h.actorName || 'Unit')}</span>` : ''}<span class="b-arrow">→</span><span class="b-target ${h.targetTeam || actorClass}">${esc(h.targetName || 'Target')}</span><span class="b-outcome heal" title="Recovered ${h.amount} HP">+${abbrNum(h.amount)} HP</span></div>`).join('');
-  const shieldsHtml = (row.shields || []).map(s => `<div class="b-sub-outcome"><span class="b-tree-branch">↳</span>${s.actorId && s.actorId !== row.actorId ? `<span class="b-badge">Shield · ${esc(s.actorName || 'Unit')}</span>` : ''}<span class="b-arrow">→</span><span class="b-target ${s.targetTeam || actorClass}">${esc(s.targetName || 'Target')}</span><span class="b-outcome shield">🛡️ +${abbrNum(s.amount)} Shield</span></div>`).join('');
+  const renderDamageGroup = hits => {
+    if (hits.length === 1) return renderDamage(hits[0]);
+    const target = hits[0];
+    const total = hits.reduce((sum, h) => sum + (h.hpLoss ?? Math.max(0, (h.amount || 0) - (h.absorbed || 0))), 0);
+    const absorbed = hits.reduce((sum, h) => sum + (h.absorbed || 0), 0);
+    return `<details class="b-multihit-group"><summary class="b-sub-outcome b-multihit-summary"><span class="b-tree-branch">↳</span><span class="b-arrow">→</span><span class="b-target ${target.targetTeam || (actorClass === 'ally' ? 'enemy' : 'ally')}">${esc(target.targetName || 'Target')}</span><span class="b-outcome damage" title="Total HP loss: ${Number(total).toLocaleString()}">−${abbrNum(total)} HP <small>${esc(target.damageType || 'dmg')}</small></span>${absorbed ? `<span class="b-outcome shield">−${abbrNum(absorbed)} Shield</span>` : ''}<span class="b-badge combo">⚡ ${hits.length} HITS</span><span class="b-multihit-toggle" aria-hidden="true">▾</span></summary><div class="b-multihit-breakdown">${hits.map((h, i) => `<div class="b-multihit-item"><span class="b-hit-num">Hit ${i + 1}</span>${renderDamage(h)}</div>`).join('')}</div></details>`;
+  };
+  const renderNote = note => {
+    let extra = '';
+    if (showDetails) {
+      if (note.curVal !== undefined && note.maxVal !== undefined && note.stat) extra = ` (${esc(note.stat)} ${abbrNum(note.curVal)}/${abbrNum(note.maxVal)})`;
+      else if (note.subtype === 'freeze' || note.isFreeze || (note.text && note.text.includes('afflicted with freeze'))) {
+        if (!note.text.includes('DEF') && !note.text.includes('SPEED')) extra = ' (- 10% DEF/ 20% SPEED)';
+      }
+    }
+    return `<div class="b-sublines"><span class="b-subline ${note.type === 'thread' ? 'thread' : 'status'}">${note.type === 'thread' ? '🧵' : '•'} ${esc(note.text)}${extra}</span></div>`;
+  };
+  const renderMythical = event => `<div class="b-mythical-banner"><span class="b-mythical-icon" aria-hidden="true">👁️</span><div class="b-mythical-body"><span class="b-mythical-tag">MYTHICAL FORM AWAKENING</span><span class="b-mythical-desc">${esc(event.text)}</span></div></div>`;
+  // Older/synthetic rows retain their category arrays. Newly grouped rows carry
+  // an ordered timeline so reactions cannot jump ahead of the hit causing them.
+  const timeline = row.timeline || [
+    ...(row.damages || []).map(event => ({ type: 'damage', event })),
+    ...(row.reflects || []).map(event => ({ type: 'reflect', event })),
+    ...(row.reactions || []).map(event => ({ type: 'reaction', event })),
+    ...(row.heals || []).map(event => ({ type: 'heal', event })),
+    ...(row.shields || []).map(event => ({ type: 'shield', event })),
+    ...(row.subrows || []).filter(event => !['reaction', 'reflect', 'revive'].includes(event.type)).map(event => ({ type: event.type === 'mythical' ? 'mythical' : 'note', event })),
+    ...(row.revives || []).map(event => ({ type: 'revive', event })),
+    ...(row.deaths || []).map(event => ({ type: 'death', event }))
+  ];
+  const outcomes = [];
+  for (let i = 0; i < timeline.length; i++) {
+    const { type, event } = timeline[i];
+    if (type === 'damage') {
+      const hits = [event], key = event.targetId || event.targetName;
+      // Only adjacent hits collapse; an intervening awakening or reaction stays
+      // between the exact hits that caused it.
+      while (timeline[i + 1]?.type === 'damage' && (timeline[i + 1].event.targetId || timeline[i + 1].event.targetName) === key) hits.push(timeline[++i].event);
+      outcomes.push(renderDamageGroup(hits));
+    } else if (type === 'reaction' || type === 'reflect') {
+      outcomes.push(`${type === 'reaction' ? `<span class="b-badge">Reaction · ${esc(event.actorName || 'Unit')}</span>` : ''}${renderDamage(event)}`);
+    } else if (type === 'heal' || type === 'shield') {
+      const shield = type === 'shield';
+      outcomes.push(`<div class="b-sub-outcome"><span class="b-tree-branch">↳</span>${event.actorId && event.actorId !== row.actorId ? `<span class="b-badge">${shield ? 'Shield' : 'Recovery'} · ${esc(event.actorName || 'Unit')}</span>` : ''}<span class="b-arrow">→</span><span class="b-target ${event.targetTeam || actorClass}">${esc(event.targetName || 'Target')}</span><span class="b-outcome ${shield ? 'shield' : 'heal'}"${shield ? '' : ` title="Recovered ${Number(event.amount) || 0} HP"`}>${shield ? '🛡️ ' : ''}+${abbrNum(event.amount)} ${shield ? 'Shield' : 'HP'}</span></div>`);
+    } else if (type === 'mythical') {
+      outcomes.push(renderMythical(event));
+    } else if (type === 'death') {
+      outcomes.push(`<div class="b-sublines"><span class="b-subline" style="color:#ff8b8b;font-weight:600">${event.converted ? '🧵' : '💀'} ${esc(event.targetName)} ${event.converted ? 'is converted into a Marionette.' : 'falls.'}</span></div>`);
+    } else {
+      outcomes.push(renderNote(event));
+    }
+  }
   const detailsHtml = showDetails && (row.costSP !== undefined || row.cooldown !== undefined) ? `<span class="b-details-info">[Cost: ${row.costHP ? `${row.costHP} HP` : `${row.costSP || 0} SP`} | ${row.cooldown || 0} CD]</span>` : '';
-  const subrows = (row.subrows || []).filter(s => s.type !== 'reaction' || !(row.reactions || []).length);
-  const mythicalSubrows = subrows.filter(s => s.type === 'mythical');
-  const normalSubrows = subrows.filter(s => s.type !== 'mythical');
-  const mythicalHtml = mythicalSubrows.map(m => `<div class="b-mythical-banner"><span class="b-mythical-icon" aria-hidden="true">👁️</span><div class="b-mythical-body"><span class="b-mythical-tag">MYTHICAL FORM AWAKENING</span><span class="b-mythical-desc">${esc(m.text)}</span></div></div>`).join('');
-  const sublinesHtml = normalSubrows.length ? `<div class="b-sublines">${normalSubrows.map(s => { let extra=''; if(showDetails){ if(s.curVal!==undefined&&s.maxVal!==undefined&&s.stat)extra=` (${s.stat} ${abbrNum(s.curVal)}/${abbrNum(s.maxVal)})`; else if(s.subtype==='freeze'||s.isFreeze||(s.text&&s.text.includes('afflicted with freeze'))){if(!s.text.includes('DEF')&&!s.text.includes('SPEED'))extra=' (- 10% DEF/ 20% SPEED)';}} return `<span class="b-subline ${s.type==='thread'?'thread':'status'}">${s.type==='thread'?'🧵':s.type==='reflect'?'↩️':'•'} ${esc(s.text)}${extra}</span>`;}).join('')}</div>` : '';
-  const deathsHtml = (row.deaths || []).map(d => `<div class="b-sublines"><span class="b-subline" style="color:#ff8b8b;font-weight:600">${d.converted?'🧵':'💀'} ${esc(d.targetName)} ${d.converted?'is converted into a Marionette.':'falls.'}</span></div>`).join('');
-  const hasOutcomes = !!(damagesHtml || healsHtml || shieldsHtml);
-  const isMythicalTurn = mythicalSubrows.length > 0 || (row.reactions || []).some(r => r.subtype === 'mythical_authority') || /mythical/i.test(row.ability || '');
-  return `<div class="b-row ${actorClass}-turn ${isMythicalTurn ? 'b-row-mythical mythical-turn' : ''}"><div class="b-turn-header"><span class="b-actor ${actorClass}">${esc(row.actorName)}</span><span class="b-ability">· ${esc(row.ability)}</span>${detailsHtml}</div>${mythicalHtml}${hasOutcomes ? `<div class="b-outcomes-block">${damagesHtml}${healsHtml}${shieldsHtml}</div>` : ''}${sublinesHtml}${deathsHtml}</div>`;
+  const isMythicalTurn = timeline.some(step => step.type === 'mythical' || step.event.subtype === 'mythical_authority') || /mythical/i.test(row.ability || '');
+  return `<div class="b-row ${actorClass}-turn ${isMythicalTurn ? 'b-row-mythical mythical-turn' : ''}"><div class="b-turn-header"><span class="b-actor ${actorClass}">${esc(row.actorName)}</span><span class="b-ability">· ${esc(row.ability)}</span>${detailsHtml}</div>${outcomes.length ? `<div class="b-outcomes-block">${outcomes.join('')}</div>` : ''}</div>`;
+
 }
 
 function battleOutcomeLabel(outcome, success, isSim = false) {
@@ -545,7 +576,7 @@ function updateBattleLogComponent(wrap, props) {
   const image = backdrop.querySelector('img');
   if (!props.battlefieldImage) image?.remove();
   else if (!image || image.getAttribute('src') !== props.battlefieldImage) {
-    backdrop.innerHTML = `<img class="gm-battlefield-image" src="${esc(props.battlefieldImage)}" alt="" onload="layoutBattlefields(this.closest('.gm-dungeon-arena'))" onerror="this.hidden=true">`;
+    backdrop.innerHTML = `<img class="gm-battlefield-image" src="${esc(props.battlefieldImage)}" alt="" onload="layoutBattlefields(this.closest('.gm-dungeon-arena'))" onerror="this.hidden=true;layoutBattlefields(this.closest('.gm-dungeon-arena'))">`;
   }
   layoutBattlefields(wrap);
   viewport.scrollTop = follow ? viewport.scrollHeight : top;

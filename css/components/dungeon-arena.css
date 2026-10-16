@@ -32,10 +32,35 @@
   width: 100%;
   margin: 0 0 16px;
   border-radius: 6px;
-  overflow: hidden;
+  max-height: min(75dvh, 900px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: #756342 #11151a;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), inset 0 0 0 1px rgba(210, 180, 120, 0.25);
   background: #11151a;
   user-select: none;
+}
+
+.gm-dungeon-arena:focus-visible {
+  outline: 2px solid #c9aa71;
+  outline-offset: 2px;
+}
+
+.gm-battlefield-canvas {
+  position: relative;
+  margin-inline: auto;
+  flex: none;
+}
+
+.gm-battlefield-scroll-hint {
+  margin: -8px 0 16px;
+  color: #c9b995;
+  font: 11px/1.4 system-ui, sans-serif;
+  text-align: center;
+}
+
+.gm-battlefield-scroll-hint[hidden] {
+  display: none;
 }
 
 .gm-dungeon-backdrop {
@@ -46,7 +71,7 @@
   background: #11151a;
 }
 
-/* UI geometry positions the source ground below the scenery on every resize. */
+/* Keep the complete image proportional to its canvas, including during panning. */
 .gm-battlefield-image {
   position: absolute;
   top: 0;
@@ -54,7 +79,7 @@
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: fill;
+  object-fit: contain;
   image-rendering: pixelated;
 }
 
@@ -63,19 +88,20 @@
 }
 
 .gm-stage-playfield {
-  position: relative;
+  position: absolute;
   z-index: 2;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 16px;
-  width: 100%;
   min-width: 0;
-  padding: var(--gm-scenery-height, 160px) 20px 16px;
+  padding: 8px;
 }
 
 .gm-arena-side {
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
   gap: 4px;
   width: 100%;
@@ -366,11 +392,6 @@
   .gm-dungeon-arena.crowded {
     --gm-companion-size: 28px;
     --gm-companion-card-width: 36px;
-  }
-
-  .gm-stage-playfield {
-    padding-right: 12px;
-    padding-left: 12px;
   }
 
   .gm-unit-name-label .unit-name {
