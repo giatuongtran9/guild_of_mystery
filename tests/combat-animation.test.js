@@ -125,16 +125,18 @@ test('the presentation cursor emits one cast then each timeline event exactly on
     assert.equal(cues.at(-1).event.targetId || cues.at(-1).event.actorId, row.timeline[i].event.targetId || row.timeline[i].event.actorId);
     if (i < row.timeline.length - 1) { assert.equal(playing.currentTurn, 0); assert.equal(playing.eventCount, i + 1); }
   }
+  assert.equal(playing.currentTurn, 0); assert.equal(playing.eventCount, row.timeline.length);
+  assert.equal(f.w.advanceBattlePresentation(playing).type, 'settle');
   assert.equal(playing.currentTurn, 1); assert.equal(playing.eventCount, null);
   assert.equal(JSON.stringify(row), original, 'the presentation cursor cannot mutate combat events');
   assert.equal(f.w.advanceBattlePresentation(playing), null, 'a completed replay produces no new cue');
 });
 
-test('fast presentation completes the current action once and leaves the next action untouched', f => {
+test('settling completes the current action once and leaves the next action untouched', f => {
   const first = action(), second = { type: 'story', text: 'Another action.' };
   const playing = { turnRows: [first, second], currentTurn: 0, eventCount: null };
   f.w.advanceBattlePresentation(playing); f.w.advanceBattlePresentation(playing);
-  f.w.advanceBattlePresentation(playing, true);
+  while (playing.currentTurn === 0) f.w.advanceBattlePresentation(playing);
   assert.equal(playing.currentTurn, 1); assert.equal(playing.eventCount, null);
   const shown = f.w.battlePresentationRows(playing.turnRows, playing.currentTurn, playing.eventCount);
   assert.equal(shown.length, 1); assert.equal(shown[0].resources[0].sp, 3);
@@ -221,7 +223,8 @@ test('periodic damage reveals its tick without an invented casting action', f =>
   const row = action(); row.timeline = [{ ...row.timeline[0], event: { ...row.timeline[0].event, isDot: true } }];
   const playing = { currentTurn: 0, turnRows: [row] };
   const cue = f.w.advanceBattlePresentation(playing);
-  assert.equal(cue.type, 'damage'); assert.equal(playing.currentTurn, 1);
+  assert.equal(cue.type, 'damage'); assert.equal(playing.currentTurn, 0);
+  assert.equal(f.w.advanceBattlePresentation(playing).type, 'settle'); assert.equal(playing.currentTurn, 1);
 });
 
 test('finished final effects remove their numbers and cue outlines', f => {

@@ -13,8 +13,13 @@ function teamOf(u, state) {
 function emitCombatEvent(state, ev) {
   if (!state || !state.events) return;
   if (ev.round === undefined) ev.round = state.currentRound || 0;
+  if (ev.type === 'thread') {
+    const target = [...(state.allies || []), ...(state.enemies || [])].find(unit => unit.id === ev.targetId);
+    ev.threadState = combatThreadSnapshot(target);
+  }
   state.events.push(ev);
 }
+function combatThreadSnapshot(unit){return unit?.thread?{ownerId:unit.thread.ownerId,value:unit.thread.progress,max:unit.thread.required}:null;}
 // A hit is placed in the stream when HP/shields change, before its nested
 // awakening, retaliation or death. Callers may then add their ability labels.
 function emitResolvedDamage(state, result, details) {
@@ -28,11 +33,15 @@ function emitResolvedDamage(state, result, details) {
 }
 function combatResourceSnapshot(unit,state){
  const a=getCombatAgent(unit),cfg=PATH_METERS[a.path];
+ const curseOwner=unit._mythicalCurseLink&&signatureUnits(state).find(owner=>owner.id===unit._mythicalCurseLink.ownerId);
+ const companionOwner=unit._assetOwnerId||unit._signatureOwnerId||a.ownerId;
  return {id:unit.id,name:unit.name,team:teamOf(unit,state),path:a.path,sequence:a.sequence,summoned:!!unit.summoned,unitType:a.unitType||null,
   traitId:a.traitId??null,traitTier:traitRarity(a),traitName:traitName(a),hp:unit.hp,maxHp:unit.maxHp,shield:unit.shield||0,sp:a.sp,maxSP:a.maxSP,alive:unit.alive,
   meter:cfg?{name:cfg.name,value:getMeterValue(a,a.path),max:cfg.max}:null,inForm:!!unit._inForm,
   threadSlots:a.path==='fool'?{used:threadUsage(state,a),max:threadSlots(a.sequence)}:null,
-  threadProgress:unit.thread?{value:unit.thread.progress,max:unit.thread.required}:null,
+  threadProgress:combatThreadSnapshot(unit),
+  curseLink:unit.alive&&hasStatus(unit,'curse_link')&&mythicalActive(curseOwner,'chained')?{ownerId:curseOwner.id,turns:unit.statusMeta?.curse_link?.duration||0}:null,
+  companion:(unit.summoned||a.unitType==='marionette')&&companionOwner?{ownerId:companionOwner,kind:unit._signatureCompanionKind||a.unitType||null,definitionId:unit._assetDefinitionId||null}:null,
   statuses:(unit.status||[]).map(name=>({name,turns:unit.statusMeta?.[name]?.duration||0})),
   recordCount:a._signatureRecords?.length||0};
 }
@@ -762,7 +771,12 @@ function addStatus(target,status,duration=1,source="unknown",extraMeta={}){
  if(!target.status.includes(status))target.status.push(status);
  target.statusMeta[status]={duration:Math.max(1,Number(duration)||1),source,_grace:target._acting===true,...(extraMeta||{})};interruptThreadsOnOwnerCC(target,status);return true;
 }
-function removeStatus(target,status){if(!target?.status)return;target.status=target.status.filter(x=>x!==status);if(target.statusMeta)delete target.statusMeta[status];if(status==='sleep')delete target._mythicalDream;if(status==='frozen')delete target._mythicalPetrified;}
+function removeStatus(target,status,state=ACTIVE_BATTLE?.state){
+ if(!target?.status)return;
+ const removedCurse=status==='curse_link'&&hasStatus(target,status)&&target._mythicalCurseLink;
+ target.status=target.status.filter(x=>x!==status);if(target.statusMeta)delete target.statusMeta[status];if(status==='sleep')delete target._mythicalDream;if(status==='frozen')delete target._mythicalPetrified;
+ if(removedCurse&&signatureUnits(state).some(unit=>unit===target))emitCombatEvent(state,{type:'status',subtype:'signature_presentation',presentationEffect:'curse_link_end',ownerId:removedCurse.ownerId,targetId:target.id,targetName:target.name,targetTeam:teamOf(target,state),curseLink:null,text:`${target.name}'s curse link ends.`});
+}
 function processStatuses(unit,add=()=>{},state=null,decrement=true){
  if(!unit.alive)return;unit.status=unit.status||[];unit.statusMeta=unit.statusMeta||{};
  for(const [status,ratio,damageType] of DOT_RULES){
@@ -1415,6 +1429,8 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
       ability: castName,
       sourcePath: presentationSourcePath,
       sourceAbilityId: presentationAbilityId,
+      ownedPower: spec._signatureOwned || null,
+      sourceUnitId: spec._signatureSourceId || null,
       costSP: cost,costHP:quote.resource==='hp'?quote.amount:0,
       cooldown: baseCd,abilityId:castId
     });
@@ -1465,7 +1481,7 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
   if(e.type==='pathway_asset')applyPathwayAbilityEffect(e,agent,actor,state,lines);
   else if(e.type==='signature')applySignatureEffect(e,agent,actor,targets,state,lines,r,spec);
   else if(e.type==='strip_buffs'||e.type==='nullify_buffs')for(const t of targets){removeFxCat(t,'buff');t.buffs=[];removeStatus(t,'guarded');removeStatus(t,'evade');if((t.shield||0)>0){const text=`${t.name}'s barrier (${t.shield} HP shield) is stripped away!`;lines.push({text,kind:'status'});t.shield=0;emitCombatEvent(state,{round:state?.currentRound||1,type:'status',subtype:'shield_removed',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),shieldAfter:0,text});}}
-  else if(e.type==='cleanse'){for(const t of tgs){const removed=[];for(const st of [...(t.status||[])])if(CLEANSE_STATUSES.includes(st)){removeStatus(t,st);removed.push(st);}if(removed.length){const text=`${t.name} cleanses: ${removed.join(', ')}.`;lines.push({text,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'status',subtype:'cleanse',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text});}}}
+  else if(e.type==='cleanse'){for(const t of tgs){const removed=[];for(const st of [...(t.status||[])])if(CLEANSE_STATUSES.includes(st)){removeStatus(t,st,state);removed.push(st);}if(removed.length){const text=`${t.name} cleanses: ${removed.join(', ')}.`;lines.push({text,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'status',subtype:'cleanse',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text});}}}
   else if(e.type==='shield')for(const t of tgs){const amount=e.fullHp?t.maxHp:Math.round(t.maxHp*Number(e.maxHpRatio||0)),granted=grantShield(t,amount,e.incomingCategory);if(granted<=0)continue;lines.push({text:`${t.name} gains ${granted} HP of ${e.incomingCategory?e.incomingCategory+' ':''}shield.`,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'shield',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),amount:granted,shieldAfter:t.shield});}
   else if(e.type==='heal')for(const t of tgs){if(e.oncePerBattle&&actor._signatureOnceHeals?.[e.oncePerBattle])continue;const amount=Math.round(t.maxHp*Number(e.maxHpRatio||0)+(e.scaling==='INT'?agent.stats.int*Number(e.multiplier||0):0));if(amount>0){const restored=recoverHP(t,amount,{source:actor,state,lines,kind:'heal'});if(restored>0){if(e.oncePerBattle){actor._signatureOnceHeals=actor._signatureOnceHeals||{};actor._signatureOnceHeals[e.oncePerBattle]=true;}lines.push({text:`${t.name} recovers ${restored} HP (${t.hp}/${t.maxHp}).`,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'heal',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),amount:restored,hpAfter:t.hp,maxHp:t.maxHp});}}}
   else if(e.type==='buff')for(const t of tgs){const d=fxDuration(e,'buff'),m=1+Number(e.amount||0);if(e.stat==='all'){for(const k of ['atk','def','int'])addFx(t,'buff',k,m,d);}else addFx(t,'buff',e.stat,m,d);emitCombatEvent(state,{round:state?.currentRound||1,type:'status',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`${t.name} gains +${Math.round((m-1)*100)}% ${e.stat.toUpperCase()} ${durationText(d)}`});}
@@ -1631,6 +1647,8 @@ function powerEffect(a,actor,enemy,state,lines=[],r,actionContext={}){if(!lines)
       actorName: actor.name,
       actorTeam: teamOf(actor, state),
       ability: 'Thread Binding',
+      abilityId: 'thread_binding',sourceAbilityId:'thread_binding',sourcePath:'fool',
+      targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),
       costSP: threadCost,costHP:threadQuote.resource==='hp'?threadQuote.amount:0,
       cooldown: threadCd
     });

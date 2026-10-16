@@ -16,7 +16,8 @@ async function fixture(options = {}) {
   w.G9_DATA = await w.G9DataLoader.load();
   w.setInterval = () => 1; w.clearInterval = () => {}; w.scrollTo = () => {};
   w.matchMedia = () => ({ matches: false, addEventListener() {}, removeEventListener() {} });
-  let timerId = 0;
+  let timerId = 0, clock = 0;
+  w.performance.now = () => clock;
   const timers = new Map(), animations = [];
   w.setTimeout = (fn, delay) => { timers.set(++timerId, { fn, delay }); return timerId; };
   w.clearTimeout = id => timers.delete(id);
@@ -65,6 +66,11 @@ async function fixture(options = {}) {
       { round: 1, type: 'resources', units: [{ ...ally, hp: 0, alive: false, sp: 3 }, { ...enemy, hp: 30, shield: 30, inForm: true, sp: 5 }] },
       { round: 1, type: 'story', text: 'The encounter is recorded.' }
     ];
+    if (options.basic) result.events = [
+      ...result.events.slice(0, 3),
+      { round: 1, type: 'resources', units: [{ ...ally, sp: 16 }, { ...enemy, hp: 30 }] },
+      { round: 1, type: 'story', text: 'The encounter is recorded.' }
+    ];
     result.success = false; result.battleOutcome = 'defeat';
     result.battleSnapshot = {
       ...result.battleSnapshot, outcome: 'defeat',
@@ -81,9 +87,9 @@ async function fixture(options = {}) {
   const tick = () => {
     assert.equal(timers.size, 1, 'exactly one scheduler can advance the presentation');
     const [id, timer] = timers.entries().next().value;
-    timers.delete(id); timer.fn();
+    timers.delete(id); clock += timer.delay; timer.fn();
   };
-  return { dom, w, app, timers, animations, tick, card, get allyId() { return allyId; }, enemyId };
+  return { dom, w, app, timers, animations, tick, card, elapse: ms => { clock += ms; }, get time() { return clock; }, get allyId() { return allyId; }, enemyId };
 }
 
 async function test(name, fn, options) {
@@ -118,6 +124,8 @@ function clean(f) {
     f.tick(); assert.equal(hp(ally), '0/100'); assert(log(f).textContent.includes('Reaction ·')); assert(!log(f).textContent.includes('Chronicle Agent falls'));
     assert.equal(sp(enemy), '20/20', 'the authoritative end-of-action snapshot is still unrevealed');
     f.tick(); assert(log(f).textContent.includes('Chronicle Agent falls')); assert(ally.classList.contains('dead'));
+    assert.equal(sp(ally), '16/20', 'the final impact remains readable before reconciliation');
+    f.tick();
     assert.equal(sp(ally), '3/20'); assert.equal(sp(enemy), '7/20');
     assert.equal(f.card(f.allyId), ally); assert.equal(ally.querySelector('img'), allyImage);
     assert(f.app.querySelector('.battle-completion').hidden, 'settlement waits for the remaining encounter rows');
@@ -142,13 +150,17 @@ function clean(f) {
   await test('paused speed changes stay paused and live speed changes replace the scheduler without replay', f => {
     beginHit(f);
     f.w.G9.toggleTickerPause(); f.w.G9.setTickerSpeed(2); assert.equal(f.timers.size, 0);
-    f.w.G9.toggleTickerPause(); assert.equal(f.timers.size, 1); assert.equal(f.timers.values().next().value.delay, 75);
+    f.w.G9.toggleTickerPause(); assert.equal(f.timers.size, 1); assert.equal(f.timers.values().next().value.delay, 225);
     const stale = f.timers.values().next().value.fn;
-    f.w.G9.setTickerSpeed(4); assert.equal(f.timers.size, 1); assert.equal(f.timers.values().next().value.delay, 100);
+    f.w.G9.setTickerSpeed(4); assert.equal(f.timers.size, 1); assert.equal(f.timers.values().next().value.delay, 112.5);
     const before = log(f).textContent; stale(); assert.equal(log(f).textContent, before);
-    f.tick(); assert.equal(log(f).querySelectorAll('.b-turn-header').length, 1); assert.equal(sp(f.card(f.enemyId)), '7/20');
+    f.tick(); assert.equal(log(f).querySelectorAll('.b-turn-header').length, 1); assert.equal(sp(f.card(f.enemyId)), '20/20');
+    assert(log(f).textContent.includes('MYTHICAL FORM AWAKENING')); assert(!log(f).textContent.includes('Chronicle Agent falls'));
+    f.tick(); f.tick(); f.tick(); f.tick();
+    assert.equal(sp(f.card(f.enemyId)), '7/20');
     assert(log(f).textContent.includes('Chronicle Agent falls')); assert(!log(f).textContent.includes('Gather Shadows'));
-    f.tick(); assert.equal(log(f).querySelectorAll('.b-turn-header').length, 2); assert.equal(sp(f.card(f.enemyId)), '5/20');
+    f.tick(); assert.equal(log(f).querySelectorAll('.b-turn-header').length, 2);
+    f.tick(); f.tick(); assert.equal(sp(f.card(f.enemyId)), '5/20');
     assert.equal(log(f).textContent.split('Runebore Revolver').length - 1, 1, 'speed changes cannot duplicate an action');
   });
 
@@ -202,6 +214,32 @@ function clean(f) {
     assert(f.app.querySelector('[data-pause]').disabled); assert(f.app.querySelector('[data-step]').disabled);
     assert.equal(f.app.querySelector('.b-result-box').hidden, false);
   }, { sim: true });
+
+  for (const speed of [.5, 1, 2, 4]) await test(`ordinary action lasts ${2000 / speed}ms at ${speed}x with ordered impacts`, f => {
+    f.w.G9.setTickerSpeed(speed); f.tick(); f.tick();
+    const started = f.time;
+    assert.equal(hp(f.card(f.enemyId)), '100/100');
+    f.tick(); assert.equal(hp(f.card(f.enemyId)), '30/100');
+    assert(f.app.querySelector('.battle-partial-row'));
+    f.tick(); assert.equal(f.time - started, 2000 / speed);
+    assert.equal(f.app.querySelector('.battle-partial-row'), null);
+  }, { basic: true });
+
+  await test('complex actions retain extra reading time and Pause preserves the remaining phase clock', f => {
+    f.tick(); f.tick(); const started = f.time;
+    for (let i = 0; i < 6; i++) f.tick();
+    assert.equal(f.time - started, 3700);
+    assert(log(f).textContent.includes('Chronicle Agent falls'));
+  });
+
+  await test('Pause and speed changes preserve elapsed reading time without advancing while paused', f => {
+    beginHit(f); f.elapse(200); f.w.G9.toggleTickerPause();
+    f.elapse(10000); f.w.G9.toggleTickerPause();
+    assert.equal(f.timers.values().next().value.delay, 250);
+    f.elapse(50); f.w.G9.setTickerSpeed(2);
+    assert.equal(f.timers.values().next().value.delay, 100);
+    f.tick(); assert(log(f).textContent.includes('MYTHICAL FORM AWAKENING'));
+  });
 
   console.log(`\nCombat animation controls: ${passed} passed, ${failed} failed.`);
   if (failed) process.exitCode = 1;

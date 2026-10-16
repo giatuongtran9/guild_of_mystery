@@ -38,15 +38,15 @@ function mythicalHit(owner,target,amount,state,lines,r,damageType='physical',opt
  const hit=resolveIncoming(owner,target,amount,state,lines,r,{...options,damageType,indirect:true,mythical:true});
  const text=`${owner.name}'s mythical authority deals ${hit.hpLoss+hit.absorbed} ${damageType} damage to ${target.name}.`;
  lines?.push({text,kind:'quirk'});
- emitResolvedDamage(state,hit,{type:'damage',subtype:'mythical_authority',actorId:owner.id,actorName:owner.name,actorTeam:teamOf(owner,state),targetId:target.id,targetName:target.name,targetTeam:teamOf(target,state),text,amount:hit.hpLoss+hit.absorbed,incoming:hit.incoming,absorbed:hit.absorbed,hpLoss:hit.hpLoss,shieldAfter:target.shield||0,hpAfter:target.hp,maxHp:target.maxHp,damageType});
+ emitResolvedDamage(state,hit,{type:'damage',subtype:'mythical_authority',actorId:owner.id,actorName:owner.name,actorTeam:teamOf(owner,state),targetId:target.id,targetName:target.name,targetTeam:teamOf(target,state),text,amount:hit.hpLoss+hit.absorbed,incoming:hit.incoming,absorbed:hit.absorbed,hpLoss:hit.hpLoss,shieldAfter:target.shield||0,hpAfter:target.hp,maxHp:target.maxHp,damageType,...(options.presentationEffect?{presentationEffect:options.presentationEffect}:{})});
  return hit;
 }
-function mythicalControl(owner,state,lines,r,status,duration){
+function mythicalControl(owner,state,lines,r,status,duration,presentation={}){
  r=r||state?.rng||(()=>.99);
  const possible=foesOf(owner,state).filter(u=>u.alive&&u.inCombat!==false&&!hasStatus(u,'untargetable')&&canAffect(owner.sequence,u.sequence)&&!statusImmune(u,status));
  if(!possible.length)return null;const target=pickR(r,possible);
  if(r()<Number(combatRates(mythicalAgent(target),target).resistance||0)||r()<statusResistChance(target,status)){mythicalNote(owner,target,state,lines,`${target.name} resists ${MYTHICAL_AUTHORITIES[owner.path].name}.`);return null;}
- if(!addStatus(target,status,duration,owner.name))return null;const turns=target.statusMeta[status].duration;mythicalNote(owner,target,state,lines,`${owner.name}'s ${MYTHICAL_AUTHORITIES[owner.path].name} afflicts ${target.name} with ${status.replace(/_/g,' ')} for ${turns} turn${turns===1?'':'s'}.`);return target;
+ if(!addStatus(target,status,duration,owner.name))return null;const turns=target.statusMeta[status].duration;mythicalNote(owner,target,state,lines,`${owner.name}'s ${MYTHICAL_AUTHORITIES[owner.path].name} afflicts ${target.name} with ${status.replace(/_/g,' ')} for ${turns} turn${turns===1?'':'s'}.`,'status',{...presentation,...(presentation.presentationEffect==='curse_link'?{turns,curseLink:{ownerId:owner.id,turns}}:{})});return target;
 }
 function mythicalRecall(owner,state,lines){
  const authority=owner._mythicalAuthority;if(authority.used)return;
@@ -81,7 +81,7 @@ function mythicalAwaken(unit,state,lines=[],r=state?.rng){
   authority.snapshot=Math.max(1,unit.hp);
   if(unit.sequence>1){authority.turns=2;addFx(unit,'dodge','dodge',cfg.dodge,2);}
  }else if(path==='chained'){
-  const target=mythicalControl(unit,state,lines,r,'curse_link',cfg.turns);if(target)target._mythicalCurseLink={ownerId:unit.id};authority.used=true;
+  const target=mythicalControl(unit,state,lines,r,'curse_link',cfg.turns,{presentationEffect:'curse_link',ownerId:unit.id});if(target)target._mythicalCurseLink={ownerId:unit.id};authority.used=true;
  }
 }
 function mythicalTurnStart(unit,state,lines=[],r=state?.rng){
@@ -97,6 +97,7 @@ function mythicalExpire(unit,state,lines=[]){
   for(const key of ['_mythicalShelterOwners','_mythicalConcealOwners'])if(ally[key])ally[key]=ally[key].filter(id=>id!==unit.id);
   for(const status of ['poison','curse'])if(ally._mythicalProtectionOwners?.[status]){ally._mythicalProtectionOwners[status]=ally._mythicalProtectionOwners[status].filter(id=>id!==unit.id);ally._mythicalStatusProtection[status]=ally._mythicalProtectionOwners[status].length>0;}
   if(authority.path==='paragon'&&ally._signatureOwnerId===unit.id&&ally._signatureCompanionKind==='historical_machine'){ally.alive=false;ally.inCombat=false;}
+  if(authority.path==='chained'&&ally._mythicalCurseLink?.ownerId===unit.id&&hasStatus(ally,'curse_link'))mythicalNote(unit,ally,state,lines,`${ally.name}'s curse link ends.`,'status',{presentationEffect:'curse_link_end',ownerId:unit.id,curseLink:null});
  }
  if(authority.path==='paragon')returnRecalledPathwayDevice(unit,state,lines);
  mythicalNote(unit,unit,state,lines,`${unit.name}'s ${MYTHICAL_AUTHORITIES[authority.path].name} ends${unit.alive?'; the mythical form remains active':''}.`);
@@ -142,7 +143,7 @@ function mythicalAfterDamage(attacker,defender,result,state,lines=[],r=state?.rn
  }
  // Actual HP loss already includes combat pacing. Apply only the recipient's
  // defenses/vulnerability to the echo; stat-based authorities keep normal pacing.
- if(mythicalActive(defender,'chained'))for(const target of foesOf(defender,state).filter(u=>u.alive&&u._mythicalCurseLink?.ownerId===defender.id&&hasStatus(u,'curse_link')))mythicalHit(defender,target,Math.round(lost*MYTHICAL_AUTHORITIES.chained.echo),state,lines,r,'dark',{pacingApplied:true});
+ if(mythicalActive(defender,'chained'))for(const target of foesOf(defender,state).filter(u=>u.alive&&u._mythicalCurseLink?.ownerId===defender.id&&hasStatus(u,'curse_link')))mythicalHit(defender,target,Math.round(lost*MYTHICAL_AUTHORITIES.chained.echo),state,lines,r,'dark',{pacingApplied:true,presentationEffect:'curse_echo'});
 }
 function mythicalBeforeFatal(unit,source,state,lines=[],r=state?.rng){
  if(!mythicalActive(unit)||unit.hp>0)return false;const authority=unit._mythicalAuthority;if(authority.used)return false;

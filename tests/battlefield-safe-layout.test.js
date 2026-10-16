@@ -443,6 +443,95 @@ async function test(label, fn) {
         assert.deepEqual(errors, [], 'reduced-motion fixture has no browser exceptions');
       } finally { await page.close(); }
     });
+    await test('persistent pathway links stay aligned across scrolling and phone-to-desktop reflow', async () => {
+      const { page, errors } = await pageFixture(browser, 390);
+      try {
+        const allies = units('ally', 12), enemies = units('enemy', 12);
+        await render(page, allies, enemies, 'abandoned_market', true);
+        await page.evaluate(({ allies, enemies }) => {
+          window.signatureMap = Object.fromEntries([...allies, ...enemies].map(unit => [unit.id, { ...unit, alive: true }]));
+          signatureMap.enemy_character_0.threadProgress = { ownerId: 'ally_character_0', value: 2, max: 5 };
+          signatureMap.ally_character_1.curseLink = { ownerId: 'enemy_character_0', turns: 2 };
+          window.signatureFx = createBattleEffects(document.querySelector('.battle-log-wrap'));
+          signatureFx.sync(signatureMap);
+        }, { allies, enemies });
+        const inspect = () => page.evaluate(() => {
+          const wrap = document.querySelector('.battle-log-wrap'), field = wrap.querySelector('.gm-battlefield-canvas').getBoundingClientRect();
+          const result = [];
+          for (const path of wrap.querySelectorAll('.gm-pathway-links path')) {
+            const center = id => {
+              const unit = [...wrap.querySelectorAll('[data-unit-id]')].find(node => node.dataset.unitId === id);
+              const box = unit.querySelector('.gm-unit-sprite-anchor').getBoundingClientRect();
+              return [box.left - field.left + box.width / 2, box.top - field.top + box.height / 2];
+            };
+            const points = path.getAttribute('d').match(/-?\d+(?:\.\d+)?/g).map(Number);
+            result.push({ start: points.slice(0, 2), end: points.slice(-2),
+              owner: center(path.dataset.ownerId), target: center(path.dataset.targetId) });
+          }
+          return { paths: result, label: wrap.querySelector('.gm-pathway-progress')?.textContent,
+            pointer: getComputedStyle(wrap.querySelector('.gm-pathway-links')).pointerEvents,
+            viewBox: wrap.querySelector('.gm-pathway-links').getAttribute('viewBox').split(' ').map(Number),
+            field: [field.width, field.height] };
+        });
+        for (const width of [390, 1440]) {
+          await page.setViewportSize({ width, height: 1100 });
+          await page.evaluate(() => { layoutBattlefields(document); const arena = document.querySelector('.gm-dungeon-arena'); arena.scrollTop = arena.scrollHeight; });
+          const result = await inspect();
+          assert.equal(result.paths.length, 2); assert.equal(result.label, '2/5'); assert.equal(result.pointer, 'none');
+          assert.deepEqual(result.viewBox.slice(2), result.field);
+          for (const link of result.paths) {
+            for (let i = 0; i < 2; i++) { assert(Math.abs(link.start[i] - link.owner[i]) < .1); assert(Math.abs(link.end[i] - link.target[i]) < .1); }
+          }
+        }
+        await page.evaluate(() => { signatureMap.enemy_character_0.threadProgress = null; signatureMap.ally_character_1.curseLink = null; signatureFx.sync(signatureMap); });
+        assert.equal(await page.locator('.gm-pathway-links').count(), 0);
+        assert.deepEqual(errors, []);
+      } finally { await page.close(); }
+    });
+    for (const width of [390, 1440]) await test(`signature artwork stays within fixed anchors and never intercepts input at ${width}px`, async () => {
+      const { page, errors } = await pageFixture(browser, width);
+      try {
+        const allies = units('ally', 4), enemies = units('enemy', 4);
+        await render(page, allies, enemies, 'abandoned_market', true);
+        const result = await page.evaluate(({ allies, enemies }) => {
+          const wrap = document.querySelector('.battle-log-wrap'), arena = wrap.querySelector('.gm-dungeon-arena');
+          arena.scrollIntoView({ block: 'start' });
+          const map = Object.fromEntries([...allies, ...enemies].map(unit => [unit.id, { ...unit, alive: true }]));
+          const ownerId = 'ally_character_0', deviceId = 'ally_companion_0';
+          map[ownerId].path = 'door'; map[deviceId].companion = { ownerId, kind: 'device' };
+          const fx = createBattleEffects(wrap); fx.sync(map);
+          const before = [...wrap.querySelectorAll('.gm-arena-unit')].map(node => [node.getBoundingClientRect().x, node.getBoundingClientRect().y]);
+          const shapes = [];
+          for (const row of [{ actorId: ownerId, abilityId: 'record:raging_blow', ownedPower: 'record' },
+            { actorId: ownerId, abilityId: 'asset_soul:power', ownedPower: 'soul' },
+            { actorId: deviceId, abilityId: 'basic_attack', attackKind: 'unarmed' }]) {
+            const card = [...wrap.querySelectorAll('[data-unit-id]')].find(node => node.dataset.unitId === row.actorId);
+            const frame = arena.getBoundingClientRect(), box = card.getBoundingClientRect();
+            arena.scrollTop += box.top - frame.top - (arena.clientHeight - box.height) / 2;
+            fx.show({ type: 'cast', row }); fx.pause();
+            const shape = wrap.querySelector('.gm-pathway-fx-layer [data-effect]');
+            if (!shape) throw new Error('Expected a visible signature shape');
+            const art = shape.getBoundingClientRect(), anchor = card.querySelector('.gm-unit-sprite-anchor').getBoundingClientRect();
+            shapes.push({ effect: shape.dataset.effect, inside: art.left >= anchor.left - .1 && art.right <= anchor.right + .1 && art.top >= anchor.top - .1 && art.bottom <= anchor.bottom + .1,
+              pointer: getComputedStyle(shape.closest('svg')).pointerEvents, size: anchor.width });
+          }
+          fx.clear();
+          const after = [...wrap.querySelectorAll('.gm-arena-unit')].map(node => {
+            const box = node.getBoundingClientRect(); return [box.x, box.y + arena.scrollTop];
+          });
+          // Comparing content coordinates avoids treating deliberate panning as layout motion.
+          const stable = before.map((point, i) => Math.abs(point[0] - after[i][0]) < .1);
+          return { shapes, stable, remaining: wrap.querySelectorAll('.gm-pathway-links, .gm-pathway-fx-layer').length,
+            overflow: arena.scrollWidth - arena.clientWidth };
+        }, { allies, enemies });
+        assert.deepEqual(result.shapes.map(shape => shape.effect), ['portal', 'soul', 'muzzle']);
+        assert(result.shapes.every(shape => shape.inside && shape.pointer === 'none'));
+        assert.equal(result.shapes[0].size, width <= 560 ? 64 : 96);
+        assert.equal(result.shapes[2].size, width <= 560 ? 32 : 40);
+        assert(result.stable.every(Boolean)); assert.equal(result.remaining, 0); assert(result.overflow <= 1);
+        assert.deepEqual(errors, []);
+      } finally { await page.close(); }
+    });
   } finally { await browser.close(); }
   if (output) { fs.mkdirSync(output, { recursive: true }); fs.writeFileSync(path.join(output, 'battlefield-safe-layout.json'), JSON.stringify(measurements, null, 2) + '\n'); }
   console.log(`\n${passed} passed, ${failed} failed`);

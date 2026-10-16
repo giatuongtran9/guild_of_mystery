@@ -10,13 +10,13 @@
     "js/traits.js": "813bc70427448802",
     "js/market.js": "507fb36b01097000",
     "js/pathway-assets.js": "ef58e1173cc37f9e",
-    "js/signatures.js": "2c3629ca684339b3",
-    "js/mythical.js": "d28ea1012c19ad14",
+    "js/signatures.js": "a5cdf363eb630ee0",
+    "js/mythical.js": "36137b6f05975faf",
     "js/battle-ai.js": "938d1e520e19fc4d",
-    "js/engine.js": "814e6c97b2995d48",
+    "js/engine.js": "5aa8bc939e51ea98",
     "js/state.js": "06b4d9cd538f377d",
     "js/campaign.js": "cc4a4e65446ccee4",
-    "js/ui.js": "a208bf0dd2b80b6d"
+    "js/ui.js": "768cb4dfee08d4a8"
   },
   "serviceWorkerVersion": "e1bc522e1bc66336"
 }
