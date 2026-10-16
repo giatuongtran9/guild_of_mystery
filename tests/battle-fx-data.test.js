@@ -44,7 +44,7 @@ test('basic attack families distinguish weapons and caster pathways', () => {
 test('impact and chip settings retain the requested readable timings', () => {
   assert.equal(original.impact.frames, 4);
   assert.equal(original.impact.durationMs, 160);
-  assert.equal(original.impact.critHitStopMs, 50);
+  assert.equal(original.impact.critHitStopMs, 0, 'critical hits never add a stop to replay timing');
   assert(original.impact.critScale > 1);
   assert.equal(original.abilityChipMs, 500);
 });

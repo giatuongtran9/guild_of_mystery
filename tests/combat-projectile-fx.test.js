@@ -68,14 +68,24 @@ function cast(f, row, next = hit(row.actorId), speed = 1, hold = 600) {
 }
 function active(f) { return f.animations.filter(animation => !animation.cancelled && animation.playState !== 'finished'); }
 
-test('gun basics use a straight bolt while melee and unarmed basics use slash arcs', f => {
-  for (const [kind, family] of [['gun', 'bolt'], ['weapon', 'slash'], ['unarmed', 'slash']]) {
+test('gun and unarmed basics retain procedural projectiles while weapon slashes use only the custom impact mark', f => {
+  for (const [kind, family] of [['gun', 'bolt'], ['unarmed', 'slash']]) {
     const projectile = cast(f, { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: kind });
-    assert(projectile, kind + ' has an observable attack cue');
+    assert(projectile, kind + ' retains its existing projectile cue');
     assert.equal(projectile.dataset.family, family);
     assert.equal(projectile.dataset.pathKind, 'straight');
-    assert.equal(f.find('.gm-combat-ability-chip'), null, 'basics do not repeat weapon names above the sprite');
   }
+  const weapon = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: 'weapon' };
+  f.effects.show({ type: 'cast', row: weapon, next: hit('paragon') }, 1, 450);
+  assert.equal(f.find('.gm-combat-projectile'), null, 'the custom weapon slash is not layered over a procedural slash');
+  f.effects.show({ ...hit('paragon'), row: weapon }, 1, 450);
+  assert(f.find('.gm-combat-sword-slash image'), 'the supplied PNG renders at the target impact');
+  assert.equal(f.find('.gm-combat-sword-slash image').getAttribute('href'), 'data/assets/effects/sword-slash.png');
+  assert.equal(f.find('.gm-combat-impact-frame'), null, 'the bespoke slash replaces the procedural impact frames');
+  const slashAnimation = active(f).find(animation => animation.element.matches('.gm-combat-sword-slash-image'));
+  assert(slashAnimation, 'the slash animates without adding a playback phase');
+  assert.equal(Number(slashAnimation.timing.duration), fx.impact.durationMs);
+  assert.equal(f.find('.gm-combat-ability-chip'), null, 'basics do not repeat weapon names above the sprite');
 });
 
 test('caster basics use pathway magic, retaining damage type color', f => {
@@ -137,7 +147,7 @@ test('physical shots are fast and straight while spell paths curve with afterima
   assert(movement.keyframes.length >= 3, 'the spell has a curved intermediate travel point');
 });
 
-test('impact feedback has four stepped pixel frames and critical hits hold a larger first frame', f => {
+test('impact feedback retains stepped frames and critical hits scale visually without any hit-stop', f => {
   const row = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'shot' };
   f.effects.show({ ...hit(), row }, 1, 450);
   const normal = f.find('.gm-combat-impact');
@@ -150,14 +160,23 @@ test('impact feedback has four stepped pixel frames and critical hits hold a lar
   const critical = f.find('.gm-combat-impact');
   assert.equal(critical.dataset.critical, 'true');
   assert(Number(critical.dataset.impactScale) > normalScale);
-  assert.equal(Number(critical.dataset.hitStopMs), 50);
+  assert.equal(Number(critical.dataset.hitStopMs), 0);
   const frameAnimations = active(f).filter(animation => animation.element.closest?.('.gm-combat-impact') === critical);
   assert(frameAnimations.length >= 4, 'each stepped frame is represented in the visible burst');
-  assert(frameAnimations.some(animation => Number(animation.timing.duration) >= fx.impact.durationMs + 50));
+  assert(frameAnimations.every(animation => Number(animation.timing.duration) === fx.impact.durationMs), 'critical visuals never extend the impact clock');
   for (const animation of frameAnimations) {
     assert.equal(animation.timing.easing, 'linear', 'the overall clock must reach intermediate pixel frames');
     assert(animation.keyframes.every(key => key.easing === 'steps(1,end)'), 'pixel opacity steps belong to individual keyframe segments');
   }
+});
+
+test('sword slash and critical number styles preserve mobile readability and draw damage over effects', f => {
+  const css = fs.readFileSync(path.join(root, 'css/components/dungeon-arena.css'), 'utf8');
+  assert.match(css, /\.gm-combat-fx-layer\s*\{[^}]*z-index:\s*4/s);
+  assert.match(css, /\.gm-battle-fx-layer\s*\{[^}]*z-index:\s*5/s);
+  assert.match(css, /\.gm-battle-fx-number-critical\s*\{[^}]*font-size:\s*16px/s);
+  assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*?\.gm-battle-fx-number-critical\s*\{[^}]*font-size:\s*15px/s);
+  assert.match(css, /\.gm-combat-sword-slash-image\s*\{[^}]*transform-origin:\s*center/s);
 });
 
 test('a heal rises as green motes with no damaging projectile or impact', f => {

@@ -232,14 +232,18 @@ function clean(f) {
     assert(log(f).textContent.includes('Chronicle Agent falls'));
   });
 
-  await test('critical impact adds a scaled hit-stop without delaying or duplicating the resolved hit', f => {
+  await test('critical impact is larger and orange with no hit-stop or playback delay', f => {
     beginHit(f);
     assert.equal(hp(f.card(f.enemyId)), '30/100');
-    assert.equal(f.timers.values().next().value.delay, 500, '450ms impact plus 50ms critical hold');
+    assert.equal(f.timers.values().next().value.delay, 450, 'critical damage uses the ordinary 450ms impact phase');
+    const number = f.app.querySelector('.gm-battle-fx-number-critical');
+    assert(number, 'critical damage has a distinct number style');
+    assert.equal(number.dataset.critical, 'true');
+    assert.match(number.style.cssText, /#ff9b3d/i, 'critical damage number is orange');
     f.elapse(50); f.w.G9.toggleTickerPause();
     assert.equal(f.timers.size, 0);
     f.w.G9.setTickerSpeed(2); f.w.G9.toggleTickerPause();
-    assert.equal(f.timers.values().next().value.delay, 225, 'remaining critical phase follows proportional speed');
+    assert.equal(f.timers.values().next().value.delay, 200, 'critical phase keeps the ordinary remaining clock at 2x');
     f.tick();
     assert(log(f).textContent.includes('MYTHICAL FORM AWAKENING'));
     assert.equal(hp(f.card(f.enemyId)), '30/100');
