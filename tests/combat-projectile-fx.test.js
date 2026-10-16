@@ -68,7 +68,7 @@ function cast(f, row, next = hit(row.actorId), speed = 1, hold = 600) {
 }
 function active(f) { return f.animations.filter(animation => !animation.cancelled && animation.playState !== 'finished'); }
 
-test('gun and unarmed basics retain procedural projectiles while weapon slashes use only the custom impact mark', f => {
+test('gun and unarmed basics retain procedural projectiles while weapon basics travel as a directional slash', f => {
   for (const [kind, family] of [['gun', 'bolt'], ['unarmed', 'slash']]) {
     const projectile = cast(f, { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: kind });
     assert(projectile, kind + ' retains its existing projectile cue');
@@ -78,6 +78,21 @@ test('gun and unarmed basics retain procedural projectiles while weapon slashes 
   const weapon = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: 'weapon' };
   f.effects.show({ type: 'cast', row: weapon, next: hit('paragon') }, 1, 450);
   assert.equal(f.find('.gm-combat-projectile'), null, 'the custom weapon slash is not layered over a procedural slash');
+  const travelingSlash = f.find('.gm-combat-sword-slash-travel');
+  assert(travelingSlash, 'the slash launches from the attacker during the cast cue');
+  assert.equal(travelingSlash.dataset.ownerId, 'paragon');
+  assert.equal(travelingSlash.dataset.targetId, 'enemy');
+  assert.equal(travelingSlash.querySelector('image').getAttribute('href'), 'data/assets/effects/sword-slash.png');
+  assert.equal(travelingSlash.querySelector('image').getAttribute('transform'), 'rotate(45)',
+    'the slash art’s diagonal crescent axis is turned to align with horizontal travel before bearing rotation');
+  assert.equal(Number(travelingSlash.dataset.travelMs), 450,
+    'slash uses the full existing cast window for a clearly readable flight');
+  assert.equal(Number(travelingSlash.dataset.travelDelayMs), 0,
+    'slash launches as soon as the attacker cue appears, without extending the turn');
+  const travelAnimation = active(f).find(animation => animation.element === travelingSlash);
+  assert(travelAnimation?.keyframes.some(frame => /rotate\(/.test(frame.transform || '')), 'slash rotates along the attacker-to-target direction');
+  const angle = Math.atan2((80 + 32) - (350 + 32), (140 + 32) - (110 + 32)) * 180 / Math.PI;
+  assert(Math.abs(Number(travelingSlash.dataset.angleDeg) - angle) < .1, 'slash orientation follows the actual target vector');
   f.effects.show({ ...hit('paragon'), row: weapon }, 1, 450);
   assert(f.find('.gm-combat-sword-slash image'), 'the supplied PNG renders at the target impact');
   assert.equal(f.find('.gm-combat-sword-slash image').getAttribute('href'), 'data/assets/effects/sword-slash.png');
@@ -176,7 +191,9 @@ test('sword slash and critical number styles preserve mobile readability and dra
   assert.match(css, /\.gm-battle-fx-layer\s*\{[^}]*z-index:\s*5/s);
   assert.match(css, /\.gm-battle-fx-number-critical\s*\{[^}]*font-size:\s*16px/s);
   assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*?\.gm-battle-fx-number-critical\s*\{[^}]*font-size:\s*15px/s);
-  assert.match(css, /\.gm-combat-sword-slash-image\s*\{[^}]*transform-origin:\s*center/s);
+  assert.match(css, /\.gm-combat-sword-slash-image,\s*\.gm-combat-sword-slash-projectile\s*\{[^}]*transform-origin:\s*center/s);
+  assert.match(css, /\.gm-unit-sprite-anchor\.gm-cue-actor\s*\{[^}]*#ffd078/s, 'attacker cue is gold and distinct from the red target cue');
+  assert.match(css, /\.gm-unit-sprite-anchor\.gm-cue-damage\s*\{[^}]*#f39991/s, 'target damage cue remains red');
 });
 
 test('a heal rises as green motes with no damaging projectile or impact', f => {
