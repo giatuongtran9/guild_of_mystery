@@ -15,6 +15,17 @@ function emitCombatEvent(state, ev) {
   if (ev.round === undefined) ev.round = state.currentRound || 0;
   state.events.push(ev);
 }
+// A hit is placed in the stream when HP/shields change, before its nested
+// awakening, retaliation or death. Callers may then add their ability labels.
+function emitResolvedDamage(state, result, details) {
+  if (!result?.event) return emitCombatEvent(state, details);
+  const event = result.event;
+  const hpAfter = event.hpAfter, shieldAfter = event.shieldAfter;
+  Object.assign(event, details, { amount: result.hpLoss + result.absorbed,
+    incoming: result.incoming, hpLoss: result.hpLoss, absorbed: result.absorbed,
+    hpAfter, shieldAfter });
+  return event;
+}
 function combatResourceSnapshot(unit,state){
  const a=getCombatAgent(unit),cfg=PATH_METERS[a.path];
  return {id:unit.id,name:unit.name,team:teamOf(unit,state),path:a.path,sequence:a.sequence,summoned:!!unit.summoned,unitType:a.unitType||null,
@@ -51,6 +62,7 @@ function groupEventsToRows(events, battleSnapshot) {
   const rounds = [];
   let currentRound = null;
   let activeTurn = null;
+  const step = (turn, type, event) => (turn.timeline || (turn.timeline = [])).push({ type, event });
 
   function getRound(r) {
     if (!currentRound || currentRound.round !== r) {
@@ -95,6 +107,7 @@ function groupEventsToRows(events, battleSnapshot) {
       // Awakened by the hit that is still being resolved: show it inside that attack row (cast -> hit -> awakening -> stuns).
       if (ev.subtype === 'mythical_form' && ev.inTurn && activeTurn) {
         activeTurn.subrows.push({ type: 'mythical', text: ev.text });
+        step(activeTurn, 'mythical', ev);
         continue;
       }
       // Any other story line is chronologically after the pending turn, so close that turn first.
@@ -103,6 +116,7 @@ function groupEventsToRows(events, battleSnapshot) {
         activeTurn = null;
       }
       r.rows.push({
+        ...ev,
         id: `story_${ev.round}_${i}`,
         round: ev.round,
         type: 'story',
@@ -123,33 +137,35 @@ function groupEventsToRows(events, battleSnapshot) {
         actorName: ev.actorName,
         actorTeam: ev.actorTeam,
         ability: ev.ability,
-        costSP: ev.costSP,costHP:ev.costHP||0,costHP:ev.costHP,
+        costSP: ev.costSP,costHP:ev.costHP,
         cooldown: ev.cooldown,
         damages: [],
         heals: [],
         shields: [],
         subrows: [],
-        deaths: []
+        deaths: [], timeline: []
       };
       continue;
     }
 
-    // Reflect damage is emitted while the attacker's own hit is still resolving, i.e. BEFORE that hit's damage event.
-    // Keep it inside the attack row (it hit the row's actor) instead of closing the row and splitting the attack in three.
+    // A reflection remains part of the attack it answers, after its direct hit.
     if (activeTurn && ev.type === 'damage' && ev.isReflect && ev.targetId === activeTurn.actorId) {
       (activeTurn.reflects = activeTurn.reflects || []).push(ev);
       activeTurn.subrows.push({ type: 'reflect', text: `${ev.actorName} reflects ${abbrNum(ev.amount)} damage back at ${ev.targetName}.` });
+      step(activeTurn, 'reflect', ev);
       continue;
     }
 
-    if (activeTurn && ev.type === 'damage' && ev.actorId !== activeTurn.actorId && (ev.isSignature || ev.subtype === 'mythical_authority')) {
+    if (activeTurn && ev.type === 'damage' && ev.actorId !== activeTurn.actorId && (ev.isReaction || ev.isSignature || ev.subtype === 'mythical_authority')) {
       (activeTurn.reactions = activeTurn.reactions || []).push(ev);
       activeTurn.subrows.push({ type: 'reaction', text: ev.text || `${ev.actorName} deals ${abbrNum(ev.amount)} ${ev.damageType || ''} damage to ${ev.targetName}.` });
+      step(activeTurn, 'reaction', ev);
       continue;
     }
 
     if (activeTurn && ev.actorId === activeTurn.actorId && ev.type === 'damage' && !ev.isDot) {
       activeTurn.damages.push(ev);
+      step(activeTurn, 'damage', ev);
       continue;
     }
 
@@ -157,6 +173,7 @@ function groupEventsToRows(events, battleSnapshot) {
       if (!activeTurn) activeTurn = { id: `support_${ev.round}_${ev.actorId}_${i}`, round: ev.round, type: 'turn', actorId: ev.actorId, actorName: ev.actorName, actorTeam: ev.actorTeam, ability: ev.ability || (ev.type === 'heal' ? 'Recovery' : 'Protection'), damages: [], heals: [], shields: [], subrows: [], deaths: [] };
       if (ev.type === 'heal') activeTurn.heals.push(ev);
       else activeTurn.shields.push(ev);
+      step(activeTurn, ev.type, ev);
       continue;
     }
 
@@ -178,12 +195,14 @@ function groupEventsToRows(events, battleSnapshot) {
         subrows: [],
         deaths: []
       };
+      step(activeTurn, 'damage', ev);
       continue;
     }
 
     if (ev.type === 'miss') {
       if (activeTurn && activeTurn.actorId === ev.actorId) {
         activeTurn.subrows.push({ type: 'miss', text: ev.text });
+        step(activeTurn, 'note', { type: 'miss', text: ev.text });
         continue;
       }
       if (activeTurn) {
@@ -235,6 +254,7 @@ function groupEventsToRows(events, battleSnapshot) {
     if (ev.type === 'thread') {
       if (activeTurn) {
         activeTurn.subrows.push({ type: 'thread', text: ev.text });
+        step(activeTurn, 'note', { type: 'thread', text: ev.text });
       } else {
         r.rows.push({
           id: `thread_${ev.round}_${i}`,
@@ -249,6 +269,7 @@ function groupEventsToRows(events, battleSnapshot) {
     if (ev.type === 'status') {
       if (activeTurn) {
         activeTurn.subrows.push({ type: 'status', text: ev.text, subtype: ev.subtype, stat: ev.stat, curVal: ev.curVal, maxVal: ev.maxVal, isFreeze: ev.isFreeze });
+        step(activeTurn, 'note', { ...ev, type: 'status' });
       } else {
         r.rows.push({
           id: `status_${ev.round}_${i}`,
@@ -263,8 +284,10 @@ function groupEventsToRows(events, battleSnapshot) {
     if (ev.type === 'death') {
       if (activeTurn) {
         activeTurn.deaths.push(ev);
+        step(activeTurn, 'death', ev);
       } else {
         r.rows.push({
+          ...ev,
           id: `death_${ev.round}_${i}`,
           round: ev.round,
           type: 'death',
@@ -280,8 +303,10 @@ function groupEventsToRows(events, battleSnapshot) {
       if (activeTurn) {
         (activeTurn.revives = activeTurn.revives || []).push(ev);
         activeTurn.subrows.push({ type: 'revive', text: ev.text });
+        step(activeTurn, 'revive', ev);
       } else {
         r.rows.push({
+          ...ev,
           id: `revive_${ev.round}_${i}`,
           round: ev.round,
           type: 'revive',
@@ -607,12 +632,22 @@ function resolveIncoming(attacker,defender,dmg,state,lines=[],r,opt={}){if(!line
  if(defender?.alive)dmg=mythicalBeforeDamage(attacker,defender,dmg,state,lines,r||state?.rng,opt);
  // Shared reflection already contains this scaling; stat-based reflection does not.
  const periodicMultiplier=opt.dotStatus?Math.max(0,Number(defender?.bossDefinition?.periodicDamageTakenMultiplier??1)):1;dmg*=periodicMultiplier;
- const globalMultiplier=(!opt.reflect||attacker?._reflect?.mode==='stat')?Number(GLOBAL_COMBAT.damage||1)*(1+Math.max(0,(state?.currentRound||1)-(GLOBAL_COMBAT.rampStarts||5))*Number(GLOBAL_COMBAT.roundRamp||0)):1;dmg*=globalMultiplier;
+ const globalMultiplier=!opt.pacingApplied&&(!opt.reflect||attacker?._reflect?.mode==='stat')?Number(GLOBAL_COMBAT.damage||1)*(1+Math.max(0,(state?.currentRound||1)-(GLOBAL_COMBAT.rampStarts||5))*Number(GLOBAL_COMBAT.roundRamp||0)):1;dmg*=globalMultiplier;
  const incoming=Math.max(0,Math.round(dmg*Number(defender?._vulnerability||1))),res={incoming,globalMultiplier,periodicMultiplier,absorbed:0,hpLoss:0,negated:false,reflected:0,dead:false,revived:false,shieldBefore:defender?.shield||0};
- if(!defender||!defender.alive||incoming<=0)return res;
- if(hasStatus(defender,'untargetable')){res.negated=true;lines.push({text:`${defender.name} is untargetable and avoids damage.`,kind:'status'});return res;}
+ const recordHit=()=>{
+  if(res.event)return;
+  res.event={type:'damage',actorId:attacker?.id,actorName:attacker?.name,actorTeam:attacker?teamOf(attacker,state):undefined,
+   targetId:defender?.id,targetName:defender?.name,targetTeam:defender?teamOf(defender,state):undefined,
+   amount:res.hpLoss+res.absorbed,incoming:res.incoming,hpLoss:res.hpLoss,absorbed:res.absorbed,
+   hpAfter:defender?.hp,maxHp:defender?.maxHp,shieldAfter:defender?.shield||0,
+   damageType:opt.trueDamage?'true':opt.damageType||'physical',isReflect:!!opt.reflect,
+   isReaction:!!opt.indirect&&!opt.dotStatus,isDot:!!opt.dotStatus};
+  emitCombatEvent(state,res.event);
+ };
+ if(!defender||!defender.alive||incoming<=0){recordHit();return res;}
+ if(hasStatus(defender,'untargetable')){res.negated=true;lines.push({text:`${defender.name} is untargetable and avoids damage.`,kind:'status'});recordHit();return res;}
  const dmgType=canonicalResistanceElement(opt.trueDamage?'true':opt.damageType||'physical');
- if(!opt.indirect&&hasStatus(defender,'possession_phase')&&matchesIncomingCategory('physical',dmgType)){res.negated=true;lines.push({text:`${defender.name}'s Possession Phase phases through physical damage!`,kind:'status'});return res;}
+ if(!opt.indirect&&hasStatus(defender,'possession_phase')&&matchesIncomingCategory('physical',dmgType)){res.negated=true;lines.push({text:`${defender.name}'s Possession Phase phases through physical damage!`,kind:'status'});recordHit();return res;}
  const ward=defender._reflect;
  const rf=(ward&&!opt.reflect&&!opt.indirect&&!(state&&state._inReflect)&&matchesIncomingCategory(ward.incomingCategory,dmgType))?ward:null;
  if(rf&&rf.negate){res.negated=true;lines.push({text:`${defender.name} negates ${incoming} damage.`,kind:'quirk'});}
@@ -626,12 +661,14 @@ function resolveIncoming(attacker,defender,dmg,state,lines=[],r,opt={}){if(!line
   rem=traitIncomingHP(attacker,defender,rem,state,lines,res,opt);
   rem=pathwayBeforeIncoming(attacker,defender,rem,state,lines,r||state?.rng,opt);
   const beforeHP=defender.hp;res.hpLoss=Math.min(Math.max(0,defender.hp),rem);defender.hp=Math.max(0,defender.hp-rem);
+  recordHit();
   Object.assign(res,settleFatalDamage(defender,state,lines,attacker,opt));
-  if(res.traitSurvival)res.hpLoss=Math.max(0,beforeHP-defender.hp);
-  if(defender._mythicalFatalRedirected){res.hpLoss=0;res.absorbed=0;res.redirected=true;delete defender._mythicalFatalRedirected;}
+  if(res.traitSurvival){res.hpLoss=Math.max(0,beforeHP-defender.hp);res.event.hpAfter=defender.hp;}
+  if(defender._mythicalFatalRedirected){res.hpLoss=0;res.absorbed=0;res.event.hpAfter=defender.hp;res.event.shieldAfter=defender.shield||0;res.redirected=true;delete defender._mythicalFatalRedirected;}
   recordThreadDamage(defender,res.hpLoss,state,lines);
   if(defender.hp>0&&(defender.agent||(defender.path&&defender.sequence!=null))){const wasInHit=state?._mythicalFromHit;if(state)state._mythicalFromHit=!!wasInHit||!opt.indirect;try{tryMythicalForm(defender.agent||defender,defender,state,lines,r);}finally{if(state)state._mythicalFromHit=wasInHit;}}
  }
+ recordHit();
  if(rf&&attacker&&attacker!==defender&&attacker.alive){
   let refl=0;
   if(rf.mode==='stat'){
@@ -644,13 +681,14 @@ function resolveIncoming(attacker,defender,dmg,state,lines=[],r,opt={}){if(!line
    let rr;try{rr=resolveIncoming(defender,attacker,refl,state,lines,r,{reflect:true,damageType:rf.element||'physical'});}finally{if(state)state._inReflect=wasReflect;}
    res.reflected=rr.hpLoss+rr.absorbed;
    reflectLine.text=`${defender.name} reflects ${res.reflected} damage back at ${attacker.name}.`;
-   emitCombatEvent(state,{round:state?.currentRound||1,type:'damage',actorId:defender.id,actorName:defender.name,actorTeam:teamOf(defender,state),targetId:attacker.id,targetName:attacker.name,targetTeam:teamOf(attacker,state),amount:res.reflected,incoming:refl,absorbed:rr.absorbed,hpLoss:rr.hpLoss,hpAfter:attacker.hp,maxHp:attacker.maxHp,damageType:rf.element||'reflected',isReflect:true,text:reflectLine.text});
+   emitResolvedDamage(state,rr,{round:state?.currentRound||1,type:'damage',actorId:defender.id,actorName:defender.name,actorTeam:teamOf(defender,state),targetId:attacker.id,targetName:attacker.name,targetTeam:teamOf(attacker,state),amount:res.reflected,incoming:refl,absorbed:rr.absorbed,hpLoss:rr.hpLoss,hpAfter:attacker.hp,maxHp:attacker.maxHp,damageType:rf.element||'reflected',isReflect:true,text:reflectLine.text});
   }
  }
  const wasInHit=state?._mythicalFromHit;if(state)state._mythicalFromHit=!!wasInHit||!opt.indirect;
  traitAfterHit(attacker,defender,res,state,lines,r||state?.rng||Math.random,opt);
  traitAfterIncoming(attacker,defender,res,state,lines,r||state?.rng||Math.random,opt);
  try{signatureAfterDamage(attacker,defender,res,state,lines,r||state?.rng,opt);pathwayAfterDamage(attacker,defender,res,state,lines,r||state?.rng||Math.random,opt);mythicalAfterDamage(attacker,defender,res,state,lines,r||state?.rng,opt);}finally{if(state)state._mythicalFromHit=wasInHit;}
+ Object.assign(res.event,{amount:res.hpLoss+res.absorbed,hpLoss:res.hpLoss,absorbed:res.absorbed});
  return res;
 }
 function beginTurn(c){if(c._reflect&&c._reflect.untilTurn)c._reflect=undefined;c._tauntUntilTurn=false;if(c._fx&&c._fx.some(f=>f.turn)){c._fx=c._fx.filter(f=>!f.turn);recomputeFx(c);}}
@@ -730,7 +768,7 @@ function processStatuses(unit,add=()=>{},state=null,decrement=true){
    const details=[],hit=resolveIncoming(source,unit,damage,state,details,state?.rng,{damageType,indirect:true,dotStatus:status});
    const resolved=hit.hpLoss+hit.absorbed;
    add(`${unit.name} takes ${resolved} ${status[0].toUpperCase()+status.slice(1)} damage (${damage} incoming, ${hit.hpLoss} HP lost).`);
-   emitCombatEvent(state,{round:state?.currentRound||1,type:'damage',actorId:source?.id,actorName:source?.name||status,actorTeam:source?teamOf(source,state):undefined,targetId:unit.id,targetName:unit.name,targetTeam:teamOf(unit,state),ability:status[0].toUpperCase()+status.slice(1),amount:resolved,incoming:damage,absorbed:hit.absorbed,hpLoss:hit.hpLoss,damageType,isDot:true,hpAfter:unit.hp,maxHp:unit.maxHp});
+   emitResolvedDamage(state,hit,{round:state?.currentRound||1,type:'damage',actorId:source?.id,actorName:source?.name||status,actorTeam:source?teamOf(source,state):undefined,targetId:unit.id,targetName:unit.name,targetTeam:teamOf(unit,state),ability:status[0].toUpperCase()+status.slice(1),amount:resolved,incoming:damage,absorbed:hit.absorbed,hpLoss:hit.hpLoss,damageType,isDot:true,hpAfter:unit.hp,maxHp:unit.maxHp});
    for(const line of details)add(line.text);
    // A resurrection before this action starts exhausts this action, not the next two.
    if(hit.revived&&unit.statusMeta.spiritual_exhaustion)unit.statusMeta.spiritual_exhaustion._grace=false;
@@ -1086,7 +1124,7 @@ function maybeCounter(target,attacker,state,lines=[],r){if(!lines)lines=[];if(!t
   lines.push({text:`${target.name} counters for ${dmg} damage (${Math.round(rates.counter*100)}% counter chance).`,kind:'quirk'});
   emitCombatEvent(state,{round:state?.currentRound||1,type:'cast',actorId:target.id,actorName:target.name,actorTeam:teamOf(target,state),ability:'Counter',costSP:0,cooldown:0,isCounter:true});
   const hit=resolveIncoming(target,attacker,dmg,state,lines,r,{damageType:'physical'});
-  emitCombatEvent(state,{round:state?.currentRound||1,type:'damage',actorId:target.id,actorName:target.name,actorTeam:teamOf(target,state),targetId:attacker.id,targetName:attacker.name,targetTeam:teamOf(attacker,state),amount:hit.hpLoss+hit.absorbed,absorbed:hit.absorbed,hpLoss:hit.hpLoss,shieldAfter:attacker.shield||0,damageType:'physical',isCounter:true,hpAfter:attacker.hp,maxHp:attacker.maxHp});
+  emitResolvedDamage(state,hit,{round:state?.currentRound||1,type:'damage',actorId:target.id,actorName:target.name,actorTeam:teamOf(target,state),targetId:attacker.id,targetName:attacker.name,targetTeam:teamOf(attacker,state),amount:hit.hpLoss+hit.absorbed,absorbed:hit.absorbed,hpLoss:hit.hpLoss,shieldAfter:attacker.shield||0,damageType:'physical',isCounter:true,hpAfter:attacker.hp,maxHp:attacker.maxHp});
  }
 }
 function consumeAttackMiss(actor,r){const chance=Number(actor._nextAttackMiss||0);actor._nextAttackMiss=0;return chance>0&&r()<chance;}
@@ -1115,6 +1153,18 @@ function attackOnce(agent,actor,enemy,state,lines=[],r,mult=1,options={}){if(!li
  const pm=passiveCombatModifier(agent), weapon=weaponStats(agent);
  const openingCrit=traitOpeningCritical(actor,enemy,critFailure||forcedMiss);
  if(!attackHit(agent,actor,enemy,state,lines,r,{forcedMiss,weaponAttack:true,ability:'attack'}))return false;
+ // Open the successful attack before its opening costs and companion hooks,
+ // so those notes cannot attach to a preceding Curse/other periodic tick.
+ if(options.emitCast!==false)emitCombatEvent(state, {
+   round: state?.currentRound || 1,
+   type: 'cast',
+   actorId: actor.id,
+   actorName: actor.name,
+   actorTeam: teamOf(actor, state),
+   ability: weapon.name === 'Bare Hands' ? 'Attack' : weapon.name,
+   costSP: 0,
+   cooldown: 0
+ });
  const assetStrike=pathwayBeforeBasicAttack(actor,enemy,state,lines);const weaponStrike=weaponOpeningStrike(actor,enemy,state,lines);mult*=assetStrike.multiplier*weaponStrike.multiplier;
  handleSleepWake(enemy,lines); // v15 basic_physical_attack: round((ATK*ATK_mod + Weapon_Bonus_DMG) * Strike_Mult - DEF*0.5)
  let strikeMult=mult*(weapon.kind==='unarmed'?1+weaponMasteryValue(agent,'unarmed')*.04:1)*(enemy._weaknessBonus>0?1+enemy._weaknessBonus:1);
@@ -1136,22 +1186,11 @@ function attackOnce(agent,actor,enemy,state,lines=[],r,mult=1,options={}){if(!li
  dmg=Math.round(dmg*traitScale);
  trace.final=dmg;
  if(state?.balanceTrace) state.balanceTrace.push(trace);
- // Open the attack row BEFORE the hit resolves: reflect / Mythical Form events fired inside resolveIncoming belong to this attack.
- if(options.emitCast!==false)emitCombatEvent(state, {
-   round: state?.currentRound || 1,
-   type: 'cast',
-   actorId: actor.id,
-   actorName: actor.name,
-   actorTeam: teamOf(actor, state),
-   ability: weapon.name === 'Bare Hands' ? 'Attack' : weapon.name,
-   costSP: 0,
-   cooldown: 0
- });
  const tk=resolveIncoming(actor,enemy,dmg,state,lines,r,{damageType:'physical',basic:true,critical,primary:true,traitScaled:true});const dealt=tk.hpLoss+tk.absorbed;trace.final=Math.round(dmg*tk.globalMultiplier);trace.incoming=tk.incoming;if(tk.globalMultiplier!==1)trace.effectContributions.push({type:'combat_pacing',multiplier:tk.globalMultiplier});
  const totalLifeSteal=Math.max(0,pm.lifesteal+Number(actor._lifestealBonus||0)+Number(traitData(agent).lifesteal||0)); if(actor.alive&&(!hasStatus(actor,'no_heal')||hasTrait(actor,'hollow_saint'))&&totalLifeSteal>0&&dealt>0){const heal=recoverHP(actor,Math.round(dealt*totalLifeSteal),{source:actor,state,lines,kind:'lifesteal'});if(heal>0){lines.push({text:`${actor.name} recovers ${heal} HP from Lifesteal.`,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'heal',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:actor.id,targetName:actor.name,targetTeam:teamOf(actor,state),amount:heal,hpAfter:actor.hp,maxHp:actor.maxHp});}}
  if(weapon.id!=='none') state.weaponUsage[weapon.id]=(state.weaponUsage[weapon.id]||0)+1;
  const displayedPower=Math.round(categoryAttackPower(agent,actor)+(weapon.atk||0)); lines.push({text:`${actor.name} attacks with ${weapon.name==='Bare Hands'?'bare hands':weapon.name} (Attack power ${displayedPower}); ${enemy.name} suffers ${dealt}${critical?' critical':''} damage.`,kind:'normal'});
- emitCombatEvent(state, {
+ emitResolvedDamage(state, tk, {
    round: state?.currentRound || 1,
    type: 'damage',
    actorId: actor.id,
@@ -1524,7 +1563,7 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
    didDamage=true;totalDamage+=finalDamage;
    if(executed)lines.push({text:`EXECUTE: ${t.name} is instantly executed!`,kind:'quirk'});
    lines.push({text:`IMPACT: ${damageType} damage ${finalDamage} to ${t.name}${critical?' critical':''}${trueDamage||psychicTrue?' (TRUE DAMAGE)':''}.`,kind:'damage'});
-   emitCombatEvent(state,{
+   emitResolvedDamage(state,tk,{
      round:state?.currentRound||1,type:'damage',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),amount:finalDamage,absorbed:tk.absorbed,hpLoss:tk.hpLoss,shieldAfter:t.shield||0,damageType,critical,trueDamage:trueDamage||psychicTrue,instantKill:executed,hpAfter:t.hp,maxHp:t.maxHp
    });
    if(matchesIncomingCategory('physical',trueDamage||psychicTrue?'true':damageType)&&t.alive&&actor.alive&&!tk.revived&&!tk.negated&&finalDamage>0)maybeCounter(t,actor,state,lines,r);

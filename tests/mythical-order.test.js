@@ -3,36 +3,38 @@ const assert = require('assert');
 const g = require('../js/node-loader.js');
 const mk = (path, seq, id) => { const a = g.makeAgent(Math.random, { sequence: seq, path, trait: 'Stout Vitality' }); Object.assign(a, { id, name: g.pathOf(path).name + ' Seq ' + seq, awakened: true, path, sequence: seq, recommendedPath: path, injuries: 0, weaponId: 'none', weaponMastery: {} }); g.restatAgent(a); a.sp = g.maxSPFor(a); return a; };
 
-// --- synthetic: cast -> mythical story (from hit) -> shield -> stun -> damage
+// --- synthetic: cast -> damage -> mythical story (from hit) -> shield -> stun
 {
   const ev = [
     { round: 1, type: 'cast', actorId: 'S', actorName: 'Scholar', actorTeam: 'enemy', ability: 'Systemic Glitch' },
+    { round: 1, type: 'damage', actorId: 'S', actorName: 'Scholar', targetId: 'W', targetName: 'Wheel', amount: 143800 },
     { round: 1, type: 'story', subtype: 'mythical_form', inTurn: true, actorId: 'W', actorName: 'Wheel', text: 'MYTHICAL FORM: Wheel awakens' },
     { round: 1, type: 'shield', actorId: 'W', targetId: 'W', amount: 5 },
     { round: 1, type: 'status', actorId: 'W', targetId: 'S', text: 'Scholar is overwhelmed by mental pollution' },
-    { round: 1, type: 'damage', actorId: 'S', actorName: 'Scholar', targetId: 'W', targetName: 'Wheel', amount: 143800 },
   ];
   const rows = g.groupEventsToRows(ev)[0].rows;
   assert.strictEqual(rows.length, 1, 'awakening must not create a row above the attack');
   assert.strictEqual(rows[0].ability, 'Systemic Glitch');
   assert.strictEqual(rows[0].damages.length, 1);
   assert.deepStrictEqual(rows[0].subrows.map(s => s.type), ['mythical', 'status'], 'order: awakening, then stun');
+  assert.deepStrictEqual(rows[0].timeline.map(s => s.type), ['damage', 'mythical', 'shield', 'note']);
 }
 // --- synthetic: a reactive authority must not steal the row from the hit that awakened it
 {
   const ev = [
     { round: 1, type: 'cast', actorId: 'S', actorName: 'Scholar', actorTeam: 'enemy', ability: 'Strike', costSP: 10 },
+    { round: 1, type: 'damage', actorId: 'S', actorName: 'Scholar', targetId: 'W', amount: 50, hpLoss: 50, absorbed: 0 },
     { round: 1, type: 'story', subtype: 'mythical_form', inTurn: true, actorId: 'W', actorName: 'Wheel', text: 'MYTHICAL FORM: Wheel awakens' },
     { round: 1, type: 'damage', subtype: 'mythical_authority', actorId: 'W', actorName: 'Wheel', targetId: 'S', amount: 20, hpLoss: 20, absorbed: 0 },
-    { round: 1, type: 'damage', actorId: 'S', actorName: 'Scholar', targetId: 'W', amount: 50, hpLoss: 50, absorbed: 0 },
     { round: 1, type: 'resources', units: [{ id: 'W', hp: 50 }, { id: 'S', hp: 80 }] },
   ];
   const rows = g.groupEventsToRows(ev)[0].rows;
   assert.strictEqual(rows.length, 1, 'awakening and its authority remain inside the causing attack');
   assert.strictEqual(rows[0].actorId, 'S');
-  assert.strictEqual(rows[0].damages[0], ev[3]);
-  assert.strictEqual(rows[0].reactions[0], ev[2], 'reactive damage retains its own actor');
+  assert.strictEqual(rows[0].damages[0], ev[1]);
+  assert.strictEqual(rows[0].reactions[0], ev[3], 'reactive damage retains its own actor');
   assert.deepStrictEqual(rows[0].subrows.map(s => s.type), ['mythical', 'reaction']);
+  assert.deepStrictEqual(rows[0].timeline.map(s => s.type), ['damage', 'mythical', 'reaction']);
   assert.strictEqual(rows[0].resources, ev[4].units, 'final resources attach to the complete attack');
 }
 // --- synthetic: awakening NOT caused by a hit keeps its own row, after the pending turn
@@ -56,15 +58,17 @@ for (let sd = 1; sd <= 150; sd++) {
   const ev = res.events, rows = g.groupEventsToRows(ev).flatMap(r => r.rows);
   ev.forEach((e, i) => {
     if (!(e.subtype === 'mythical_form' && e.inTurn)) return;
-    // The causing attack follows the awakening; reflected hits may awaken its caster instead of its target.
+    // The causing hit is emitted before awakening, including nested reflections.
     let hit = null;
-    for (let j = i + 1; j < ev.length; j++) { if (ev[j].type === 'round_start') break; if (ev[j].type === 'damage' && !ev[j].isReflect && !ev[j].isSignature && ev[j].subtype !== 'mythical_authority') { hit = ev[j]; break; } }
-    if (!hit) return; // not caused by an attack hit (e.g. start-of-round DoT tick)
-    seen++; if (ev.slice(i + 1, ev.indexOf(hit)).some(x => x.type === 'cast')) basic++;
+    for (let j = i - 1; j >= 0; j--) { if (ev[j].type === 'round_start') break; if (ev[j].type === 'damage' && ev[j].targetId === e.actorId) { hit = ev[j]; break; } }
+    assert(hit, `seed ${sd}: in-hit awakening must follow a hit on the awakening unit`);
+    seen++;
     assert(!rows.some(r => r.type === 'story' && r.text === e.text), `seed ${sd}: in-hit awakening must not be a standalone row`);
     const row = rows.find(r => r.type === 'turn' && r.subrows.some(sr => sr.type === 'mythical' && sr.text === e.text));
     assert(row, `seed ${sd}: awakening must be a subrow of an attack turn`);
-    assert.strictEqual(row.actorId, hit.actorId, `seed ${sd}: awakening shown under ${row.actorName}'s row but caused by ${hit.actorName}'s hit`);
+    const hitIndex = row.timeline.findIndex(step => step.event === hit);
+    const awakeningIndex = row.timeline.findIndex(step => step.type === 'mythical' && step.event === e);
+    assert(hitIndex >= 0 && hitIndex < awakeningIndex, `seed ${sd}: awakening must follow its causing hit inside the same action`);
   });
 }
 assert(seen > 50, 'test must actually exercise in-hit awakenings');

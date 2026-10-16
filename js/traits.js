@@ -160,7 +160,7 @@ function traitAfterIncoming(attacker,defender,result,state,lines,r,opt={}){
  if(hasTrait(defender,'spiteful_shell')&&defender.alive&&attacker.alive&&result.absorbed>0&&result.shieldBefore>0&&!defender.shield&&traitOnce(defender,'spite',state)&&canAffect(defender.sequence,attacker.sequence)){
   const raw=Math.round(defender.maxHp*traitDefinition(defender).params.retaliationHP/100),pm=passiveCombatModifier(traitAgent(attacker)),physical=Math.max(0,Math.round(raw*(1-elementResistance(attacker,'physical')/100)-Number(attacker.def||0)*(pm.def||1)*.5));
   const hit=resolveIncoming(defender,attacker,physical,state,lines,r,{damageType:'physical',indirect:true,traitGenerated:true});
-  emitCombatEvent(state,{type:'damage',actorId:defender.id,actorName:defender.name,actorTeam:teamOf(defender,state),targetId:attacker.id,targetName:attacker.name,targetTeam:teamOf(attacker,state),amount:hit.hpLoss+hit.absorbed,hpLoss:hit.hpLoss,absorbed:hit.absorbed,hpAfter:attacker.hp,maxHp:attacker.maxHp,damageType:'physical'});
+  emitResolvedDamage(state,hit,{type:'damage',actorId:defender.id,actorName:defender.name,actorTeam:teamOf(defender,state),targetId:attacker.id,targetName:attacker.name,targetTeam:teamOf(attacker,state),amount:hit.hpLoss+hit.absorbed,hpLoss:hit.hpLoss,absorbed:hit.absorbed,hpAfter:attacker.hp,maxHp:attacker.maxHp,damageType:'physical'});
   traitNote(defender,state,lines,`retaliates against ${attacker.name}.`);
  }
 }
@@ -175,8 +175,9 @@ function traitIncomingHP(attacker,defender,amount,state,lines,res,opt={}){
   const eligible=Math.min(rem,defender.hp),protectors=sameSideOf(defender,state).filter(u=>u!==defender&&u.alive&&!u.summoned&&hasTrait(u,'martyrs_mantle')).sort((a,b)=>b.hp/b.maxHp-a.hp/a.maxHp||sameSideOf(defender,state).indexOf(a)-sameSideOf(defender,state).indexOf(b));
   const protector=protectors.find(u=>traitBudget(u,'transfer',state).value<Math.floor(u.maxHp*traitDefinition(u).params.roundCap/100));
   if(protector){const d=traitDefinition(protector),budget=traitBudget(protector,'transfer',state),transfer=Math.max(0,Math.min(Math.floor(eligible*d.params.share/100),Math.floor(protector.maxHp*d.params.roundCap/100)-budget.value,protector.hp));
-   if(transfer){const before=protector.hp;protector.hp-=transfer;budget.spend(transfer);rem-=transfer;settleFatalDamage(protector,state,lines,attacker,{indirect:true,transferred:true});res.transferred=transfer;
-    emitCombatEvent(state,{type:'damage',actorId:attacker.id,actorName:attacker.name,actorTeam:teamOf(attacker,state),targetId:protector.id,targetName:protector.name,targetTeam:teamOf(protector,state),amount:transfer,hpLoss:Math.min(before,transfer),absorbed:0,hpAfter:protector.hp,maxHp:protector.maxHp,damageType:'transferred'});traitNote(protector,state,lines,`takes ${transfer} damage for ${defender.name}.`);
+   if(transfer){const before=protector.hp;protector.hp-=transfer;budget.spend(transfer);rem-=transfer;res.transferred=transfer;
+    emitCombatEvent(state,{type:'damage',actorId:attacker.id,actorName:attacker.name,actorTeam:teamOf(attacker,state),targetId:protector.id,targetName:protector.name,targetTeam:teamOf(protector,state),amount:transfer,hpLoss:Math.min(before,transfer),absorbed:0,hpAfter:protector.hp,maxHp:protector.maxHp,damageType:'transferred'});
+    settleFatalDamage(protector,state,lines,attacker,{indirect:true,transferred:true});traitNote(protector,state,lines,`takes ${transfer} damage for ${defender.name}.`);
    }
   }
  }

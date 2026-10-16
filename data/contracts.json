@@ -449,21 +449,79 @@
     ]
   },
   "battlefields": {
-    "defaultImage": "data/assets/battlefields/river_dock.png",
-    "simulatorImage": "data/assets/battlefields/abandoned_market.png",
+    "defaultImage": "data/assets/battlefields/river_dock.png?v=fb8f1a08355caf38",
+    "simulatorImage": "data/assets/battlefields/abandoned_market.png?v=16ba5901a4564ff8",
     "encounters": {
-      "A Missing Cat": "data/assets/battlefields/foggy_town.png",
-      "The Stolen Heirloom": "data/assets/battlefields/abandoned_market.png",
-      "Murder at Bell House": "data/assets/battlefields/gothic_cathedral.png",
-      "The Whispering Tenant": "data/assets/battlefields/clockmaker_alley.png",
-      "A Vanished Watchman": "data/assets/battlefields/foggy_town.png",
-      "The Chapel Below": "data/assets/battlefields/sewer_vault.png",
-      "The Red Ledger": "data/assets/battlefields/ruined_temple.png"
+      "A Missing Cat": "data/assets/battlefields/foggy_town.png?v=79c1edbaae2ed78a",
+      "The Stolen Heirloom": "data/assets/battlefields/abandoned_market.png?v=16ba5901a4564ff8",
+      "Murder at Bell House": "data/assets/battlefields/gothic_cathedral.png?v=b6db15d8c3b4f015",
+      "The Whispering Tenant": "data/assets/battlefields/clockmaker_alley.png?v=699782f6a7b6e17e",
+      "A Vanished Watchman": "data/assets/battlefields/foggy_town.png?v=79c1edbaae2ed78a",
+      "The Chapel Below": "data/assets/battlefields/sewer_vault.png?v=7b6a153eb81699d2",
+      "The Red Ledger": "data/assets/battlefields/ruined_temple.png?v=cf3f7a0afdb7da3a"
     },
     "environments": {
-      "South Wharf": "data/assets/battlefields/river_dock.png",
-      "Old Market": "data/assets/battlefields/abandoned_market.png",
-      "Clockmaker’s Row": "data/assets/battlefields/clockmaker_alley.png"
+      "South Wharf": "data/assets/battlefields/river_dock.png?v=fb8f1a08355caf38",
+      "Old Market": "data/assets/battlefields/abandoned_market.png?v=16ba5901a4564ff8",
+      "Clockmaker’s Row": "data/assets/battlefields/clockmaker_alley.png?v=699782f6a7b6e17e"
+    },
+    "scenes": {
+      "abandoned_market.png": {
+        "ground": [
+          0.04,
+          0.23,
+          0.96,
+          0.97
+        ]
+      },
+      "clockmaker_alley.png": {
+        "ground": [
+          0.04,
+          0.23,
+          0.96,
+          0.97
+        ]
+      },
+      "foggy_town.png": {
+        "ground": [
+          0.04,
+          0.23,
+          0.96,
+          0.97
+        ]
+      },
+      "gothic_cathedral.png": {
+        "ground": [
+          0.04,
+          0.23,
+          0.96,
+          0.97
+        ]
+      },
+      "river_dock.png": {
+        "ground": [
+          0.04,
+          0.23,
+          0.96,
+          0.97
+        ]
+      },
+      "ruined_temple.png": {
+        "ground": [
+          0.04,
+          0.245,
+          0.96,
+          0.97
+        ]
+      },
+      "sewer_vault.png": {
+        "ground": [
+          0.04,
+          0.23,
+          0.96,
+          0.97
+        ]
+      }
     }
   },
   "pool": {

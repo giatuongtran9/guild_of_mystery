@@ -285,7 +285,10 @@ test('a fatal Burn remainder after shielding revives once and reports actual los
   assert.strictEqual(tick.amount,70);
   assert.strictEqual(tick.absorbed,69);
   assert.strictEqual(tick.hpLoss,1);
-  assert.strictEqual(tick.hpAfter,350);
+  assert.strictEqual(tick.hpAfter,0, 'lethal damage precedes the separate resurrection');
+  const revival=w.state.events.find(e=>e.type==='revive');
+  assert.strictEqual(revival.hpAfter,350);
+  assert(w.state.events.indexOf(tick)<w.state.events.indexOf(revival));
 });
 test('standalone DoT API ticks and decrements duration exactly once', () => {
   const w = fixture(); g.addStatus(w.v, 'burn', 2, 'caster');
