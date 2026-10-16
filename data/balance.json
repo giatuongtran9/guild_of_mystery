@@ -1861,7 +1861,7 @@
   },
   "global_combat": {
     "hp": 1,
-    "damage": 2,
+    "damage": 1.5,
     "healing": 1,
     "shield": 1,
     "roundRamp": 0,

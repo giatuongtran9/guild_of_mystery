@@ -14,7 +14,7 @@ for(const budget of [undefined,.35]){
  const damage=w.state.events.find(e=>e.type==='damage'&&e.targetId===w.v.id);
  assert(damage,'the real status tick emits damage');
  const raw=w.v.maxHp*.03; // Authored Bleed tick: 3% target Max HP.
- const expected=Math.round(raw*2*(budget??1));
+ const expected=Math.round(raw*g.GLOBAL_COMBAT.damage*(budget??1));
  assert.equal(damage.absorbed,expected,'periodic intake scales the tick before shield absorption');
  assert.equal(w.v.hp,10000,'shield absorbs the complete tick');
 }
@@ -27,7 +27,7 @@ for(const opt of [{},{indirect:true},{reflect:true}]){
 }
 {
  const w=world(.35),r=g.resolveIncoming(w.u,w.v,100,w.state,[],()=>.99,{indirect:true,dotStatus:'curse'});
- assert.equal(r.periodicMultiplier,.35);assert.equal(r.incoming,70,'periodic telemetry reports the authored intake once');
+ assert.equal(r.periodicMultiplier,.35);assert.equal(r.incoming,Math.round(100*g.GLOBAL_COMBAT.damage*.35),'periodic telemetry reports the authored intake once');
  const before=w.v.hp;
  assert.equal(g.recoverHP(w.v,1000,{source:w.u,maxRecovery:7}),7);
  assert.equal(w.v.hp-before,7,'an actual recovery cap applies after modifiers');

@@ -4,6 +4,7 @@ const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypt
 const h=require('./combat-benchmark-helpers'),g=require('../js/node-loader');
 const opts=h.options(),samples=Number(opts.samples||40),weapon=opts.weapon||'rare_sword',assets=opts.assets||'rare';
 const roundLimit=Number(opts.rounds||50),seedBase=Number(opts.seed||78319),battleSeedBase=Number(opts['battle-seed']||opts.battleSeed||61877);
+const clearMin=Number(opts['clear-min']??.65),clearMax=Number(opts['clear-max']??.75);
 const allDefinitions=JSON.parse(fs.readFileSync(path.join(__dirname,'../data/contracts.json'),'utf8')).WANTED_TARGETS;
 const definitions=allDefinitions.filter(b=>(!opts.bosses||opts.bosses.split(',').includes(b.id))
  &&(!opts.sequences||h.sequences(opts.sequences).includes(b.sequence)));
@@ -12,6 +13,8 @@ const teams=[['fool','tyrant','mother'],['door','visionary','fool'],['red_priest
 const teamIndices=opts['team-indices']?opts['team-indices'].split(',').map(Number):teams.map((_,i)=>i);
 assert(Number.isInteger(samples)&&samples>0,'Samples must be a positive integer.');
 assert(Number.isInteger(roundLimit)&&roundLimit>0&&roundLimit<=50,'Safety limit must be 1–50 rounds.');
+assert(Number.isFinite(clearMin)&&Number.isFinite(clearMax)&&clearMin>=0&&clearMax<=1&&clearMin<=clearMax,
+ 'Clear target must satisfy 0 <= --clear-min <= --clear-max <= 1.');
 assert(definitions.length,'No bosses match the selection.');
 assert(teamIndices.length&&teamIndices.every(i=>Number.isInteger(i)&&teams[i]),'Invalid team indices.');
 if(opts.bosses)assert(opts.bosses.split(',').every(id=>allDefinitions.some(b=>b.id===id)),'Unknown boss ID.');
@@ -99,7 +102,7 @@ for(const boss of definitions){
    meanSurvivorInjuries:row.returnedAgents?row.totalInjuries/row.returnedAgents:null,
    meanTreatmentFundsPerAttempt:count?row.treatmentFunds/count:null,
    meanTreatmentMaterialsPerAttempt:count?row.treatmentMaterials/count:null,
-   meetsClearTarget:count>0&&row.wins/count>=.8&&row.wins/count<=.9,
+   meetsClearTarget:count>0&&row.wins/count>=clearMin&&row.wins/count<=clearMax,
    meetsCasualtyTarget:count>0&&row.casualties/count<=.1});
   rows.push(row);
  }
@@ -116,7 +119,7 @@ const aggregates=definitions.map(b=>{
   meanRounds:rate('rounds'),p90Rounds:percentile(rr.flatMap(r=>r.observedRounds),.9),phaseRate:rate('attemptsWithPhase'),
   winsWithoutPhase:sum('winsWithoutPhase'),meanSurvivorInjuries:sum('returnedAgents')?sum('totalInjuries')/sum('returnedAgents'):null,
   meanTreatmentFundsPerAttempt:rate('treatmentFunds'),meanTreatmentMaterialsPerAttempt:rate('treatmentMaterials'),
-  meetsClearTarget:rate('wins')>=.8&&rate('wins')<=.9,meetsCasualtyTarget:rate('casualties')<=.1,
+  meetsClearTarget:count>0&&rate('wins')>=clearMin&&rate('wins')<=clearMax,meetsCasualtyTarget:count>0&&rate('casualties')<=.1,
   mechanic:b.mechanic,phase:b.phase,descriptionWarnings:/15 rounds/.test(b.mechanic)&&roundLimit!==15?['Mechanic text still promises a 15-round limit.']:[]};
 });
 const bossBudgets=definitions.map(b=>{const live=g.bossDefinition(b.id);return{id:b.id,sequence:b.sequence,statMultipliers:live.statMultipliers,damageMultiplier:live.damageMultiplier,
@@ -126,6 +129,7 @@ const report={rules:g.GLOBAL_COMBAT,bossBudgets,method:{profile:profileMethod,bo
  trait:'Stout Vitality',statVariance:1,roundLimit,teams:teamIndices.map(i=>({teamIndex:i,paths:teams[i]})),
  party:'Exactly three awakened owners; owned companions enter as additional units without changing the party-size requirement.',
  teamCoverage:'Six fixed representative compositions. These do not exhaust every three-pathway composition.',
+ clearTarget:{minimum:clearMin,maximum:clearMax,validation:'Inclusive sample clear-rate point estimate for each team row and each boss aggregate; confidence intervals express sampling uncertainty.'},
  injuryRecovery:'No passive injury recovery. Treatment clears injuries immediately for funds and materials; no real day passes.',
  retreat:'One 30% roll per defeated party. Success recovers all owners at 99 injuries. Casualty counts include partial losses in victories and timeouts.',
  sampleResolution:1/samples,confidenceIntervals:'Wilson 95% intervals; six fixed compositions do not establish performance across all parties.',

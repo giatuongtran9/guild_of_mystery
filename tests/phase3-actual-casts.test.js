@@ -365,7 +365,7 @@ function exerciseActive(key, rank, team, text) {
   if (spec.effectId === 'thread_binding') { exerciseThread(w, spec, text); return; }
   prepare(w, spec);
   const foes = targets(w, spec), supports = spec.effects.some(e => e.type === 'targeting' && e.mode === 'all_allies') ? [w.u, w.ally] : [w.u];
-  const before = {sp:w.a.sp, hp:w.u.hp, targetSP:foes.map(t=>t.sp), targetHP:foes.map(t=>t.hp), allyHP:w.ally.hp};
+  const before = {sp:w.a.sp, maxSP:w.a.maxSP, hp:w.u.hp, targetSP:foes.map(t=>t.sp), targetMaxSP:foes.map(t=>t.agent.maxSP), targetHP:foes.map(t=>t.hp), allyHP:w.ally.hp};
   const signature=spec.effects.find(e=>e.type==='signature');
   const owned=signature&&['door_record','tower_imitation'].includes(signature.rule);
   const copied = owned||spec.effects.some(e => e.type === 'copy_ability');
@@ -378,7 +378,8 @@ function exerciseActive(key, rank, team, text) {
   check(cast(w, spec), 'actual shipped cast succeeds');
   equal(JSON.stringify(spec), untouched, 'cast never mutates shared normalized spec');
   const drain = spec.effects.find(e => e.type === 'sp_siphon');
-  equal(w.a.sp, Math.min(w.a.maxSP, before.sp - paidSpec.costSP + (drain ? foes.length * drain.amount : 0)), 'actual SP spend and siphon');
+  const siphoned = drain ? foes.reduce((total, t, i) => total + Math.min(Math.max(0, before.targetSP[i]), Math.max(0, Math.round(Number(drain.amount || 0) + Number(drain.spRatio || 0) * before.targetMaxSP[i]))), 0) : 0;
+  equal(w.a.sp, Math.min(before.maxSP, before.sp - paidSpec.costSP + siphoned), 'actual SP spend and siphon');
   equal(w.a.cooldowns[castId], paidSpec.cooldown > 0 ? paidSpec.cooldown + 1 : 0, 'advertised cooldown survives its own effects');
   const castEvent = w.state.events.find(e => e.type === 'cast' && e.actorId === w.u.id);
   check(castEvent, 'real cast event recorded'); equal(castEvent.costSP, paidSpec.costSP, 'cast event SP agrees with actual source cost');
@@ -462,7 +463,10 @@ function exerciseActive(key, rank, team, text) {
         if(mult){const dealt=w.state.events.filter(x=>x.type==='damage'&&x.actorId===w.u.id).reduce((n,x)=>n+x.amount,0);equal(w.u.hp-before.hp,Math.round(dealt*ratio),'actual skill Lifesteal amount');}
         else {const old=w.u.hp,victimHP=w.v.hp;check(g.attackOnce(w.a,w.u,w.v,w.state,[],high,1),'timed Lifesteal follow-up attack');equal(w.u.hp-old,Math.round((victimHP-w.v.hp)*ratio),'timed Lifesteal on real basic strike');const copy=structuredClone(w.u);for(let i=0;i<d;i++)g.tickCombatEffectDurations([copy]);const hp=copy.hp,target=structuredClone(w.v);g.attackOnce(copy.agent,copy,target,{...w.state,allies:[copy],enemies:[target]},[],high,1);equal(copy.hp,hp,'Lifesteal expires after configured actions');}break;
       }
-      case 'sp_drain':case 'sp_siphon':tooltipNumber(text,`${e.amount} SP`,'resource drain');foes.forEach((t,i)=>equal(t.sp,before.targetSP[i]-Math.min(before.targetSP[i],e.amount),'victim SP drained'));break;
+      case 'sp_drain':case 'sp_siphon':
+        tooltipNumber(text,`${e.amount} SP`,'resource drain');
+        if(e.spRatio){tooltipNumber(text,percent(e.spRatio),'Max SP drain ratio');check(text.includes('target Max SP'),'percentage drain identifies target Max SP');}
+        foes.forEach((t,i)=>{const requested=Math.max(0,Math.round(Number(e.amount||0)+Number(e.spRatio||0)*before.targetMaxSP[i]));equal(t.sp,before.targetSP[i]-Math.min(Math.max(0,before.targetSP[i]),requested),'victim SP drained');});break;
       case 'sp_cost_increase':case 'cooldown_increase':case 'debuff_hit':case 'skill_misfire': {
         const config={sp_cost_increase:['_spCostMultiplier','_spCostDuration'],cooldown_increase:['_cooldownPenalty','_cooldownDuration'],debuff_hit:['_hitChanceDebuff','_hitChanceDebuffDuration'],skill_misfire:['_skillMisfireChance','_skillMisfireDuration']}[e.type];
         tooltipNumber(text,e.type==='cooldown_increase'?`${e.amount}`:percent(e.chance??e.amount),e.type);tooltipDuration(text,e.duration||1);

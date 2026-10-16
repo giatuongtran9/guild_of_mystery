@@ -3,6 +3,9 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const g = require('../js/node-loader');
+// Keep the original reported battle as a fixed ×2 regression fixture. Live
+// pacing is verified separately so this trace keeps its historical numbers.
+g.GLOBAL_COMBAT.damage = 2;
 const ui = { abbrNum: g.abbrNum };
 vm.createContext(ui);
 vm.runInContext(fs.readFileSync(require.resolve('../js/ui.js'), 'utf8').split('// ===== Browser UI =====')[0], ui);
