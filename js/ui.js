@@ -194,8 +194,7 @@ function layoutBattlefields(root = document) {
     arena.classList.toggle('crowded', crowded);
     const image = arena.querySelector('.gm-battlefield-image');
     if (!stage || !canvas) continue;
-    const width = arena.getBoundingClientRect().width;
-    if (!width) continue;
+    if (!arena.clientWidth) continue;
     const filename = image?.getAttribute('src').split(/[?#]/)[0].split('/').pop();
     const scenes = typeof G9D !== 'undefined' ? G9D.contracts.battlefields?.scenes : null;
     const [left, top, right, bottom] = image && !image.hidden
@@ -208,31 +207,34 @@ function layoutBattlefields(root = document) {
       left: `${left * 100}%`, top: `${top * 100}%`,
       width: `${(right - left) * 100}%`, height: `${(bottom - top) * 100}%`
     });
-    const fit = value => {
-      Object.assign(canvas.style, { width: `${value}px`, height: `${value / aspect}px` });
+    // Stretch the complete scenery across the current box. Artwork dimensions
+    // belong to the cards, so changing the backdrop never stretches a unit.
+    // Recheck clientWidth after overflow changes: classic scrollbars take space.
+    for (let pass = 0; pass < 4; pass++) {
+      const viewportWidth = arena.clientWidth;
+      const frameHeight = Math.min(viewportWidth / aspect, maxHeight);
+      arena.style.height = `${frameHeight}px`;
+      Object.assign(canvas.style, { width: `${viewportWidth}px`, height: `${frameHeight}px` });
       const style = getComputedStyle(stage);
-      const children = [...stage.children];
-      const requiredHeight = children.reduce((sum, side) => sum + side.getBoundingClientRect().height, 0)
-        + Math.max(0, children.length - 1) * (parseFloat(style.rowGap) || 0)
-        + (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
+      const horizontalPadding = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
       const widestCard = Math.max(0, ...[...stage.querySelectorAll('.gm-arena-unit')].map(card => card.getBoundingClientRect().width));
-      return requiredHeight <= stage.getBoundingClientRect().height - 1
-        && widestCard + (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0) <= stage.getBoundingClientRect().width;
-    };
-    // Keep the entire source image intact. Enlarge its canvas only when the
-    // fixed-size formations need more clear floor, then pan within the viewport.
-    let lower = Math.min(width, maxHeight * aspect), upper = lower;
-    if (!fit(lower)) {
-      do { upper *= 1.25; } while (!fit(upper) && upper < width * 16);
-      for (let step = 0; step < 8; step++) {
-        const middle = (lower + upper) / 2;
-        if (fit(middle)) upper = middle;
-        else lower = middle;
-      }
-      fit(Math.ceil(upper));
+      const canvasWidth = Math.max(viewportWidth, Math.ceil((widestCard + horizontalPadding) / (right - left)));
+      if (canvasWidth > viewportWidth) canvas.style.width = `${canvasWidth}px`;
+      const children = [...stage.children];
+      const contentHeight = children.reduce((sum, side) => sum + side.getBoundingClientRect().height, 0)
+        + Math.max(0, children.length - 1) * (parseFloat(style.rowGap) || 0)
+        + (parseFloat(style.paddingTop) || 0);
+      const bottomGap = parseFloat(getComputedStyle(arena).getPropertyValue('--gm-guild-bottom-gap')) || 32;
+      // Respect both the reviewed clear floor and the requested distance from
+      // the image edge; count names, gauges and companion rows in this reserve.
+      const height = Math.max(frameHeight, Math.ceil(Math.max(
+        (contentHeight + 8 + 1) / (bottom - top),
+        (contentHeight + bottomGap + 1) / (1 - top)
+      )));
+      canvas.style.height = `${height}px`;
+      stage.style.paddingBottom = `${Math.max(8, bottomGap - height * (1 - bottom))}px`;
+      if (Math.abs(arena.clientWidth - viewportWidth) < 0.5) break;
     }
-    const canvasHeight = canvas.getBoundingClientRect().height;
-    arena.style.height = `${Math.min(canvasHeight, maxHeight)}px`;
     // Preserve the reader's pan position across playback updates and summons.
     arena.scrollLeft = scrollPosition.left;
     arena.scrollTop = scrollPosition.top;

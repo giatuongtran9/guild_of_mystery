@@ -28,6 +28,7 @@
   --gm-character-card-width: 104px;
   --gm-companion-size: 40px;
   --gm-companion-card-width: 48px;
+  --gm-guild-bottom-gap: 48px;
   position: relative;
   width: 100%;
   margin: 0 0 16px;
@@ -71,7 +72,8 @@
   background: #11151a;
 }
 
-/* Keep the complete image proportional to its canvas, including during panning. */
+/* Stretch the complete scenery across the responsive canvas. Unit artwork
+   keeps its own square, proportional sizing below. */
 .gm-battlefield-image {
   position: absolute;
   top: 0;
@@ -79,7 +81,7 @@
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: contain;
+  object-fit: fill;
   image-rendering: pixelated;
 }
 
@@ -277,10 +279,6 @@
   color: #f06464;
 }
 
-.gm-arena-unit.mythical .gm-unit-name-label {
-  border-bottom: 1px solid #c9aa71;
-}
-
 .gm-float-gauge {
   position: relative;
   width: 100%;
@@ -380,6 +378,7 @@
     --gm-character-card-width: 72px;
     --gm-companion-size: 32px;
     --gm-companion-card-width: 40px;
+    --gm-guild-bottom-gap: 32px;
   }
 
   .gm-dungeon-arena.crowded {
