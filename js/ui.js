@@ -20,6 +20,168 @@ function flattenTurnRows(groupedRounds) {
   return flattened;
 }
 
+// Resolution is already complete. These cursors expose its recorded events;
+// neither animation callbacks nor wall-clock timing can change the outcome.
+function battlePresentationRows(rows, shownCount, eventCount) {
+  const visible = rows.slice(0, shownCount);
+  const row = rows[shownCount];
+  if (row && Number.isInteger(eventCount) && eventCount >= 0) {
+    const partial = { ...row, presentationPartial: true,
+      timeline: (row.timeline || []).slice(0, eventCount),
+      damages: [], heals: [], shields: [], reflects: [], reactions: [],
+      deaths: [], revives: [], subrows: [] };
+    delete partial.resources;
+    visible.push(partial);
+  }
+  return visible;
+}
+
+function advanceBattlePresentation(playing, fast = false) {
+  const row = playing.turnRows[playing.currentTurn];
+  if (!row) return null;
+  const timeline = row.timeline || [];
+  if (fast || !timeline.length) {
+    playing.currentTurn++;
+    playing.eventCount = null;
+    // Fast playback keeps the log exact but uses one concise visual cue.
+    const last = [...timeline].reverse().find(step => ['death', 'revive', 'mythical', 'damage', 'reaction', 'heal', 'shield'].includes(step.type));
+    return last ? { ...last, row } : { type: 'row', event: row, row };
+  }
+  if (!Number.isInteger(playing.eventCount)) {
+    playing.eventCount = 0;
+    // Periodic damage has no fresh attack or casting action to animate.
+    if (!timeline[0]?.event.isDot) return { type: 'cast', event: row, row, next: timeline[0] };
+  }
+  const step = timeline[playing.eventCount++];
+  if (playing.eventCount >= timeline.length) {
+    playing.currentTurn++;
+    playing.eventCount = null;
+  }
+  return { ...step, row, next: Number.isInteger(playing.eventCount) ? timeline[playing.eventCount] : null };
+}
+
+function createBattleEffects(wrap) {
+  const animations = new Set(), touched = new Set();
+  let layer = null, rate = 1, ending = false;
+  const reduced = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const unit = (id, name) => [...wrap.querySelectorAll('.gm-arena-unit')]
+    .find(node => id ? node.dataset.unitId === String(id) : name && node.querySelector('.gm-unit-name-label')?.getAttribute('title') === name);
+  const anchor = node => node?.querySelector('.gm-unit-sprite-anchor');
+  const isVisible = node => {
+    if (!node) return false;
+    const box = node.getBoundingClientRect(), arena = wrap.querySelector('.gm-dungeon-arena')?.getBoundingClientRect();
+    return !!arena && box.width > 0 && box.height > 0 && box.bottom > Math.max(0, arena.top)
+      && box.top < Math.min(window.innerHeight, arena.bottom) && box.right > arena.left && box.left < arena.right;
+  };
+  function mark(node, kind) {
+    const a = anchor(node);
+    if (!a || !isVisible(a)) return;
+    a.classList.add(`gm-cue-${kind}`); touched.add(a);
+  }
+  function animate(node, frames, duration = 180) {
+    if (!node?.animate || reduced() || rate >= 4 || !isVisible(node)) return;
+    const animation = node.animate(frames, { duration, easing: 'ease-out', fill: 'none' });
+    animation.playbackRate = rate;
+    animations.add(animation);
+    animation.onfinish = () => {
+      animations.delete(animation); animation.cancel();
+      if (node.matches('.gm-battle-fx, .gm-battle-fx-number')) node.remove();
+      if (ending && !animations.size) clear();
+    };
+    animation.oncancel = () => animations.delete(animation);
+  }
+  function clear() {
+    for (const animation of [...animations]) animation.cancel();
+    animations.clear();
+    for (const a of touched) for (const name of [...a.classList]) if (name.startsWith('gm-cue-')) a.classList.remove(name);
+    touched.clear(); layer?.remove(); layer = null;
+  }
+  function overlay() {
+    if (!layer) {
+      layer = document.createElement('div'); layer.className = 'gm-battle-fx-layer';
+      layer.setAttribute('aria-hidden', 'true');
+      wrap.querySelector('.gm-battlefield-canvas')?.append(layer);
+    }
+    return layer;
+  }
+  function point(node) {
+    const box = anchor(node).getBoundingClientRect();
+    const canvas = wrap.querySelector('.gm-battlefield-canvas').getBoundingClientRect();
+    return { x: box.left - canvas.left + box.width / 2, y: box.top - canvas.top + box.height / 2 };
+  }
+  function number(node, text, color) {
+    if (!isVisible(anchor(node)) || !text) return;
+    const p = point(node), element = document.createElement('span');
+    element.className = 'gm-battle-fx-number'; element.textContent = text;
+    element.style.cssText = `left:${p.x}px;top:${p.y}px;--gm-fx-color:${color}`;
+    overlay().append(element);
+    animate(element, [{ opacity: 1, transform: 'translate(-50%,-50%)' }, { opacity: 0, transform: 'translate(-50%,calc(-50% - 6px))' }], 260);
+  }
+  function travel(from, to, color) {
+    if (reduced() || rate >= 4 || !isVisible(anchor(from)) || !isVisible(anchor(to))) return;
+    const a = point(from), b = point(to), element = document.createElement('span');
+    element.className = 'gm-battle-fx';
+    element.style.cssText = `left:${b.x}px;top:${b.y}px;--gm-fx-color:${color}`;
+    overlay().append(element);
+    animate(element, [{ opacity: .85, transform: `translate(calc(-50% + ${a.x-b.x}px),calc(-50% + ${a.y-b.y}px))` },
+      { opacity: 0, transform: 'translate(-50%,-50%)' }], rate === .5 ? 200 : 150);
+  }
+  function motion(node, kind) {
+    if (!node) return;
+    const sprite = node.querySelector('.gm-unit-sprite'), size = anchor(node)?.getBoundingClientRect().width || 0;
+    // The scaled pose leaves more room than the nudge consumes, even for a
+    // 28px companion; art stays inside its fixed square throughout the motion.
+    const nudge = Math.min(2, size * .02), direction = node.classList.contains('ally') ? -1 : 1;
+    if (['death', 'arrive', 'revive', 'mythical'].includes(kind)) {
+      animate(sprite, [{ opacity: kind === 'death' ? 1 : .25 }, { opacity: kind === 'death' ? .4 : 1 }], 240);
+    } else animate(sprite, [{ transform: 'translate(0,0) scale(1)' },
+      { transform: kind === 'cast' ? `translate(0,${direction*nudge}px) scale(.94)` : `translate(${nudge}px,0) scale(.94)` },
+      { transform: 'translate(0,0) scale(1)' }]);
+  }
+  function show(cue, speed = 1) {
+    clear(); rate = Number(speed) || 1;
+    if (!cue) return;
+    ending = !!cue.isDone;
+    const event = cue.event || {}, row = cue.row || event;
+    const actor = unit(event.actorId || row.actorId, event.actorName || row.actorName);
+    const target = unit(event.targetId || row.targetId, event.targetName || row.targetName);
+    const type = cue.type === 'row' ? (event.subtype === 'mythical_form' ? 'mythical' : event.type) : cue.type;
+    const colors = { physical: '#f2c39b', fire: '#f39463', lightning: '#acdafa', dark: '#c6a0e8', corrosion: '#b1d982', frost: '#abd9ee', true: '#eee3cd' };
+    const color = colors[event.damageType] || '#c8b5ed';
+    if (!event.isDot) mark(actor, 'actor');
+    const next = cue.next?.event;
+    if (next && ['damage', 'reaction', 'reflect'].includes(cue.next.type) && !next.isDot
+      && (row.attackKind === 'gun' || next.damageType !== 'physical')) {
+      travel(unit(next.actorId || row.actorId, next.actorName || row.actorName), unit(next.targetId, next.targetName), colors[next.damageType] || color);
+    }
+    if (type === 'cast') motion(actor, 'cast');
+    else if (['damage', 'reaction', 'reflect'].includes(type)) {
+      mark(target, 'target');
+      const hp = event.hpLoss ?? Math.max(0, (event.amount || 0) - (event.absorbed || 0));
+      mark(target, hp ? 'damage' : 'shield');
+      if (event.absorbed > 0 && event.shieldAfter === 0) mark(target, 'break');
+      motion(target, 'hit');
+      number(target, hp ? `−${abbrNum(hp)}${event.absorbed ? ' · shield' : ''}` : 'Shield', hp ? '#f4b5ad' : '#c6e5fa');
+    } else if (type === 'mythical') { mark(actor, 'mythical'); motion(actor, 'mythical'); }
+    else if (type === 'heal' || type === 'shield' || type === 'revive') {
+      const recipient = target || actor;
+      mark(recipient, type); motion(recipient, type);
+      number(recipient, type === 'shield' ? `+${abbrNum(event.amount)} Shield` : `+${abbrNum(event.amount)}`, type === 'shield' ? '#c6e5fa' : '#b4edc4');
+    } else if (type === 'death') { mark(target || actor, 'death'); motion(target || actor, 'death'); }
+    else if (event.type === 'miss' || row.isMiss) {
+      mark(target, 'miss'); motion(target, 'miss'); number(target, 'Miss', '#d5deea');
+    } else if (type === 'thread' || event.type === 'thread' || event.status || row.isSkip
+      || ['cc_loss', 'madness_loss', 'banished'].includes(event.subtype)) mark(target || actor, 'control');
+    for (const node of cue.arrivals || []) { mark(node, 'arrive'); motion(node, 'arrive'); }
+    if (ending && !animations.size) clear();
+  }
+  return { show, clear,
+    pause: () => { for (const a of animations) a.pause(); },
+    resume: () => { for (const a of animations) a.play(); },
+    setSpeed: speed => { rate = Number(speed) || 1; if (rate >= 4) clear(); else for (const a of animations) a.playbackRate = rate; }
+  };
+}
+
 function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
   const hpMap = Object.create(null);
   for (const a of (initialAllies || [])) {
@@ -34,6 +196,12 @@ function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
   }
 
   for (const row of shownRows) {
+    const caster = row.actorId ? hpMap[row.actorId] : hpMap[row.actorName];
+    if (row.subtype === 'mythical_form' && caster) caster.inForm = true;
+    // A cast may close before another cast without a resource snapshot between
+    // them. Keep its payment in completed history as well as the partial row.
+    if (caster && Number.isFinite(caster.sp)) caster.sp = Math.max(0, caster.sp - (row.costSP || 0));
+    if (caster && row.costHP > 0) caster.curHp = Math.max(1, caster.curHp - row.costHP);
     // Follow the same causal steps as the log: a shield gained after a hit must
     // survive that hit, and a later hit must consume an earlier recovery.
     const steps = row.timeline || [
@@ -44,6 +212,11 @@ function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
       ...(row.revives || []).map(event => ({ type: 'revive', event }))
     ];
     for (const { type, event } of steps) {
+      if (type === 'mythical') {
+        const changed = event.actorId ? hpMap[event.actorId] : hpMap[event.actorName];
+        if (changed) changed.inForm = true;
+        continue;
+      }
       const target = event.targetId ? hpMap[event.targetId] : hpMap[event.targetName];
       if (!target) continue;
       if (['damage', 'reflect', 'reaction'].includes(type)) {
@@ -448,17 +621,19 @@ function renderBattleLogComponent({
   outcome,
   isSim,
   paused = false,
+  eventCount = null,
+  animated = false,
   battlefieldImage = ''
 }) {
-  const visible = flattenedRows.slice(0, shownCount);
+  const visible = battlePresentationRows(flattenedRows, shownCount, eventCount);
   const hpMap = calculateCurrentHp(allies, enemies, visible);
   const known=new Set([...allies,...enemies].map(u=>u.id)),added=[...new Set(Object.values(hpMap))].filter(u=>u.id&&!known.has(u.id));
   const shownAllies=[...allies,...added.filter(u=>u.team==='ally')],shownEnemies=[...enemies,...added.filter(u=>u.team==='enemy')];
 
   // Keep earlier turns in place so incoming events cannot collapse the text being read.
-  const contentHtml = visible.map(r => renderTurnRowHtml(r, showDetails)).join('');
+  const contentHtml = visible.map(r => r.presentationPartial ? `<div class="battle-partial-row" aria-hidden="true">${renderTurnRowHtml(r, showDetails)}</div>` : renderTurnRowHtml(r, showDetails)).join('');
 
-  return `<div class="battle-log-wrap" role="log" aria-live="polite" data-shown-count="${visible.length}" data-details="${!!showDetails}">
+  return `<div class="battle-log-wrap" role="log" aria-live="polite" data-shown-count="${shownCount}" data-details="${!!showDetails}" data-paused="${paused}" data-animated="${animated}">
     <div class="battle-toolbar">
       <div class="speed-controls">
         <button type="button" data-pause ${isDone ? 'disabled' : ''} aria-pressed="${paused}" onclick="window.G9.toggleTickerPause()">${paused ? 'Resume' : 'Pause'}</button>
@@ -488,7 +663,7 @@ function renderBattleLogComponent({
 }
 
 function updateBattleLogComponent(wrap, props) {
-  const visible = props.flattenedRows.slice(0, props.shownCount);
+  const visible = battlePresentationRows(props.flattenedRows, props.shownCount, props.eventCount);
   const hpMap = calculateCurrentHp(props.allies, props.enemies, visible);
   const viewport = wrap.querySelector('.battle-ticker-viewport');
   const follow = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <= 35;
@@ -552,16 +727,21 @@ function updateBattleLogComponent(wrap, props) {
   const previousCount = Number(wrap.dataset.shownCount) || 0;
   const detailsChanged = wrap.dataset.details !== String(!!props.showDetails);
   const typing = viewport.querySelector('.typing');
-  if (detailsChanged || visible.length < previousCount) {
-    viewport.innerHTML = visible.map(row => renderTurnRowHtml(row, props.showDetails)).join('');
+  viewport.querySelector('.battle-partial-row')?.remove();
+  if (detailsChanged || props.shownCount < previousCount) {
+    viewport.innerHTML = props.flattenedRows.slice(0, props.shownCount).map(row => renderTurnRowHtml(row, props.showDetails)).join('');
   } else {
     if (typing) typing.remove();
-    viewport.insertAdjacentHTML('beforeend', visible.slice(previousCount).map(row => renderTurnRowHtml(row, props.showDetails)).join(''));
+    viewport.insertAdjacentHTML('beforeend', props.flattenedRows.slice(previousCount, props.shownCount).map(row => renderTurnRowHtml(row, props.showDetails)).join(''));
   }
+  const partial = visible.find(row => row.presentationPartial);
+  if (partial) viewport.insertAdjacentHTML('beforeend', `<div class="battle-partial-row" aria-hidden="true">${renderTurnRowHtml(partial, props.showDetails)}</div>`);
   if (!props.isDone && typing) viewport.append(typing);
   if (typing) typing.textContent = props.paused ? 'Paused · Step to read the next action.' : 'Battling…';
-  wrap.dataset.shownCount = visible.length;
+  wrap.dataset.shownCount = props.shownCount;
   wrap.dataset.details = !!props.showDetails;
+  wrap.dataset.paused = !!props.paused;
+  wrap.dataset.animated = !!props.animated;
   for (const button of wrap.querySelectorAll('[data-speed]')) button.classList.toggle('active', Number(button.dataset.speed) === props.speed);
   wrap.querySelector('[data-skip]').hidden = props.isDone;
   const pause = wrap.querySelector('[data-pause]');
@@ -591,6 +771,11 @@ if (typeof document !== 'undefined') (() => {
   'use strict';
   const loadedGame=loadGame();
   let state=loadedGame||newGame(), tab='hall', selected=null, previewPath=PATH_KEYS[0], planning=null, run=null, notice='', tickerTimer=null, tickerSpeed=1, showBattleDetails=false, simBattleDetails=false, simMode='1v1', simA=[{path:PATH_KEYS[0],sequence:9},{path:PATH_KEYS[0],sequence:9}], simB=[{path:PATH_KEYS[1]||PATH_KEYS[0],sequence:9},{path:PATH_KEYS[1]||PATH_KEYS[0],sequence:9}], simResult=null;
+  let battleEffects = null, battleEffectsWrap = null, battleEpoch = 0;
+  function clearBattleEffects() {
+    battleEpoch++;
+    battleEffects?.clear(); battleEffects = null; battleEffectsWrap = null;
+  }
   const app=document.getElementById('app');
   const clone=v=>JSON.parse(JSON.stringify(v));
   const esc=s=>String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -635,6 +820,7 @@ if (typeof document !== 'undefined') (() => {
     else if(currentDossier?.dataset.agentId===selected)dossierOpenSections=new Set(Array.from(currentDossier.querySelectorAll('details[data-dossier-section][open]'),el=>el.dataset.dossierSection));
     if(options.openSection)dossierOpenSections.add(options.openSection);
     clearTimeout(tickerTimer); tickerTimer = null;
+    clearBattleEffects();
     const pagePosition = { x: window.scrollX, y: window.scrollY };
     const scrollPositions = Array.from(app.querySelectorAll('.quest-modal, .battle-ticker-viewport, .character-dossier')).map(el => ({
       selector: el.id ? `#${el.id}` : el.classList.contains('character-dossier')?'.character-dossier':'.quest-modal',
@@ -725,29 +911,44 @@ if (typeof document !== 'undefined') (() => {
   function scheduleTicker() {
     const playing = run || (tab === 'simulator' ? simResult : null);
     if (playing && !playing.paused && playing.currentTurn < playing.turnRows.length && !tickerTimer) {
-      const delay = tickerSpeed === .5 ? 1600 : tickerSpeed === 4 ? 100 : (tickerSpeed === 2 ? 250 : 500);
+      const wrap = app.querySelector(run ? '#battle-viewport' : '#sim-viewport')?.closest('.battle-log-wrap');
+      if (!wrap) return;
+      if (battleEffectsWrap !== wrap) {
+        clearBattleEffects(); battleEffectsWrap = wrap; battleEffects = createBattleEffects(wrap);
+        if (!playing.entryShown && playing.currentTurn === 0) {
+          battleEffects.show({ type: 'entry', arrivals: [...wrap.querySelectorAll('.gm-arena-unit.companion')] }, tickerSpeed);
+          playing.entryShown = true;
+        }
+      }
+      const phased = Number.isInteger(playing.eventCount);
+      const delay = tickerSpeed === .5 ? (phased ? 400 : 1600) : tickerSpeed === 4 ? 100
+        : tickerSpeed === 2 ? (phased ? 75 : 250) : (phased ? 150 : playing.currentTurn ? 250 : 500);
+      const epoch = battleEpoch;
       const timer = setTimeout(() => {
-        if (tickerTimer !== timer) return;
+        if (tickerTimer !== timer || epoch !== battleEpoch) return;
         tickerTimer = null;
         const current = run || (tab === 'simulator' ? simResult : null);
         if (current !== playing) return;
-        playing.currentTurn++;
-        refreshBattle();
+        const cue = advanceBattlePresentation(playing, tickerSpeed === 4);
+        refreshBattle(cue);
       }, delay);
       tickerTimer = timer;
     }
   }
-  function refreshBattle() {
+  function refreshBattle(cue = null) {
     const playing = run || (tab === 'simulator' ? simResult : null);
     const isSim = !run;
     const viewport = app.querySelector(isSim ? '#sim-viewport' : '#battle-viewport');
     if (!playing || !viewport) { render(); return; }
     const summary = isSim ? playing.summaryText : summarizeBattleEvents(playing.result.events || [], playing.result.battleSnapshot).summaryText;
     const isDone = playing.currentTurn >= playing.turnRows.length;
-    updateBattleLogComponent(viewport.closest('.battle-log-wrap'), {
+    const wrap = viewport.closest('.battle-log-wrap');
+    const existing = new Set(wrap.querySelectorAll('.gm-arena-unit'));
+    updateBattleLogComponent(wrap, {
       allies: isSim ? playing.teamA : playing.initialAllies,
       enemies: isSim ? playing.teamB : playing.initialEnemies,
       flattenedRows: playing.turnRows, shownCount: playing.currentTurn, isDone,
+      eventCount: playing.eventCount, animated: true,
       showDetails: isSim ? simBattleDetails : showBattleDetails, speed: tickerSpeed, paused: !!playing.paused,
       summaryText: playing.isCampaign ? summary.replace(/Casualties/g, 'Agents recovered') : summary,
       success: isSim ? playing.success : playing.result.success,
@@ -755,6 +956,11 @@ if (typeof document !== 'undefined') (() => {
       isSim,
       battlefieldImage: battlefieldImageFor(isSim ? {} : playing.quest, isSim)
     });
+    if (battleEffectsWrap !== wrap) {
+      clearBattleEffects(); battleEffectsWrap = wrap; battleEffects = createBattleEffects(wrap);
+    }
+    if (cue) battleEffects.show({ ...cue, isDone, arrivals: [...wrap.querySelectorAll('.gm-arena-unit')].filter(node => !existing.has(node)) }, tickerSpeed);
+    if (playing.paused) battleEffects.pause();
     const completion = app.querySelector('.battle-completion');
     if (!isSim && completion) completion.hidden = !isDone;
     if (typeof prioritizeVisiblePartyPortraits === 'function') prioritizeVisiblePartyPortraits();
@@ -815,6 +1021,7 @@ if (typeof document !== 'undefined') (() => {
     enemies: simResult.teamB,
     flattenedRows: simResult.turnRows,
     shownCount: simResult.currentTurn,
+    eventCount: simResult.eventCount, animated: true,
     isDone: simResult.currentTurn >= simResult.turnRows.length,
     showDetails: simBattleDetails,
     speed: tickerSpeed,
@@ -917,6 +1124,7 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
       enemies: run.initialEnemies,
       flattenedRows: run.turnRows,
       shownCount: run.currentTurn,
+      eventCount: run.eventCount, animated: true,
       isDone,
       showDetails: showBattleDetails,
       speed: tickerSpeed,
@@ -977,6 +1185,7 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
       tickerSpeed = [.5, 1, 2, 4].includes(Number(spd)) ? Number(spd) : 1;
       clearTimeout(tickerTimer);
       tickerTimer = null;
+      battleEffects?.setSpeed(tickerSpeed);
       refreshBattle();
     },
     toggleTickerPause: () => {
@@ -984,6 +1193,7 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
       if (!playing || playing.currentTurn >= playing.turnRows.length) return;
       playing.paused = !playing.paused;
       clearTimeout(tickerTimer); tickerTimer = null;
+      if (playing.paused) battleEffects?.pause(); else battleEffects?.resume();
       refreshBattle();
     },
     stepTicker: () => {
@@ -991,6 +1201,7 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
       if (!playing || playing.currentTurn >= playing.turnRows.length) return;
       playing.paused = true;
       clearTimeout(tickerTimer); tickerTimer = null;
+      clearBattleEffects(); playing.eventCount = null;
       while (playing.turnRows[playing.currentTurn]?.isRoundHeader) playing.currentTurn++;
       playing.currentTurn = Math.min(playing.turnRows.length, playing.currentTurn + 1);
       refreshBattle();
@@ -1014,8 +1225,8 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
   unitType: m.unitType,
   hp: snap.allies[i]?.maxHp ?? m.stats?.hp ?? 100,
   maxHp: snap.allies[i]?.maxHp ?? m.stats?.hp ?? 100,
-  ...(snap.initialUnits || []).find(u => u.id === m.id),
-  alive: snap.allies[i]?.alive ?? true
+  alive: true,
+  ...(snap.initialUnits || []).find(u => u.id === m.id)
 })),
 teamB: opponents.map((o, i) => ({
   id: snap.enemies[i]?.id || `enemy_${i}`,
@@ -1025,9 +1236,9 @@ teamB: opponents.map((o, i) => ({
   team: 'enemy',
   hp: snap.enemies[i]?.maxHp ?? 100,
   maxHp: snap.enemies[i]?.maxHp ?? 100,
-  ...(snap.initialUnits || []).find(u => u.id === snap.enemies[i]?.id),
-  alive: snap.enemies[i]?.alive ?? true
-})),balanceTrace:snap.balanceTrace||[]};render()},fastTicker:()=>{if(!run)return;run.currentTurn=Math.min(run.turnRows.length,run.currentTurn+5);refreshBattle();},skipTicker:(isSim=false)=>{const playing=isSim?simResult:run;if(!playing)return;playing.currentTurn=playing.turnRows.length;clearTimeout(tickerTimer);tickerTimer=null;refreshBattle();},dossier:id=>{dossierReturnFocus={id:document.activeElement?.id,action:document.activeElement?.getAttribute('onclick')};selected=id;dossierSkillType='active';render({resetDossier:true});document.getElementById('dossier-title')?.focus()},
+  alive: true,
+  ...(snap.initialUnits || []).find(u => u.id === snap.enemies[i]?.id)
+})),balanceTrace:snap.balanceTrace||[]};render()},fastTicker:()=>{if(!run)return;clearBattleEffects();run.eventCount=null;run.currentTurn=Math.min(run.turnRows.length,run.currentTurn+5);clearTimeout(tickerTimer);tickerTimer=null;refreshBattle();},skipTicker:(isSim=false)=>{const playing=isSim?simResult:run;if(!playing)return;playing.currentTurn=playing.turnRows.length;playing.eventCount=null;clearTimeout(tickerTimer);tickerTimer=null;clearBattleEffects();refreshBattle();},dossier:id=>{dossierReturnFocus={id:document.activeElement?.id,action:document.activeElement?.getAttribute('onclick')};selected=id;dossierSkillType='active';render({resetDossier:true});document.getElementById('dossier-title')?.focus()},
     closeDossier:()=>{selected=null;render();const previous=dossierReturnFocus;const opener=previous?.id?document.getElementById(previous.id):previous?.action?Array.from(app.querySelectorAll('[onclick]')).find(el=>el.getAttribute('onclick')===previous.action):null;(opener||app.querySelector('.tabs [aria-current="page"]'))?.focus();dossierReturnFocus=null},
     dossierSkillTab:type=>{const a=state.roster.find(x=>x.id===selected);if(!a||!['active','passive','inventory'].includes(type))return;if(type==='inventory'){if(!pathwayCollection(a))return;render({openSection:'inventory'});document.getElementById('dossier-inventory-title')?.focus();return;}if(!a.awakened)return;dossierSkillType=type;render({openSection:'abilities'});document.getElementById(`dossier-tab-${type}`)?.focus()},
     recruitInfo:id=>{const a=state.recruitPool.find(x=>x.id===id);if(a){toast(`${a.name}: ${a.occupation}. ${traitRarity(a)} — ${traitName(a)}. ${traitDescription(a)}`)}},

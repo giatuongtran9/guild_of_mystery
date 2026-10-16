@@ -106,7 +106,7 @@ function groupEventsToRows(events, battleSnapshot) {
     if (ev.type === 'story') {
       // Awakened by the hit that is still being resolved: show it inside that attack row (cast -> hit -> awakening -> stuns).
       if (ev.subtype === 'mythical_form' && ev.inTurn && activeTurn) {
-        activeTurn.subrows.push({ type: 'mythical', text: ev.text });
+        activeTurn.subrows.push({ ...ev, type: 'mythical' });
         step(activeTurn, 'mythical', ev);
         continue;
       }
@@ -130,6 +130,9 @@ function groupEventsToRows(events, battleSnapshot) {
         r.rows.push(activeTurn);
       }
       activeTurn = {
+        // Keep source ability and target metadata for presentation without
+        // changing the grouped row's identity or its ordered outcomes.
+        ...ev,
         id: `turn_${ev.round}_${ev.actorId}_${i}`,
         round: ev.round,
         type: 'turn',
@@ -201,14 +204,15 @@ function groupEventsToRows(events, battleSnapshot) {
 
     if (ev.type === 'miss') {
       if (activeTurn && activeTurn.actorId === ev.actorId) {
-        activeTurn.subrows.push({ type: 'miss', text: ev.text });
-        step(activeTurn, 'note', { type: 'miss', text: ev.text });
+        activeTurn.subrows.push({ ...ev });
+        step(activeTurn, 'note', ev);
         continue;
       }
       if (activeTurn) {
         r.rows.push(activeTurn);
       }
       activeTurn = {
+        ...ev,
         id: `turn_${ev.round}_${ev.actorId}_${i}`,
         round: ev.round,
         type: 'turn',
@@ -234,6 +238,7 @@ function groupEventsToRows(events, battleSnapshot) {
         r.rows.push(activeTurn);
       }
       activeTurn = {
+        ...ev,
         id: `turn_${ev.round}_${ev.actorId}_${i}`,
         round: ev.round,
         type: 'turn',
@@ -253,10 +258,11 @@ function groupEventsToRows(events, battleSnapshot) {
 
     if (ev.type === 'thread') {
       if (activeTurn) {
-        activeTurn.subrows.push({ type: 'thread', text: ev.text });
-        step(activeTurn, 'note', { type: 'thread', text: ev.text });
+        activeTurn.subrows.push({ ...ev });
+        step(activeTurn, 'note', ev);
       } else {
         r.rows.push({
+          ...ev,
           id: `thread_${ev.round}_${i}`,
           round: ev.round,
           type: 'thread',
@@ -268,10 +274,11 @@ function groupEventsToRows(events, battleSnapshot) {
 
     if (ev.type === 'status') {
       if (activeTurn) {
-        activeTurn.subrows.push({ type: 'status', text: ev.text, subtype: ev.subtype, stat: ev.stat, curVal: ev.curVal, maxVal: ev.maxVal, isFreeze: ev.isFreeze });
-        step(activeTurn, 'note', { ...ev, type: 'status' });
+        activeTurn.subrows.push({ ...ev });
+        step(activeTurn, 'note', ev);
       } else {
         r.rows.push({
+          ...ev,
           id: `status_${ev.round}_${i}`,
           round: ev.round,
           type: 'status',
@@ -1162,6 +1169,9 @@ function attackOnce(agent,actor,enemy,state,lines=[],r,mult=1,options={}){if(!li
    actorName: actor.name,
    actorTeam: teamOf(actor, state),
    ability: weapon.name === 'Bare Hands' ? 'Attack' : weapon.name,
+   abilityId: 'basic_attack',
+   attackKind: weapon.kind,
+   sourcePath: agent.path,
    costSP: 0,
    cooldown: 0
  });
@@ -1392,6 +1402,10 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
  const baseCd = nativeAbilityCooldown(agent,castSpec);
  agent.cooldowns[castId]=(baseCd > 0 ? baseCd + 1 : 0)+Number(agent._cooldownPenalty||0);agent._lastAbility=castId;
  lines.push({text:`ACTION: ${actor.name} casts [${castName}] (Cost: ${quote.amount} ${quote.resource.toUpperCase()} | ${baseCd}-Turn CD).`,kind:'action'});
+ // Owned powers prefix the original ability ID. Resolve their visual source
+ // from the effective ability, including stored records from earlier battles.
+ const presentationAbilityId=String(spec.effectId||spec.id||castId).split(':').pop();
+ const presentationSourcePath=PATH_KEYS.find(path=>PATHS[path].sequences.some(tier=>(tier.abilities||[]).some(ability=>(ability.effectId||ability.id)===presentationAbilityId)))||agent.path;
     emitCombatEvent(state, {
       round: state?.currentRound || 1,
       type: 'cast',
@@ -1399,6 +1413,8 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
       actorName: actor.name,
       actorTeam: teamOf(actor, state),
       ability: castName,
+      sourcePath: presentationSourcePath,
+      sourceAbilityId: presentationAbilityId,
       costSP: cost,costHP:quote.resource==='hp'?quote.amount:0,
       cooldown: baseCd,abilityId:castId
     });
@@ -1455,9 +1471,9 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
   else if(e.type==='buff')for(const t of tgs){const d=fxDuration(e,'buff'),m=1+Number(e.amount||0);if(e.stat==='all'){for(const k of ['atk','def','int'])addFx(t,'buff',k,m,d);}else addFx(t,'buff',e.stat,m,d);emitCombatEvent(state,{round:state?.currentRound||1,type:'status',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`${t.name} gains +${Math.round((m-1)*100)}% ${e.stat.toUpperCase()} ${durationText(d)}`});}
   else if(e.type==='stat_modifier'&&spec.type==='active'&&['atk','def','int'].includes(e.stat))for(const t of supportTargets){const d=fxDuration(e,'buff'),m=1+Number(e.amount||0);addFx(t,'buff',e.stat,m,d);emitCombatEvent(state,{round:state?.currentRound||1,type:'status',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`${t.name} gains +${Math.round((m-1)*100)}% ${e.stat.toUpperCase()} ${durationText(d)}`});}
   else if(e.type==='debuff')for(const t of targets){const d=fxDuration(e,'debuff'),m=1-Number(e.amount||0);if(e.stat==='speed')addFx(t,'speed_debuff','speed',m,d);else if(e.stat==='outgoing')addFx(t,'outgoing','outgoing',m,d);else addFx(t,'debuff',e.stat,m,d);emitCombatEvent(state,{round:state?.currentRound||1,type:'status',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`${t.name} suffers -${Math.round((1-m)*100)}% ${e.stat.toUpperCase()} ${durationText(d)}`});}
-  else if(e.type==='status'){const selfSt=SELF_STATUSES.includes(e.status);for(const t of (selfSt?[actor]:targets))if(t.alive){const mental=['sleep','silenced','confused','charmed','stunned','bound','dreambound','controlled','fear','illusion'].includes(e.status);const resist=(mental&&!selfSt&&!e.ignoreResistance)?Number(combatRates(t.agent||t).resistance||0):0;if((e.chance==null||r()<Number(e.chance))&&r()>=resist&&r()>=(selfSt||e.ignoreResistance?0:statusResistChance(t,e.status))){if(e.status==='sleep')t._sleepAppliedThisAction=true;if(e.status==='banished'){const skipTurns=Math.max(1,Number(e.duration||1));t._skipTurns=skipTurns;addStatus(t,'untargetable',skipTurns,actor.name);addStatus(t,'banished',skipTurns,actor.name);lines.push({text:`${t.name} is banished into a spatial fold for ${skipTurns} turn${skipTurns===1?'':'s'}.`,kind:'status'});checkThreadInterruptOnTarget(t,state,lines);}else { if(!addStatus(t,e.status,Number(e.duration||1),actor.name,e.status==='evade'&&e.dodgeRate!==undefined?{dodgeRate:Number(e.dodgeRate)}:{}))continue; if(e.status==='untargetable')checkThreadInterruptOnTarget(t,state,lines); }emitCombatEvent(state,{round:state?.currentRound||1,type:'status',subtype:e.status==='freeze'?'freeze':undefined,isFreeze:e.status==='freeze',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`${t.name} is afflicted with ${e.status} (${e.duration||1} turn${Number(e.duration||1)===1?'':'s'}${e.status==='evade'?`, ${Math.round(Math.min(1,Number(e.dodgeRate??1))*100)}% dodge`:''})`});}}}
-  else if(e.type==='status_pool'){for(const t of targets)if(t.alive){const pool=e.statuses||[];if(pool.length&&(e.chance==null||r()<Number(e.chance))){const st=pickR(r,pool),dur=Number(e.duration||1);if(!addStatus(t,st,dur,actor.name))continue;const text=`${t.name} is afflicted with ${st} (${dur} turn${dur===1?'':'s'})`;lines.push({text,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'status',subtype:st==='freeze'||st==='frozen'?'freeze':undefined,isFreeze:st==='freeze'||st==='frozen',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text});}}}
-  else if(e.type==='status_chance'){for(const t of targets)if(t.alive){const mental=['sleep','silenced','confused','charmed','stunned','bound','dreambound','controlled','fear','illusion'].includes(e.status);const resist=mental&&!e.ignoreResistance?Number(combatRates(t.agent||t).resistance||0):0;if(r()<Number(e.chance||0)*(1-resist)*(1-(e.ignoreResistance?0:statusResistChance(t,e.status))))addStatus(t,e.status,Number(e.duration||1),actor.name);}}
+  else if(e.type==='status'){const selfSt=SELF_STATUSES.includes(e.status);for(const t of (selfSt?[actor]:targets))if(t.alive){const mental=['sleep','silenced','confused','charmed','stunned','bound','dreambound','controlled','fear','illusion'].includes(e.status);const resist=(mental&&!selfSt&&!e.ignoreResistance)?Number(combatRates(t.agent||t).resistance||0):0;if((e.chance==null||r()<Number(e.chance))&&r()>=resist&&r()>=(selfSt||e.ignoreResistance?0:statusResistChance(t,e.status))){if(e.status==='sleep')t._sleepAppliedThisAction=true;if(e.status==='banished'){const skipTurns=Math.max(1,Number(e.duration||1));t._skipTurns=skipTurns;addStatus(t,'untargetable',skipTurns,actor.name);addStatus(t,'banished',skipTurns,actor.name);lines.push({text:`${t.name} is banished into a spatial fold for ${skipTurns} turn${skipTurns===1?'':'s'}.`,kind:'status'});checkThreadInterruptOnTarget(t,state,lines);}else { if(!addStatus(t,e.status,Number(e.duration||1),actor.name,e.status==='evade'&&e.dodgeRate!==undefined?{dodgeRate:Number(e.dodgeRate)}:{}))continue; if(e.status==='untargetable')checkThreadInterruptOnTarget(t,state,lines); }emitCombatEvent(state,{round:state?.currentRound||1,type:'status',status:hasStatus(t,e.status)?e.status:undefined,subtype:e.status==='freeze'?'freeze':undefined,isFreeze:e.status==='freeze',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`${t.name} is afflicted with ${e.status} (${e.duration||1} turn${Number(e.duration||1)===1?'':'s'}${e.status==='evade'?`, ${Math.round(Math.min(1,Number(e.dodgeRate??1))*100)}% dodge`:''})`});}}}
+  else if(e.type==='status_pool'){for(const t of targets)if(t.alive){const pool=e.statuses||[];if(pool.length&&(e.chance==null||r()<Number(e.chance))){const st=pickR(r,pool),dur=Number(e.duration||1);if(!addStatus(t,st,dur,actor.name))continue;const text=`${t.name} is afflicted with ${st} (${dur} turn${dur===1?'':'s'})`;lines.push({text,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'status',status:st,subtype:st==='freeze'||st==='frozen'?'freeze':undefined,isFreeze:st==='freeze'||st==='frozen',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text});}}}
+  else if(e.type==='status_chance'){for(const t of targets)if(t.alive){const mental=['sleep','silenced','confused','charmed','stunned','bound','dreambound','controlled','fear','illusion'].includes(e.status);const resist=mental&&!e.ignoreResistance?Number(combatRates(t.agent||t).resistance||0):0;if(r()<Number(e.chance||0)*(1-resist)*(1-(e.ignoreResistance?0:statusResistChance(t,e.status)))){if(!addStatus(t,e.status,Number(e.duration||1),actor.name))continue;emitCombatEvent(state,{round:state?.currentRound||1,type:'status',status:e.status,actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),text:`${t.name} is afflicted with ${e.status} (${e.duration||1} turn${Number(e.duration||1)===1?'':'s'})`});}}}
   else if(e.type==='skill_misfire'){for(const t of targets){t._skillMisfireChance=Math.max(t._skillMisfireChance||0,Number(e.chance||.3));setCombatDuration(t,'_skillMisfireDuration',Math.max(t._skillMisfireDuration||0,Number(e.duration||2)));lines.push({text:`${t.name} is afflicted by skill misfire (${Math.round(Number(e.chance||.3)*100)}% chance).`,kind:'status'});}}
   else if(e.type==='mind_control'){const ally=foesOf(actor,state).find(x=>x!==enemy&&x.alive);if(ally){const dmg=Math.max(1,Math.round((enemy.atk||enemy.agent?.stats?.atk||10)*Number(e.damageMultiplier||1.5)));lines.push({text:`${enemy.name} turns its own power against ${ally.name} for ${dmg} damage.`,kind:'quirk'});resolveIncoming(enemy,ally,dmg,state,lines,r);}addStatus(enemy,'stunned',1,actor.name);}
   else if(e.type==='reflect'){{const d=fxDuration(e,'reflect');actor._reflect={mode:e.mode==='stat'?'stat':'share',stat:String(e.stat||'INT').toUpperCase(),multiplier:Number(e.multiplier||0),share:Number(e.share||0),element:e.element||'physical',incomingCategory:e.incomingCategory||null,negate:!!e.negate,untilTurn:d==='next_turn',rounds:d==='next_turn'?0:Number(d),_grace:!!actor._acting};lines.push({text:`${actor.name} is wrapped in a reflecting ward${e.negate?' that negates incoming damage':''} ${durationText(d)}.`,kind:'status'});}}

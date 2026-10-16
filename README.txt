@@ -1,5 +1,21 @@
 Guild of Mystery — v17 JSON Data Layer
 
+Combat animation and playback
+  Battles replay their already-resolved combat events in chronological order.
+  At Read, 1x and 2x, casts reveal each hit, awakening, shield, reaction and
+  defeat separately, including their intermediate HP and SP values. At 4x,
+  each action uses one compact visual cue while retaining the complete log.
+  Existing artwork supports brief attack motions, impact and recovery cues,
+  projectiles, companion arrival, and Mythical transformation feedback.
+  Character cards and gauges remain fixed in their approved battlefield slots.
+  Pause freezes playback and motion; Step finishes one complete action; Skip
+  cancels effects and exposes the already-saved outcome. Reduced motion keeps
+  static cues and immediate gauge updates. Animation never resolves damage,
+  rolls randomness, changes companion scaling, or settles an outcome.
+  Runtime: js/ui.js and css/components/dungeon-arena.css.
+  Checks: tests/combat-animation.test.js, combat-animation-controls.test.js,
+  battlefield-safe-layout.test.js, phase2-battle.test.js and phase4-ui.test.js.
+
 Opening campaign: The Whispering District
   The Campaign tab introduces Sequence 9 play through five ordered missions:
   recruit/awaken/equip, investigate, prepare, confront Cantor Vale, close the case.
