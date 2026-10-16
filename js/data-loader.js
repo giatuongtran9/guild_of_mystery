@@ -56,15 +56,61 @@
     if (manifest.serviceWorkerVersion !== undefined && !/^[a-f0-9]{16}$/.test(manifest.serviceWorkerVersion)) throw new Error('Runtime manifest has an invalid service worker version');
   }
 
+  // Shared with the authored-data build and Node loader. FX data selects from
+  // renderer-owned shapes; it cannot supply markup, scripts or CSS fragments.
+  function validateBattleFx(fx, pathwayKeys) {
+    const fail = detail => { throw new Error(`data/fx.json: ${detail}`); };
+    const record = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+    const fields = (value, required, optional = []) => record(value)
+      && required.every(key => Object.prototype.hasOwnProperty.call(value, key))
+      && Object.keys(value).every(key => required.includes(key) || optional.includes(key));
+    const number = (value, min, max, integer = false) => typeof value === 'number'
+      && Number.isFinite(value) && value >= min && value <= max && (!integer || Number.isInteger(value));
+    const familyKeys = ['slash', 'bolt', 'beam', 'orb', 'shard', 'wisp', 'thread', 'wave'];
+    const family = value => typeof value === 'string' && familyKeys.includes(value);
+    const paths = new Set(pathwayKeys);
+    const safeKey = key => /^[a-z][a-z0-9_]*$/.test(key) && !['constructor', 'prototype'].includes(key);
+    if (!fields(fx, ['schema', 'damageColors', 'families', 'pathwayDefaults', 'pathwayDamageOverrides', 'basicAttack', 'impact', 'support', 'abilityChipMs'])
+      || fx.schema !== 'guild.battle-fx.v1') fail('invalid battle FX schema');
+    if (!record(fx.damageColors) || !['default', 'physical', 'true'].every(key => Object.prototype.hasOwnProperty.call(fx.damageColors, key))
+      || Object.entries(fx.damageColors).some(([key, value]) => !safeKey(key) || typeof value !== 'string' || !/^#[a-f0-9]{6}$/i.test(value))) fail('damage colors must be six-digit hex colors');
+    if (!fields(fx.families, familyKeys)) fail('all eight effect families are required');
+    for (const key of familyKeys) {
+      const effect = fx.families[key];
+      if (!fields(effect, ['shape', 'path', 'size', 'speedPxPerMs', 'minMs', 'maxMs', 'afterimages'])
+        || effect.shape !== key || !['straight', 'arc'].includes(effect.path)
+        || !number(effect.size, 4, 64) || !number(effect.speedPxPerMs, .1, 10)
+        || !number(effect.minMs, 40, 1000, true) || !number(effect.maxMs, effect.minMs, 1000, true)
+        || !number(effect.afterimages, 0, 4, true)) fail(`invalid ${key} family`);
+    }
+    if (!record(fx.pathwayDefaults) || Object.keys(fx.pathwayDefaults).length !== paths.size
+      || [...paths].some(key => !Object.prototype.hasOwnProperty.call(fx.pathwayDefaults, key))
+      || Object.entries(fx.pathwayDefaults).some(([key, value]) => !paths.has(key) || !family(value))) fail('pathway defaults must cover every listed pathway with a known family');
+    if (!record(fx.pathwayDamageOverrides)
+      || Object.entries(fx.pathwayDamageOverrides).some(([key, values]) => !paths.has(key) || !record(values)
+        || Object.entries(values).some(([type, value]) => !Object.prototype.hasOwnProperty.call(fx.damageColors, type) || !family(value)))) fail('invalid pathway damage override');
+    if (!fields(fx.basicAttack, ['melee', 'unarmed', 'gun', 'caster'], ['pathways'])
+      || ['melee', 'unarmed', 'gun', 'caster'].some(key => !family(fx.basicAttack[key]))
+      || (fx.basicAttack.pathways !== undefined && (!record(fx.basicAttack.pathways)
+        || Object.entries(fx.basicAttack.pathways).some(([key, value]) => !paths.has(key) || !family(value))))) fail('invalid basic attack family');
+    if (!fields(fx.impact, ['frames', 'durationMs', 'critScale', 'critHitStopMs'])
+      || !number(fx.impact.frames, 3, 4, true) || !number(fx.impact.durationMs, 80, 500, true)
+      || !number(fx.impact.critScale, 1, 2) || !number(fx.impact.critHitStopMs, 0, 100, true)) fail('invalid impact settings');
+    if (!fields(fx.support, ['durationMs']) || !number(fx.support.durationMs, 100, 1000, true)
+      || !number(fx.abilityChipMs, 100, 1000, true)) fail('invalid support or ability chip duration');
+    return fx;
+  }
+
   function validateBundle(bundle) {
     if (!bundle || bundle.schema !== 'guild.runtime-data.v1') throw new Error('Runtime data bundle has an invalid schema');
     validateManifest(bundle.manifest);
     if (!bundle.pathwayFiles || Object.keys(bundle.pathwayFiles).length !== 22) throw new Error('Runtime data bundle must contain all 22 pathways');
     for (const key of bundle.manifest.order) validatePathway(bundle.pathwayFiles[key], key);
-    for (const name of ['items', 'enemies', 'contracts', 'formulas', 'balance', 'campaign', 'traits']) {
+    for (const name of ['items', 'enemies', 'contracts', 'formulas', 'balance', 'campaign', 'traits', 'fx']) {
       if (!bundle.other?.[name] || typeof bundle.other[name] !== 'object') throw new Error(`Runtime data bundle is missing ${name}`);
     }
     if (bundle.other.campaign.schema !== 'campaign.chapter.v1' || !Array.isArray(bundle.other.campaign.missions) || bundle.other.campaign.missions.length !== 5) throw new Error('data/campaign.json must contain a five-mission opening chapter');
+    validateBattleFx(bundle.other.fx, bundle.manifest.order);
     if (bundle.runtimeAssets !== undefined && (bundle.runtimeAssets?.schemaVersion !== 1 || !/^[a-f0-9]{16}$/.test(bundle.runtimeAssets.version) || !bundle.runtimeAssets.entries || typeof bundle.runtimeAssets.entries !== 'object')) throw new Error('Runtime portrait manifest has an invalid schema');
     return bundle;
   }
@@ -202,8 +248,9 @@
       OCCUPATIONS: enemyData.OCCUPATIONS || enemyData.human_enemy_occupations || []
     };
 
-    return { pathways, traits: other.traits, items: other.items, enemies: enemyData, contracts: other.contracts, campaign: other.campaign, formulas: other.formulas, balance: other.balance, system, characters, runtimeAssets, runtimeManifest };
+    return { pathways, traits: other.traits, items: other.items, enemies: enemyData, contracts: other.contracts, campaign: other.campaign, formulas: other.formulas, balance: other.balance, fx: other.fx, system, characters, runtimeAssets, runtimeManifest };
   }
 
-  window.G9DataLoader = { load };
+  if (typeof window === 'undefined' && typeof module !== 'undefined' && module.exports) module.exports = { validateBattleFx };
+  else window.G9DataLoader = { load };
 })();

@@ -51,8 +51,11 @@ function battlePresentationDelay(playing, speed = 1) {
   if (count === 0) return (periodic ? 0 : 600) / rate;
   const weights = { damage: 450, reaction: 650, reflect: 550, heal: 400,
     shield: 400, mythical: 900, death: 700, revive: 600, note: 180 };
+  const fx = (typeof G9_DATA !== 'undefined' && G9_DATA.fx) || (typeof G9D !== 'undefined' && G9D.fx);
+  const critStop = fx?.impact?.critHitStopMs ?? 50;
   const holds = timeline.map(step => Math.max(weights[step.type] || 180,
-    step.event.presentationEffect && !step.event.presentationEffect.endsWith('_end') ? 500 : step.event.type === 'thread' ? 350 : 0));
+    step.event.presentationEffect && !step.event.presentationEffect.endsWith('_end') ? 500 : step.event.type === 'thread' ? 350 : 0)
+    + (['damage', 'reaction', 'reflect'].includes(step.type) && step.event.critical ? critStop : 0));
   const total = (periodic ? 0 : 600) + holds.reduce((sum, value) => sum + value, 0);
   const padding = count === timeline.length ? Math.max(0, (periodic ? 650 : 2000) - total) : 0;
   return ((holds[count - 1] || 0) + padding) / rate;
@@ -286,12 +289,279 @@ function createPathwayEffects(wrap) {
   };
 }
 
+// Decorative effects follow the recorded replay cursor. Their animation clock
+// never resolves combat or changes HP; the next replay phase owns the impact.
+function createCombatFx(wrap) {
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const data = (typeof G9_DATA !== 'undefined' && G9_DATA.fx ? G9_DATA : null)
+    || (typeof G9D !== 'undefined' ? G9D : typeof G9_DATA !== 'undefined' ? G9_DATA : {});
+  const defaults = {
+    damageColors: { default: '#c8b5ed', physical: '#f2c39b', fire: '#f39463', lightning: '#acdafa',
+      dark: '#c6a0e8', corrosion: '#b1d982', frost: '#abd9ee', true: '#eee3cd' },
+    families: {
+      slash: { path: 'straight', size: 24, speedPxPerMs: 2.4, minMs: 80, maxMs: 260, afterimages: 0 },
+      bolt: { path: 'straight', size: 14, speedPxPerMs: 2, minMs: 100, maxMs: 340, afterimages: 1 },
+      beam: { path: 'straight', size: 10, speedPxPerMs: 3, minMs: 90, maxMs: 260, afterimages: 0 },
+      orb: { path: 'arc', size: 16, speedPxPerMs: 1.25, minMs: 160, maxMs: 480, afterimages: 3 },
+      shard: { path: 'arc', size: 16, speedPxPerMs: 1.6, minMs: 130, maxMs: 420, afterimages: 2 },
+      wisp: { path: 'arc', size: 18, speedPxPerMs: 1.1, minMs: 180, maxMs: 500, afterimages: 3 },
+      thread: { path: 'arc', size: 10, speedPxPerMs: 1.7, minMs: 130, maxMs: 420, afterimages: 2 },
+      wave: { path: 'straight', size: 32, speedPxPerMs: 1.8, minMs: 140, maxMs: 460, afterimages: 1 }
+    },
+    pathwayDefaults: {}, pathwayDamageOverrides: {}, basicAttack: { melee: 'slash', unarmed: 'slash', gun: 'bolt', caster: 'orb', pathways: {} },
+    impact: { frames: 4, durationMs: 160, critScale: 1.5, critHitStopMs: 50 }, support: { durationMs: 500 }, abilityChipMs: 500
+  };
+  const config = data.fx || defaults, animations = new Map();
+  const casterPaths = new Set(['fool', 'door', 'visionary', 'sun', 'white_tower', 'hermit', 'paragon', 'wheel_of_fortune', 'moon']);
+  let hpMap = Object.create(null), surface = null, chip = null, chipRow = null, speed = 1, paused = false, areaRows = new WeakSet();
+  const reduced = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const compact = () => reduced() || speed >= 4;
+  const canvas = () => wrap.querySelector('.gm-battlefield-canvas');
+  const unit = id => id == null ? null : [...wrap.querySelectorAll('.gm-arena-unit')].find(node => node.dataset.unitId === String(id));
+  const state = id => id == null ? null : hpMap[id];
+  const damageTypes = new Set(['damage', 'reaction', 'reflect']);
+  function element(tag, attrs = {}) {
+    const node = document.createElementNS(svgNS, tag);
+    for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, String(value));
+    return node;
+  }
+  function layer() {
+    const field = canvas();
+    if (!field) return null;
+    if (!surface?.isConnected) {
+      surface = element('svg', { class: 'gm-combat-fx-layer', 'aria-hidden': 'true', focusable: 'false', preserveAspectRatio: 'none' });
+      field.append(surface);
+    }
+    const box = field.getBoundingClientRect();
+    surface.setAttribute('viewBox', `0 0 ${Math.max(1, box.width)} ${Math.max(1, box.height)}`);
+    surface.setAttribute('data-reduced-motion', String(reduced()));
+    return surface;
+  }
+  function point(id) {
+    const sprite = unit(id)?.querySelector('.gm-unit-sprite-anchor'), box = sprite?.getBoundingClientRect();
+    const field = canvas()?.getBoundingClientRect(), arena = wrap.querySelector('.gm-dungeon-arena')?.getBoundingClientRect();
+    if (!box || !field || !arena || !box.width || !box.height || !field.width || !field.height
+      || box.bottom <= Math.max(0, arena.top) || box.top >= Math.min(window.innerHeight, arena.bottom)
+      || box.right <= Math.max(0, arena.left) || box.left >= Math.min(window.innerWidth, arena.right)) return null;
+    return { x: box.left - field.left + box.width / 2, y: box.top - field.top + box.height / 2, radius: Math.min(box.width, box.height) * .38 };
+  }
+  function group(kind, ownerId, targetId, color) {
+    const node = element('g', { class: kind, style: `--gm-fx-color:${color}` });
+    if (ownerId != null) node.setAttribute('data-owner-id', ownerId);
+    if (targetId != null) node.setAttribute('data-target-id', targetId);
+    return node;
+  }
+  function animate(node, frames, duration, delay = 0, options = {}) {
+    if (!node.animate || compact()) return null;
+    const animation = node.animate(frames, { duration, delay, easing: options.easing || 'linear', fill: 'none' });
+    animation.playbackRate = speed;
+    animations.set(animation, node);
+    if (paused) animation.pause();
+    animation.onfinish = () => { animations.delete(animation); animation.cancel(); if (options.remove !== false) node.remove(); };
+    animation.oncancel = () => animations.delete(animation);
+    return animation;
+  }
+  function clearPhase(keepChip = true) {
+    for (const [animation, node] of [...animations]) {
+      if (keepChip && (node === chip || chip?.contains(node))) continue;
+      animation.cancel(); animations.delete(animation);
+    }
+    for (const node of [...(surface?.children || [])]) if (!keepChip || node !== chip) node.remove();
+    if (!keepChip) { chip = null; chipRow = null; }
+  }
+  function colorFor(event) { return config.damageColors?.[event.damageType] || defaults.damageColors[event.damageType] || config.damageColors?.default || defaults.damageColors.default; }
+  function sourcePath(row, event) {
+    return event.sourcePath || (event.actorId == null || event.actorId === row.actorId ? row.sourcePath : null) || state(event.actorId ?? row.actorId)?.path;
+  }
+  function magicBasic(row, event) {
+    if (!(row.abilityId === 'basic_attack' || row.attackKind) || row.attackKind === 'gun'
+      || (event.actorId != null && event.actorId !== row.actorId)) return false;
+    const path = sourcePath(row, event);
+    const archetype = typeof archetypeOf === 'function' ? archetypeOf(path)
+      : data.balance?.path_archetype?.[path] || (casterPaths.has(path) ? 'Caster' : 'Physical');
+    return row.attackKind === 'magic' || archetype === 'Caster';
+  }
+  function familyFor(row, event) {
+    const path = sourcePath(row, event), basic = row.abilityId === 'basic_attack' || !!row.attackKind;
+    const rules = config.basicAttack || defaults.basicAttack;
+    let family;
+    if (basic && (event.actorId == null || event.actorId === row.actorId)) {
+      if (row.attackKind === 'gun') family = rules.gun;
+      else if (magicBasic(row, event)) family = rules.pathways?.[path] || rules.caster;
+      else family = row.attackKind === 'unarmed' ? rules.unarmed : rules.melee;
+    } else family = config.pathwayDamageOverrides?.[path]?.[event.damageType] || config.pathwayDefaults?.[path];
+    return defaults.families[family] ? family : event.damageType === 'physical' ? 'slash' : 'orb';
+  }
+  function shape(family, size, width) {
+    const node = element('g', { transform: `scale(${size / 20})` });
+    const path = (d, attrs = {}) => node.append(element('path', { d, fill: 'currentColor', ...attrs }));
+    if (family === 'slash') path('M -10 9 L -7 1 L -1 -7 L 10 -10 L 3 -5 L -3 2 Z');
+    else if (family === 'bolt') path('M -11 -2 L 4 -2 L 4 -5 L 12 0 L 4 5 L 4 2 L -11 2 Z');
+    else if (family === 'beam') { node.append(element('rect', { x: -16, y: -1.5, width: 32, height: 3, fill: 'currentColor' })); path('M 12 -4 L 20 0 L 12 4 Z'); }
+    else if (family === 'orb') path('M -5 -8 L 5 -8 L 5 -5 L 8 -5 L 8 5 L 5 5 L 5 8 L -5 8 L -5 5 L -8 5 L -8 -5 L -5 -5 Z');
+    else if (family === 'shard') path('M -9 1 L 5 -9 L 9 -4 L 5 7 L -1 10 Z');
+    else if (family === 'wisp') path('M -10 5 L -6 1 L -8 -4 L -1 -8 L 6 -5 L 9 0 L 5 6 L 0 4 L -4 8 Z');
+    else if (family === 'thread') path('M -12 4 L -6 -4 L 0 4 L 6 -4 L 12 0', { fill: 'none', stroke: 'currentColor', 'stroke-width': 2 });
+    else { const half = Math.max(10, (width || size) / size * 10); path(`M ${-half} 3 L ${-half * .75} -3 L ${-half * .5} 3 L ${-half * .25} -3 L 0 3 L ${half * .25} -3 L ${half * .5} 3 L ${half * .75} -3 L ${half} 3`, { fill: 'none', stroke: 'currentColor', 'stroke-width': 3 }); }
+    return node;
+  }
+  function targetRank(targetId) {
+    const target = unit(targetId), targetTeam = target?.classList.contains('ally') ? 'ally' : 'enemy';
+    const points = [...wrap.querySelectorAll(`.gm-arena-unit.${targetTeam}`)]
+      .filter(node => state(node.dataset.unitId)?.alive !== false && state(node.dataset.unitId)?.inCombat !== false)
+      .map(node => point(node.dataset.unitId)).filter(Boolean);
+    if (!points.length) return null;
+    const minX = Math.min(...points.map(p => p.x - p.radius)), maxX = Math.max(...points.map(p => p.x + p.radius));
+    return { x: (minX + maxX) / 2, y: points.reduce((sum, p) => sum + p.y, 0) / points.length, width: Math.max(36, maxX - minX) };
+  }
+  function isArea(row, event) {
+    return (event.actorId == null || event.actorId === row.actorId) && (!!event.area || ['all_enemies', 'up_to_3_enemies'].includes(row.presentationTargetMode));
+  }
+  function travel(row, step, phaseHold) {
+    const event = step?.event;
+    if (!event || !damageTypes.has(step.type) || event.isDot || compact()) return;
+    const ownerId = event.actorId ?? row.actorId, targetId = event.targetId;
+    const a = point(ownerId), originalTarget = point(targetId);
+    if (!a || !originalTarget || ownerId === targetId) return;
+    const area = isArea(row, event);
+    if (area && areaRows.has(row)) return;
+    const b = area ? targetRank(targetId) || originalTarget : originalTarget;
+    const family = area ? 'wave' : familyFor(row, event), settings = config.families?.[family] || defaults.families[family];
+    const physical = event.damageType === 'physical' && !magicBasic(row, event), pathKind = physical ? 'straight' : settings.path;
+    const distance = Math.hypot(b.x - a.x, b.y - a.y), hold = Math.max(1, Number(phaseHold) || 600);
+    const duration = Math.min(hold, Math.max(settings.minMs, Math.min(settings.maxMs, distance / (settings.speedPxPerMs || 1))));
+    const delay = Math.max(0, hold - duration), angle = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+    const bend = pathKind === 'arc' ? Math.min(42, distance * .18) : 0;
+    const coords = t => ({ x: a.x + (b.x - a.x) * t + Math.sin(Math.PI * t) * bend,
+      y: a.y + (b.y - a.y) * t - Math.sin(Math.PI * t) * bend * .45 });
+    const make = (ghost = 0) => {
+      const node = group(ghost ? 'gm-combat-afterimage' : 'gm-combat-projectile', ownerId, targetId, colorFor(event));
+      for (const [name, value] of Object.entries({ family, 'damage-type': event.damageType || 'default', 'path-kind': pathKind,
+        'travel-ms': duration, 'travel-delay-ms': delay })) node.setAttribute(`data-${name}`, value);
+      node.setAttribute('opacity', '0');
+      node.append(shape(settings.shape || family, settings.size, area ? b.width : undefined)); layer()?.append(node);
+      const frames = Array.from({ length: 9 }, (_, index) => {
+        const t = index / 8, p = coords(Math.max(0, t - ghost * .065));
+        return { offset: t, transform: `translate(${p.x}px,${p.y}px) rotate(${family === 'wave' ? 0 : angle}deg)`, opacity: t === 1 ? 0 : ghost ? .25 / ghost : .95 };
+      });
+      animate(node, frames, duration, delay);
+    };
+    make();
+    if (pathKind === 'arc') for (let index = 1; index <= Math.min(3, settings.afterimages || 0); index++) make(index);
+    if (area) areaRows.add(row);
+  }
+  function hitIndex(row, event) {
+    const hits = (row.timeline || []).filter(step => damageTypes.has(step.type) && !step.event.isDot
+      && step.event.targetId === event.targetId && step.event.actorId === event.actorId);
+    return { index: Math.max(1, hits.findIndex(step => step.event === event) + 1), count: hits.length };
+  }
+  function impact(row, event) {
+    if (event.isDot) return;
+    const p = point(event.targetId);
+    if (!p || !layer()) return;
+    const critical = !!event.critical, settings = config.impact || defaults.impact, hit = hitIndex(row, event);
+    const duration = settings.durationMs || 160, stop = critical ? settings.critHitStopMs || 50 : 0, total = duration + stop;
+    const burst = group('gm-combat-impact', event.actorId ?? row.actorId, event.targetId, colorFor(event));
+    burst.setAttribute('transform', `translate(${p.x} ${p.y}) scale(${critical ? settings.critScale || 1.5 : 1})`);
+    burst.setAttribute('data-critical', String(critical)); burst.setAttribute('data-frame', '0');
+    burst.setAttribute('data-impact-scale', critical ? settings.critScale || 1.5 : 1); burst.setAttribute('data-hit-stop-ms', stop);
+    burst.setAttribute('data-hit-index', hit.index); burst.setAttribute('data-hit-count', hit.count); burst.setAttribute('data-stagger-ms', hit.count > 1 ? 35 : 0);
+    const pixels = [ [[-2,-2,4,4]], [[-2,-10,4,6],[-2,4,4,6],[-10,-2,6,4],[4,-2,6,4]],
+      [[-2,-14,4,5],[-2,9,4,5],[-14,-2,5,4],[9,-2,5,4],[-9,-9,3,3],[6,6,3,3]],
+      [[-2,-17,3,3],[-2,14,3,3],[-17,-2,3,3],[14,-2,3,3],[-12,-12,2,2],[10,10,2,2]] ];
+    const frameCount = settings.frames || 4;
+    for (let index = 0; index < frameCount; index++) {
+      const frame = element('g', { class: 'gm-combat-impact-frame', 'data-frame': index, opacity: compact() ? index === frameCount - 1 ? 1 : 0 : index === 0 ? 1 : 0 });
+      const pixelIndex = Math.round(index * (pixels.length - 1) / (frameCount - 1));
+      for (const [x,y,width,height] of pixels[pixelIndex]) frame.append(element('rect', { x,y,width,height, fill: 'currentColor' }));
+      burst.append(frame);
+      const start = index * duration / frameCount + (index > 0 ? stop : 0), end = (index + 1) * duration / frameCount + stop;
+      const frames = [{ opacity: index === 0 ? 1 : 0, offset: 0 }];
+      if (start > 0) frames.push({ opacity: 1, offset: start / total });
+      frames.push({ opacity: 0, offset: end / total });
+      if (end < total) frames.push({ opacity: 0, offset: 1 });
+      // Step each keyframe segment. Stepping the whole effect would hold only
+      // the first frame and skip the intermediate pixel shapes entirely.
+      animate(frame, frames.map(key => ({ ...key, easing: 'steps(1,end)' })), total);
+    }
+    layer().append(burst);
+    if (hit.count > 1 && !compact()) for (let index = 0; index < 3; index++) {
+      const spark = element('rect', { x: -1, y: -1, width: 3, height: 3, fill: 'currentColor' }); burst.append(spark);
+      animate(spark, [{ transform: 'translate(0,0)', opacity: .9 }, { transform: `translate(${(index - 1) * 13}px,${-10 - index * 3}px)`, opacity: 0 }], 110, index * 35);
+    }
+  }
+  function support(type, event, row) {
+    const id = event.targetId ?? event.actorId ?? row.targetId ?? row.actorId, p = point(id);
+    if (!p || !layer()) return;
+    const duration = config.support?.durationMs || 500, color = type === 'heal' || type === 'revive' ? '#91dda9' : type === 'shield' ? '#b6dced' : '#dfc898';
+    const node = group(`gm-combat-${type === 'revive' ? 'heal' : type}`, event.actorId ?? row.actorId, id, color);
+    node.setAttribute('transform', `translate(${p.x} ${p.y})`); layer().append(node);
+    if (type === 'heal' || type === 'revive') {
+      for (let index = 0; index < 4; index++) {
+        const mote = element('path', { d: 'M -1 -4 H 1 V -1 H 4 V 1 H 1 V 4 H -1 V 1 H -4 V -1 H -1 Z', fill: 'currentColor', transform: `translate(${(index - 1.5) * 7} ${index % 2 * 7})` });
+        node.append(mote);
+        animate(mote, [{ opacity: 0, transform: `translate(${(index - 1.5) * 7}px,8px)` }, { opacity: .9, offset: .3 }, { opacity: 0, transform: `translate(${(index - 1.5) * 7}px,-19px)` }], duration - index * 45, index * 45);
+      }
+    } else if (type === 'shield') {
+      const ring = element('circle', { class: 'gm-combat-fx-outline', cx: 0, cy: 0, r: Math.max(8, p.radius), fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }); node.append(ring);
+      animate(ring, [{ opacity: .9, transform: 'scale(.7)' }, { opacity: .65, offset: .5 }, { opacity: 0, transform: 'scale(1.08)' }], duration);
+    } else {
+      const icon = element('text', { x: 0, y: -p.radius - 8, 'text-anchor': 'middle', fill: 'currentColor', 'font-size': 15, 'font-weight': 700 });
+      icon.textContent = event.type === 'thread' ? '⌁' : event.status ? '!' : '◇'; node.append(icon);
+      animate(icon, [{ opacity: .9, transform: 'translate(0,3px)' }, { opacity: 1, offset: .4 }, { opacity: 0, transform: 'translate(0,-5px)' }], duration);
+    }
+  }
+  function abilityChip(row, event) {
+    if (row === chipRow || row.abilityId === 'basic_attack' || row.attackKind) return;
+    const label = row.ability || row.abilityName || event.ability || event.abilityName;
+    const p = point(event.actorId ?? row.actorId), field = canvas()?.getBoundingClientRect();
+    if (!label || !p || !field || !layer()) return;
+    if (chip) { for (const [animation, node] of [...animations]) if (node === chip || chip.contains(node)) { animation.cancel(); animations.delete(animation); } chip.remove(); }
+    const width = Math.max(40, Math.min(field.width - 8, 180, String(label).length * 5.8 + 16));
+    chip = group('gm-combat-ability-chip', event.actorId ?? row.actorId, null, '#e3d4b0'); chipRow = row;
+    chip.setAttribute('transform', `translate(${Math.max(width / 2 + 4, Math.min(field.width - width / 2 - 4, p.x))} ${Math.max(13, p.y - p.radius - 15)})`);
+    chip.append(element('rect', { class: 'gm-combat-ability-chip-bg', x: -width / 2, y: -11, width, height: 20, rx: 2 }));
+    const text = element('text', { class: 'gm-combat-ability-chip-label', x: 0, y: 3, 'text-anchor': 'middle' });
+    text.textContent = String(label).length > 28 ? `${String(label).slice(0, 27)}…` : String(label); chip.append(text); layer().append(chip);
+    animate(chip, [{ opacity: 1 }, { opacity: 1, offset: .8 }, { opacity: 0 }], config.abilityChipMs || 500);
+  }
+  function show(cue, playbackSpeed = 1, phaseHoldMs = 600) {
+    speed = Math.max(.1, Number(playbackSpeed) || 1);
+    const event = cue?.event || {}, row = cue?.row || event;
+    if (chipRow && row !== chipRow) clearPhase(false); else clearPhase(true);
+    if (!cue || cue.type === 'settle') return;
+    const type = cue.type === 'row' ? event.type : cue.type;
+    if (type === 'cast') { areaRows.delete(row); abilityChip(row, event); }
+    if (damageTypes.has(type)) impact(row, event);
+    else if (['heal', 'shield', 'revive'].includes(type)) support(type, event, row);
+    else if (event.status || event.type === 'thread' || ['cc_loss', 'madness_loss', 'banished'].includes(event.subtype)) support('status', event, row);
+    travel(row, cue.next, phaseHoldMs);
+  }
+  return { sync: map => { hpMap = map || Object.create(null); }, show,
+    clear: () => { clearPhase(false); surface?.remove(); surface = null; hpMap = Object.create(null); paused = false; areaRows = new WeakSet(); },
+    reflow: () => { clearPhase(false); surface?.remove(); surface = null; },
+    pause: () => { paused = true; for (const animation of animations.keys()) animation.pause(); },
+    resume: () => { paused = false; for (const animation of animations.keys()) animation.play(); },
+    setSpeed: value => { speed = Math.max(.1, Number(value) || 1); if (compact()) clearPhase(false); else for (const animation of animations.keys()) animation.playbackRate = speed; }
+  };
+}
+
+
 function createBattleEffects(wrap) {
   const animations = new Set(), touched = new Set();
   const pathwayEffects = createPathwayEffects(wrap);
+  const combatFx = createCombatFx(wrap);
   const arena = wrap.querySelector('.gm-dungeon-arena');
-  let currentMap = Object.create(null);
-  const reflow = () => pathwayEffects.sync(currentMap);
+  let currentMap = Object.create(null), geometry = '';
+  const reflow = () => {
+    pathwayEffects.sync(currentMap);
+    const next = [...wrap.querySelectorAll('.gm-battlefield-canvas, .gm-unit-sprite-anchor')].map(node => {
+      const box = node.getBoundingClientRect();
+      return [box.left, box.top, box.width, box.height].join(',');
+    }).join(';');
+    if (geometry && geometry !== next) combatFx.reflow();
+    geometry = next;
+  };
   arena?.addEventListener('gm-battlefield-layout', reflow);
   let layer = null, rate = 1, ending = false;
   const reduced = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -316,7 +586,7 @@ function createBattleEffects(wrap) {
     animations.add(animation);
     animation.onfinish = () => {
       animations.delete(animation); animation.cancel();
-      if (node.matches('.gm-battle-fx, .gm-battle-fx-number')) node.remove();
+      if (node.matches('.gm-battle-fx-number')) node.remove();
       if (ending && !animations.size) clearTransient();
     };
     animation.oncancel = () => animations.delete(animation);
@@ -328,7 +598,7 @@ function createBattleEffects(wrap) {
     touched.clear(); layer?.remove(); layer = null;
   }
   function clear() {
-    clearTransient(); pathwayEffects.clear(); currentMap = Object.create(null);
+    clearTransient(); pathwayEffects.clear(); combatFx.clear(); currentMap = Object.create(null);
     arena?.removeEventListener('gm-battlefield-layout', reflow);
   }
   function overlay() {
@@ -352,16 +622,7 @@ function createBattleEffects(wrap) {
     overlay().append(element);
     animate(element, [{ opacity: 1, transform: 'translate(-50%,-50%)' }, { opacity: 1, offset: .55 }, { opacity: 0, transform: 'translate(-50%,calc(-50% - 6px))' }], 850);
   }
-  function travel(from, to, color, duration) {
-    if (reduced() || rate >= 4 || !isVisible(anchor(from)) || !isVisible(anchor(to))) return;
-    const a = point(from), b = point(to), element = document.createElement('span');
-    element.className = 'gm-battle-fx';
-    element.style.cssText = `left:${b.x}px;top:${b.y}px;--gm-fx-color:${color}`;
-    overlay().append(element);
-    animate(element, [{ opacity: .85, transform: `translate(calc(-50% + ${a.x-b.x}px),calc(-50% + ${a.y-b.y}px))` },
-      { opacity: 0, transform: 'translate(-50%,-50%)' }], duration);
-  }
-  function motion(node, kind) {
+  function motion(node, kind, hitStop = 0) {
     if (!node) return;
     const sprite = node.querySelector('.gm-unit-sprite'), size = anchor(node)?.getBoundingClientRect().width || 0;
     // The scaled pose leaves more room than the nudge consumes, even for a
@@ -369,34 +630,34 @@ function createBattleEffects(wrap) {
     const nudge = Math.min(2, size * .02), direction = node.classList.contains('ally') ? -1 : 1;
     if (['death', 'arrive', 'revive', 'mythical'].includes(kind)) {
       animate(sprite, [{ opacity: kind === 'death' ? 1 : .25 }, { opacity: kind === 'death' ? .4 : 1 }], 240);
-    } else animate(sprite, [{ transform: 'translate(0,0) scale(1)' },
-      { transform: kind === 'cast' ? `translate(0,${direction*nudge}px) scale(.94)` : `translate(${nudge}px,0) scale(.94)` },
-      { transform: 'translate(0,0) scale(1)' }]);
+    } else {
+      const duration = 180 + hitStop;
+      const frames = [{ transform: 'translate(0,0) scale(1)', offset: 0 }];
+      if (hitStop) frames.push({ transform: 'translate(0,0) scale(1)', offset: hitStop / duration });
+      frames.push({ transform: kind === 'cast' ? `translate(0,${direction*nudge}px) scale(.94)` : `translate(${nudge}px,0) scale(.94)`, offset: (hitStop + 90) / duration },
+        { transform: 'translate(0,0) scale(1)', offset: 1 });
+      animate(sprite, frames, duration);
+    }
   }
   function show(cue, speed = 1, timingMs = 600) {
     clearTransient(); rate = Number(speed) || 1;
     pathwayEffects.show(cue, rate, timingMs);
+    combatFx.show(cue, rate, timingMs);
     if (!cue) return;
     ending = !!cue.isDone;
     const event = cue.event || {}, row = cue.row || event;
     const actor = unit(event.actorId || row.actorId, event.actorName || row.actorName);
     const target = unit(event.targetId || row.targetId, event.targetName || row.targetName);
     const type = cue.type === 'row' ? (event.subtype === 'mythical_form' ? 'mythical' : event.type) : cue.type;
-    const colors = { physical: '#f2c39b', fire: '#f39463', lightning: '#acdafa', dark: '#c6a0e8', corrosion: '#b1d982', frost: '#abd9ee', true: '#eee3cd' };
-    const color = colors[event.damageType] || '#c8b5ed';
     if (!event.isDot && type !== 'settle') mark(actor, 'actor');
-    const next = cue.next?.event;
-    if (next && ['damage', 'reaction', 'reflect'].includes(cue.next.type) && !next.isDot
-      && (row.attackKind === 'gun' || next.damageType !== 'physical')) {
-      travel(unit(next.actorId || row.actorId, next.actorName || row.actorName), unit(next.targetId, next.targetName), colors[next.damageType] || color, timingMs);
-    }
     if (type === 'cast') motion(actor, 'cast');
     else if (['damage', 'reaction', 'reflect'].includes(type)) {
       mark(target, 'target');
       const hp = event.hpLoss ?? Math.max(0, (event.amount || 0) - (event.absorbed || 0));
       mark(target, hp ? 'damage' : 'shield');
       if (event.absorbed > 0 && event.shieldAfter === 0) mark(target, 'break');
-      motion(target, 'hit');
+      const fx = (typeof G9_DATA !== 'undefined' && G9_DATA.fx) || (typeof G9D !== 'undefined' && G9D.fx);
+      motion(target, 'hit', event.critical ? fx?.impact?.critHitStopMs ?? 50 : 0);
       number(target, hp ? `−${abbrNum(hp)}${event.absorbed ? ' · shield' : ''}` : 'Shield', hp ? '#f4b5ad' : '#c6e5fa');
     } else if (type === 'mythical') { mark(actor, 'mythical'); motion(actor, 'mythical'); }
     else if (type === 'heal' || type === 'shield' || type === 'revive') {
@@ -412,11 +673,11 @@ function createBattleEffects(wrap) {
     if (ending && !animations.size) clearTransient();
   }
   return { show, clear,
-    sync: map => { currentMap = map || Object.create(null); pathwayEffects.sync(currentMap); },
-    reflow: () => { clearTransient(); pathwayEffects.show(null); pathwayEffects.sync(currentMap); },
-    pause: () => { for (const a of animations) a.pause(); pathwayEffects.pause(); },
-    resume: () => { for (const a of animations) a.play(); pathwayEffects.resume(); },
-    setSpeed: speed => { rate = Number(speed) || 1; if (rate >= 4) clearTransient(); else for (const a of animations) a.playbackRate = rate; pathwayEffects.setSpeed(rate); }
+    sync: map => { currentMap = map || Object.create(null); pathwayEffects.sync(currentMap); combatFx.sync(currentMap); },
+    reflow: () => { clearTransient(); pathwayEffects.show(null); pathwayEffects.sync(currentMap); combatFx.reflow(); },
+    pause: () => { for (const a of animations) a.pause(); pathwayEffects.pause(); combatFx.pause(); },
+    resume: () => { for (const a of animations) a.play(); pathwayEffects.resume(); combatFx.resume(); },
+    setSpeed: speed => { rate = Number(speed) || 1; if (rate >= 4) clearTransient(); else for (const a of animations) a.playbackRate = rate; pathwayEffects.setSpeed(rate); combatFx.setSpeed(rate); }
   };
 }
 

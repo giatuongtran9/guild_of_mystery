@@ -19,6 +19,16 @@ Combat animation and playback
   Chained curse links pulse on their actual echo. Faint connections last only
   while the recorded binding or curse is active and follow battlefield reflow.
   Pause and speed changes preserve the remaining reading time in the phase.
+  Projectile families and damage colors live in data/fx.json. Melee basics
+  slash, guns fire bolts, and caster basics use their pathway's magic. Spells
+  curve with afterimages; distance controls travel within the recorded phase.
+  Pixel impacts use four stepped frames, with larger critical bursts and a
+  50ms critical hold at 1x. Heals, shields and statuses appear on recipients.
+  Area casts share one wave; repeated hits retain their ordered impacts.
+  Abilities display a brief name chip above the caster; basic attacks do not.
+  Thread Binding advances before scheduled and granted bonus actions, while
+  counters and reflections remain reactions. Its late stages prevent Evade
+  as well as ordinary dodge; conversion cancels the victim's pending action.
   Runtime: js/ui.js and css/components/dungeon-arena.css.
   Checks: tests/combat-animation.test.js, combat-animation-controls.test.js,
   combat-signature-effects.test.js, signature-presentation-events.test.js,
@@ -50,6 +60,7 @@ Data architecture:
                              meter, Sequence 9→0 names and one editable ability
                              block per Sequence.
   data/items.json          — weapons and item definitions only; Pathway abilities are authoritative in data/pathways/*.json.
+  data/fx.json             — battle effect families, colors and presentation timing.
   data/enemies.json        — enemy name pools, human names/occupations/weapons,
                              traits and threat/name tables.
   data/contracts.json      — contract templates, wanted targets, tags and

@@ -55,7 +55,7 @@ async function fixture(options = {}) {
     result.events = [
       { round: 1, type: 'round_start' },
       { round: 1, type: 'cast', actorId: allyId, actorName: ally.name, actorTeam: 'ally', ability: 'Runebore Revolver', costSP: 4 },
-      { round: 1, type: 'damage', actorId: allyId, actorName: ally.name, actorTeam: 'ally', targetId: enemyId, targetName: enemy.name, targetTeam: 'enemy', damageType: 'physical', amount: 70, hpLoss: 70, hpAfter: 30, shieldAfter: 0 },
+      { round: 1, type: 'damage', actorId: allyId, actorName: ally.name, actorTeam: 'ally', targetId: enemyId, targetName: enemy.name, targetTeam: 'enemy', damageType: 'physical', amount: 70, hpLoss: 70, hpAfter: 30, shieldAfter: 0, critical: !!options.critical },
       { round: 1, type: 'story', subtype: 'mythical_form', actorId: enemyId, actorName: enemy.name, actorTeam: 'enemy', inTurn: true, text: 'Curse Vessel awakens Bandaged Curse Vessel.' },
       { round: 1, type: 'shield', actorId: enemyId, actorName: enemy.name, actorTeam: 'enemy', targetId: enemyId, targetName: enemy.name, targetTeam: 'enemy', amount: 25, shieldAfter: 25 },
       { round: 1, type: 'damage', actorId: enemyId, actorName: enemy.name, actorTeam: 'enemy', targetId: allyId, targetName: ally.name, targetTeam: 'ally', damageType: 'dark', amount: 50, hpLoss: 50, hpAfter: 0, shieldAfter: 0, isReaction: true },
@@ -104,7 +104,7 @@ function sp(node) { return node.querySelector('.gm-float-gauge.mp .gm-float-num'
 function log(f) { return f.app.querySelector('.battle-ticker-viewport'); }
 function beginHit(f) { f.tick(); f.tick(); f.tick(); }
 function clean(f) {
-  assert.equal(f.app.querySelectorAll('.gm-battle-fx-layer, .gm-battle-fx, .gm-battle-fx-number').length, 0);
+  assert.equal(f.app.querySelectorAll('.gm-battle-fx-layer, .gm-battle-fx-number, .gm-combat-fx-layer').length, 0);
   assert(![...f.app.querySelectorAll('[class]')].some(node => [...node.classList].some(name => name.startsWith('gm-cue-'))));
 }
 
@@ -231,6 +231,20 @@ function clean(f) {
     assert.equal(f.time - started, 3700);
     assert(log(f).textContent.includes('Chronicle Agent falls'));
   });
+
+  await test('critical impact adds a scaled hit-stop without delaying or duplicating the resolved hit', f => {
+    beginHit(f);
+    assert.equal(hp(f.card(f.enemyId)), '30/100');
+    assert.equal(f.timers.values().next().value.delay, 500, '450ms impact plus 50ms critical hold');
+    f.elapse(50); f.w.G9.toggleTickerPause();
+    assert.equal(f.timers.size, 0);
+    f.w.G9.setTickerSpeed(2); f.w.G9.toggleTickerPause();
+    assert.equal(f.timers.values().next().value.delay, 225, 'remaining critical phase follows proportional speed');
+    f.tick();
+    assert(log(f).textContent.includes('MYTHICAL FORM AWAKENING'));
+    assert.equal(hp(f.card(f.enemyId)), '30/100');
+    assert.equal(log(f).textContent.split('70 HP').length - 1, 1);
+  }, { critical: true });
 
   await test('Pause and speed changes preserve elapsed reading time without advancing while paused', f => {
     beginHit(f); f.elapse(200); f.w.G9.toggleTickerPause();

@@ -9,7 +9,7 @@ const root = path.resolve(__dirname, '..');
 const source = fs.readFileSync(path.join(root, 'js/data-loader.js'), 'utf8');
 const read = name => JSON.parse(fs.readFileSync(path.join(root, 'data', name), 'utf8'));
 const manifest = read('pathways/index.json');
-const names = ['items', 'enemies', 'contracts', 'formulas', 'balance', 'campaign', 'traits'];
+const names = ['items', 'enemies', 'contracts', 'formulas', 'balance', 'campaign', 'traits', 'fx'];
 const rawBundle = () => ({
   schema: 'guild.runtime-data.v1', manifest,
   pathwayFiles: Object.fromEntries(manifest.order.map(key => [key, read(`pathways/${key}.json`)])),
@@ -66,7 +66,7 @@ async function test(name, body) {
 (async () => {
   await test('cold startup downloads one revalidated manifest and one immutable data bundle', async () => {
     const b = browser(); await b.load();
-    assert.equal(b.requests.length, 2, '29 authored JSON requests must become two runtime requests');
+    assert.equal(b.requests.length, 2, '30 authored JSON requests must become two runtime requests');
     assert.equal(b.requests[0].cache, 'no-cache');
     assert.equal(b.requests[1].cache, 'force-cache');
     assert.match(b.requests[1].url, /data\.[a-f0-9]{16}\.json$/);
@@ -153,6 +153,14 @@ async function test(name, body) {
     const bundle = rawBundle(); delete bundle.other.items;
     await assert.rejects(browser({ current: release(bundle) }).load(), /missing items/i);
   });
+  await test('missing FX data is rejected before entering the renderer', async () => {
+    const bundle = rawBundle(); delete bundle.other.fx;
+    await assert.rejects(browser({ current: release(bundle) }).load(), /missing fx/i);
+  });
+  await test('unsafe FX markup is rejected before entering the renderer', async () => {
+    const bundle = rawBundle(); bundle.other.fx.families.orb.svg = '<script>bad</script>';
+    await assert.rejects(browser({ current: release(bundle) }).load(), /fx\.json.*orb family/i);
+  });
   await test('missing pathway is a readable data-bundle failure', async () => {
     const bundle = rawBundle(); delete bundle.pathwayFiles.fool;
     await assert.rejects(browser({ current: release(bundle) }).load(), /all 22 pathways/i);
@@ -173,7 +181,7 @@ async function test(name, body) {
     const bundle = rawBundle(); bundle.other.campaign.missions.pop();
     await assert.rejects(browser({ current: release(bundle) }).load(), /five-mission/i);
   });
-  await test('all 220 abilities and six shared datasets preserve authored content', async () => {
+  await test('all 220 abilities and eight shared datasets preserve authored content', async () => {
     const data = await browser().load(), raw = rawBundle();
     for (const key of manifest.order) {
       for (const tier of raw.pathwayFiles[key].sequences) {

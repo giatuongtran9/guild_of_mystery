@@ -4,6 +4,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const { validateBattleFx } = require('../js/data-loader.js');
 
 const SCRIPTS = ['vendor/dayjs.min', 'paths', 'v15', 'generate', 'traits', 'market', 'pathway-assets', 'signatures', 'mythical', 'battle-ai', 'engine', 'state', 'campaign', 'ui'].map(name => `js/${name}.js`);
 const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex').slice(0, 16);
@@ -65,8 +66,9 @@ function buildRuntimeData({ root = path.resolve(__dirname, '..'), check = false 
     return [key, p];
   }));
   if (!manifest.counters || Object.keys(manifest.counters).length !== 22 || manifest.order.some(key => !Object.hasOwn(manifest.counters, key) || !manifest.order.includes(manifest.counters[key]))) throw new Error('Invalid authored pathway counters');
-  const other = Object.fromEntries(['items', 'enemies', 'contracts', 'formulas', 'balance', 'campaign', 'traits'].map(name => [name, read(`data/${name}.json`)]));
+  const other = Object.fromEntries(['items', 'enemies', 'contracts', 'formulas', 'balance', 'campaign', 'traits', 'fx'].map(name => [name, read(`data/${name}.json`)]));
   if (other.campaign.schema !== 'campaign.chapter.v1' || !Array.isArray(other.campaign.missions) || other.campaign.missions.length !== 5) throw new Error('Invalid authored opening chapter');
+  validateBattleFx(other.fx, manifest.order);
   const bundle = { schema: 'guild.runtime-data.v1', manifest, pathwayFiles, other };
   const assetManifest = inside('data/assets/runtime/characters/manifest.json');
   if (fs.existsSync(assetManifest)) bundle.runtimeAssets = compactRuntimeAssets(JSON.parse(fs.readFileSync(assetManifest, 'utf8')));
@@ -101,6 +103,6 @@ if (require.main === module) {
     if (process.argv.slice(2).some(arg => arg !== '--check')) throw new Error('Usage: node scripts/build-runtime-data.js [--check]');
     const check = process.argv.includes('--check');
     const release = buildRuntimeData({ check });
-    console.log(`${check ? 'Verified' : 'Built'} ${release.bundle}: 22 pathways, 220 ranks and seven shared datasets.`);
+    console.log(`${check ? 'Verified' : 'Built'} ${release.bundle}: 22 pathways, 220 ranks and eight shared datasets.`);
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }

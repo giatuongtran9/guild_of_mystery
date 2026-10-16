@@ -1,14 +1,16 @@
 // Thread Binding: battle-only Marionettes, slot counting, cooldown-on-resolve, both sides.
 const assert=require('assert');const g=require('../js/node-loader.js');
 const r=()=>0.99; // never resists / never procs
-const mkAgent=(path,seq,id)=>{const a=g.makeAgent(Math.random,{sequence:seq,path,trait:'Stout Vitality'});Object.assign(a,{id,name:id,awakened:true,path,sequence:seq,injuries:0,weaponId:'none',weaponMastery:{}});g.restatAgent(a);a.sp=g.maxSPFor(a);a.maxSP=a.sp;a.cooldowns={};return a;};
+const generationR=()=>.4; // reproducible profiles; battle randomness remains seeded
+const mkAgent=(path,seq,id)=>{const a=g.makeAgent(generationR,{sequence:seq,path,trait:'Stout Vitality'});Object.assign(a,{id,name:id,awakened:true,path,sequence:seq,injuries:0,weaponId:'none',weaponMastery:{}});g.restatAgent(a);a.sp=g.maxSPFor(a);a.maxSP=a.sp;a.cooldowns={};return a;};
 const allyUnit=a=>({id:a.id,name:a.name,agent:a,hp:a.stats.hp,maxHp:a.stats.hp,alive:true,inCombat:true,status:[],statusMeta:{}});
-const mkState=(allies,enemies)=>({allies,enemies,individual:false,createdMarionettes:[],battleMarionettes:[],rng:Math.random,events:[],balanceTrace:[],currentRound:1,weaponUsage:{}});
+const mkState=(allies,enemies)=>({allies,enemies,individual:false,createdMarionettes:[],battleMarionettes:[],rng:generationR,events:[],balanceTrace:[],currentRound:1,weaponUsage:{}});
 const cast=lines=>lines.some(l=>/casts \[Thread Binding\]/.test(l.text));
 
 // ---- player Fool (Seq 4 => 1 thread slot)
 {const fool=mkAgent('fool',4,'Fool'),fu=allyUnit(fool);
- const e1=g.makeEnemy(8,Math.random,0,'door'),e2=g.makeEnemy(8,Math.random,1,'error');
+ assert.strictEqual(g.threadSlots(4),1,'Sequence 4 retains one slot; a living marionette fills it');
+ const e1=g.makeEnemy(8,generationR,0,'door'),e2=g.makeEnemy(8,generationR,1,'error');
  const st=mkState([fu],[e1,e2]);const lines=[];
  e1.thread={ownerId:fool.id,progress:4,required:5};fool.threadTargets=[e1.id];
  g.processSpiritThreads(st,lines);
@@ -28,7 +30,7 @@ const cast=lines=>lines.some(l=>/casts \[Thread Binding\]/.test(l.text));
  assert.strictEqual(fool.cooldowns.thread_binding,999,'locked while the new thread is active');}
 
 // ---- enemy Fool converts a player unit into an enemy-side Marionette
-{const fool=g.makeEnemy(4,Math.random,0,'fool');const target=allyUnit(mkAgent('door',4,'DoorHero'));
+{const fool=g.makeEnemy(4,generationR,0,'fool');const target=allyUnit(mkAgent('door',4,'DoorHero'));
  const st=mkState([target],[fool]);const lines=[];
  target.thread={ownerId:fool.id,progress:4,required:5};fool.threadTargets=[target.id];
  g.processSpiritThreads(st,lines);

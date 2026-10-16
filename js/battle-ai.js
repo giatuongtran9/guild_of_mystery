@@ -52,10 +52,10 @@ function battleAIHealableAllies(actor,state){return sameSideOf(actor,state).filt
 function battleAIPacing(state){return Number(GLOBAL_COMBAT.damage||1)*(1+Math.max(0,(state.currentRound||1)-(GLOBAL_COMBAT.rampStarts||5))*Number(GLOBAL_COMBAT.roundRamp||0));}
 function battleAIHitChance(agent,actor,target,weaponAttack=false){
  if(!target?.alive||hasStatus(target,'untargetable')||!canAffect(agent.sequence,target.sequence))return 0;
- const disabled=actionDisabled(target),forced=Math.max(0,Math.min(1,Number(actor._nextAttackMiss||0)));
- if(!disabled&&hasStatus(target,'evade')&&(target.statusMeta?.evade?.dodgeRate===undefined||Number(target.statusMeta.evade.dodgeRate)>=1))return 0;
+ const disabled=actionDisabled(target),dodgeLocked=!!(target._threadLockDodge??getCombatAgent(target)._threadLockDodge),forced=Math.max(0,Math.min(1,Number(actor._nextAttackMiss||0)));
+ if(!disabled&&!dodgeLocked&&hasStatus(target,'evade')&&(target.statusMeta?.evade?.dodgeRate===undefined||Number(target.statusMeta.evade.dodgeRate)>=1))return 0;
  const pm=passiveCombatModifier(agent),ta=getCombatAgent(target),rates=combatRates(ta,target),cfg=G9D.formulas.combat_rates?.dodge||{};
- const dodge=disabled?0:Math.max(.03,Math.min(Number(cfg.max_rate??1),.05+((ta.stats.int-agent.stats.int)/Math.max(1,agent.stats.int))*Number(cfg.int_advantage_coefficient??.25)+Number(rates.dodge||0)-Number(pm.hitChance||0)));
+ const dodge=disabled||dodgeLocked?0:Math.max(.03,Math.min(Number(cfg.max_rate??1),.05+((ta.stats.int-agent.stats.int)/Math.max(1,agent.stats.int))*Number(cfg.int_advantage_coefficient??.25)+Number(rates.dodge||0)-Number(pm.hitChance||0)));
  const miss=Math.max(0,Math.min(.95,(weaponAttack?Number(weaponStats(agent).masteryMiss||0):0)-Number(pm.hitChance||0)+Number(actor._hitChanceDebuff||0)+Number(actor._threadHitDebuff||0)));
  // A prepared retry retains the original contest chance, and cannot beat forced miss.
  const retry=actor.path==='wheel_of_fortune'&&actor._signatureRetry&&getMeterValue(agent,agent.path)>=Number(actor._signatureRetry.chargeCost??100);
