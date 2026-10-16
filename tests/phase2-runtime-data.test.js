@@ -95,7 +95,7 @@ try {
       assert.equal(fs.readFileSync(target, 'utf8'), 'must remain untouched');
     } finally { fs.unlinkSync(file); fs.renameSync(backup, file); fs.rmSync(outside, { recursive: true, force: true }); }
   }
-  console.log('PASS runtime data build: deterministic versioning, 29-file/220-rank parity, immutable originals, stale-build check, script/SW versions, portrait manifest inclusion.');
+  console.log('PASS runtime data build: deterministic versioning, 30-file/220-rank parity, immutable originals, stale-build check, script/SW versions, portrait manifest inclusion.');
 } finally {
   fs.rmSync(temp, { recursive: true, force: true });
 }

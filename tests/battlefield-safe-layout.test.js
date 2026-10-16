@@ -326,6 +326,8 @@ async function test(label, fn) {
             const wrap = document.querySelector('.battle-log-wrap');
             const arena = wrap.querySelector('.gm-dungeon-arena');
             const card = wrap.querySelector(`[data-unit-id="${id}"]`);
+            const targetId = id.replace(/_0$/, '_1');
+            const targetAnchor = wrap.querySelector(`[data-unit-id="${targetId}"] .gm-unit-sprite-anchor`);
             const anchor = card.querySelector('.gm-unit-sprite-anchor');
             const rect = node => {
               const r = node.getBoundingClientRect();
@@ -346,7 +348,7 @@ async function test(label, fn) {
             const before = capture();
             const effects = createBattleEffects(wrap);
             const row = { type: 'action', actorId: id, actorName: id, actorTeam: 'enemy', attackKind: 'gun',
-              timeline: [{ type: 'damage', event: { actorId: id, targetId: id, hpLoss: 10, amount: 10, damageType: 'physical' } }] };
+              timeline: [{ type: 'damage', event: { actorId: id, targetId, hpLoss: 10, amount: 10, damageType: 'physical' } }] };
             const playing = { turnRows: [row], currentTurn: 0, eventCount: null };
             effects.show(advanceBattlePresentation(playing));
             effects.pause();
@@ -354,7 +356,7 @@ async function test(label, fn) {
             for (const animation of animations) animation.currentTime = Number(animation.effect.getTiming().duration) / 2;
             const during = capture();
             const actorCue = anchor.classList.contains('gm-cue-actor');
-            const pointerEvents = [...wrap.querySelectorAll('.gm-battle-fx-layer, .gm-battle-fx, .gm-battle-fx-number')]
+            const pointerEvents = [...wrap.querySelectorAll('.gm-combat-fx-layer, .gm-combat-projectile, .gm-battle-fx-layer, .gm-battle-fx-number')]
               .map(node => getComputedStyle(node).pointerEvents);
             const canvas = rect(wrap.querySelector('.gm-battlefield-canvas'));
             const ground = { left: canvas.left + canvas.width * .04, right: canvas.left + canvas.width * .96,
@@ -364,12 +366,12 @@ async function test(label, fn) {
             effects.show(advanceBattlePresentation(playing));
             effects.pause();
             const number = wrap.querySelector('.gm-battle-fx-number');
-            const damageCue = anchor.classList.contains('gm-cue-damage');
+            const damageCue = targetAnchor.classList.contains('gm-cue-damage');
             const numberPointer = number && getComputedStyle(number).pointerEvents;
             effects.clear();
             return { before, during, ground, actorCue, damageCue, pointerEvents, numberPointer,
               animationCount: animations.length, restored: capture(),
-              remainingEffects: wrap.querySelectorAll('.gm-battle-fx-layer, [class*="gm-cue-"]').length,
+              remainingEffects: wrap.querySelectorAll('.gm-combat-fx-layer, .gm-battle-fx-layer, [class*="gm-cue-"]').length,
               remainingAnimations: arena.getAnimations({ subtree: true }).length,
               horizontalOverflow: arena.scrollWidth - arena.clientWidth,
               documentWidth: document.documentElement.scrollWidth };
@@ -427,9 +429,9 @@ async function test(label, fn) {
             number: wrap.querySelector('.gm-battle-fx-number')?.textContent,
             animations: arena.getAnimations({ subtree: true }).length,
             transition: getComputedStyle(target.querySelector('.gm-float-fill.hp')).transitionDuration,
-            hasProjectile: !!wrap.querySelector('.gm-battle-fx') };
+            hasProjectile: !!wrap.querySelector('.gm-combat-projectile') };
           effects.clear();
-          result.remainingEffects = wrap.querySelectorAll('.gm-battle-fx-layer, [class*="gm-cue-"]').length;
+          result.remainingEffects = wrap.querySelectorAll('.gm-combat-fx-layer, .gm-battle-fx-layer, [class*="gm-cue-"]').length;
           return result;
         });
         assert.equal(result.castHp, '100%', 'casting does not expose future impact HP');

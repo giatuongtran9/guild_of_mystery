@@ -657,7 +657,7 @@ function resolveIncoming(attacker,defender,dmg,state,lines=[],r,opt={}){if(!line
    amount:res.hpLoss+res.absorbed,incoming:res.incoming,hpLoss:res.hpLoss,absorbed:res.absorbed,
    hpAfter:defender?.hp,maxHp:defender?.maxHp,shieldAfter:defender?.shield||0,
    damageType:opt.trueDamage?'true':opt.damageType||'physical',isReflect:!!opt.reflect,
-   isReaction:!!opt.indirect&&!opt.dotStatus,isDot:!!opt.dotStatus};
+   isReaction:!!opt.indirect&&!opt.dotStatus,isDot:!!opt.dotStatus,area:!!opt.area};
   emitCombatEvent(state,res.event);
  };
  if(!defender||!defender.alive||incoming<=0){recordHit();return res;}
@@ -971,7 +971,7 @@ function recordThreadDamage(target,hpLoss,state,lines=[]){
  }
 }
 function findThreadOwnerUnit(state,ownerId){return [...(state?.allies||[]),...(state?.enemies||[])].find(u=>(u.agent?.id||u.id)===ownerId)||null;}
-// One Spirit Thread step for a single victim. The battle loop calls this at the start of the victim's own turn.
+// One Spirit Thread step per victim turn or granted bonus action; reactions do not tick it.
 function tickSpiritThread(enemy,state,lines=[]){
  if(!lines)lines=[];
  const t=enemy?.thread;if(!t)return false;
@@ -1002,6 +1002,17 @@ function tickSpiritThread(enemy,state,lines=[]){
   const text=`${enemy.name}'s thread holds. ${t.required-t.progress} turn(s) remain.`;
   lines.push({text,kind:'status'});emit(null,text);
  }
+ return true;
+}
+function tryThreadBindingControl(target,state,lines=[],r){
+ if(!target.thread||target.thread.progress<4||hasStatus(target,'bound')||r()>=THREAD_RULES.bindingChance)return false;
+ const ownerId=target.thread.ownerId;
+ // This control blocks the action about to start, so its one-turn duration is
+ // consumed at the enclosing scheduled-turn end rather than receiving grace.
+ if(!addStatus(target,'bound',1,'Spirit Body Thread',{_grace:false}))return false;
+ const text=`${target.name} is bound by tightening Spirit Threads (1 turn).`;
+ lines.push({text,kind:'status'});
+ emitCombatEvent(state,{type:'status',status:'bound',actorId:ownerId,targetId:target.id,targetName:target.name,targetTeam:teamOf(target,state),text});
  return true;
 }
 // Round-start housekeeping: frees the slot of any thread whose victim died since the last turn.
@@ -1153,15 +1164,17 @@ function consumeCritFailure(actor){const blocked=!!actor._nextCritFail;actor._ne
 function attackHit(agent,actor,target,state,lines=[],r,{forcedMiss=false,weaponAttack=false,ability='Attack'}={}){
  const miss=text=>{lines.push({text,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'miss',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:target.id,targetName:target.name,targetTeam:teamOf(target,state),text});signatureFailedAttack(actor,state,lines,r);return false;};
  const fortuneDodge=()=>{if(getCombatAgent(target).path==='wheel_of_fortune'&&!target.summoned)signatureBonus(target,state);};
- const disabled=actionDisabled(target);
+ // Stage-three Spirit Threads prevent every target dodge, including guaranteed
+ // Evade. The attacker's independent accuracy checks still apply below.
+ const disabled=actionDisabled(target),targetAgent=getCombatAgent(target),dodgeLocked=!!(target._threadLockDodge??targetAgent._threadLockDodge);
  if(forcedMiss)return miss(`${actor.name}'s ${ability} is forced to miss.`);
  if(!target.alive||hasStatus(target,'untargetable'))return miss(`${actor.name} cannot target ${target.name}.`);
- if(!disabled&&hasStatus(target,'evade')&&(target.statusMeta?.evade?.dodgeRate===undefined||Number(target.statusMeta.evade.dodgeRate)>=1)){fortuneDodge();return miss(`${target.name}'s Evasion lets them slip away untouched — ${actor.name}'s ${ability} misses.`);}
- const pm=passiveCombatModifier(agent),targetAgent=getCombatAgent(target),targetStats=targetAgent.stats||target,
+ if(!disabled&&!dodgeLocked&&hasStatus(target,'evade')&&(target.statusMeta?.evade?.dodgeRate===undefined||Number(target.statusMeta.evade.dodgeRate)>=1)){fortuneDodge();return miss(`${target.name}'s Evasion lets them slip away untouched — ${actor.name}'s ${ability} misses.`);}
+ const pm=passiveCombatModifier(agent),targetStats=targetAgent.stats||target,
    enemyRates=combatRates(targetAgent,target),dodgeMaxCap=Number(G9D?.formulas?.combat_rates?.dodge?.max_rate??1.0);
  const intAdvantage=Number(G9D?.formulas?.combat_rates?.dodge?.int_advantage_coefficient??.25);
  const dodgeChance=Math.max(.03,Math.min(dodgeMaxCap,.05+((targetStats.int-agent.stats.int)/Math.max(1,agent.stats.int))*intAdvantage+(enemyRates.dodge||0)-(pm.hitChance||0)));
- if(!disabled&&r()<dodgeChance&&!signatureRetryContest(actor,state,lines,r,dodgeChance,true,false)){fortuneDodge();return miss(`${actor.name}'s ${ability} misses as ${target.name} reads the movement and dodges.`);}
+ if(!disabled&&!dodgeLocked&&r()<dodgeChance&&!signatureRetryContest(actor,state,lines,r,dodgeChance,true,false)){fortuneDodge();return miss(`${actor.name}'s ${ability} misses as ${target.name} reads the movement and dodges.`);}
  const weapon=weaponStats(agent),missChance=Math.max(0,Math.min(.95,(weaponAttack?weapon.masteryMiss:0)-pm.hitChance+(actor._hitChanceDebuff||0)+(actor._threadHitDebuff||0)));
  if(r()<missChance&&!signatureRetryContest(actor,state,lines,r,missChance,true,false))return miss(weaponAttack?`${actor.name} misses with ${weapon.name}. ${weapon.kind==='gun'?`Gun Mastery Lv.${weapon.mastery} gives ${Math.round((1-missChance)*100)}% accuracy.`:'The attack misses.'}`:`${actor.name}'s ${ability} misses.`);
  return true;
@@ -1420,6 +1433,7 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
  // from the effective ability, including stored records from earlier battles.
  const presentationAbilityId=String(spec.effectId||spec.id||castId).split(':').pop();
  const presentationSourcePath=PATH_KEYS.find(path=>PATHS[path].sequences.some(tier=>(tier.abilities||[]).some(ability=>(ability.effectId||ability.id)===presentationAbilityId)))||agent.path;
+ const presentationTargetMode=traitAreaSkill(actor,castSpec)?'all_enemies':(abilityEffects(spec).find(effect=>effect.type==='targeting')?.mode||'single_enemy');
     emitCombatEvent(state, {
       round: state?.currentRound || 1,
       type: 'cast',
@@ -1429,6 +1443,7 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
       ability: castName,
       sourcePath: presentationSourcePath,
       sourceAbilityId: presentationAbilityId,
+      presentationTargetMode,
       ownedPower: spec._signatureOwned || null,
       sourceUnitId: spec._signatureSourceId || null,
       costSP: cost,costHP:quote.resource==='hp'?quote.amount:0,
@@ -1647,7 +1662,7 @@ function powerEffect(a,actor,enemy,state,lines=[],r,actionContext={}){if(!lines)
       actorName: actor.name,
       actorTeam: teamOf(actor, state),
       ability: 'Thread Binding',
-      abilityId: 'thread_binding',sourceAbilityId:'thread_binding',sourcePath:'fool',
+      abilityId: 'thread_binding',sourceAbilityId:'thread_binding',sourcePath:'fool',presentationTargetMode:'single_enemy',
       targetId:enemy.id,targetName:enemy.name,targetTeam:teamOf(enemy,state),
       costSP: threadCost,costHP:threadQuote.resource==='hp'?threadQuote.amount:0,
       cooldown: threadCd
@@ -1745,7 +1760,9 @@ function resolveQuestBattle(members,quest,seed=Date.now(),decisions={}){
        if(c.thread){tickSpiritThread(c,state,lines);if(!c.alive)continue;} // Spirit Threads advance on the victim's own turn
        if(mythicalTryAction(c,state,lines,r)||signatureTryAction(c,state,lines,r))continue;
        if(c._skipTurns>0||hasStatus(c,'banished')){if(c._skipTurns>0)c._skipTurns--;lines.push({text:`${c.name} is banished in a spatial fold and cannot act.`,kind:'status'});if(!c._skipTurns||c._skipTurns<=0){removeStatus(c,'banished');removeStatus(c,'untargetable');}continue;}
-       if((c.agent.madness||0)>=50&&r()<.18){lines.push({text:`${c.name} loses the action to mounting Madness.`,kind:'status'});interruptOwnerThreads(c,state,lines);continue;}if(actionDisabled(c)&&!traitCanActThroughControl(c,state,lines)){
+       if((c.agent.madness||0)>=50&&r()<.18){lines.push({text:`${c.name} loses the action to mounting Madness.`,kind:'status'});interruptOwnerThreads(c,state,lines);continue;}
+       tryThreadBindingControl(c,state,lines,r);
+       if(actionDisabled(c)&&!traitCanActThroughControl(c,state,lines)){
       lostControl=true;
       lines.push({text:`${c.name} loses the action to Crowd Control.`,kind:'status'});
       emitCombatEvent(state, {
@@ -1759,7 +1776,7 @@ function resolveQuestBattle(members,quest,seed=Date.now(),decisions={}){
       });
       continue;
     }
-       if(c.thread&&c.thread.progress>=4&&r()<THREAD_RULES.bindingChance){addStatus(c,'bound',1,'Spirit Body Thread');}if(hasStatus(c,'fear')&&r()<.35){lines.push({text:`${c.name} loses this action to a status effect.`,kind:'status'});interruptOwnerThreads(c,state,lines);continue;}
+       if(hasStatus(c,'fear')&&r()<.35){lines.push({text:`${c.name} loses this action to a status effect.`,kind:'status'});interruptOwnerThreads(c,state,lines);continue;}
        const isConfused=hasStatus(c,'confused')&&r()<0.50;if(isConfused)lines.push({text:`${c.name} is Confused and targets an ally!`,kind:'status'});
        const targetPool=(isConfused?sameSideOf(c,state):foesOf(c,state)).filter(x=>x.alive&&x.inCombat!==false);
        if(!targetPool.length)continue;
@@ -1773,6 +1790,18 @@ function resolveQuestBattle(members,quest,seed=Date.now(),decisions={}){
        const traitExtra=traitHasBonus(c)?1:0;
        for(let extra=0;extra<normalExtra+nativeExtra+traitExtra;extra++){
         if(!c.alive||(c.bossDefinition&&actionDisabled(c)))break;const traitAction=extra<normalExtra||extra>=normalExtra+nativeExtra;if(traitAction&&actionDisabled(c))break;const remaining=(isConfused?sameSideOf(c,state):foesOf(c,state)).filter(t=>t.alive&&t.inCombat!==false&&!hasStatus(t,'untargetable'));if(!remaining.length)break;
+        // A granted action tightens an attached thread before it can execute.
+        // Conversion cancels the action; cooldowns and statuses still tick only
+        // through the enclosing scheduled-turn lifecycle.
+        if(c.thread){tickSpiritThread(c,state,lines);if(!c.alive)break;}
+        tryThreadBindingControl(c,state,lines,r);
+        if(hasStatus(c,'bound')&&!traitCanActThroughControl(c,state,lines)){
+         lostControl=true;
+         const text=`${c.name} loses the bonus action to Crowd Control`;
+         lines.push({text,kind:'status'});
+         emitCombatEvent(state,{type:'status',subtype:'cc_loss',actorId:c.id,actorName:c.name,actorTeam:teamOf(c,state),text});
+         break;
+        }
         const next=remaining.includes(enemy)?enemy:pickR(r,combatTargetPool(c,remaining,state));
         traitBeginAction(c,state,extra>=normalExtra);try{powerEffect(c.agent,c,next,state,lines,r,{origin:extra>=normalExtra&&extra<normalExtra+nativeExtra?'native_extra':'trait_extra'});}finally{traitFinishAction(c,state,lines);}
        }
@@ -1834,7 +1863,7 @@ function abilityDescription(spec,path,sequence){
  if(targetMode==='all_allies')parts.push('Supports all living allies');
  if((spec.effectId||spec.id)==='thread_binding'){
   parts.push('Attempts Spirit Body Threads on one enemy; resistance can prevent attachment');
-  parts.push(`Progresses one stage at the start of each of the target's turns: ${rulePercent(THREAD_RULES.initialSpeedLoss)} Speed loss; then ${ruleNumber(THREAD_RULES.dodgeLoss*100)}-point Dodge and ${ruleNumber(THREAD_RULES.hitLoss*100)}-point accuracy loss; then ${rulePercent(THREAD_RULES.advancedSpeedLoss)} total Speed loss and no Dodge; stage 4 adds a ${rulePercent(THREAD_RULES.bindingChance)} binding chance`);
+  parts.push(`Progresses one stage before each of the target's scheduled turns and granted bonus actions (not counters or reflections): ${rulePercent(THREAD_RULES.initialSpeedLoss)} Speed loss; then ${ruleNumber(THREAD_RULES.dodgeLoss*100)}-point Dodge and ${ruleNumber(THREAD_RULES.hitLoss*100)}-point accuracy loss; then ${rulePercent(THREAD_RULES.advancedSpeedLoss)} total Speed loss and no Dodge; stage 4 adds a ${rulePercent(THREAD_RULES.bindingChance)} binding chance`);
   parts.push('All of your threads are cut immediately if you are stunned, frozen, put to sleep, polymorphed, bound, rendered unconscious or banished, or lose your action to Madness or Fear');
   parts.push(`At stage ${THREAD_RULES.required}, the target dies and joins your side as a battle-only marionette with ${rulePercent(THREAD_RULES.marionetteStats)} of its stats`);
   parts.push(`When the threaded target loses more than ${rulePercent(THREAD_RULES.damageThreshold)} of its Max HP in one combatant turn, remove one stack, at most once per turn; shield absorption does not count`);

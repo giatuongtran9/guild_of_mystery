@@ -24,7 +24,8 @@ const pathways={version:'v17.0',paths,path_keys:manifest.order.slice(),counters:
 const enemies=readJson('enemies.json'),contracts=readJson('contracts.json');
 const system={...(balance.system||{}),contracts:contracts.system||{},enemy_names:enemies.enemy_names||[],combat:balance.system?.combat||'json-driven-elemental-pipeline'};
 const characters={FIRST:enemies.FIRST||enemies.human_enemy_names?.first||[],LAST:enemies.LAST||enemies.human_enemy_names?.last||[],TRAITS:enemies.TRAITS||{},TRAIT_NAMES:enemies.TRAIT_NAMES||[],OCCUPATIONS:enemies.OCCUPATIONS||enemies.human_enemy_occupations||[]};
-const G9_DATA={traits:readJson('traits.json'),pathways,formulas:readJson('formulas.json'),balance,items:readJson('items.json'),enemies,characters,contracts,campaign:readJson('campaign.json'),system};
+const fx=require('./data-loader.js').validateBattleFx(readJson('fx.json'),manifest.order);
+const G9_DATA={traits:readJson('traits.json'),pathways,formulas:readJson('formulas.json'),balance,items:readJson('items.json'),enemies,characters,contracts,campaign:readJson('campaign.json'),fx,system};
 const files=['paths.js','v15.js','generate.js','traits.js','market.js','pathway-assets.js','signatures.js','mythical.js','battle-ai.js','engine.js','state.js','campaign.js','exports.js'];
 const src=files.map(f=>fs.readFileSync(path.join(__dirname,f),'utf8')).join('\n');
 const m={exports:{}};
