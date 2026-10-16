@@ -302,7 +302,7 @@
    Coordinates supplied by playback identify each effect's center. */
 .gm-battle-fx-layer {
   position: absolute;
-  z-index: 4;
+  z-index: 5;
   inset: 0;
   overflow: hidden;
   pointer-events: none;
@@ -312,9 +312,6 @@
   position: absolute;
   transform: translate(-50%, -50%);
   pointer-events: none;
-}
-
-.gm-battle-fx-number {
   max-width: calc(100% - 8px);
   color: var(--gm-fx-color, #f0e9df);
   font: 700 13px/1.2 system-ui, sans-serif;
@@ -340,11 +337,26 @@
 .gm-combat-projectile,
 .gm-combat-afterimage,
 .gm-combat-impact,
+.gm-combat-sword-slash,
 .gm-combat-heal,
 .gm-combat-shield,
 .gm-combat-status {
   color: var(--gm-fx-color, #dce9f0);
   pointer-events: none;
+}
+
+.gm-combat-sword-slash-image {
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: opacity, transform;
+}
+
+.gm-battle-fx-number-critical {
+  color: #ff9b3d;
+  font-size: 16px;
+  font-weight: 800;
+  text-shadow: -1px -1px 0 #11151a, 1px -1px 0 #11151a,
+    -1px 1px 0 #11151a, 1px 1px 0 #11151a, 0 2px 4px #11151a;
 }
 
 .gm-combat-fx-layer :is(path, line, polyline, polygon, circle, ellipse, rect) {
@@ -679,6 +691,15 @@
 
   .gm-float-num {
     display: none;
+  }
+
+  .gm-battle-fx-number {
+    max-width: calc(100% - 4px);
+    font-size: 12px;
+  }
+
+  .gm-battle-fx-number-critical {
+    font-size: 15px;
   }
 }
 
