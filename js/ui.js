@@ -420,8 +420,9 @@ function createCombatFx(wrap) {
   }
   function travel(row, step, phaseHold) {
     const event = step?.event;
-    // The bespoke sword mark replaces the procedural projectile and impact slash.
-    if (swordBasicSlash(row, event)) return;
+    const swordBasic = swordBasicSlash(row, event);
+    // Weapon basics use the supplied slash art for travel and impact; very-fast
+    // and reduced-motion playback retain their existing compact presentation.
     if (!event || !damageTypes.has(step.type) || event.isDot || compact()) return;
     const ownerId = event.actorId ?? row.actorId, targetId = event.targetId;
     const a = point(ownerId), originalTarget = point(targetId);
@@ -429,20 +430,30 @@ function createCombatFx(wrap) {
     const area = isArea(row, event);
     if (area && areaRows.has(row)) return;
     const b = area ? targetRank(targetId) || originalTarget : originalTarget;
-    const family = area ? 'wave' : familyFor(row, event), settings = config.families?.[family] || defaults.families[family];
-    const physical = event.damageType === 'physical' && !magicBasic(row, event), pathKind = physical ? 'straight' : settings.path;
+    const family = swordBasic ? 'slash' : area ? 'wave' : familyFor(row, event), settings = config.families?.[family] || defaults.families[family];
+    const physical = event.damageType === 'physical' && !magicBasic(row, event), pathKind = physical || swordBasic ? 'straight' : settings.path;
     const distance = Math.hypot(b.x - a.x, b.y - a.y), hold = Math.max(1, Number(phaseHold) || 600);
-    const duration = Math.min(hold, Math.max(settings.minMs, Math.min(settings.maxMs, distance / (settings.speedPxPerMs || 1))));
-    const delay = Math.max(0, hold - duration), angle = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+    const duration = swordBasic ? hold
+      : Math.min(hold, Math.max(settings.minMs, Math.min(settings.maxMs, distance / (settings.speedPxPerMs || 1))));
+    const delay = swordBasic ? 0 : Math.max(0, hold - duration);
+    const angle = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
     const bend = pathKind === 'arc' ? Math.min(42, distance * .18) : 0;
     const coords = t => ({ x: a.x + (b.x - a.x) * t + Math.sin(Math.PI * t) * bend,
       y: a.y + (b.y - a.y) * t - Math.sin(Math.PI * t) * bend * .45 });
     const make = (ghost = 0) => {
-      const node = group(ghost ? 'gm-combat-afterimage' : 'gm-combat-projectile', ownerId, targetId, colorFor(event));
+      const node = group(ghost ? 'gm-combat-afterimage' : swordBasic ? 'gm-combat-sword-slash-travel' : 'gm-combat-projectile', ownerId, targetId, colorFor(event));
       for (const [name, value] of Object.entries({ family, 'damage-type': event.damageType || 'default', 'path-kind': pathKind,
-        'travel-ms': duration, 'travel-delay-ms': delay })) node.setAttribute(`data-${name}`, value);
+        'travel-ms': duration, 'travel-delay-ms': delay, ...(swordBasic ? { 'angle-deg': angle.toFixed(2) } : {}) })) node.setAttribute(`data-${name}`, value);
       node.setAttribute('opacity', '0');
-      node.append(shape(settings.shape || family, settings.size, area ? b.width : undefined)); layer()?.append(node);
+      if (swordBasic) {
+        const size = Math.max(54, Math.min(88, originalTarget.radius * 2.5));
+        const slash = element('image', { class: 'gm-combat-sword-slash-projectile', x: -size / 2, y: -size / 2,
+          width: size, height: size, href: 'data/assets/effects/sword-slash.png', transform: 'rotate(45)',
+          preserveAspectRatio: 'xMidYMid meet', opacity: 1 });
+        slash.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', 'data/assets/effects/sword-slash.png');
+        node.append(slash);
+      } else node.append(shape(settings.shape || family, settings.size, area ? b.width : undefined));
+      layer()?.append(node);
       const frames = Array.from({ length: 9 }, (_, index) => {
         const t = index / 8, p = coords(Math.max(0, t - ghost * .065));
         return { offset: t, transform: `translate(${p.x}px,${p.y}px) rotate(${family === 'wave' ? 0 : angle}deg)`, opacity: t === 1 ? 0 : ghost ? .25 / ghost : .95 };
