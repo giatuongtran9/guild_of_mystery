@@ -229,8 +229,9 @@
 }
 
 .gm-unit-sprite-anchor.gm-cue-actor {
-  --gm-cue-color: #d8e6ef;
-  --gm-cue-glow: rgba(186, 216, 235, 0.22);
+  --gm-cue-color: #ffd078;
+  --gm-cue-wash: rgba(245, 176, 63, 0.12);
+  --gm-cue-glow: rgba(255, 186, 74, 0.34);
 }
 
 .gm-unit-sprite-anchor.gm-cue-target {
@@ -345,7 +346,8 @@
   pointer-events: none;
 }
 
-.gm-combat-sword-slash-image {
+.gm-combat-sword-slash-image,
+.gm-combat-sword-slash-projectile {
   transform-box: fill-box;
   transform-origin: center;
   will-change: opacity, transform;
