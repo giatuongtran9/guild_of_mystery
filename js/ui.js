@@ -51,11 +51,8 @@ function battlePresentationDelay(playing, speed = 1) {
   if (count === 0) return (periodic ? 0 : 600) / rate;
   const weights = { damage: 450, reaction: 650, reflect: 550, heal: 400,
     shield: 400, mythical: 900, death: 700, revive: 600, note: 180 };
-  const fx = (typeof G9_DATA !== 'undefined' && G9_DATA.fx) || (typeof G9D !== 'undefined' && G9D.fx);
-  const critStop = fx?.impact?.critHitStopMs ?? 50;
   const holds = timeline.map(step => Math.max(weights[step.type] || 180,
-    step.event.presentationEffect && !step.event.presentationEffect.endsWith('_end') ? 500 : step.event.type === 'thread' ? 350 : 0)
-    + (['damage', 'reaction', 'reflect'].includes(step.type) && step.event.critical ? critStop : 0));
+    step.event.presentationEffect && !step.event.presentationEffect.endsWith('_end') ? 500 : step.event.type === 'thread' ? 350 : 0));
   const total = (periodic ? 0 : 600) + holds.reduce((sum, value) => sum + value, 0);
   const padding = count === timeline.length ? Math.max(0, (periodic ? 650 : 2000) - total) : 0;
   return ((holds[count - 1] || 0) + padding) / rate;
@@ -309,7 +306,7 @@ function createCombatFx(wrap) {
       wave: { path: 'straight', size: 32, speedPxPerMs: 1.8, minMs: 140, maxMs: 460, afterimages: 1 }
     },
     pathwayDefaults: {}, pathwayDamageOverrides: {}, basicAttack: { melee: 'slash', unarmed: 'slash', gun: 'bolt', caster: 'orb', pathways: {} },
-    impact: { frames: 4, durationMs: 160, critScale: 1.5, critHitStopMs: 50 }, support: { durationMs: 500 }, abilityChipMs: 500
+    impact: { frames: 4, durationMs: 160, critScale: 1.5, critHitStopMs: 0 }, support: { durationMs: 500 }, abilityChipMs: 500
   };
   const config = data.fx || defaults, animations = new Map();
   const casterPaths = new Set(['fool', 'door', 'visionary', 'sun', 'white_tower', 'hermit', 'paragon', 'wheel_of_fortune', 'moon']);
@@ -357,7 +354,7 @@ function createCombatFx(wrap) {
     animation.playbackRate = speed;
     animations.set(animation, node);
     if (paused) animation.pause();
-    animation.onfinish = () => { animations.delete(animation); animation.cancel(); if (options.remove !== false) node.remove(); };
+    animation.onfinish = () => { animations.delete(animation); animation.cancel(); if (options.remove !== false) node.remove(); options.removeNode?.remove(); };
     animation.oncancel = () => animations.delete(animation);
     return animation;
   }
@@ -417,8 +414,14 @@ function createCombatFx(wrap) {
   function isArea(row, event) {
     return (event.actorId == null || event.actorId === row.actorId) && (!!event.area || ['all_enemies', 'up_to_3_enemies'].includes(row.presentationTargetMode));
   }
+  function swordBasicSlash(row, event) {
+    return row?.abilityId === 'basic_attack' && row.attackKind === 'weapon'
+      && event?.actorId === row.actorId && !event.isReaction && !event.isReflect;
+  }
   function travel(row, step, phaseHold) {
     const event = step?.event;
+    // The bespoke sword mark replaces the procedural projectile and impact slash.
+    if (swordBasicSlash(row, event)) return;
     if (!event || !damageTypes.has(step.type) || event.isDot || compact()) return;
     const ownerId = event.actorId ?? row.actorId, targetId = event.targetId;
     const a = point(ownerId), originalTarget = point(targetId);
@@ -460,7 +463,23 @@ function createCombatFx(wrap) {
     const p = point(event.targetId);
     if (!p || !layer()) return;
     const critical = !!event.critical, settings = config.impact || defaults.impact, hit = hitIndex(row, event);
-    const duration = settings.durationMs || 160, stop = critical ? settings.critHitStopMs || 50 : 0, total = duration + stop;
+    const duration = settings.durationMs || 160, stop = 0, total = duration;
+    const swordBasic = swordBasicSlash(row, event);
+    if (swordBasic) {
+      const slash = group('gm-combat-sword-slash', event.actorId ?? row.actorId, event.targetId, '#fff0dc');
+      slash.setAttribute('transform', `translate(${p.x} ${p.y})`);
+      slash.setAttribute('data-critical', String(critical));
+      slash.setAttribute('data-hit-stop-ms', '0');
+      slash.setAttribute('data-hit-index', hit.index); slash.setAttribute('data-hit-count', hit.count);
+      const size = Math.max(54, Math.min(100, p.radius * 2.5)) * (critical ? 1.12 : 1);
+      const image = element('image', { class: 'gm-combat-sword-slash-image', x: -size / 2, y: -size / 2, width: size, height: size,
+        href: 'data/assets/effects/sword-slash.png', preserveAspectRatio: 'xMidYMid meet', opacity: 1 });
+      image.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', 'data/assets/effects/sword-slash.png');
+      slash.append(image); layer().append(slash);
+      animate(image, [{ opacity: 0, transform: 'scale(.72)' }, { opacity: 1, offset: .24, transform: 'scale(1)' },
+        { opacity: 0, transform: 'scale(1.08)' }], duration, 0, { removeNode: slash, easing: 'ease-out' });
+      return;
+    }
     const burst = group('gm-combat-impact', event.actorId ?? row.actorId, event.targetId, colorFor(event));
     burst.setAttribute('transform', `translate(${p.x} ${p.y}) scale(${critical ? settings.critScale || 1.5 : 1})`);
     burst.setAttribute('data-critical', String(critical)); burst.setAttribute('data-frame', '0');
@@ -614,11 +633,13 @@ function createBattleEffects(wrap) {
     const canvas = wrap.querySelector('.gm-battlefield-canvas').getBoundingClientRect();
     return { x: box.left - canvas.left + box.width / 2, y: box.top - canvas.top + box.height / 2 };
   }
-  function number(node, text, color) {
+  function number(node, text, color, critical = false) {
     if (!isVisible(anchor(node)) || !text) return;
     const p = point(node), element = document.createElement('span');
-    element.className = 'gm-battle-fx-number'; element.textContent = text;
-    element.style.cssText = `left:${p.x}px;top:${p.y}px;--gm-fx-color:${color}`;
+    element.className = `gm-battle-fx-number${critical ? ' gm-battle-fx-number-critical' : ''}`;
+    if (critical) element.dataset.critical = 'true';
+    element.textContent = text;
+    element.style.cssText = `left:${p.x}px;top:${p.y}px;--gm-fx-color:${critical ? '#ff9b3d' : color}`;
     overlay().append(element);
     animate(element, [{ opacity: 1, transform: 'translate(-50%,-50%)' }, { opacity: 1, offset: .55 }, { opacity: 0, transform: 'translate(-50%,calc(-50% - 6px))' }], 850);
   }
@@ -656,9 +677,8 @@ function createBattleEffects(wrap) {
       const hp = event.hpLoss ?? Math.max(0, (event.amount || 0) - (event.absorbed || 0));
       mark(target, hp ? 'damage' : 'shield');
       if (event.absorbed > 0 && event.shieldAfter === 0) mark(target, 'break');
-      const fx = (typeof G9_DATA !== 'undefined' && G9_DATA.fx) || (typeof G9D !== 'undefined' && G9D.fx);
-      motion(target, 'hit', event.critical ? fx?.impact?.critHitStopMs ?? 50 : 0);
-      number(target, hp ? `−${abbrNum(hp)}${event.absorbed ? ' · shield' : ''}` : 'Shield', hp ? '#f4b5ad' : '#c6e5fa');
+      motion(target, 'hit');
+      number(target, hp ? `−${abbrNum(hp)}${event.absorbed ? ' · shield' : ''}` : 'Shield', hp ? '#f4b5ad' : '#c6e5fa', !!event.critical && hp > 0);
     } else if (type === 'mythical') { mark(actor, 'mythical'); motion(actor, 'mythical'); }
     else if (type === 'heal' || type === 'shield' || type === 'revive') {
       const recipient = target || actor;
