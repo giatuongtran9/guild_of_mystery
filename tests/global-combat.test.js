@@ -5,7 +5,7 @@ function agent(path='fool',sequence=9,id='caster'){
  const a=g.makeAgent(()=>.5,{path,sequence,trait:'Stout Vitality'});a.id=id;a.name=id;g.restatAgent(a);a.sp=g.maxSPFor(a);return a;
 }
 function world(){const u=g.makeCombatUnit(agent()),v=g.makeCombatUnit(agent('fool',9,'victim'));u.hp=u.maxHp=v.hp=v.maxHp=100000;const s={allies:[u],enemies:[v],events:[],balanceTrace:[],weaponUsage:{},rng:()=>.99,currentRound:1,traitDeployment:{ally:1,enemy:1}};g.bindBattle(s,[]);return {u,v,s};}
-assert.equal(g.GLOBAL_COMBAT.damage,2);assert.equal(g.GLOBAL_COMBAT.hp,1);
+assert.equal(g.GLOBAL_COMBAT.damage,1.5);assert.equal(g.GLOBAL_COMBAT.hp,1);
 assert.equal(require('../data/formulas.json').combat_rates.dodge.max_rate,1);
 assert(!('dodgeCap' in g.GLOBAL_COMBAT));assert(!('threadHpGate' in g.GLOBAL_COMBAT));
 for(const p of g.PATH_KEYS)for(const sequence of [9,5,0]){
@@ -16,8 +16,8 @@ for(const p of g.PATH_KEYS)for(const sequence of [9,5,0]){
  assert.equal(r.battleSnapshot.initialUnits[0].maxHp,r.battleSnapshot.initialUnits[1].maxHp,'authored and allied stats use the same global rules');
  assert.deepEqual(a,before);
 }
-let w=world();assert.equal(g.resolveIncoming(w.u,w.v,100,w.s,[],()=>.99,{indirect:true}).incoming,200);
-w=world();w.s.currentRound=6;assert.equal(g.resolveIncoming(w.u,w.v,100,w.s,[],()=>.99,{indirect:true}).incoming,200);
+let w=world();assert.equal(g.resolveIncoming(w.u,w.v,100,w.s,[],()=>.99,{indirect:true}).incoming,150);
+w=world();w.s.currentRound=6;assert.equal(g.resolveIncoming(w.u,w.v,100,w.s,[],()=>.99,{indirect:true}).incoming,150);
 w=world();w.u.hp=100;assert.equal(g.recoverHP(w.u,100),100);assert.equal(g.grantShield(w.u,100),100);
 w=world();assert(g.addStatus(w.v,'stunned',5,'fixture'));assert.equal(w.v.statusMeta.stunned.duration,5);
 assert(g.addStatus(w.v,'frozen',5,'fixture'));assert(g.hasStatus(w.v,'frozen'));

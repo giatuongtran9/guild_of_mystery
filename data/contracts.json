@@ -53,7 +53,7 @@
         "extraActions": 1
       },
       "statMultipliers": {
-        "hp": 54.074054399999994,
+        "hp": 38.662948895999996,
         "atk": 1.05,
         "def": 0.8,
         "int": 1
@@ -82,7 +82,7 @@
         "damageMultiplier": 1.15
       },
       "statMultipliers": {
-        "hp": 42.14635,
+        "hp": 33.71708,
         "atk": 1.1,
         "def": 0.8,
         "int": 0.63
@@ -112,7 +112,7 @@
         "damageMultiplier": 1.2
       },
       "statMultipliers": {
-        "hp": 24.50214,
+        "hp": 20.0917548,
         "atk": 1,
         "def": 0.8,
         "int": 1.05
@@ -141,7 +141,7 @@
         "damageMultiplier": 1.2
       },
       "statMultipliers": {
-        "hp": 7.925658999999999,
+        "hp": 7.767145819999999,
         "atk": 1.05,
         "def": 0.8,
         "int": 1.1
@@ -169,7 +169,7 @@
         "damageMultiplier": 1.2
       },
       "statMultipliers": {
-        "hp": 20.012054,
+        "hp": 16.509944549999997,
         "atk": 1.05,
         "def": 0.85,
         "int": 1.1
@@ -198,7 +198,7 @@
         "damageMultiplier": 1.15
       },
       "statMultipliers": {
-        "hp": 21.812724000000003,
+        "hp": 18.540815400000003,
         "atk": 1.05,
         "def": 0.8,
         "int": 1.1

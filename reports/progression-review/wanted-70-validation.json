@@ -1,0 +1,127 @@
+{
+  "schema": "wanted.validation.v1",
+  "globalDamage": 1.5,
+  "clearTarget": {
+    "minimum": 0.65,
+    "maximum": 0.75
+  },
+  "attempts": 1152,
+  "clearRate": 0.7022569444444444,
+  "timeouts": 343,
+  "casualties": 0,
+  "errors": 0,
+  "meanRounds": 42.3046875,
+  "bosses": [
+    {
+      "bossId": "red_knife",
+      "sequence": 9,
+      "samples": 288,
+      "wins": 205,
+      "winRate": 0.7118055555555556,
+      "winRate95CI": [
+        0.6569793955581191,
+        0.7610557954241959
+      ],
+      "timeouts": 83,
+      "casualties": 0,
+      "meanRounds": 46.77777777777778,
+      "seed": 459127,
+      "battleSeed": 305721,
+      "hpMultiplier": 38.662948895999996,
+      "meetsClearTarget": true
+    },
+    {
+      "bossId": "black_mirror",
+      "sequence": 7,
+      "samples": 144,
+      "wins": 101,
+      "winRate": 0.7013888888888888,
+      "winRate95CI": [
+        0.6222002701860168,
+        0.7701118758038914
+      ],
+      "timeouts": 43,
+      "casualties": 0,
+      "meanRounds": 42.145833333333336,
+      "seed": 893319,
+      "battleSeed": 128153,
+      "hpMultiplier": 33.71708,
+      "meetsClearTarget": true
+    },
+    {
+      "bossId": "broken_hour",
+      "sequence": 5,
+      "samples": 144,
+      "wins": 94,
+      "winRate": 0.6527777777777778,
+      "winRate95CI": [
+        0.5719628687044347,
+        0.7256532420465303
+      ],
+      "timeouts": 50,
+      "casualties": 0,
+      "meanRounds": 44.3125,
+      "seed": 893319,
+      "battleSeed": 128153,
+      "hpMultiplier": 20.0917548,
+      "meetsClearTarget": true
+    },
+    {
+      "bossId": "ashen_choir",
+      "sequence": 3,
+      "samples": 144,
+      "wins": 101,
+      "winRate": 0.7013888888888888,
+      "winRate95CI": [
+        0.6222002701860168,
+        0.7701118758038914
+      ],
+      "timeouts": 43,
+      "casualties": 0,
+      "meanRounds": 37.09722222222222,
+      "seed": 893319,
+      "battleSeed": 128153,
+      "hpMultiplier": 7.767145819999999,
+      "meetsClearTarget": true
+    },
+    {
+      "bossId": "vacant_crown",
+      "sequence": 1,
+      "samples": 288,
+      "wins": 200,
+      "winRate": 0.6944444444444444,
+      "winRate95CI": [
+        0.6389738628005783,
+        0.7447961485930223
+      ],
+      "timeouts": 88,
+      "casualties": 0,
+      "meanRounds": 40.11805555555556,
+      "seed": 459127,
+      "battleSeed": 305721,
+      "hpMultiplier": 16.509944549999997,
+      "meetsClearTarget": true
+    },
+    {
+      "bossId": "last_hour",
+      "sequence": 0,
+      "samples": 144,
+      "wins": 108,
+      "winRate": 0.75,
+      "winRate95CI": [
+        0.6734032427028186,
+        0.813604938526033
+      ],
+      "timeouts": 36,
+      "casualties": 0,
+      "meanRounds": 41.09027777777778,
+      "seed": 893319,
+      "battleSeed": 128153,
+      "hpMultiplier": 18.540815400000003,
+      "meetsClearTarget": true
+    }
+  ],
+  "method": "HP-only per-boss budgets; live global damage1.5; six fixed representative mixed three-owner teams, Rare weapons and collections, 50-round cap. Final profile per boss frozen before its independent holdout. Black/Broken/Ash/Last use24samples/team; Red/Crown48samples/team. Red/Crown preliminary holdouts discarded after HP refinement; final holdouts use different fresh seeds. Final HP budgets are now applied to authored contracts. Wilson95% intervals express sampling uncertainty; fixed teams do not cover every possible party.",
+  "profileSha256": "385e6f66726face49d95ff86cd0dac8b69a995e54e4ed823cb1a66ecdc1db666",
+  "testedCodeFingerprint": "ce33d4b60490415a038c8ae7c4ffa33706cb4a3a02ee56572a29845c851309ba"
+}

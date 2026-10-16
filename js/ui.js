@@ -57,6 +57,8 @@ function calculateCurrentHp(initialAllies, initialEnemies, shownRows) {
         target.curHp = 0; target.curShield = 0; target.alive = false;
       } else if (type === 'revive') {
         target.curHp = event.hpAfter ?? (event.amount || 1); target.alive = true;
+      } else if (event.subtype === 'shield_removed') {
+        target.curShield = event.shieldAfter ?? 0;
       }
     }
     if (row.type === 'death' && (row.targetId || row.targetName)) {
@@ -314,14 +316,12 @@ function renderHpStrip(hpMap, allies, enemies, battlefieldImage = '') {
     <!-- Enemies above Guild; compact companions have their own wrapping rows. -->
     <div class="gm-stage-playfield">
       <section class="gm-arena-side gm-arena-side-allies" aria-label="Guild members">
-        <h3 class="gm-arena-side-title">Guild</h3>
         <div class="gm-rank-row gm-rank-allies" role="group" aria-label="Guild formation">
           ${formation(allies, 'ally')}
         </div>
       </section>
 
       <section class="gm-arena-side gm-arena-side-enemies" aria-label="Enemies">
-        <h3 class="gm-arena-side-title">Enemies</h3>
         <div class="gm-rank-row gm-rank-enemies" role="group" aria-label="Enemy formation">
           ${formation(enemies, 'enemy')}
         </div>
@@ -366,14 +366,14 @@ function renderTurnRowHtml(row, showDetails) {
     const hpLoss = d.hpLoss ?? Math.max(0, (d.amount || 0) - (d.absorbed || 0));
     const badges = [d.critical ? '<span class="b-badge crit" title="Critical Hit">💥 CRIT</span>' : '', d.trueDamage ? '<span class="b-badge true-dmg" title="True Damage">⚡ TRUE</span>' : '', d.instantKill ? '<span class="b-badge execute" title="Execute">☠️ EXECUTE</span>' : '', d.isReflect ? '<span class="b-badge reflect">🔄 REFLECT</span>' : '', d.isDrain ? '<span class="b-badge drain">🩸 DRAIN</span>' : ''].filter(Boolean).join(' ');
     const hpDetail = showDetails && d.hpAfter !== undefined && d.maxHp ? ` (HP ${abbrNum(d.hpAfter)}/${abbrNum(d.maxHp)})` : '';
-    return `<div class="b-sub-outcome"><span class="b-tree-branch">↳</span><span class="b-arrow">→</span><span class="b-target ${d.targetTeam || (actorClass === 'ally' ? 'enemy' : 'ally')}">${esc(d.targetName || 'Target')}</span><span class="b-outcome damage" title="HP loss: ${Number(hpLoss).toLocaleString()}">−${abbrNum(hpLoss)} HP <small>${esc(d.damageType || 'dmg')}</small>${hpDetail}</span>${d.absorbed ? `<span class="b-outcome shield">−${abbrNum(d.absorbed)} Shield</span>` : ''}${badges}</div>`;
+    return `<div class="b-sub-outcome"><span class="b-tree-branch">↳</span><span class="b-arrow">→</span><span class="b-target ${d.targetTeam || (actorClass === 'ally' ? 'enemy' : 'ally')}">${esc(d.targetName || 'Target')}</span><span class="b-outcome damage" title="HP loss: ${Number(hpLoss).toLocaleString()}">−${abbrNum(hpLoss)} HP <small>${esc(d.subtype === 'hp_siphon' ? 'HP siphon' : d.damageType || 'dmg')}</small>${hpDetail}</span>${d.absorbed ? `<span class="b-outcome shield">−${abbrNum(d.absorbed)} Shield</span>` : ''}${badges}</div>`;
   };
   const renderDamageGroup = hits => {
     if (hits.length === 1) return renderDamage(hits[0]);
     const target = hits[0];
     const total = hits.reduce((sum, h) => sum + (h.hpLoss ?? Math.max(0, (h.amount || 0) - (h.absorbed || 0))), 0);
     const absorbed = hits.reduce((sum, h) => sum + (h.absorbed || 0), 0);
-    return `<details class="b-multihit-group"><summary class="b-sub-outcome b-multihit-summary"><span class="b-tree-branch">↳</span><span class="b-arrow">→</span><span class="b-target ${target.targetTeam || (actorClass === 'ally' ? 'enemy' : 'ally')}">${esc(target.targetName || 'Target')}</span><span class="b-outcome damage" title="Total HP loss: ${Number(total).toLocaleString()}">−${abbrNum(total)} HP <small>${esc(target.damageType || 'dmg')}</small></span>${absorbed ? `<span class="b-outcome shield">−${abbrNum(absorbed)} Shield</span>` : ''}<span class="b-badge combo">⚡ ${hits.length} HITS</span><span class="b-multihit-toggle" aria-hidden="true">▾</span></summary><div class="b-multihit-breakdown">${hits.map((h, i) => `<div class="b-multihit-item"><span class="b-hit-num">Hit ${i + 1}</span>${renderDamage(h)}</div>`).join('')}</div></details>`;
+    return `<details class="b-multihit-group"><summary class="b-sub-outcome b-multihit-summary"><span class="b-tree-branch">↳</span><span class="b-arrow">→</span><span class="b-target ${target.targetTeam || (actorClass === 'ally' ? 'enemy' : 'ally')}">${esc(target.targetName || 'Target')}</span><span class="b-outcome damage" title="Total HP loss: ${Number(total).toLocaleString()}">−${abbrNum(total)} HP <small>${esc(target.subtype === 'hp_siphon' ? 'HP siphon' : target.damageType || 'dmg')}</small></span>${absorbed ? `<span class="b-outcome shield">−${abbrNum(absorbed)} Shield</span>` : ''}<span class="b-badge combo">⚡ ${hits.length} HITS</span><span class="b-multihit-toggle" aria-hidden="true">▾</span></summary><div class="b-multihit-breakdown">${hits.map((h, i) => `<div class="b-multihit-item"><span class="b-hit-num">Hit ${i + 1}</span>${renderDamage(h)}</div>`).join('')}</div></details>`;
   };
   const renderNote = note => {
     let extra = '';
@@ -405,7 +405,8 @@ function renderTurnRowHtml(row, showDetails) {
       const hits = [event], key = event.targetId || event.targetName;
       // Only adjacent hits collapse; an intervening awakening or reaction stays
       // between the exact hits that caused it.
-      while (timeline[i + 1]?.type === 'damage' && (timeline[i + 1].event.targetId || timeline[i + 1].event.targetName) === key) hits.push(timeline[++i].event);
+      while (timeline[i + 1]?.type === 'damage' && (timeline[i + 1].event.targetId || timeline[i + 1].event.targetName) === key
+        && timeline[i + 1].event.subtype === event.subtype && timeline[i + 1].event.damageType === event.damageType) hits.push(timeline[++i].event);
       outcomes.push(renderDamageGroup(hits));
     } else if (type === 'reaction' || type === 'reflect') {
       outcomes.push(`${type === 'reaction' ? `<span class="b-badge">Reaction · ${esc(event.actorName || 'Unit')}</span>` : ''}${renderDamage(event)}`);

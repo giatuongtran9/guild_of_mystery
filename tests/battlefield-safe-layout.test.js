@@ -13,6 +13,8 @@ const backgrounds = ['abandoned_market', 'clockmaker_alley', 'foggy_town', 'goth
 // Bounds independently reviewed against the original scene artwork. Geometry
 // assertions must not trust the renderer to declare its own safe area.
 const clearFloor = Object.fromEntries(backgrounds.map(name => [name, [0.04, 0.23, 0.96, 0.97]]));
+// The temple's pillar bases extend below the other scenes' clear-floor edge.
+clearFloor.ruined_temple = [0.04, 0.245, 0.96, 0.97];
 const widths = [320, 390, 560, 768, 1440];
 // Edge-reaching artwork makes a square-image containment assertion stricter
 // than checking feet or the opaque center of the production portraits.
@@ -171,7 +173,12 @@ function check(result, width, allies, enemies) {
     assert(overlapX <= 1 || overlapY <= 1, `artwork ${result.cards[i].id} and ${result.cards[j].id} must not overlap`);
   }
   const enemy = result.cards.filter(card => card.team === 'enemy'), guild = result.cards.filter(card => card.team === 'ally');
-  if (enemy.length && guild.length) assert(Math.max(...enemy.map(card => card.card.bottom)) <= Math.min(...guild.map(card => card.card.top)) + 1, 'enemies stay above guild at every breakpoint');
+  if (enemy.length) assert(Math.abs(Math.min(...enemy.map(card => card.card.top)) - (result.ground.top + 8)) < 1,
+    'enemy formation stays anchored to the top of the clear floor with 8px padding');
+  if (guild.length) assert(Math.abs(Math.max(...guild.map(card => card.card.bottom)) - (result.ground.bottom - 8)) < 1,
+    'guild formation stays anchored to the bottom of the clear floor with 8px padding');
+  if (enemy.length && guild.length) assert(Math.max(...enemy.map(card => card.card.bottom)) + 16 <= Math.min(...guild.map(card => card.card.top)) + 1,
+    'opposing formations retain at least 16px separation at every breakpoint');
 }
 
 async function checkPanReachability(page) {
