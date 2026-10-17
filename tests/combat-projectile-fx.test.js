@@ -76,6 +76,28 @@ function approx(actual, expected, message, tolerance = .11) {
   assert(Math.abs(Number(actual) - expected) <= tolerance, `${message}: ${actual} versus ${expected}`);
 }
 
+function assertMuzzlePng(muzzle) {
+  assert(muzzle, 'gun has a muzzle flash');
+  const artwork = muzzle.querySelector('image.gm-combat-gun-muzzle-image');
+  assert(artwork, 'the muzzle uses the existing PNG artwork');
+  assert.equal(muzzle.querySelectorAll('image').length, 1, 'one image supplies the flash');
+  assert.equal(muzzle.querySelector('path, polygon'), null, 'the old procedural flash is removed');
+  const src = 'data/assets/effects/gun-muzzle.png';
+  assert.equal(artwork.getAttribute('href'), src);
+  assert.equal(muzzle.dataset.effectSrc, src);
+  const png = fs.readFileSync(path.join(root, src));
+  const sourceWidth = png.readUInt32BE(16), sourceHeight = png.readUInt32BE(20);
+  const width = Number(artwork.getAttribute('width')), height = Number(artwork.getAttribute('height'));
+  assert.equal(width, 48, 'muzzle art has a compact fixed width at both character sizes');
+  approx(height, sourceHeight * width / sourceWidth, 'the PNG retains its source proportions', .001);
+  approx(muzzle.dataset.effectWidth, width, 'declared flash width matches the artwork');
+  approx(muzzle.dataset.effectHeight, height, 'declared flash height matches the artwork');
+  assert.equal(artwork.getAttribute('preserveAspectRatio'), 'xMidYMid meet');
+  approx(Number(artwork.getAttribute('x')) + 110 * width / sourceWidth, 0, 'the source ignition x is anchored at the firing hand', .001);
+  approx(Number(artwork.getAttribute('y')) + 280 * height / sourceHeight, 0, 'the source ignition y is anchored at the firing hand', .001);
+  return artwork;
+}
+
 test('gun basics match the sword reference while firing from the forward hand in every direction', f => {
   for (const size of [64, 96]) for (const speed of [1, 2]) for (const targetPosition of [[10, 350], [270, 350], [110, 80], [110, 480]]) {
     f.setSpriteSize(size);
@@ -91,9 +113,7 @@ test('gun basics match the sword reference while firing from the forward hand in
     assert.equal(projectile.dataset.shape, 'bullet');
     assert(projectile.querySelector('rect[rx]'), 'the bullet uses rounded tracer geometry');
     assert.equal(projectile.querySelector('path'), null, 'gun shots do not reuse the generic arrow path');
-    assert.equal(muzzle.querySelector('image'), null, 'a tiny procedural flash replaces the old large muzzle image');
-    assert.equal(Number(muzzle.dataset.effectWidth), 24, 'flash stays 24px wide');
-    assert.equal(Number(muzzle.dataset.effectHeight), 14, 'flash stays 14px high');
+    assertMuzzlePng(muzzle);
     assert.equal(Number(projectile.dataset.size), size * 2, 'main tracer uses the same 2x sprite reference as the sword slash');
     assert.equal(Number(projectile.dataset.effectWidth), size * 2, 'tracer length scales to 128px on phones and 192px on desktop');
     assert.equal(Number(projectile.dataset.effectHeight), size * 2 * .09375, 'rounded tracer thickness scales with the sword reference');
@@ -644,6 +664,55 @@ test('effects pause, resume and change speed together without mutating cards or 
   assert.deepEqual(f.all('.gm-arena-unit'), cards); assert.deepEqual(cards.map(card => card.innerHTML), html);
   f.effects.clear(); f.effects.clear();
   assert.equal(f.all('.gm-combat-fx-layer').length, 0); assert(active(f).length === 0);
+});
+
+test('the PNG muzzle pauses and changes speed with its shot, then clears with the phase', f => {
+  const row = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: 'gun' };
+  cast(f, row, hit('paragon'), 1, 600);
+  const muzzle = f.find('.gm-combat-gun-muzzle'), artwork = assertMuzzlePng(muzzle);
+  const flash = active(f).find(animation => animation.element === muzzle);
+  assert(flash, 'PNG flash is animated on the replay clock');
+  f.effects.pause();
+  assert.equal(flash.playState, 'paused');
+  assert.equal(f.find('.gm-combat-gun-muzzle-image'), artwork, 'pausing preserves the same loaded image');
+  f.effects.setSpeed(2);
+  assert.equal(flash.playbackRate, 2, 'flash follows the selected replay speed');
+  assert.equal(Number(flash.timing.duration), 140, 'speed does not rewrite the unscaled flash duration');
+  f.effects.resume();
+  assert.equal(flash.playState, 'running');
+  f.effects.show({ ...hit('paragon'), row }, 2, 450);
+  assert(flash.cancelled, 'the following impact cancels the earlier flash animation');
+  assert.equal(f.find('.gm-combat-gun-muzzle'), null);
+  f.effects.clear();
+  assert.equal(f.all('.gm-combat-fx-layer').length, 0);
+});
+
+test('reduced motion keeps a static PNG muzzle without a moving shot', f => {
+  const row = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: 'gun' };
+  cast(f, row, hit('paragon'), 1, 600);
+  const muzzle = f.find('.gm-combat-gun-muzzle');
+  assertMuzzlePng(muzzle);
+  assert(Number(muzzle.getAttribute('opacity')) > 0, 'the static flash remains visible');
+  assert.match(muzzle.getAttribute('transform'), /translate\([^)]+\) rotate\([^)]+\)/, 'static flash keeps its hand position and aim');
+  assert.equal(f.find('.gm-combat-projectile'), null);
+  assert.equal(f.animations.length, 0);
+  f.effects.show({ ...hit('paragon'), row }, 1, 450);
+  assert.equal(f.find('.gm-combat-gun-muzzle'), null, 'the static flash clears on the next phase');
+}, true);
+
+test('4x uses one static PNG muzzle and leaves no flash backlog', f => {
+  const row = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: 'gun' };
+  for (let index = 0; index < 4; index++) {
+    cast(f, { ...row }, hit('paragon'), 4, 600);
+    const muzzle = f.find('.gm-combat-gun-muzzle');
+    assertMuzzlePng(muzzle);
+    assert(Number(muzzle.getAttribute('opacity')) > 0);
+    assert.equal(f.all('.gm-combat-gun-muzzle').length, 1);
+    assert.equal(f.find('.gm-combat-projectile'), null);
+    assert.equal(f.animations.length, 0);
+    f.effects.show({ ...hit('paragon'), row }, 4, 450);
+    assert.equal(f.find('.gm-combat-gun-muzzle'), null);
+  }
 });
 
 test('reflow cancels travel so stale endpoints cannot survive a layout change', f => {
