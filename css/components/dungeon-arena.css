@@ -817,3 +817,42 @@
     drop-shadow(0 0 2px rgba(255, 132, 124, 0.96))
     drop-shadow(0 0 7px rgba(238, 54, 49, 0.82));
 }
+
+
+/* --- S9 Custom Abilities Combat Visual Effects --- */
+.gm-combat-brutal-strike-projectile,
+.gm-combat-brutal-strike-impact-slash {
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: opacity, transform;
+  filter: drop-shadow(0 0 6px rgba(230, 57, 70, 0.85));
+}
+
+.gm-combat-loophole-seal {
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: opacity, transform;
+}
+
+.gm-loophole-intact,
+.gm-loophole-half-top,
+.gm-loophole-half-bot {
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: opacity, transform;
+}
+
+.gm-combat-theft-siphon {
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: opacity, transform;
+  filter: drop-shadow(0 0 8px rgba(180, 50, 40, 0.6));
+}
+
+.gm-combat-healing-touch-flight,
+.gm-combat-healing-touch-impact {
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: opacity, transform;
+  filter: drop-shadow(0 0 8px rgba(234, 216, 181, 0.7));
+}

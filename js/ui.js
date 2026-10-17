@@ -350,7 +350,7 @@ function createCombatFx(wrap) {
     return node;
   }
   const S9_EFFECTS = {
-    brutal_strike: 'data/assets/effects/sword-slash.png',
+    brutal_strike: 'data/assets/effects/brutal-strike.png',
     exploit_loophole: 'data/assets/effects/exploit-loophole.png',
     combat_theft: 'data/assets/effects/combat-theft.png',
     healing_touch: 'data/assets/effects/healing-touch.png'
@@ -521,47 +521,205 @@ function createCombatFx(wrap) {
     const src = S9_EFFECTS[id];
     if (id === 'exploit_loophole' && target) {
       const size = effectHeight(target);
-      const node = group('gm-combat-loophole-seal', row.actorId, targetId, '#e5c59b');
-      node.setAttribute('data-ability-id', id); node.setAttribute('data-effect-height', size); image(node, src, size, size); layer().append(node);
-      if (!compact()) animate(node, [
-        { transform: `translate(${target.x}px,${target.y}px) rotate(-18deg) scale(.5)`, opacity: 0 },
-        { transform: `translate(${target.x}px,${target.y}px) rotate(0deg) scale(1)`, opacity: .92, offset: .28 },
-        { transform: `translate(${target.x}px,${target.y}px) rotate(18deg) scale(1.08)`, opacity: 0 }
-      ], hold);
-      else node.setAttribute('transform', `translate(${target.x} ${target.y})`);
+      const root = layer();
+      let defs = root.querySelector('defs[data-gm-loophole-defs]');
+      if (!defs) {
+        defs = element('defs', { 'data-gm-loophole-defs': 'true' });
+        root.insertBefore(defs, root.firstChild);
+      }
+      const clipIdTop = `gm-loophole-clip-top-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+      const clipIdBot = `gm-loophole-clip-bot-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+      
+      // The art is 1376x768 (ratio ~1.79:1). Center it at (0, 0)
+      const w = size * 1.5, h = w * (768 / 1376);
+      const hw = w / 2, hh = h / 2;
+
+      // Top-left half polygon and bottom-right half polygon split along diagonal from (-hw, hh) to (hw, -hh)
+      const clipTop = element('clipPath', { id: clipIdTop, clipPathUnits: 'userSpaceOnUse' });
+      clipTop.append(element('polygon', { points: `${-hw - 5},${-hh - 5} ${hw + 5},${-hh - 5} ${-hw - 5},${hh + 5}` }));
+      defs.append(clipTop);
+
+      const clipBot = element('clipPath', { id: clipIdBot, clipPathUnits: 'userSpaceOnUse' });
+      clipBot.append(element('polygon', { points: `${hw + 5},${-hh - 5} ${hw + 5},${hh + 5} ${-hw - 5},${hh + 5}` }));
+      defs.append(clipBot);
+
+      const container = group('gm-combat-loophole-seal', row.actorId, targetId, '#e5c59b');
+      container.setAttribute('data-ability-id', id);
+      container.setAttribute('data-effect-height', size);
+      container.setAttribute('transform', `translate(${target.x} ${target.y})`);
+
+      // Intact emblem layer
+      const intact = element('g', { class: 'gm-loophole-intact' });
+      image(intact, src, w, h);
+      container.append(intact);
+
+      // Flash overlay
+      const flash = element('ellipse', { cx: 0, cy: 0, rx: w * .48, ry: h * .48, fill: '#ffffff', opacity: 0 });
+      container.append(flash);
+
+      // Top-left half
+      const topHalf = element('g', { class: 'gm-loophole-half-top', 'clip-path': `url(#${clipIdTop})`, opacity: 0 });
+      image(topHalf, src, w, h);
+      container.append(topHalf);
+
+      // Bottom-right half
+      const botHalf = element('g', { class: 'gm-loophole-half-bot', 'clip-path': `url(#${clipIdBot})`, opacity: 0 });
+      image(botHalf, src, w, h);
+      container.append(botHalf);
+
+      root.append(container);
+
+      if (!compact()) {
+        const animIntact = animate(intact, [
+          { transform: 'scale(0.8)', opacity: 0 },
+          { transform: 'scale(1)', opacity: 0.98, offset: 0.2 },
+          { transform: 'scale(1)', opacity: 0.98, offset: 0.38 },
+          { transform: 'scale(1.02)', opacity: 0, offset: 0.42 },
+          { transform: 'scale(1.02)', opacity: 0 }
+        ], hold, 0, { remove: false });
+
+        animate(flash, [
+          { opacity: 0 },
+          { opacity: 0, offset: 0.36 },
+          { opacity: 0.95, offset: 0.4 },
+          { opacity: 0, offset: 0.48 },
+          { opacity: 0 }
+        ], hold, 0, { remove: false });
+
+        animate(topHalf, [
+          { transform: 'translate(0px, 0px) rotate(0deg)', opacity: 0 },
+          { transform: 'translate(0px, 0px) rotate(0deg)', opacity: 0, offset: 0.39 },
+          { transform: 'translate(-4px, -4px) rotate(-1deg)', opacity: 0.98, offset: 0.42 },
+          { transform: 'translate(-28px, -24px) rotate(-8deg)', opacity: 0.8, offset: 0.72 },
+          { transform: 'translate(-42px, -36px) rotate(-14deg) scale(0.9)', opacity: 0 }
+        ], hold, 0, { remove: false });
+
+        animate(botHalf, [
+          { transform: 'translate(0px, 0px) rotate(0deg)', opacity: 0 },
+          { transform: 'translate(0px, 0px) rotate(0deg)', opacity: 0, offset: 0.39 },
+          { transform: 'translate(4px, 4px) rotate(1deg)', opacity: 0.98, offset: 0.42 },
+          { transform: 'translate(28px, 24px) rotate(8deg)', opacity: 0.8, offset: 0.72 },
+          { transform: 'translate(42px, 36px) rotate(14deg) scale(0.9)', opacity: 0 }
+        ], hold, 0, {
+          onfinish: () => {
+            clipTop.remove();
+            clipBot.remove();
+            container.remove();
+          }
+        });
+      } else {
+        container.setAttribute('transform', `translate(${target.x} ${target.y})`);
+      }
       return;
     }
     if (id === 'combat_theft' && target) {
-      const dx = actor.x - target.x, dy = actor.y - target.y, distance = Math.hypot(dx, dy);
-      const angle = Math.atan2(dy, dx) * 180 / Math.PI, height = effectHeight(Math.min(actor.spriteHeight, target.spriteHeight) ? { spriteHeight: Math.min(actor.spriteHeight, target.spriteHeight) } : actor), width = Math.max(distance, height);
+      // Anchor left dark vortex at thief (actor), right runic target at victim (target)
+      const dx = target.x - actor.x, dy = target.y - actor.y, distance = Math.hypot(dx, dy);
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      // Proportional scale preserving aspect ratio 1376:768
+      const width = Math.max(distance, 120);
+      const height = width * (768 / 1376);
       const midX = (actor.x + target.x) / 2, midY = (actor.y + target.y) / 2;
       const node = group('gm-combat-theft-siphon', row.actorId, targetId, '#e7c38d');
-      node.setAttribute('data-ability-id', id); node.setAttribute('data-travel-direction', 'target-to-attacker'); node.setAttribute('data-effect-height', height);
-      image(node, src, width, height); layer().append(node);
-      if (!compact()) animate(node, [
-        { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(.18)`, opacity: 0 },
-        { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(1)`, opacity: .95, offset: .25 },
-        { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(.84)`, opacity: .82, offset: .7 },
-        { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(.3)`, opacity: 0 }
-      ], hold);
-      else node.setAttribute('transform', `translate(${midX} ${midY}) rotate(${angle})`);
+      node.setAttribute('data-ability-id', id);
+      node.setAttribute('data-travel-direction', 'attacker-to-target');
+      node.setAttribute('data-effect-height', height);
+      
+      // In the art: left is dark vortex, right is runic target.
+      // So translating to midX, midY with rotation = angle naturally connects actor -> target!
+      const img = image(node, src, width, height);
+      layer().append(node);
+      if (!compact()) {
+        animate(node, [
+          { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(0.65)`, opacity: 0 },
+          { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(1)`, opacity: 0.98, offset: 0.22 },
+          { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(1.03)`, opacity: 0.92, offset: 0.55 },
+          { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(0.95)`, opacity: 0.85, offset: 0.78 },
+          { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(0.85)`, opacity: 0 }
+        ], hold);
+      } else {
+        node.setAttribute('transform', `translate(${midX} ${midY}) rotate(${angle})`);
+      }
       return;
     }
     if (id === 'healing_touch' && target) {
+      // Bottle at caster (actor), lotus at target (target). If self-cast, actor == target.
+      const isSelf = targetId === row.actorId || Math.hypot(target.x - actor.x, target.y - actor.y) < 10;
+      const root = layer();
+      let defs = root.querySelector('defs[data-gm-healing-defs]');
+      if (!defs) {
+        defs = element('defs', { 'data-gm-healing-defs': 'true' });
+        root.insertBefore(defs, root.firstChild);
+      }
+      const clipId = `gm-healing-mask-${Date.now()}-${Math.floor(Math.random()*1000)}`;
+
+      if (isSelf) {
+        const size = effectHeight(actor);
+        const w = size * 1.6, h = w * (768 / 1376);
+        const node = group('gm-combat-healing-touch-flight', row.actorId, targetId, '#ead8b5');
+        node.setAttribute('data-ability-id', id);
+        node.setAttribute('data-effect-height', size);
+        node.setAttribute('transform', `translate(${actor.x} ${actor.y})`);
+        image(node, src, w, h);
+        root.append(node);
+        if (!compact()) {
+          animate(node, [
+            { transform: `translate(${actor.x}px,${actor.y}px) scale(0.75)`, opacity: 0 },
+            { transform: `translate(${actor.x}px,${actor.y}px) scale(1)`, opacity: 0.98, offset: 0.3 },
+            { transform: `translate(${actor.x}px,${actor.y - 6}px) scale(1.05)`, opacity: 0.9, offset: 0.7 },
+            { transform: `translate(${actor.x}px,${actor.y - 10}px) scale(1)`, opacity: 0 }
+          ], hold);
+        }
+        return;
+      }
+
+      // Ally cast: bottle at actor (left), lotus at target (right)
       const dx = target.x - actor.x, dy = target.y - actor.y, distance = Math.hypot(dx, dy);
-      const direction = distance ? { x: dx / distance, y: dy / distance } : { x: 0, y: -1 };
-      const start = { x: actor.x + direction.x * actor.radius * .7, y: actor.y + direction.y * actor.radius * .7 };
-      const end = { x: target.x - direction.x * target.radius * .5, y: target.y - direction.y * target.radius * .5 };
-      const height = effectHeight({ spriteHeight: Math.min(actor.spriteHeight, target.spriteHeight) }), width = height * .76;
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      const width = Math.max(distance, 140);
+      const height = width * (768 / 1376);
+      const midX = (actor.x + target.x) / 2, midY = (actor.y + target.y) / 2;
+
+      // Mask reveal along the stream: clipPath rect sliding from left (-width/2) to right (width/2)
+      const clip = element('clipPath', { id: clipId, clipPathUnits: 'userSpaceOnUse' });
+      const revealRect = element('rect', { x: -width / 2 - 10, y: -height / 2 - 10, width: 0, height: height + 20 });
+      clip.append(revealRect);
+      defs.append(clip);
+
       const node = group('gm-combat-healing-touch-flight', row.actorId, targetId, '#ead8b5');
-      node.setAttribute('data-ability-id', id); node.setAttribute('data-travel-ms', hold); node.setAttribute('data-effect-height', height);
-      image(node, src, width, height); layer().append(node);
-      if (!compact()) animate(node, [
-        { transform: `translate(${start.x}px,${start.y}px) scale(.58)`, opacity: 0 },
-        { transform: `translate(${(start.x + end.x) / 2}px,${(start.y + end.y) / 2}px) scale(.92)`, opacity: .95, offset: .52 },
-        { transform: `translate(${end.x}px,${end.y}px) scale(1)`, opacity: 0 }
-      ], hold);
-      else node.setAttribute('transform', `translate(${end.x} ${end.y})`);
+      node.setAttribute('data-ability-id', id);
+      node.setAttribute('data-travel-ms', hold);
+      node.setAttribute('data-effect-height', height);
+      node.setAttribute('clip-path', `url(#${clipId})`);
+      node.setAttribute('transform', `translate(${midX} ${midY}) rotate(${angle})`);
+
+      image(node, src, width, height);
+      root.append(node);
+
+      if (!compact()) {
+        animate(revealRect, [
+          { width: `${width * 0.28}px`, offset: 0 },
+          { width: `${width * 0.65}px`, offset: 0.5 },
+          { width: `${width + 30}px`, offset: 0.85 },
+          { width: `${width + 30}px`, offset: 1 }
+        ], hold, 0, { remove: false });
+
+        animate(node, [
+          { opacity: 0 },
+          { opacity: 0.98, offset: 0.2 },
+          { opacity: 0.98, offset: 0.8 },
+          { opacity: 0 }
+        ], hold, 0, {
+          onfinish: () => {
+            clip.remove();
+            node.remove();
+          }
+        });
+      } else {
+        revealRect.setAttribute('width', String(width + 30));
+        node.setAttribute('opacity', '0.9');
+      }
+      return;
     }
   }
   function animate(node, frames, duration, delay = 0, options = {}) {
@@ -696,29 +854,24 @@ function createCombatFx(wrap) {
         'travel-ms': duration, 'travel-delay-ms': delay, ...(usesSlashArt ? { 'angle-deg': angle.toFixed(2), ...(brutalStrike ? { 'ability-id': 'brutal_strike' } : {}) } : {}) })) node.setAttribute(`data-${name}`, value);
       node.setAttribute('opacity', '0');
       if (usesSlashArt) {
-        // Size against the sprite box. The established weapon-basic scale is 2x;
-        // Brutal Strike is emphasized but leaves more character silhouette visible.
         const size = effectHeight(originalTarget);
         node.setAttribute('data-effect-height', size);
-        const slash = element('image', { class: 'gm-combat-sword-slash-projectile', x: -size / 2, y: -size / 2,
-          width: size, height: size, href: 'data/assets/effects/sword-slash.png', transform: 'rotate(180)',
-          preserveAspectRatio: 'xMidYMid meet', opacity: 1 });
-        slash.setAttribute('data-flip-deg', '180');
-        slash.setAttribute('data-sprite-scale', '2');
-        slash.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', 'data/assets/effects/sword-slash.png');
-        node.append(slash);
         if (brutalStrike) {
-          // Abyss Criminal's Brutal Strike keeps the shared crescent art, but
-          // adds a short crimson fracture edge and a few ember pixels.
-          const edge = element('g', { class: 'gm-combat-brutal-strike-edge', 'data-pathway': 'abyss' });
-          edge.append(element('path', { d: `M ${-size * .34} ${size * .12} L ${-size * .12} ${-size * .06} L ${size * .03} ${size * .02} L ${size * .3} ${-size * .17}`,
-            fill: 'none', stroke: '#a92f42', 'stroke-width': 2.5, 'stroke-linecap': 'square', 'stroke-linejoin': 'miter' }));
-          edge.append(element('path', { d: `M ${-size * .24} ${size * .16} L ${-size * .1} ${size * .07} L ${-size * .02} ${size * .1}`,
-            fill: 'none', stroke: '#e5b477', 'stroke-width': 1.25, 'stroke-linecap': 'square' }));
-          for (const [x, y, side] of [[-.31, -.2, 3], [.23, .18, 2], [.35, -.04, 2]]) {
-            edge.append(element('rect', { x: size * x, y: size * y, width: side, height: side, fill: '#c54b43', opacity: .9 }));
-          }
-          node.append(edge);
+          // Brutal Strike: 1152x576 crimson slash art (ratio 2:1), same size as sword slash
+          const slashWidth = size * 1.5, slashHeight = slashWidth * 0.5;
+          const slash = element('image', { class: 'gm-combat-brutal-strike-projectile', x: -slashWidth / 2, y: -slashHeight / 2,
+            width: slashWidth, height: slashHeight, href: 'data/assets/effects/brutal-strike.png',
+            preserveAspectRatio: 'xMidYMid meet', opacity: 1 });
+          slash.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', 'data/assets/effects/brutal-strike.png');
+          node.append(slash);
+        } else {
+          const slash = element('image', { class: 'gm-combat-sword-slash-projectile', x: -size / 2, y: -size / 2,
+            width: size, height: size, href: 'data/assets/effects/sword-slash.png', transform: 'rotate(180)',
+            preserveAspectRatio: 'xMidYMid meet', opacity: 1 });
+          slash.setAttribute('data-flip-deg', '180');
+          slash.setAttribute('data-sprite-scale', '2');
+          slash.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', 'data/assets/effects/sword-slash.png');
+          node.append(slash);
         }
       } else if (gunBasic) {
         const extent = effectHeight(a), thickness = extent * .09375;
@@ -769,49 +922,52 @@ function createCombatFx(wrap) {
     const duration = punchHit ? Math.max(settings.durationMs || 160, 320) : settings.durationMs || 160;
     const impactScale = critical ? settings.critScale || 1.5 : 1;
     const burst = group('gm-combat-impact', event.actorId ?? row.actorId, event.targetId,
-      punchHit ? '#ffd36f' : brutalHit ? '#a92f42' : critical ? settings.critColor || defaults.impact.critColor : colorFor(event));
+      punchHit ? '#ffd36f' : brutalHit ? '#e63946' : critical ? settings.critColor || defaults.impact.critColor : colorFor(event));
     burst.setAttribute('transform', `translate(${p.x} ${p.y}) scale(${impactScale})`);
     burst.setAttribute('data-critical', String(critical)); burst.setAttribute('data-frame', '0');
     burst.setAttribute('data-impact-scale', impactScale);
     if (punchHit) burst.setAttribute('data-punch-burst', 'true');
-    if (brutalHit) burst.setAttribute('data-brutal-strike', 'true');
-    burst.setAttribute('data-hit-index', hit.index); burst.setAttribute('data-hit-count', hit.count); burst.setAttribute('data-stagger-ms', hit.count > 1 ? 35 : 0);
-    let punchArt = null;
-    if (punchHit) {
-      // Use the original authored punch artwork, not a procedurally redrawn burst.
-      const height = Math.max(120, Math.min(210, (Number(p.spriteHeight) || 96) * 1.5));
-      const width = height * 880 / 929;
-      const src = 'data/assets/effects/unarmed-punch-impact.png?v=0ec09b43c3593bab';
-      burst.setAttribute('data-effect-src', src);
-      burst.setAttribute('data-effect-width', width); burst.setAttribute('data-effect-height', height);
-      punchArt = image(burst, src, width, height, 'gm-combat-impact-image gm-combat-impact-image-punch');
-    } else {
-      const pixels = [ [[-2,-2,4,4]], [[-2,-10,4,6],[-2,4,4,6],[-10,-2,6,4],[4,-2,6,4]],
-        [[-2,-14,4,5],[-2,9,4,5],[-14,-2,5,4],[9,-2,5,4],[-9,-9,3,3],[6,6,3,3]],
-        [[-2,-17,3,3],[-2,14,3,3],[-17,-2,3,3],[14,-2,3,3],[-12,-12,2,2],[10,10,2,2]] ];
-      const frameCount = settings.frames || 4;
-      for (let index = 0; index < frameCount; index++) {
-        const frame = element('g', { class: 'gm-combat-impact-frame', 'data-frame': index, opacity: compact() ? index === frameCount - 1 ? 1 : 0 : index === 0 ? 1 : 0 });
-        const pixelIndex = Math.round(index * (pixels.length - 1) / (frameCount - 1));
-        for (const [x,y,width,height] of pixels[pixelIndex]) frame.append(element('rect', { x,y,width,height, fill: 'currentColor' }));
-        burst.append(frame);
-        const start = index / frameCount, end = (index + 1) / frameCount;
-        const frames = [{ opacity: index === 0 ? 1 : 0, offset: 0 }];
-        if (start > 0) frames.push({ opacity: 1, offset: start });
-        frames.push({ opacity: 0, offset: end });
-        if (end < 1) frames.push({ opacity: 0, offset: 1 });
-        // Step each keyframe segment. Stepping the whole effect would hold only
-        // the first frame and skip the intermediate pixel shapes entirely.
-        animate(frame, frames.map(key => ({ ...key, easing: 'steps(1,end)' })), duration);
+    if (brutalHit) {
+      burst.setAttribute('data-brutal-strike', 'true');
+      // Screen micro-shake on the battlefield canvas
+      const field = canvas();
+      if (field && !compact()) {
+        field.animate([
+          { transform: 'translate(0, 0)' },
+          { transform: 'translate(-3px, 2px)', offset: 0.15 },
+          { transform: 'translate(3px, -2px)', offset: 0.35 },
+          { transform: 'translate(-2px, -1px)', offset: 0.6 },
+          { transform: 'translate(1px, 1px)', offset: 0.8 },
+          { transform: 'translate(0, 0)' }
+        ], { duration: 220, easing: 'ease-out' });
       }
-      if (brutalHit) {
-        const fracture = element('g', { class: 'gm-combat-brutal-strike-impact-edge', 'data-pathway': 'abyss' });
-        fracture.append(element('path', { d: 'M -23 -13 L -11 -5 L -16 2 M -11 -5 L -1 4 L 5 -7 M 5 7 L 12 1 L 22 12',
-          fill: 'none', stroke: '#a92f42', 'stroke-width': 3, 'stroke-linecap': 'square', 'stroke-linejoin': 'miter' }));
-        fracture.append(element('path', { d: 'M -17 -10 L -10 -6 M 0 2 L 5 -4',
-          fill: 'none', stroke: '#e5b477', 'stroke-width': 1.5, 'stroke-linecap': 'square' }));
-        burst.append(fracture);
-        if (!compact()) animate(fracture, [{ opacity: .98 }, { opacity: .82, offset: .35 }, { opacity: 0 }], Math.min(240, duration));
+      // High-opacity crimson slash flash across defender
+      const slashWidth = effectHeight(p) * 1.6, slashHeight = slashWidth * 0.5;
+      const slashImpact = element('image', { class: 'gm-combat-brutal-strike-impact-slash',
+        x: -slashWidth / 2, y: -slashHeight / 2, width: slashWidth, height: slashHeight,
+        href: 'data/assets/effects/brutal-strike.png', preserveAspectRatio: 'xMidYMid meet' });
+      slashImpact.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', 'data/assets/effects/brutal-strike.png');
+      burst.append(slashImpact);
+      if (!compact()) {
+        animate(slashImpact, [
+          { transform: 'scale(1.15) rotate(-10deg)', opacity: 1 },
+          { transform: 'scale(1) rotate(0deg)', opacity: 0.95, offset: 0.3 },
+          { transform: 'scale(0.96) rotate(3deg)', opacity: 0 }
+        ], Math.min(260, duration));
+      }
+      // Trailing embers
+      const embers = element('g', { class: 'gm-combat-brutal-embers' });
+      const emberCoords = [[-28, -14, 4], [-12, -22, 3], [16, -10, 4], [30, 8, 3], [-8, 16, 3.5], [22, 20, 2.5]];
+      for (const [ex, ey, r] of emberCoords) {
+        embers.append(element('rect', { x: ex, y: ey, width: r, height: r, fill: '#ff4d4d', opacity: 0.9 }));
+      }
+      burst.append(embers);
+      if (!compact()) {
+        animate(embers, [
+          { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+          { transform: 'translate(4px, -12px) scale(0.8)', opacity: 0.7, offset: 0.5 },
+          { transform: 'translate(8px, -24px) scale(0.4)', opacity: 0 }
+        ], Math.min(360, duration * 1.5));
       }
     }
     layer().append(burst);
@@ -837,9 +993,10 @@ function createCombatFx(wrap) {
     if (type === 'heal' || type === 'revive') {
       if (presentationAbility(row) === 'healing_touch') {
         const size = effectHeight(p);
+        const w = size * 1.6, h = w * (768 / 1376);
         const emblem = group('gm-combat-healing-touch-impact', event.actorId ?? row.actorId, id, '#ead8b5');
         emblem.setAttribute('data-ability-id', 'healing_touch'); emblem.setAttribute('data-effect-height', size); emblem.setAttribute('transform', `translate(${p.x} ${p.y})`);
-        image(emblem, 'data/assets/effects/healing-touch.png', size * .76, size);
+        image(emblem, 'data/assets/effects/healing-touch.png', w, h);
         layer().append(emblem);
         if (!compact()) animate(emblem, [
           { transform: `translate(${p.x}px,${p.y}px) scale(.62)`, opacity: 0 },
