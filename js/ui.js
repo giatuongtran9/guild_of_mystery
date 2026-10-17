@@ -960,7 +960,7 @@ function createBattleEffects(wrap) {
       mark(recipient, type); motion(recipient, type);
       number(recipient, type === 'shield' ? `+${abbrNum(event.amount)} Shield` : `+${abbrNum(event.amount)}`, type === 'shield' ? '#c6e5fa' : '#b4edc4');
     } else if (type === 'death') { mark(target || actor, 'death'); motion(target || actor, 'death'); }
-    else if (event.type === 'miss' || row.isMiss) {
+    else if (event.type === 'miss' || (cue.type === 'row' && row.isMiss)) {
       mark(target, 'miss'); motion(target, 'miss'); number(target, 'Miss', '#d5deea');
     } else if (type === 'thread' || event.type === 'thread' || event.status || row.isSkip
       || ['cc_loss', 'madness_loss', 'banished'].includes(event.subtype)) mark(target || actor, 'control');

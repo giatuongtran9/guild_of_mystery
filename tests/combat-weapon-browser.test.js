@@ -203,16 +203,21 @@ async function screenshot(page, name) {
           impact(); fx.pause();
           const outcomeHtml = renderTurnRowHtml(battlePresentationRows([row], 0, playing.eventCount)[0], false);
           const total = castDelay + battlePresentationDelay(playing, speed);
-          return { attemptVisible, castHtml, outcomeHtml, total,
+          const outcome = { attemptVisible, castHtml, outcomeHtml, total,
             impacts: wrap.querySelectorAll('.gm-combat-impact, .gm-combat-punch-impact').length,
             numbers: [...wrap.querySelectorAll('.gm-battle-fx-number')].map(node => node.textContent),
             targetHit: wrap.querySelector('[data-unit-id="target"] .gm-unit-sprite-anchor').classList.contains('gm-cue-damage') };
+          const settled = advanceBattlePresentation(playing); fx.show(settled, speed, 0);
+          return { ...outcome, settledType: settled.type, settledNumbers: wrap.querySelectorAll('.gm-battle-fx-number').length,
+            settledMissCue: wrap.querySelector('[data-unit-id="target"] .gm-unit-sprite-anchor').classList.contains('gm-cue-miss') };
         }, speed);
         assert(result.attemptVisible, 'a missed shot still shows the main firing animation');
         assert(!result.castHtml.includes('b-outcome miss'), 'Miss remains hidden during the weapon attempt');
         assert(result.outcomeHtml.includes('b-outcome miss'), 'Miss appears when the recorded outcome is revealed');
         assert.equal(result.total, 2000 / speed); assert.equal(result.impacts, 0); assert.equal(result.targetHit, false);
         assert.deepEqual(result.numbers, ['Miss']); assert.deepEqual(errors, []);
+        assert.equal(result.settledType, 'settle'); assert.equal(result.settledNumbers, 0); assert.equal(result.settledMissCue, false,
+          'settling a completed miss cannot replay the miss cue or create a second number');
       } finally { await page.close(); }
     });
     await test('knife and sword share the same melee presentation', async () => {
