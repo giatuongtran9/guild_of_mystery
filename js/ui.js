@@ -348,6 +348,121 @@ function createCombatFx(wrap) {
     if (targetId != null) node.setAttribute('data-target-id', targetId);
     return node;
   }
+  const S9_EFFECTS = {
+    brutal_strike: 'data/assets/effects/sword-slash.png',
+    exploit_loophole: 'data/assets/effects/exploit-loophole.png',
+    combat_theft: 'data/assets/effects/combat-theft.png',
+    healing_touch: 'data/assets/effects/healing-touch.png'
+  };
+  function presentationAbility(row) {
+    return String(row?.sourceAbilityId || row?.abilityId || '').split(':').pop();
+  }
+  function image(node, src, width, height, className = 'gm-combat-effect-image') {
+    const art = element('image', { class: className, x: -width / 2, y: -height / 2, width, height,
+      href: src, preserveAspectRatio: 'xMidYMid meet' });
+    art.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', src);
+    node.append(art);
+    return art;
+  }
+  function animatedImage(kind, row, event, src, x, y, width, height, frames, duration) {
+    const node = group(kind, event?.actorId ?? row.actorId, event?.targetId ?? null, '#e7c38d');
+    node.setAttribute('data-effect-src', src);
+    node.setAttribute('transform', `translate(${x} ${y})`);
+    image(node, src, width, height);
+    layer()?.append(node);
+    if (!compact()) animate(node, frames, duration);
+    return node;
+  }
+  function muzzleFlash(row, next, phaseHold) {
+    const event = next?.event, targetId = event?.targetId;
+    const a = point(row.actorId), b = point(targetId);
+    if (!a || !b || !layer()) return;
+    const angle = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+    const radians = angle * Math.PI / 180, size = Math.max(28, a.spriteHeight * 1.25);
+    const x = a.x + Math.cos(radians) * size * .34, y = a.y + Math.sin(radians) * size * .34;
+    const node = group('gm-combat-gun-muzzle', row.actorId, targetId, '#f6bd72');
+    node.setAttribute('data-angle-deg', angle.toFixed(2));
+    image(node, 'data/assets/effects/gun-muzzle.png', size, size);
+    layer().append(node);
+    if (!compact()) animate(node, [
+      { transform: `translate(${x}px,${y}px) rotate(${angle}deg) scale(.55)`, opacity: 0 },
+      { transform: `translate(${x}px,${y}px) rotate(${angle}deg) scale(1)`, opacity: .95, offset: .28 },
+      { transform: `translate(${x}px,${y}px) rotate(${angle}deg) scale(.75)`, opacity: 0 }
+    ], Math.min(190, Math.max(100, Number(phaseHold) || 600)));
+    else node.setAttribute('transform', `translate(${x} ${y}) rotate(${angle})`);
+  }
+  function punchCue(row, next, phaseHold) {
+    const event = next?.event, actor = point(row.actorId), target = point(event?.targetId);
+    if (!event || !actor || !target || !layer()) return;
+    const dx = target.x - actor.x, dy = target.y - actor.y, distance = Math.hypot(dx, dy);
+    const direction = distance ? { x: dx / distance, y: dy / distance } : { x: 1, y: 0 };
+    const from = { x: actor.x + direction.x * actor.radius * .7, y: actor.y + direction.y * actor.radius * .7 };
+    const to = { x: target.x - direction.x * target.radius * .55, y: target.y - direction.y * target.radius * .55 };
+    const bend = Math.min(18, distance * .08), normal = { x: -direction.y, y: direction.x };
+    const path = element('path', { class: 'gm-combat-punch-trail', d: `M ${from.x} ${from.y} Q ${(from.x + to.x) / 2 + normal.x * bend} ${(from.y + to.y) / 2 + normal.y * bend} ${to.x} ${to.y}`,
+      fill: 'none', stroke: '#e8d2aa', 'stroke-width': Math.max(2, actor.spriteHeight * .055), 'stroke-linecap': 'round', opacity: 0,
+      'stroke-dasharray': distance, 'stroke-dashoffset': distance });
+    path.setAttribute('data-owner-id', row.actorId); path.setAttribute('data-target-id', event.targetId);
+    path.setAttribute('data-travel-ms', Math.min(240, Number(phaseHold) || 600));
+    layer().append(path);
+    if (!compact()) animate(path, [
+      { opacity: 0, strokeDashoffset: distance },
+      { opacity: .9, strokeDashoffset: 0, offset: .28 },
+      { opacity: 0, strokeDashoffset: -distance * .12 }
+    ], Math.min(240, Math.max(100, Number(phaseHold) || 600)));
+    else path.setAttribute('opacity', '.35');
+  }
+  function abilityCue(row, next, phaseHold) {
+    const id = presentationAbility(row), event = next?.event;
+    const actor = point(row.actorId), targetId = event?.targetId ?? row.targetId, target = point(targetId);
+    if (!actor || !layer()) return;
+    const hold = Math.max(100, Math.min(Number(phaseHold) || 600, 560));
+    const src = S9_EFFECTS[id];
+    if (id === 'exploit_loophole' && target) {
+      const size = Math.max(52, target.spriteHeight * 1.7);
+      const node = group('gm-combat-loophole-seal', row.actorId, targetId, '#e5c59b');
+      node.setAttribute('data-ability-id', id); image(node, src, size, size); layer().append(node);
+      if (!compact()) animate(node, [
+        { transform: `translate(${target.x}px,${target.y}px) rotate(-18deg) scale(.5)`, opacity: 0 },
+        { transform: `translate(${target.x}px,${target.y}px) rotate(0deg) scale(1)`, opacity: .92, offset: .28 },
+        { transform: `translate(${target.x}px,${target.y}px) rotate(18deg) scale(1.08)`, opacity: 0 }
+      ], hold);
+      else node.setAttribute('transform', `translate(${target.x} ${target.y})`);
+      return;
+    }
+    if (id === 'combat_theft' && target) {
+      const dx = actor.x - target.x, dy = actor.y - target.y, distance = Math.hypot(dx, dy);
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI, width = Math.max(72, distance), height = Math.max(48, width * .62);
+      const midX = (actor.x + target.x) / 2, midY = (actor.y + target.y) / 2;
+      const node = group('gm-combat-theft-siphon', row.actorId, targetId, '#e7c38d');
+      node.setAttribute('data-ability-id', id); node.setAttribute('data-travel-direction', 'target-to-attacker');
+      image(node, src, width, height); layer().append(node);
+      if (!compact()) animate(node, [
+        { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(.18)`, opacity: 0 },
+        { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(1)`, opacity: .95, offset: .25 },
+        { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(.84)`, opacity: .82, offset: .7 },
+        { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(.3)`, opacity: 0 }
+      ], hold);
+      else node.setAttribute('transform', `translate(${midX} ${midY}) rotate(${angle})`);
+      return;
+    }
+    if (id === 'healing_touch' && target) {
+      const dx = target.x - actor.x, dy = target.y - actor.y, distance = Math.hypot(dx, dy);
+      const direction = distance ? { x: dx / distance, y: dy / distance } : { x: 0, y: -1 };
+      const start = { x: actor.x + direction.x * actor.radius * .7, y: actor.y + direction.y * actor.radius * .7 };
+      const end = { x: target.x - direction.x * target.radius * .5, y: target.y - direction.y * target.radius * .5 };
+      const height = Math.max(54, Math.min(actor.spriteHeight, target.spriteHeight) * 1.25), width = height * .76;
+      const node = group('gm-combat-healing-touch-flight', row.actorId, targetId, '#ead8b5');
+      node.setAttribute('data-ability-id', id); node.setAttribute('data-travel-ms', hold);
+      image(node, src, width, height); layer().append(node);
+      if (!compact()) animate(node, [
+        { transform: `translate(${start.x}px,${start.y}px) scale(.58)`, opacity: 0 },
+        { transform: `translate(${(start.x + end.x) / 2}px,${(start.y + end.y) / 2}px) scale(.92)`, opacity: .95, offset: .52 },
+        { transform: `translate(${end.x}px,${end.y}px) scale(1)`, opacity: 0 }
+      ], hold);
+      else node.setAttribute('transform', `translate(${end.x} ${end.y})`);
+    }
+  }
   function animate(node, frames, duration, delay = 0, options = {}) {
     if (!node.animate || compact()) return null;
     const animation = node.animate(frames, { duration, delay, easing: options.easing || 'linear', fill: 'none' });
@@ -421,17 +536,21 @@ function createCombatFx(wrap) {
   function travel(row, step, phaseHold) {
     const event = step?.event;
     const swordBasic = swordBasicSlash(row, event);
-    // Weapon basics use the supplied slash art for travel and impact; very-fast
-    // and reduced-motion playback retain their existing compact presentation.
-    if (!event || !damageTypes.has(step.type) || event.isDot || compact()) return;
+    const abilityId = presentationAbility(row), brutalStrike = abilityId === 'brutal_strike' && event?.actorId === row.actorId;
+    const customS9 = ['exploit_loophole', 'combat_theft'].includes(abilityId) && event?.actorId === row.actorId;
+    const unarmedBasic = row?.abilityId === 'basic_attack' && row.attackKind === 'unarmed'
+      && !!event && !magicBasic(row, event) && event.actorId === row.actorId && !event.isReaction && !event.isReflect;
+    // Punches land as a distinct burst; weapon basics and Brutal Strike use the provided crescent art.
+    if (!event || !damageTypes.has(step.type) || event.isDot || compact() || unarmedBasic || customS9) return;
     const ownerId = event.actorId ?? row.actorId, targetId = event.targetId;
     const a = point(ownerId), originalTarget = point(targetId);
     if (!a || !originalTarget || ownerId === targetId) return;
     const area = isArea(row, event);
     if (area && areaRows.has(row)) return;
     const b = area ? targetRank(targetId) || originalTarget : originalTarget;
-    const family = swordBasic ? 'slash' : area ? 'wave' : familyFor(row, event), settings = config.families?.[family] || defaults.families[family];
-    const physical = event.damageType === 'physical' && !magicBasic(row, event), pathKind = physical || swordBasic ? 'straight' : settings.path;
+    const usesSlashArt = swordBasic || brutalStrike;
+    const family = usesSlashArt ? 'slash' : area ? 'wave' : familyFor(row, event), settings = config.families?.[family] || defaults.families[family];
+    const physical = event.damageType === 'physical' && !magicBasic(row, event), pathKind = physical || usesSlashArt ? 'straight' : settings.path;
     const distance = Math.hypot(b.x - a.x, b.y - a.y), hold = Math.max(1, Number(phaseHold) || 600);
     const duration = swordBasic ? hold
       : Math.min(hold, Math.max(settings.minMs, Math.min(settings.maxMs, distance / (settings.speedPxPerMs || 1))));
@@ -440,31 +559,30 @@ function createCombatFx(wrap) {
     const direction = distance ? { x: (b.x - a.x) / distance, y: (b.y - a.y) / distance } : { x: 1, y: 0 };
     // Keep the sword mark between the sprites instead of letting it sit over
     // their centers. The bounded insets also keep close formations moving forward.
-    const startInset = swordBasic ? Math.min(a.radius, distance * .24) : 0;
-    const endInset = swordBasic ? Math.min(originalTarget.radius, distance * .24) : 0;
+    const startInset = usesSlashArt ? Math.min(a.radius, distance * .24) : 0;
+    const endInset = usesSlashArt ? Math.min(originalTarget.radius, distance * .24) : 0;
     const travelStart = { x: a.x + direction.x * startInset, y: a.y + direction.y * startInset };
     const travelEnd = { x: b.x - direction.x * endInset, y: b.y - direction.y * endInset };
     const bend = pathKind === 'arc' ? Math.min(42, distance * .18) : 0;
     const coords = t => {
-      const from = swordBasic ? travelStart : a, to = swordBasic ? travelEnd : b;
+      const from = usesSlashArt ? travelStart : a, to = usesSlashArt ? travelEnd : b;
       return { x: from.x + (to.x - from.x) * t + Math.sin(Math.PI * t) * bend,
         y: from.y + (to.y - from.y) * t - Math.sin(Math.PI * t) * bend * .45 };
     };
     const make = (ghost = 0) => {
-      const node = group(ghost ? 'gm-combat-afterimage' : swordBasic ? 'gm-combat-sword-slash-travel' : 'gm-combat-projectile', ownerId, targetId, colorFor(event));
+      const node = group(ghost ? 'gm-combat-afterimage' : usesSlashArt ? 'gm-combat-sword-slash-travel' : 'gm-combat-projectile', ownerId, targetId, colorFor(event));
       for (const [name, value] of Object.entries({ family, 'damage-type': event.damageType || 'default', 'path-kind': pathKind,
-        'travel-ms': duration, 'travel-delay-ms': delay, ...(swordBasic ? { 'angle-deg': angle.toFixed(2) } : {}) })) node.setAttribute(`data-${name}`, value);
+        'travel-ms': duration, 'travel-delay-ms': delay, ...(usesSlashArt ? { 'angle-deg': angle.toFixed(2), ...(brutalStrike ? { 'ability-id': 'brutal_strike' } : {}) } : {}) })) node.setAttribute(`data-${name}`, value);
       node.setAttribute('opacity', '0');
-      if (swordBasic) {
-        // Size against the sprite box, not its combat radius: the slash should
-        // read at roughly twice character height. Flip the art locally while
-        // the parent group's rotation continues to follow attacker -> target.
-        const size = Math.max(1, originalTarget.spriteHeight || originalTarget.radius / .38) * 2;
+      if (usesSlashArt) {
+        // Size against the sprite box. The established weapon-basic scale is 2x;
+        // Brutal Strike is emphasized but leaves more character silhouette visible.
+        const size = Math.max(1, originalTarget.spriteHeight || originalTarget.radius / .38) * (swordBasic ? 2 : 1.55);
         const slash = element('image', { class: 'gm-combat-sword-slash-projectile', x: -size / 2, y: -size / 2,
           width: size, height: size, href: 'data/assets/effects/sword-slash.png', transform: 'rotate(180)',
           preserveAspectRatio: 'xMidYMid meet', opacity: 1 });
         slash.setAttribute('data-flip-deg', '180');
-        slash.setAttribute('data-sprite-scale', '2');
+        slash.setAttribute('data-sprite-scale', swordBasic ? '2' : '1.55');
         slash.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', 'data/assets/effects/sword-slash.png');
         node.append(slash);
       } else node.append(shape(settings.shape || family, settings.size, area ? b.width : undefined));
@@ -514,6 +632,22 @@ function createCombatFx(wrap) {
       animate(frame, frames.map(key => ({ ...key, easing: 'steps(1,end)' })), total);
     }
     layer().append(burst);
+    const punchBasic = row?.abilityId === 'basic_attack' && row.attackKind === 'unarmed'
+      && !magicBasic(row, event) && event.actorId === row.actorId && !event.isReaction && !event.isReflect;
+    if (punchBasic) {
+      const size = Math.max(38, p.spriteHeight * 1.28);
+      const art = group('gm-combat-punch-impact', event.actorId ?? row.actorId, event.targetId, '#f2c39b');
+      art.setAttribute('data-effect-src', 'data/assets/effects/unarmed-punch-impact.png');
+      art.setAttribute('transform', `translate(${p.x} ${p.y})`);
+      image(art, 'data/assets/effects/unarmed-punch-impact.png', size, size);
+      layer().append(art);
+      if (!compact()) animate(art, [
+        { transform: `translate(${p.x}px,${p.y}px) scale(.35)`, opacity: 0 },
+        { transform: `translate(${p.x}px,${p.y}px) scale(1.08)`, opacity: .96, offset: .32 },
+        { transform: `translate(${p.x}px,${p.y}px) scale(1.22)`, opacity: 0 }
+      ], duration);
+      else art.setAttribute('opacity', '.9');
+    }
     if (hit.count > 1 && !compact()) for (let index = 0; index < 3; index++) {
       const spark = element('rect', { x: -1, y: -1, width: 3, height: 3, fill: 'currentColor' }); burst.append(spark);
       animate(spark, [{ transform: 'translate(0,0)', opacity: .9 }, { transform: `translate(${(index - 1) * 13}px,${-10 - index * 3}px)`, opacity: 0 }], 110, index * 35);
@@ -526,6 +660,19 @@ function createCombatFx(wrap) {
     const node = group(`gm-combat-${type === 'revive' ? 'heal' : type}`, event.actorId ?? row.actorId, id, color);
     node.setAttribute('transform', `translate(${p.x} ${p.y})`); layer().append(node);
     if (type === 'heal' || type === 'revive') {
+      if (presentationAbility(row) === 'healing_touch') {
+        const size = Math.max(44, p.spriteHeight * 1.05);
+        const emblem = group('gm-combat-healing-touch-impact', event.actorId ?? row.actorId, id, '#ead8b5');
+        emblem.setAttribute('data-ability-id', 'healing_touch'); emblem.setAttribute('transform', `translate(${p.x} ${p.y})`);
+        image(emblem, 'data/assets/effects/healing-touch.png', size * .76, size);
+        layer().append(emblem);
+        if (!compact()) animate(emblem, [
+          { transform: `translate(${p.x}px,${p.y}px) scale(.62)`, opacity: 0 },
+          { transform: `translate(${p.x}px,${p.y}px) scale(1)`, opacity: .96, offset: .3 },
+          { transform: `translate(${p.x}px,${p.y}px) scale(1.08)`, opacity: 0 }
+        ], Math.min(420, duration));
+        else emblem.setAttribute('opacity', '.9');
+      }
       for (let index = 0; index < 4; index++) {
         const mote = element('path', { d: 'M -1 -4 H 1 V -1 H 4 V 1 H 1 V 4 H -1 V 1 H -4 V -1 H -1 Z', fill: 'currentColor', transform: `translate(${(index - 1.5) * 7} ${index % 2 * 7})` });
         node.append(mote);
@@ -560,7 +707,12 @@ function createCombatFx(wrap) {
     if (chipRow && row !== chipRow) clearPhase(false); else clearPhase(true);
     if (!cue || cue.type === 'settle') return;
     const type = cue.type === 'row' ? event.type : cue.type;
-    if (type === 'cast') { areaRows.delete(row); abilityChip(row, event); }
+    if (type === 'cast') {
+      areaRows.delete(row); abilityChip(row, event);
+      if (row.abilityId === 'basic_attack' && row.attackKind === 'gun') muzzleFlash(row, cue.next, phaseHoldMs);
+      if (row.abilityId === 'basic_attack' && row.attackKind === 'unarmed' && cue.next?.event && !magicBasic(row, cue.next.event)) punchCue(row, cue.next, phaseHoldMs);
+      abilityCue(row, cue.next, phaseHoldMs);
+    }
     if (damageTypes.has(type)) impact(row, event);
     else if (['heal', 'shield', 'revive'].includes(type)) support(type, event, row);
     else if (event.status || event.type === 'thread' || ['cc_loss', 'madness_loss', 'banished'].includes(event.subtype)) support('status', event, row);
