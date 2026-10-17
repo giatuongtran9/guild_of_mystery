@@ -414,6 +414,50 @@ function createCombatFx(wrap) {
     ], flashDuration, delay);
     else { node.setAttribute('transform', `translate(${x} ${y}) rotate(${angle})`); node.setAttribute('opacity', '.8'); }
   }
+  let gunShotClipId = 0;
+  function gunShotTrail(row, next, launch, phaseHold, flashDuration) {
+    const event = next?.event, targetId = event?.targetId;
+    if (!weaponBasic(row, event, 'gun') || !launch || targetId == null) return;
+    const target = point(targetId), root = layer();
+    if (!target || !root) return;
+    const dx = target.x - launch.x, dy = target.y - launch.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance < 4) return;
+    const direction = { x: dx / distance, y: dy / distance };
+    const end = Math.max(0, distance - target.radius);
+    if (end < 4) return;
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    const duration = Math.max(90, Math.min(250, (Number(phaseHold) || 600) - flashDuration - 24));
+    let defs = root.querySelector('defs[data-gm-gun-shot-defs]');
+    if (!defs) {
+      defs = element('defs', { 'data-gm-gun-shot-defs': 'true' });
+      root.insertBefore(defs, root.firstChild);
+    }
+    const clipId = `gm-gun-shot-clip-${++gunShotClipId}`;
+    const clip = element('clipPath', { id: clipId, clipPathUnits: 'userSpaceOnUse' });
+    const reveal = element('rect', { x: 0, y: -4, width: 0, height: 8 });
+    clip.append(reveal); defs.append(clip);
+    const trail = group('gm-combat-projectile gm-combat-gun-shot-line', row.actorId, targetId, '#d6b77f');
+    trail.setAttribute('transform', `translate(${launch.x} ${launch.y}) rotate(${angle})`);
+    trail.setAttribute('clip-path', `url(#${clipId})`);
+    trail.setAttribute('data-start-x', launch.x); trail.setAttribute('data-start-y', launch.y);
+    trail.setAttribute('data-end-x', launch.x + direction.x * end);
+    trail.setAttribute('data-end-y', launch.y + direction.y * end);
+    trail.setAttribute('data-travel-ms', duration); trail.setAttribute('data-launch-delay-ms', flashDuration);
+    trail.append(element('line', { x1: 0, y1: 0, x2: end, y2: 0, fill: 'none', stroke: 'currentColor',
+      'stroke-width': 1.5, 'stroke-dasharray': '4 11', 'stroke-linecap': 'butt', opacity: .92 }));
+    root.append(trail);
+    if (compact() || !reveal.animate) { reveal.setAttribute('width', end); return; }
+    const animation = reveal.animate([{ width: '0px' }, { width: `${end}px` }], {
+      duration, delay: flashDuration, easing: 'linear', fill: 'forwards'
+    });
+    if (!animation) { reveal.setAttribute('width', end); return; }
+    animation.playbackRate = speed;
+    animations.set(animation, trail);
+    if (paused) animation.pause();
+    animation.onfinish = () => animations.delete(animation);
+    animation.oncancel = () => animations.delete(animation);
+  }
   function punchCue(row, next, phaseHold) {
     const event = next?.event, actor = point(row.actorId), target = point(event?.targetId);
     if (!weaponBasic(row, event, 'unarmed') || !actor || !target || !layer()) return;
@@ -582,10 +626,13 @@ function createCombatFx(wrap) {
     if (!a || !originalTarget || ownerId === targetId) return;
     const gunBasic = weaponBasic(row, event, 'gun');
     const firing = gunBasic ? firingPoint(a, originalTarget) : null;
-    if (compact()) {
-      if (gunBasic) muzzleFlash(row, step, { ...firing, delay: 0, flashDuration: 140 });
+    if (gunBasic) {
+      const flashDuration = Math.min(140, Math.max(90, (Number(phaseHold) || 600) * .24));
+      muzzleFlash(row, step, { ...firing, delay: 0, flashDuration });
+      gunShotTrail(row, step, firing, phaseHold, flashDuration);
       return;
     }
+    if (compact()) return;
     const area = isArea(row, event);
     if (area && areaRows.has(row)) return;
     const b = area ? targetRank(targetId) || originalTarget : originalTarget;
