@@ -36,7 +36,7 @@ function fixture(options = {}) {
   w.matchMedia = query => ({ matches: !!options.reducedMotion && query.includes('prefers-reduced-motion'), media: query, addEventListener() {}, removeEventListener() {} });
   const animations = [];
   if (options.waapi) {
-    w.HTMLElement.prototype.animate = function (keyframes, timing) {
+    w.Element.prototype.animate = function (keyframes, timing) {
       const animation = {
         element: this, keyframes, timing, playbackRate: 1, playState: 'running', onfinish: null,
         pause() { this.playState = 'paused'; },
@@ -50,7 +50,7 @@ function fixture(options = {}) {
       return animation;
     };
   }
-  w.HTMLElement.prototype.getBoundingClientRect = function () {
+  w.Element.prototype.getBoundingClientRect = function () {
     const card = this.closest?.('[data-unit-id]');
     const x = card?.dataset.unitId === enemy.id ? 140 : 40;
     const y = card?.dataset.unitId === enemy.id ? 80 : 350;

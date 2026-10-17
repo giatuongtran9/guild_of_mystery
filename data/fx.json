@@ -112,7 +112,7 @@
       "black_emperor": "beam"
     }
   },
-  "impact": { "frames": 4, "durationMs": 160, "critScale": 1.5, "critHitStopMs": 0 },
+  "impact": { "frames": 4, "durationMs": 160, "critScale": 1.5, "critColor": "#ffa64d", "critNumberScale": 1.25 },
   "support": { "durationMs": 500 },
   "abilityChipMs": 500
 }

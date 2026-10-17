@@ -215,7 +215,7 @@ function clean(f) {
     assert.equal(f.app.querySelector('.b-result-box').hidden, false);
   }, { sim: true });
 
-  for (const speed of [.5, 1, 2, 4]) await test(`ordinary action lasts ${2000 / speed}ms at ${speed}x with ordered impacts`, f => {
+  for (const critical of [false, true]) for (const speed of [.5, 1, 2, 4]) await test(`${critical ? 'critical' : 'ordinary'} action lasts ${2000 / speed}ms at ${speed}x with ordered impacts`, f => {
     f.w.G9.setTickerSpeed(speed); f.tick(); f.tick();
     const started = f.time;
     assert.equal(hp(f.card(f.enemyId)), '100/100');
@@ -223,7 +223,7 @@ function clean(f) {
     assert(f.app.querySelector('.battle-partial-row'));
     f.tick(); assert.equal(f.time - started, 2000 / speed);
     assert.equal(f.app.querySelector('.battle-partial-row'), null);
-  }, { basic: true });
+  }, { basic: true, critical });
 
   await test('complex actions retain extra reading time and Pause preserves the remaining phase clock', f => {
     f.tick(); f.tick(); const started = f.time;
@@ -232,18 +232,21 @@ function clean(f) {
     assert(log(f).textContent.includes('Chronicle Agent falls'));
   });
 
-  await test('critical impact is larger and orange with no hit-stop or playback delay', f => {
+  for (const critical of [false, true]) for (const speed of [.5, 1, 2, 4]) await test(`complex ${critical ? 'critical' : 'normal'} action lasts ${3700 / speed}ms at ${speed}x`, f => {
+    f.w.G9.setTickerSpeed(speed); f.tick(); f.tick(); const started = f.time;
+    for (let index = 0; index < 6; index++) f.tick();
+    assert.equal(f.time - started, 3700 / speed, 'a critical hit adds no hold to the causal action sequence');
+    assert(log(f).textContent.includes('Chronicle Agent falls'));
+  }, { critical });
+
+  await test('critical impact keeps the normal phase clock without delaying or duplicating the resolved hit', f => {
     beginHit(f);
     assert.equal(hp(f.card(f.enemyId)), '30/100');
-    assert.equal(f.timers.values().next().value.delay, 450, 'critical damage uses the ordinary 450ms impact phase');
-    const number = f.app.querySelector('.gm-battle-fx-number-critical');
-    assert(number, 'critical damage has a distinct number style');
-    assert.equal(number.dataset.critical, 'true');
-    assert.match(number.style.cssText, /#ff9b3d/i, 'critical damage number is orange');
+    assert.equal(f.timers.values().next().value.delay, 450, 'critical impact has the ordinary 450ms reading phase');
     f.elapse(50); f.w.G9.toggleTickerPause();
     assert.equal(f.timers.size, 0);
     f.w.G9.setTickerSpeed(2); f.w.G9.toggleTickerPause();
-    assert.equal(f.timers.values().next().value.delay, 200, 'critical phase keeps the ordinary remaining clock at 2x');
+    assert.equal(f.timers.values().next().value.delay, 200, 'remaining critical phase follows proportional speed without extra time');
     f.tick();
     assert(log(f).textContent.includes('MYTHICAL FORM AWAKENING'));
     assert.equal(hp(f.card(f.enemyId)), '30/100');
