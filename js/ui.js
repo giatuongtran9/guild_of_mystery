@@ -396,7 +396,8 @@ function createCombatFx(wrap) {
     // The original art is preserved in a pixel-exact 979x547 crop. Its bright
     // ignition point is at (105, 274) within that crop; anchor only that point
     // to the estimated hand/barrel firing position.
-    const width = 144, scale = width / 979, height = 547 * scale;
+    // Double the visible burst from the original transparent canvas while preserving its barrel anchor.
+    const width = 288, scale = width / 979, height = 547 * scale;
     const src = 'data/assets/effects/gun-muzzle.png?v=d1c869a57e8ee076';
     node.setAttribute('data-angle-deg', angle.toFixed(2));
     node.setAttribute('data-effect-width', width); node.setAttribute('data-effect-height', height);
@@ -748,7 +749,7 @@ function createCombatFx(wrap) {
     const critical = !!event.critical, settings = config.impact || defaults.impact, hit = hitIndex(row, event);
     const punchHit = weaponBasic(row, event, 'unarmed');
     const duration = punchHit ? Math.max(settings.durationMs || 160, 320) : settings.durationMs || 160;
-    const impactScale = (critical ? settings.critScale || 1.5 : 1) * (punchHit ? 1.85 : 1);
+    const impactScale = critical ? settings.critScale || 1.5 : 1;
     const burst = group('gm-combat-impact', event.actorId ?? row.actorId, event.targetId,
       punchHit ? '#ffd36f' : critical ? settings.critColor || defaults.impact.critColor : colorFor(event));
     burst.setAttribute('transform', `translate(${p.x} ${p.y}) scale(${impactScale})`);
@@ -756,31 +757,42 @@ function createCombatFx(wrap) {
     burst.setAttribute('data-impact-scale', impactScale);
     if (punchHit) burst.setAttribute('data-punch-burst', 'true');
     burst.setAttribute('data-hit-index', hit.index); burst.setAttribute('data-hit-count', hit.count); burst.setAttribute('data-stagger-ms', hit.count > 1 ? 35 : 0);
-    const pixels = punchHit ? [
-      [[-3,-3,6,6]],
-      [[-2,-11,4,9],[-2,2,4,9],[-11,-2,9,4],[2,-2,9,4]],
-      [[-2,-17,4,11],[-2,6,4,11],[-17,-2,11,4],[6,-2,11,4],[-13,-13,5,5],[8,-13,5,5],[-13,8,5,5],[8,8,5,5]],
-      [[-2,-23,4,9],[-2,14,4,9],[-23,-2,9,4],[14,-2,9,4],[-17,-17,5,5],[12,-17,5,5],[-17,12,5,5],[12,12,5,5],[-2,-2,4,4],[-10,-2,6,3],[4,-2,6,3]]
-    ] : [ [[-2,-2,4,4]], [[-2,-10,4,6],[-2,4,4,6],[-10,-2,6,4],[4,-2,6,4]],
-      [[-2,-14,4,5],[-2,9,4,5],[-14,-2,5,4],[9,-2,5,4],[-9,-9,3,3],[6,6,3,3]],
-      [[-2,-17,3,3],[-2,14,3,3],[-17,-2,3,3],[14,-2,3,3],[-12,-12,2,2],[10,10,2,2]] ];
-    const frameCount = settings.frames || 4;
-    for (let index = 0; index < frameCount; index++) {
-      const frame = element('g', { class: 'gm-combat-impact-frame', 'data-frame': index, opacity: compact() ? index === frameCount - 1 ? 1 : 0 : index === 0 ? 1 : 0 });
-      const pixelIndex = Math.round(index * (pixels.length - 1) / (frameCount - 1));
-      for (const [x,y,width,height] of pixels[pixelIndex]) frame.append(element('rect', { x,y,width,height, fill: 'currentColor' }));
-      if (punchHit && index < 3) frame.append(element('rect', { x: -2, y: -2, width: 4, height: 4, fill: '#fff5d6' }));
-      burst.append(frame);
-      const start = index / frameCount, end = (index + 1) / frameCount;
-      const frames = [{ opacity: index === 0 ? 1 : 0, offset: 0 }];
-      if (start > 0) frames.push({ opacity: 1, offset: start });
-      frames.push({ opacity: 0, offset: end });
-      if (end < 1) frames.push({ opacity: 0, offset: 1 });
-      // Step each keyframe segment. Stepping the whole effect would hold only
-      // the first frame and skip the intermediate pixel shapes entirely.
-      animate(frame, frames.map(key => ({ ...key, easing: 'steps(1,end)' })), duration);
+    let punchArt = null;
+    if (punchHit) {
+      // Use the original authored punch artwork, not a procedurally redrawn burst.
+      const height = Math.max(80, Math.min(140, Number(p.spriteHeight) || 96));
+      const width = height * 880 / 929;
+      const src = 'data/assets/effects/unarmed-punch-impact.png?v=0ec09b43c3593bab';
+      burst.setAttribute('data-effect-src', src);
+      burst.setAttribute('data-effect-width', width); burst.setAttribute('data-effect-height', height);
+      punchArt = image(burst, src, width, height, 'gm-combat-impact-image gm-combat-impact-image-punch');
+    } else {
+      const pixels = [ [[-2,-2,4,4]], [[-2,-10,4,6],[-2,4,4,6],[-10,-2,6,4],[4,-2,6,4]],
+        [[-2,-14,4,5],[-2,9,4,5],[-14,-2,5,4],[9,-2,5,4],[-9,-9,3,3],[6,6,3,3]],
+        [[-2,-17,3,3],[-2,14,3,3],[-17,-2,3,3],[14,-2,3,3],[-12,-12,2,2],[10,10,2,2]] ];
+      const frameCount = settings.frames || 4;
+      for (let index = 0; index < frameCount; index++) {
+        const frame = element('g', { class: 'gm-combat-impact-frame', 'data-frame': index, opacity: compact() ? index === frameCount - 1 ? 1 : 0 : index === 0 ? 1 : 0 });
+        const pixelIndex = Math.round(index * (pixels.length - 1) / (frameCount - 1));
+        for (const [x,y,width,height] of pixels[pixelIndex]) frame.append(element('rect', { x,y,width,height, fill: 'currentColor' }));
+        burst.append(frame);
+        const start = index / frameCount, end = (index + 1) / frameCount;
+        const frames = [{ opacity: index === 0 ? 1 : 0, offset: 0 }];
+        if (start > 0) frames.push({ opacity: 1, offset: start });
+        frames.push({ opacity: 0, offset: end });
+        if (end < 1) frames.push({ opacity: 0, offset: 1 });
+        // Step each keyframe segment. Stepping the whole effect would hold only
+        // the first frame and skip the intermediate pixel shapes entirely.
+        animate(frame, frames.map(key => ({ ...key, easing: 'steps(1,end)' })), duration);
+      }
     }
     layer().append(burst);
+    if (punchArt && !compact()) animate(punchArt, [
+      { opacity: .18, transform: 'scale(.78)' },
+      { opacity: 1, transform: 'scale(1.08)', offset: .24 },
+      { opacity: .9, transform: 'scale(1)', offset: .46 },
+      { opacity: 0, transform: 'scale(.9)' }
+    ], duration, 0, { removeNode: burst });
     if (hit.count > 1 && !compact()) for (let index = 0; index < 3; index++) {
       const spark = element('rect', { x: -1, y: -1, width: 3, height: 3, fill: 'currentColor' }); burst.append(spark);
       animate(spark, [{ transform: 'translate(0,0)', opacity: .9 }, { transform: `translate(${(index - 1) * 13}px,${-10 - index * 3}px)`, opacity: 0 }], 110, index * 35);
