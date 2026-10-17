@@ -787,3 +787,33 @@
 .gm-unit-sprite-anchor.gm-turn-focus-exempt::after {
   content: none;
 }
+
+/* Keep every unit fully visible; identify the selected target with a red rim
+   and a ground ring while the acting unit retains its warm turn cue. */
+.gm-arena-unit.gm-turn-dim:not(.dead) {
+  opacity: 1;
+  filter: none;
+}
+
+.gm-unit-sprite-anchor.gm-turn-target::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  bottom: 0;
+  width: 76%;
+  height: 9px;
+  box-sizing: border-box;
+  transform: translateX(-50%);
+  border: 2px solid rgba(255, 83, 76, 0.96);
+  border-radius: 50%;
+  background: rgba(190, 30, 35, 0.1);
+  box-shadow: 0 0 4px rgba(255, 68, 62, 0.78), 0 0 11px rgba(213, 48, 43, 0.54);
+  pointer-events: none;
+}
+
+.gm-unit-sprite-anchor.gm-turn-target .gm-unit-sprite :is(img, .combat-sprite-img) {
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.8))
+    drop-shadow(0 0 2px rgba(255, 132, 124, 0.96))
+    drop-shadow(0 0 7px rgba(238, 54, 49, 0.82));
+}

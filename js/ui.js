@@ -396,7 +396,7 @@ function createCombatFx(wrap) {
     // The original art is preserved in a pixel-exact 979x547 crop. Its bright
     // ignition point is at (105, 274) within that crop; anchor only that point
     // to the estimated hand/barrel firing position.
-    const width = 96, scale = width / 979, height = 547 * scale;
+    const width = 144, scale = width / 979, height = 547 * scale;
     const src = 'data/assets/effects/gun-muzzle.png?v=d1c869a57e8ee076';
     node.setAttribute('data-angle-deg', angle.toFixed(2));
     node.setAttribute('data-effect-width', width); node.setAttribute('data-effect-height', height);
@@ -427,7 +427,8 @@ function createCombatFx(wrap) {
     const end = Math.max(0, distance - target.radius);
     if (end < 4) return;
     const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-    const duration = Math.max(90, Math.min(250, (Number(phaseHold) || 600) - flashDuration - 24));
+    const releaseDelay = Math.max(0, Number(launch.delay) || 0);
+    const duration = Math.max(70, Math.min(220, (Number(phaseHold) || 600) - releaseDelay - flashDuration - 24));
     let defs = root.querySelector('defs[data-gm-gun-shot-defs]');
     if (!defs) {
       defs = element('defs', { 'data-gm-gun-shot-defs': 'true' });
@@ -443,13 +444,13 @@ function createCombatFx(wrap) {
     trail.setAttribute('data-start-x', launch.x); trail.setAttribute('data-start-y', launch.y);
     trail.setAttribute('data-end-x', launch.x + direction.x * end);
     trail.setAttribute('data-end-y', launch.y + direction.y * end);
-    trail.setAttribute('data-travel-ms', duration); trail.setAttribute('data-launch-delay-ms', flashDuration);
+    trail.setAttribute('data-travel-ms', duration); trail.setAttribute('data-launch-delay-ms', releaseDelay + flashDuration);
     trail.append(element('line', { x1: 0, y1: 0, x2: end, y2: 0, fill: 'none', stroke: 'currentColor',
       'stroke-width': 1.5, 'stroke-dasharray': '4 11', 'stroke-linecap': 'butt', opacity: .92 }));
     root.append(trail);
     if (compact() || !reveal.animate) { reveal.setAttribute('width', end); return; }
     const animation = reveal.animate([{ width: '0px' }, { width: `${end}px` }], {
-      duration, delay: flashDuration, easing: 'linear', fill: 'forwards'
+      duration, delay: releaseDelay + flashDuration, easing: 'linear', fill: 'forwards'
     });
     if (!animation) { reveal.setAttribute('width', end); return; }
     animation.playbackRate = speed;
@@ -458,32 +459,55 @@ function createCombatFx(wrap) {
     animation.onfinish = () => animations.delete(animation);
     animation.oncancel = () => animations.delete(animation);
   }
+  let punchShotClipId = 0;
   function punchCue(row, next, phaseHold) {
     const event = next?.event, actor = point(row.actorId), target = point(event?.targetId);
     if (!weaponBasic(row, event, 'unarmed') || !actor || !target || !layer()) return;
     const dx = target.x - actor.x, dy = target.y - actor.y, distance = Math.hypot(dx, dy);
-    const direction = distance ? { x: dx / distance, y: dy / distance } : { x: 1, y: 0 };
-    const from = { x: actor.x + direction.x * actor.radius * .25, y: actor.y + direction.y * actor.radius * .25 };
-    const length = Math.min(actor.spriteHeight * .4, Math.max(0, distance * .25));
-    const thickness = actor.spriteHeight * .09375;
-    const to = { x: from.x + direction.x * length, y: from.y + direction.y * length };
-    const path = element('path', { class: 'gm-combat-punch-trail gm-combat-punch-jab', d: `M ${from.x} ${from.y} L ${to.x} ${to.y}`,
-      fill: 'none', stroke: '#fff0c9', 'stroke-width': thickness, 'stroke-linecap': 'round', opacity: 0,
-      'stroke-dasharray': length, 'stroke-dashoffset': length });
-    path.setAttribute('data-owner-id', row.actorId); path.setAttribute('data-target-id', event.targetId);
-    path.setAttribute('data-effect-width', thickness); path.setAttribute('data-length', length);
-    path.setAttribute('data-reference-height', effectHeight(actor));
-    for (const [name, value] of Object.entries({ 'start-x': from.x, 'start-y': from.y, 'end-x': to.x, 'end-y': to.y })) path.setAttribute(`data-${name}`, value);
-    const hold = Math.max(1, Number(phaseHold) || 600), sweepDuration = hold, delay = 0;
-    path.setAttribute('data-travel-ms', sweepDuration); path.setAttribute('data-travel-delay-ms', delay);
-    layer().append(path);
-    if (!compact() && path.animate) animate(path, [
-      { opacity: 0, strokeDashoffset: length },
-      { opacity: 1, strokeDashoffset: 0, offset: .2 },
-      { opacity: 1, strokeDashoffset: 0, offset: .75 },
-      { opacity: 0, strokeDashoffset: -length * .12 }
-    ], sweepDuration, delay);
-    else { path.setAttribute('opacity', '.5'); path.setAttribute('stroke-dashoffset', 0); }
+    if (distance < 4) return;
+    const direction = { x: dx / distance, y: dy / distance };
+    const startInset = Math.min(actor.radius * .58, distance * .15);
+    const endInset = Math.min(target.radius, distance * .25);
+    const length = Math.max(0, distance - startInset - endInset);
+    if (length < 4) return;
+    const from = { x: actor.x + direction.x * startInset, y: actor.y + direction.y * startInset };
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    const thickness = Math.max(1.5, Math.min(2.5, actor.spriteHeight * .022));
+    const segment = Math.max(3, thickness * 2.1), gap = Math.max(5, thickness * 3.7);
+    const root = layer();
+    let defs = root.querySelector('defs[data-gm-punch-shot-defs]');
+    if (!defs) {
+      defs = element('defs', { 'data-gm-punch-shot-defs': 'true' });
+      root.insertBefore(defs, root.firstChild);
+    }
+    const clipId = `gm-punch-shot-clip-${++punchShotClipId}`;
+    const clip = element('clipPath', { id: clipId, clipPathUnits: 'userSpaceOnUse' });
+    const reveal = element('rect', { x: 0, y: -thickness * 2, width: 0, height: thickness * 4 });
+    clip.append(reveal); defs.append(clip);
+    const trail = group('gm-combat-projectile gm-combat-punch-trail', row.actorId, event.targetId, '#e8d09a');
+    trail.setAttribute('transform', `translate(${from.x} ${from.y}) rotate(${angle})`);
+    trail.setAttribute('clip-path', `url(#${clipId})`);
+    trail.setAttribute('data-start-x', from.x); trail.setAttribute('data-start-y', from.y);
+    trail.setAttribute('data-end-x', from.x + direction.x * length);
+    trail.setAttribute('data-end-y', from.y + direction.y * length);
+    trail.setAttribute('data-effect-width', thickness); trail.setAttribute('data-length', length);
+    trail.setAttribute('data-reference-height', effectHeight(actor));
+    const hold = Math.max(1, Number(phaseHold) || 600), delay = hold * .4;
+    const duration = Math.max(90, Math.min(190, hold * .32));
+    trail.setAttribute('data-travel-ms', duration); trail.setAttribute('data-launch-delay-ms', delay);
+    trail.append(element('line', { x1: 0, y1: 0, x2: length, y2: 0, fill: 'none', stroke: 'currentColor',
+      'stroke-width': thickness, 'stroke-dasharray': `${segment} ${gap}`, 'stroke-linecap': 'butt', opacity: .96 }));
+    root.append(trail);
+    if (compact() || !reveal.animate) { reveal.setAttribute('width', length); return; }
+    const animation = reveal.animate([{ width: '0px' }, { width: `${length}px` }], {
+      duration, delay, easing: 'linear', fill: 'forwards'
+    });
+    if (!animation) { reveal.setAttribute('width', length); return; }
+    animation.playbackRate = speed;
+    animations.set(animation, trail);
+    if (paused) animation.pause();
+    animation.onfinish = () => animations.delete(animation);
+    animation.oncancel = () => animations.delete(animation);
   }
   function abilityCue(row, next, phaseHold) {
     const id = presentationAbility(row), event = next?.event;
@@ -627,9 +651,10 @@ function createCombatFx(wrap) {
     const gunBasic = weaponBasic(row, event, 'gun');
     const firing = gunBasic ? firingPoint(a, originalTarget) : null;
     if (gunBasic) {
+      const shotDelay = (Number(phaseHold) || 600) * .4;
       const flashDuration = Math.min(140, Math.max(90, (Number(phaseHold) || 600) * .24));
-      muzzleFlash(row, step, { ...firing, delay: 0, flashDuration });
-      gunShotTrail(row, step, firing, phaseHold, flashDuration);
+      muzzleFlash(row, step, { ...firing, delay: shotDelay, flashDuration });
+      gunShotTrail(row, step, { ...firing, delay: shotDelay }, phaseHold, flashDuration);
       return;
     }
     if (compact()) return;
@@ -747,27 +772,6 @@ function createCombatFx(wrap) {
       animate(frame, frames.map(key => ({ ...key, easing: 'steps(1,end)' })), duration);
     }
     layer().append(burst);
-    const punchBasic = weaponBasic(row, event, 'unarmed');
-    if (punchBasic) {
-      const size = effectHeight(p);
-      const punchDuration = Math.min(600, Math.max(1, Number(phaseHold) || 600));
-      const art = group('gm-combat-punch-impact', event.actorId ?? row.actorId, event.targetId, '#f2c39b');
-      art.setAttribute('data-effect-height', size);
-      art.setAttribute('data-effect-duration-ms', punchDuration);
-      art.setAttribute('data-effect-src', 'data/assets/effects/unarmed-punch-impact.png');
-      art.setAttribute('transform', `translate(${p.x} ${p.y})`);
-      image(art, 'data/assets/effects/unarmed-punch-impact.png', size, size);
-      // Keep stepped hit feedback visible over the existing punch artwork,
-      // especially the larger orange critical burst.
-      layer().insertBefore(art, burst);
-      if (!compact()) animate(art, [
-        { transform: `translate(${p.x}px,${p.y}px) scale(.35)`, opacity: 0 },
-        { transform: `translate(${p.x}px,${p.y}px) scale(1)`, opacity: .96, offset: .2 },
-        { transform: `translate(${p.x}px,${p.y}px) scale(1)`, opacity: .96, offset: .75 },
-        { transform: `translate(${p.x}px,${p.y}px) scale(1.08)`, opacity: 0 }
-      ], punchDuration);
-      else art.setAttribute('opacity', '.9');
-    }
     if (hit.count > 1 && !compact()) for (let index = 0; index < 3; index++) {
       const spark = element('rect', { x: -1, y: -1, width: 3, height: 3, fill: 'currentColor' }); burst.append(spark);
       animate(spark, [{ transform: 'translate(0,0)', opacity: .9 }, { transform: `translate(${(index - 1) * 13}px,${-10 - index * 3}px)`, opacity: 0 }], 110, index * 35);
@@ -911,36 +915,31 @@ function createBattleEffects(wrap) {
   function clearTurnFocus() {
     clearTimeout(focusTimer); focusTimer = null;
     for (const node of focusedUnits) {
-      node.classList.remove('gm-turn-active', 'gm-turn-dim', 'gm-turn-focus-exempt');
-      node.querySelector('.gm-unit-sprite-anchor')?.classList.remove('gm-turn-active');
+      node.classList.remove('gm-turn-active', 'gm-turn-dim', 'gm-turn-focus-exempt', 'gm-turn-target');
+      node.querySelector('.gm-unit-sprite-anchor')?.classList.remove('gm-turn-active', 'gm-turn-target');
     }
     focusedUnits.clear(); focusedRow = null;
   }
-  function focusTurn(row) {
+  function focusTurn(row, event) {
     if (!row?.actorId && !row?.actorName) return;
     const actor = unit(row.actorId, row.actorName);
     if (!actor) return;
     if (focusedRow !== row) {
       clearTurnFocus(); focusedRow = row;
     }
-    const unaffected = new Set([String(actor.dataset.unitId)]);
-    if (row.targetId != null) unaffected.add(String(row.targetId));
-    else if (row.targetName) unaffected.add(String(row.targetName));
-    for (const step of row.timeline || []) {
-      const targetId = step?.event?.targetId, targetName = step?.event?.targetName;
-      if (targetId != null) unaffected.add(String(targetId));
-      else if (targetName) unaffected.add(String(targetName));
-    }
-    // Battle playback re-renders the unit cards between recorded events. Reapply
-    // the state to the live nodes on every cue instead of retaining stale nodes.
+    const target = unit(event?.targetId ?? row.targetId, event?.targetName ?? row.targetName);
+    // Everyone remains at full brightness. The current target gets a distinct
+    // red rim and ground ring while the acting unit keeps its warm turn cue.
     for (const node of wrap.querySelectorAll('.gm-arena-unit')) {
       focusedUnits.add(node);
       const isActor = node === actor;
-      const isExempt = !isActor && unaffected.has(String(node.dataset.unitId));
+      const isTarget = node === target && node !== actor;
+      node.classList.remove('gm-turn-dim', 'gm-turn-focus-exempt');
       node.classList.toggle('gm-turn-active', isActor);
-      node.querySelector('.gm-unit-sprite-anchor')?.classList.toggle('gm-turn-active', isActor);
-      node.classList.toggle('gm-turn-dim', !isActor && !isExempt);
-      node.classList.toggle('gm-turn-focus-exempt', isExempt);
+      node.classList.toggle('gm-turn-target', isTarget);
+      const spriteAnchor = node.querySelector('.gm-unit-sprite-anchor');
+      spriteAnchor?.classList.toggle('gm-turn-active', isActor);
+      spriteAnchor?.classList.toggle('gm-turn-target', isTarget);
     }
     clearTimeout(focusTimer); focusTimer = null;
   }
@@ -1006,12 +1005,19 @@ function createBattleEffects(wrap) {
     const dy = b ? b.top + b.height / 2 - a.top - a.height / 2 : actor.classList.contains('ally') ? -1 : 1;
     const distance = Math.hypot(dx, dy) || 1, direction = { x: dx / distance, y: dy / distance };
     const gun = row.attackKind === 'gun', magic = row.attackKind === 'magic';
-    const reach = Math.min(a.width, a.height) * (gun ? .025 : magic ? .018 : .055);
+    const reach = Math.min(a.width, a.height) * (gun ? .08 : magic ? .018 : .055);
     // Each pose's translation fits the margin created by its scale, even for
     // edge-reaching artwork and the smallest companion anchors.
     const pose = (amount, scale) => `translate(${direction.x * amount}px,${direction.y * amount}px) scale(${scale})`;
     const forward = pose(reach, gun ? .94 : magic ? .96 : .88);
-    const frames = [
+    const frames = gun ? [
+      { transform: 'translate(0,0) scale(1)', offset: 0, easing: 'ease-out' },
+      { transform: pose(-reach * .35, .99), offset: .27, easing: 'ease-in' },
+      { transform: forward, offset: .4, easing: 'linear' },
+      { transform: pose(-reach * .55, .99), offset: .47, easing: 'ease-out' },
+      { transform: 'translate(0,0) scale(1)', offset: .56, easing: 'ease-out' },
+      { transform: 'translate(0,0) scale(1)', offset: 1 }
+    ] : [
       { transform: 'translate(0,0) scale(1)', offset: 0, easing: 'ease-out' },
       { transform: pose(-reach * .3, .96), offset: .18, easing: 'ease-in' },
       { transform: forward, offset: .4, easing: 'linear' },
@@ -1031,7 +1037,7 @@ function createBattleEffects(wrap) {
     combatFx.show(cue, rate, timingMs);
     if (!cue) return;
     ending = !!cue.isDone;
-    focusTurn(row);
+    focusTurn(row, event);
     const actor = unit(event.actorId || row.actorId, event.actorName || row.actorName);
     const target = unit(event.targetId || row.targetId, event.targetName || row.targetName);
     const type = cue.type === 'row' ? (event.subtype === 'mythical_form' ? 'mythical' : event.type) : cue.type;
