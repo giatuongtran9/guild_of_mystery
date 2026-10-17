@@ -83,23 +83,30 @@ test('gun and unarmed basics retain procedural projectiles while weapon basics t
   assert.equal(travelingSlash.dataset.ownerId, 'paragon');
   assert.equal(travelingSlash.dataset.targetId, 'enemy');
   assert.equal(travelingSlash.querySelector('image').getAttribute('href'), 'data/assets/effects/sword-slash.png');
-  assert.equal(travelingSlash.querySelector('image').getAttribute('transform'), 'rotate(45)',
-    'the slash art’s diagonal crescent axis is turned to align with horizontal travel before bearing rotation');
+  const travelingArt = travelingSlash.querySelector('image');
+  assert(!travelingArt.hasAttribute('transform'), 'the art has no extra fixed rotation; the group bearing sets its direction');
+  assert(Number(travelingArt.getAttribute('width')) <= 48, 'the traveling slash is kept small enough to leave the sprites readable');
   assert.equal(Number(travelingSlash.dataset.travelMs), 450,
     'slash uses the full existing cast window for a clearly readable flight');
   assert.equal(Number(travelingSlash.dataset.travelDelayMs), 0,
     'slash launches as soon as the attacker cue appears, without extending the turn');
   const travelAnimation = active(f).find(animation => animation.element === travelingSlash);
   assert(travelAnimation?.keyframes.some(frame => /rotate\(/.test(frame.transform || '')), 'slash rotates along the attacker-to-target direction');
+  const firstTravel = travelAnimation.keyframes[0].transform;
+  const lastTravel = travelAnimation.keyframes.at(-1).transform;
+  assert.match(firstTravel, /translate\(\d+(?:\.\d+)?px,\d+(?:\.\d+)?px\)/, 'slash begins inset from the attacker center');
+  assert.notEqual(firstTravel, lastTravel, 'slash advances through the existing cast window');
   const angle = Math.atan2((80 + 32) - (350 + 32), (140 + 32) - (110 + 32)) * 180 / Math.PI;
   assert(Math.abs(Number(travelingSlash.dataset.angleDeg) - angle) < .1, 'slash orientation follows the actual target vector');
   f.effects.show({ ...hit('paragon'), row: weapon }, 1, 450);
-  assert(f.find('.gm-combat-sword-slash image'), 'the supplied PNG renders at the target impact');
-  assert.equal(f.find('.gm-combat-sword-slash image').getAttribute('href'), 'data/assets/effects/sword-slash.png');
-  assert.equal(f.find('.gm-combat-impact-frame'), null, 'the bespoke slash replaces the procedural impact frames');
-  const slashAnimation = active(f).find(animation => animation.element.matches('.gm-combat-sword-slash-image'));
-  assert(slashAnimation, 'the slash animates without adding a playback phase');
-  assert.equal(Number(slashAnimation.timing.duration), fx.impact.durationMs);
+  const impactFlash = f.find('.gm-combat-impact');
+  assert(impactFlash, 'the landing uses the existing distinct impact flash instead of repeating the traveling crescent');
+  assert(f.find('.gm-combat-impact-frame'), 'the target receives the short impact/spark frames');
+  assert.equal(f.find('.gm-combat-sword-slash-image'), null, 'the full slash artwork is not stamped over the target a second time');
+  assert.equal(Number(impactFlash.dataset.hitStopMs), 0, 'the distinct landing effect adds no hit-stop');
+  const flashAnimation = active(f).find(animation => animation.element.closest?.('.gm-combat-impact') === impactFlash);
+  assert(flashAnimation, 'the landing flash is visual-only and animated in place');
+  assert.equal(Number(flashAnimation.timing.duration), fx.impact.durationMs, 'impact stays within the existing effect timing');
   assert.equal(f.find('.gm-combat-ability-chip'), null, 'basics do not repeat weapon names above the sprite');
 });
 
