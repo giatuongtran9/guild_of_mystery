@@ -54,11 +54,14 @@ async function fixture(browser, width, { reduced = false, realArt = false } = {}
       fx.clear(); window.fx = createBattleEffects(wrap); fx.sync(Object.fromEntries(units.map(unit => [unit.id, unit])));
       const event = { type: eventType, actorId: 'attacker', actorName: 'Guild Duelist', actorTeam: 'ally', targetId: 'target',
         targetName: 'Target Adept', targetTeam: 'enemy', amount: 40, hpLoss: 40, hpAfter: 60, shieldAfter: 0,
-        damageType: 'physical', critical, ...(eventType === 'status' ? { status: 'bound' } : {}) };
-      const hit = { type: eventType === 'status' ? 'note' : eventType, event };
+        damageType: 'physical', critical, ...(eventType === 'status' ? { status: 'bound' } : {}),
+        ...(eventType === 'miss' ? { amount: 0, hpLoss: 0, hpAfter: 100, abilityId, attackKind: kind } : {}) };
+      const hit = { type: ['status', 'miss'].includes(eventType) ? 'note' : eventType, event };
       window.row = { type: 'turn', actorId: 'attacker', actorName: 'Guild Duelist', actorTeam: 'ally',
         abilityId, ability: abilityId === 'basic_attack' ? 'Attack' : abilityId.replaceAll('_', ' '), sourcePath,
-        ...(abilityId === 'basic_attack' ? { attackKind: kind } : {}), timeline: notes ? [{ type: 'note', event: { type: 'story', text: 'Pre-impact note' } }, hit] : [hit] };
+        ...(abilityId === 'basic_attack' ? { attackKind: kind } : {}),
+        ...(eventType === 'miss' ? { isMiss: true, targetId: 'target', targetName: 'Target Adept', targetTeam: 'enemy', text: 'Missed' } : {}),
+        timeline: notes ? [{ type: 'note', event: { type: 'story', text: 'Pre-impact note' } }, hit] : [hit] };
       window.playing = { turnRows: [row], currentTurn: 0, eventCount: null };
       window.rate = speed;
       const cue = advanceBattlePresentation(playing);
@@ -106,12 +109,18 @@ async function screenshot(page, name) {
             const target = { x: targetAnchor.left - frame.left + targetAnchor.width / 2, y: targetAnchor.top - frame.top + targetAnchor.height / 2 };
             const origin = { x: Number(flash.dataset.startX), y: Number(flash.dataset.startY) };
             const angle = Number(flash.dataset.angleDeg), expectedAngle = Math.atan2(target.y - origin.y, target.x - origin.x) * 180 / Math.PI;
-            const flashBox = flash.getBBox();
+            const flashBox = flash.getBBox(), tracerBox = tracer.getBBox(), flashOpacity = Number(getComputedStyle(flash).opacity);
+            const tracerAnimation = tracer.getAnimations()[0], tracerTiming = tracerAnimation.effect.getTiming();
+            const travelSamples = [.25, .5, .75].map(progress => {
+              freeze(Number(tracerTiming.duration) * progress);
+              return { opacity: Number(getComputedStyle(tracer).opacity), box: box(tracer) };
+            });
             return { tracer: { children: [...tracer.children].map(node => node.tagName), shape: tracer.dataset.shape,
               rects: [...tracer.querySelectorAll('rect')].map(node => ({ width: Number(node.getAttribute('width')), height: Number(node.getAttribute('height')), rx: Number(node.getAttribute('rx')) })),
-              x: Number(tracer.dataset.startX), y: Number(tracer.dataset.startY) },
+              x: Number(tracer.dataset.startX), y: Number(tracer.dataset.startY), width: tracerBox.width, height: tracerBox.height,
+              duration: Number(tracerTiming.duration), delay: Number(tracerTiming.delay), rate: tracerAnimation.playbackRate, samples: travelSamples },
               flash: { origin, paths: flash.querySelectorAll('path').length, imageCount: flash.querySelectorAll('image').length,
-                opacity: Number(getComputedStyle(flash).opacity), width: flashBox.width, height: flashBox.height,
+                opacity: flashOpacity, width: flashBox.width, height: flashBox.height,
                 angle, expectedAngle, animationRate: flashAnimation.playbackRate,
                 duration: Number(flashTiming.duration), delay: Number(flashTiming.delay) },
               hand: { relativeX: (origin.x - (anchor.left - frame.left)) / anchor.width,
@@ -119,6 +128,12 @@ async function screenshot(page, name) {
               before, during: capture(), documentWidth: document.documentElement.scrollWidth };
           }, speed);
           assert.equal(result.tracer.shape, 'bullet');
+          assert.equal(result.tracer.width, result.before.anchor.height * 2, 'main tracer matches the sword effect extent');
+          assert.equal(result.tracer.height, result.tracer.width * .09375, 'sword-sized gunfire retains a narrow profile');
+          assert.equal(result.tracer.duration, 600); assert.equal(result.tracer.delay, 0); assert.equal(result.tracer.rate, speed);
+          assert.equal(result.tracer.duration / result.tracer.rate, 600 / speed);
+          assert(result.tracer.samples.every(sample => sample.opacity > .7), 'tracer remains visible throughout the cast');
+          assert.notEqual(result.tracer.samples[0].box.top, result.tracer.samples[2].box.top, 'tracer visibly crosses the battlefield');
           assert(result.tracer.children.every(tag => tag.toLowerCase() === 'rect'), 'gunfire contains only rounded rectangles, without arrowhead paths');
           assert(result.tracer.rects.every(rect => rect.width > rect.height && rect.rx > 0), 'tracer reads as a narrow rounded bullet');
           assert.equal(result.flash.paths, 2, 'directional outer flame and bright core replace the blocky bitmap');
@@ -144,18 +159,28 @@ async function screenshot(page, name) {
             const jab = wrap.querySelector('.gm-combat-punch-jab');
             const motion = wrap.querySelector('[data-unit-id="attacker"] .gm-unit-sprite').getAnimations()[0];
             const duration = Number(motion.effect.getTiming().duration);
+            const jabLength = Number(jab.dataset.length), jabAnimation = jab.getAnimations()[0],
+              jabDuration = Number(jabAnimation.effect.getTiming().duration), jabRate = jabAnimation.playbackRate,
+              projectileCount = wrap.querySelectorAll('.gm-combat-projectile, .gm-combat-sword-slash-travel').length;
             const poses = [.1, .18, .4, .7, 1].map(progress => { freeze(duration * progress); return capture(); });
-            const jabLength = Number(jab.dataset.length), projectileCount = wrap.querySelectorAll('.gm-combat-projectile, .gm-combat-sword-slash-travel').length;
             impact(); fx.pause(); const punch = wrap.querySelector('.gm-combat-punch-impact');
+            const punchAnimation = punch.getAnimations()[0], punchDuration = Number(punchAnimation.effect.getTiming().duration);
+            const punchSamples = [.25, .5, .75].map(progress => {
+              punchAnimation.currentTime = punchDuration * progress; return Number(getComputedStyle(punch).opacity);
+            });
             const sourceSprite = wrap.querySelector('[data-unit-id="attacker"] .gm-unit-sprite');
             const returnMotion = sourceSprite.getAnimations()[0];
             if (returnMotion) returnMotion.currentTime = Number(returnMotion.effect.getTiming().duration);
-            return { before, poses, jabLength, projectileCount, punch: { owner: punch.dataset.ownerId, target: punch.dataset.targetId,
-              source: punch.querySelector('image').getAttribute('href'), size: Number(punch.dataset.effectHeight) },
+            return { before, poses, jabLength, jabDuration, jabRate, projectileCount, punch: { owner: punch.dataset.ownerId, target: punch.dataset.targetId,
+              source: punch.querySelector('image').getAttribute('href'), size: Number(punch.dataset.effectHeight),
+              duration: punchDuration, rate: punchAnimation.playbackRate, samples: punchSamples },
               targetCue: wrap.querySelector('[data-unit-id="target"] .gm-unit-sprite-anchor').classList.contains('gm-cue-damage'),
               number: wrap.querySelector('.gm-battle-fx-number')?.textContent, returned: capture() };
           }, speed);
-          assert(result.jabLength > 0 && result.jabLength <= 18, 'jab stays near the fist instead of crossing the battlefield');
+          assert(result.jabLength > 0 && result.jabLength <= result.before.anchor.height * .4 + .01, 'jab stays near the fist instead of crossing the battlefield');
+          assert.equal(result.jabDuration, 600); assert.equal(result.jabRate, speed);
+          assert.equal(result.punch.duration / result.punch.rate, 600 / speed, 'punch uses the sword phase duration at both speeds');
+          assert(result.punch.samples.every(opacity => opacity > .9), 'punch stays readable through the middle of the impact phase');
           assert.equal(result.projectileCount, 0, 'unarmed attacks do not launch ranged projectiles');
           for (const pose of result.poses) { inside(pose.art, pose.anchor, 'punching artwork'); assert.deepEqual(pose.cards, result.before.cards); assert.deepEqual(pose.gauges, result.before.gauges); }
           assert.notDeepEqual(result.poses[2].sprite, result.before.sprite, 'strike includes a visible source lunge');
@@ -167,6 +192,34 @@ async function screenshot(page, name) {
         } finally { await page.close(); }
       });
     }
+    for (const speed of [1, 2]) await test(`missed pistol attempt animates before Miss at ${speed}× without a false impact`, async () => {
+      const { page, errors } = await fixture(browser, 390);
+      try {
+        const result = await page.evaluate(speed => {
+          begin({ kind: 'gun', speed, eventType: 'miss' }); freeze(300);
+          const castDelay = battlePresentationDelay(playing, speed);
+          const castHtml = renderTurnRowHtml(battlePresentationRows([row], 0, playing.eventCount)[0], false);
+          const attemptVisible = Number(getComputedStyle(wrap.querySelector('.gm-combat-gun-tracer')).opacity) > .7;
+          impact(); fx.pause();
+          const outcomeHtml = renderTurnRowHtml(battlePresentationRows([row], 0, playing.eventCount)[0], false);
+          const total = castDelay + battlePresentationDelay(playing, speed);
+          const outcome = { attemptVisible, castHtml, outcomeHtml, total,
+            impacts: wrap.querySelectorAll('.gm-combat-impact, .gm-combat-punch-impact').length,
+            numbers: [...wrap.querySelectorAll('.gm-battle-fx-number')].map(node => node.textContent),
+            targetHit: wrap.querySelector('[data-unit-id="target"] .gm-unit-sprite-anchor').classList.contains('gm-cue-damage') };
+          const settled = advanceBattlePresentation(playing); fx.show(settled, speed, 0);
+          return { ...outcome, settledType: settled.type, settledNumbers: wrap.querySelectorAll('.gm-battle-fx-number').length,
+            settledMissCue: wrap.querySelector('[data-unit-id="target"] .gm-unit-sprite-anchor').classList.contains('gm-cue-miss') };
+        }, speed);
+        assert(result.attemptVisible, 'a missed shot still shows the main firing animation');
+        assert(!result.castHtml.includes('b-outcome miss'), 'Miss remains hidden during the weapon attempt');
+        assert(result.outcomeHtml.includes('b-outcome miss'), 'Miss appears when the recorded outcome is revealed');
+        assert.equal(result.total, 2000 / speed); assert.equal(result.impacts, 0); assert.equal(result.targetHit, false);
+        assert.deepEqual(result.numbers, ['Miss']); assert.deepEqual(errors, []);
+        assert.equal(result.settledType, 'settle'); assert.equal(result.settledNumbers, 0); assert.equal(result.settledMissCue, false,
+          'settling a completed miss cannot replay the miss cue or create a second number');
+      } finally { await page.close(); }
+    });
     await test('knife and sword share the same melee presentation', async () => {
       const { page, errors } = await fixture(browser, 390);
       try {

@@ -13,10 +13,10 @@
     "js/signatures.js": "a5cdf363eb630ee0",
     "js/mythical.js": "36137b6f05975faf",
     "js/battle-ai.js": "c05665bfb2230a25",
-    "js/engine.js": "db80bbdfb5325f04",
+    "js/engine.js": "bd197186d0ba96c3",
     "js/state.js": "06b4d9cd538f377d",
     "js/campaign.js": "cc4a4e65446ccee4",
-    "js/ui.js": "88ac87da61c42ad9"
+    "js/ui.js": "5397733a8857a4cf"
   },
   "serviceWorkerVersion": "e1bc522e1bc66336"
 }
