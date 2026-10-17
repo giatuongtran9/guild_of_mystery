@@ -68,13 +68,20 @@ function cast(f, row, next = hit(row.actorId), speed = 1, hold = 600) {
 }
 function active(f) { return f.animations.filter(animation => !animation.cancelled && animation.playState !== 'finished'); }
 
-test('gun and unarmed basics retain procedural projectiles while weapon basics travel as a directional slash', f => {
-  for (const [kind, family] of [['gun', 'bolt'], ['unarmed', 'slash']]) {
-    const projectile = cast(f, { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: kind });
-    assert(projectile, kind + ' retains its existing projectile cue');
-    assert.equal(projectile.dataset.family, family);
-    assert.equal(projectile.dataset.pathKind, 'straight');
-  }
+test('gun basics retain procedural shots, unarmed basics use a punch impact, and weapon basics travel as a directional slash', f => {
+  const gun = cast(f, { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: 'gun' });
+  assert(gun, 'gun retains its existing projectile cue');
+  assert.equal(gun.dataset.family, 'bolt');
+  assert.equal(gun.dataset.pathKind, 'straight');
+  assert(f.find('.gm-combat-gun-muzzle'), 'gun gets a brief muzzle cue at cast');
+  assert.equal(f.find('.gm-combat-gun-muzzle image').getAttribute('href'), 'data/assets/effects/gun-muzzle.png');
+  const unarmed = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: 'unarmed' };
+  assert.equal(cast(f, unarmed), null, 'a physical punch does not stack a generic projectile on the custom impact');
+  assert(f.find('.gm-combat-punch-trail'), 'punch gets a short attacker-to-target sweep during cast');
+  assert(Number(f.find('.gm-combat-punch-trail').dataset.travelMs) <= 400, 'punch cue fits the cast window');
+  f.effects.show({ type: 'damage', row: unarmed, event: hit().event }, 1, 400);
+  assert(f.find('.gm-combat-punch-impact'), 'physical unarmed basics use the custom impact art');
+  assert.equal(f.find('.gm-combat-punch-impact image').getAttribute('href'), 'data/assets/effects/unarmed-punch-impact.png');
   const weapon = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: 'weapon' };
   f.effects.show({ type: 'cast', row: weapon, next: hit('paragon') }, 1, 450);
   assert.equal(f.find('.gm-combat-projectile'), null, 'the custom weapon slash is not layered over a procedural slash');
@@ -112,6 +119,39 @@ test('gun and unarmed basics retain procedural projectiles while weapon basics t
   assert(flashAnimation, 'the landing flash is visual-only and animated in place');
   assert.equal(Number(flashAnimation.timing.duration), fx.impact.durationMs, 'impact stays within the existing effect timing');
   assert.equal(f.find('.gm-combat-ability-chip'), null, 'basics do not repeat weapon names above the sprite');
+});
+
+test('Sequence 9 active abilities have distinct cast and outcome visuals within their existing windows', f => {
+  const damage = hit('paragon');
+  const cases = [
+    ['brutal_strike', 'physical', '.gm-combat-sword-slash-travel', 'data/assets/effects/sword-slash.png'],
+    ['exploit_loophole', 'disorder', '.gm-combat-loophole-seal', 'data/assets/effects/exploit-loophole.png'],
+    ['combat_theft', 'physical', '.gm-combat-theft-siphon', 'data/assets/effects/combat-theft.png']
+  ];
+  for (const [ability, type, selector, asset] of cases) {
+    const row = { actorId: 'paragon', sourcePath: 'paragon', abilityId: ability, sourceAbilityId: ability };
+    const next = hit('paragon', 'enemy', type);
+    f.effects.show({ type: 'cast', row, next }, 1, 480);
+    const effect = f.find(selector);
+    assert(effect, ability + ' cast has a distinctive visual');
+    assert.equal(effect.querySelector('image')?.getAttribute('href'), asset);
+    const animation = active(f).find(item => item.element === effect);
+    assert(animation, ability + ' effect animates within cast');
+    assert(animation.timing.duration <= 480, ability + ' does not extend cast window');
+    if (ability === 'combat_theft') assert.equal(effect.dataset.travelDirection, 'target-to-attacker');
+    f.effects.clear(); f.effects.sync(f.map);
+  }
+  const row = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'healing_touch', sourceAbilityId: 'healing_touch' };
+  f.effects.show({ type: 'cast', row, next: { type: 'heal', event: { type: 'heal', actorId: 'paragon', targetId: 'fool', amount: 20 } } }, 1, 480);
+  const flight = f.find('.gm-combat-healing-touch-flight');
+  assert(flight, 'Healing Touch sends a distinctive effect toward its recipient');
+  assert.equal(flight.dataset.targetId, 'fool');
+  assert.equal(flight.querySelector('image')?.getAttribute('href'), 'data/assets/effects/healing-touch.png');
+  const flightAnimation = active(f).find(item => item.element === flight);
+  assert(flightAnimation && flightAnimation.timing.duration <= 480, 'Healing Touch stays inside cast timing');
+  f.effects.show({ type: 'heal', row, event: { type: 'heal', actorId: 'paragon', targetId: 'fool', amount: 20 } }, 1, 400);
+  assert(f.find('.gm-combat-healing-touch-impact'), 'successful heal resolves with a matching recipient pulse');
+  assert(f.find('.gm-combat-healing-touch-impact').dataset.targetId === 'fool');
 });
 
 test('caster basics use pathway magic, retaining damage type color', f => {
