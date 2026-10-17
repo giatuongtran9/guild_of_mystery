@@ -398,6 +398,7 @@ function createCombatFx(wrap) {
     // to the estimated hand/barrel firing position.
     // Double the visible burst from the original transparent canvas while preserving its barrel anchor.
     const width = 288, scale = width / 979, height = 547 * scale;
+    const invertedAnchorX = (979 - 105) * scale, invertedAnchorY = (547 - 274) * scale;
     const src = 'data/assets/effects/gun-muzzle.png?v=d1c869a57e8ee076';
     node.setAttribute('data-angle-deg', angle.toFixed(2));
     node.setAttribute('data-effect-width', width); node.setAttribute('data-effect-height', height);
@@ -406,7 +407,10 @@ function createCombatFx(wrap) {
     node.setAttribute('data-launch-delay-ms', delay); node.setAttribute('data-effect-duration-ms', flashDuration);
     node.setAttribute('opacity', '0');
     const flash = image(node, src, width, height, 'gm-combat-gun-muzzle-image');
-    flash.setAttribute('x', -105 * scale); flash.setAttribute('y', -274 * scale);
+    // Rotate the original artwork 180° around its center, then reposition it so
+    // the same bright ignition point remains fixed at the barrel.
+    flash.setAttribute('x', -invertedAnchorX); flash.setAttribute('y', -invertedAnchorY);
+    flash.setAttribute('transform', `rotate(180 ${width / 2} ${height / 2})`);
     layer().append(node);
     if (!compact() && node.animate) animate(node, [
       { transform: `translate(${x}px,${y}px) rotate(${angle}deg)`, opacity: 1 },
@@ -760,7 +764,7 @@ function createCombatFx(wrap) {
     let punchArt = null;
     if (punchHit) {
       // Use the original authored punch artwork, not a procedurally redrawn burst.
-      const height = Math.max(80, Math.min(140, Number(p.spriteHeight) || 96));
+      const height = Math.max(120, Math.min(210, (Number(p.spriteHeight) || 96) * 1.5));
       const width = height * 880 / 929;
       const src = 'data/assets/effects/unarmed-punch-impact.png?v=0ec09b43c3593bab';
       burst.setAttribute('data-effect-src', src);
