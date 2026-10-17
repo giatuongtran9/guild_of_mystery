@@ -75,6 +75,7 @@ test('gun basics retain procedural shots, unarmed basics use a punch impact, and
   assert.equal(gun.dataset.pathKind, 'straight');
   assert(f.find('.gm-combat-gun-muzzle'), 'gun gets a brief muzzle cue at cast');
   assert.equal(f.find('.gm-combat-gun-muzzle image').getAttribute('href'), 'data/assets/effects/gun-muzzle.png');
+  assert.equal(Number(f.find('.gm-combat-gun-muzzle').dataset.effectHeight), 128, 'gun muzzle effect is 2x the 64px sprite height');
   const unarmed = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: 'unarmed' };
   assert.equal(cast(f, unarmed), null, 'a physical punch does not stack a generic projectile on the custom impact');
   assert(f.find('.gm-combat-punch-trail'), 'punch gets a short attacker-to-target sweep during cast');
@@ -135,10 +136,12 @@ test('Sequence 9 active abilities have distinct cast and outcome visuals within 
     const effect = f.find(selector);
     assert(effect, ability + ' cast has a distinctive visual');
     assert.equal(effect.querySelector('image')?.getAttribute('href'), asset);
+    assert.equal(Number(effect.dataset.effectHeight), 128, ability + ' artwork is 2x the 64px character height');
     const animation = active(f).find(item => item.element === effect);
     assert(animation, ability + ' effect animates within cast');
     assert(animation.timing.duration <= 480, ability + ' does not extend cast window');
     if (ability === 'combat_theft') assert.equal(effect.dataset.travelDirection, 'target-to-attacker');
+    if (ability === 'brutal_strike') assert.equal(Number(effect.dataset.effectHeight), 128, 'Brutal Strike slash is 2x sprite height');
     f.effects.clear(); f.effects.sync(f.map);
   }
   const row = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'healing_touch', sourceAbilityId: 'healing_touch' };
@@ -147,17 +150,54 @@ test('Sequence 9 active abilities have distinct cast and outcome visuals within 
   assert(flight, 'Healing Touch sends a distinctive effect toward its recipient');
   assert.equal(flight.dataset.targetId, 'fool');
   assert.equal(flight.querySelector('image')?.getAttribute('href'), 'data/assets/effects/healing-touch.png');
+  assert.equal(Number(flight.dataset.effectHeight), 128, 'Healing Touch flight is 2x the character height');
   const flightAnimation = active(f).find(item => item.element === flight);
   assert(flightAnimation && flightAnimation.timing.duration <= 480, 'Healing Touch stays inside cast timing');
   f.effects.show({ type: 'heal', row, event: { type: 'heal', actorId: 'paragon', targetId: 'fool', amount: 20 } }, 1, 400);
   assert(f.find('.gm-combat-healing-touch-impact'), 'successful heal resolves with a matching recipient pulse');
   assert(f.find('.gm-combat-healing-touch-impact').dataset.targetId === 'fool');
+  assert.equal(Number(f.find('.gm-combat-healing-touch-impact').dataset.effectHeight), 128, 'Healing Touch impact is 2x sprite height');
+});
+
+test('gun and unarmed attack cues stay readable at 2x inside the existing cast window', f => {
+  const gun = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: 'gun' };
+  cast(f, gun, hit('paragon'), 2, 300);
+  const muzzle = f.find('.gm-combat-gun-muzzle');
+  const muzzleAnimation = active(f).find(animation => animation.element === muzzle);
+  const projectile = f.find('.gm-combat-projectile');
+  const projectileAnimation = active(f).find(animation => animation.element === projectile);
+  assert(muzzle && muzzleAnimation, '2x gun attack has an animated muzzle flash');
+  assert.equal(muzzleAnimation.timing.duration, 190, 'muzzle cue retains a readable animation duration');
+  assert.equal(muzzleAnimation.playbackRate, 1, 'muzzle cue is not accelerated a second time');
+  assert(projectile && projectileAnimation, 'gun attack has a moving shot');
+  assert(Number(projectile.dataset.size) > 24, 'shot is enlarged from the tiny default bolt');
+  assert.equal(Number(projectile.dataset.effectHeight), 128, 'gun shot is 2x character height');
+  assert.equal(Number(projectile.dataset.travelDelayMs), 0, 'shot launches immediately');
+  assert.equal(Number(projectile.dataset.travelMs), 260, 'shot uses a readable 260ms within the 300ms 2x cast window');
+  assert.equal(projectileAnimation.playbackRate, 1, 'shot stays readable without delaying the phase');
+
+  f.effects.clear();
+  const unarmed = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: 'unarmed' };
+  cast(f, unarmed, hit('paragon'), 2, 300);
+  const trail = f.find('.gm-combat-punch-trail');
+  const trailAnimation = active(f).find(animation => animation.element === trail);
+  assert(trail && trailAnimation, '2x unarmed attack has an animated punch sweep');
+  assert(Number(trail.getAttribute('stroke-width')) >= 5, 'punch sweep is thick enough to read at sprite scale');
+  assert.equal(Number(trail.dataset.travelMs), 240, 'punch sweep uses most of the available cast window');
+  assert.equal(trailAnimation.playbackRate, 1, 'punch sweep is not accelerated a second time');
+  f.effects.show({ type: 'damage', row: unarmed, event: hit('paragon').event }, 2, 225);
+  const punch = f.find('.gm-combat-punch-impact');
+  const punchAnimation = active(f).find(animation => animation.element === punch);
+  assert(punch && punchAnimation, 'impact art animates for the unarmed hit');
+  assert.equal(Number(punch.dataset.effectHeight), 128, 'punch impact scales to 2x sprite height');
+  assert.equal(punchAnimation.playbackRate, 1, 'punch impact remains visible at 2x');
 });
 
 test('caster basics use pathway magic, retaining damage type color', f => {
   const projectile = cast(f, { actorId: 'hermit', sourcePath: 'hermit', abilityId: 'basic_attack', attackKind: 'unarmed' }, hit('hermit', 'enemy', 'mystic'));
   assert.equal(projectile.dataset.family, fx.basicAttack.pathways.hermit);
   assert.equal(projectile.dataset.damageType, 'mystic');
+  assert.equal(Number(projectile.dataset.effectHeight), 128, 'spell projectile scales to 2x sprite height');
   assert(projectile.getAttribute('style')?.includes(fx.damageColors.mystic) || projectile.outerHTML.includes(fx.damageColors.mystic));
 });
 
@@ -172,6 +212,38 @@ test('caster basics retain magical arcs and trails even when their recorded dama
   const gun = cast(f, { ...row, attackKind: 'gun' }, hit('hermit', 'enemy', 'physical'));
   assert.equal(gun.dataset.family, 'bolt'); assert.equal(gun.dataset.pathKind, 'straight');
   assert.equal(f.find('.gm-combat-afterimage'), null, 'equipped guns retain straight shots for casters');
+});
+
+test('all eight projectile families are normalized to the sword-slash 2x height', f => {
+  const cases = [
+    ['slash', 'moon', 'physical', false, 20],
+    ['bolt', 'tyrant', 'fire', false, 24],
+    ['beam', 'sun', 'holy', false, 40],
+    ['orb', 'hermit', 'mystic', false, 16],
+    ['shard', 'justiciar', 'piercing', false, 19],
+    ['wisp', 'chained', 'corrosion', false, 19],
+    ['thread', 'fool', 'nature', false, 24],
+    ['wave', 'tyrant', 'fire', true, 20]
+  ];
+  for (const [family, sourcePath, damageType, area, extent] of cases) {
+    const row = { actorId: 'paragon', sourcePath, abilityId: 'area_test', presentationTargetMode: area ? 'all_enemies' : undefined };
+    const event = { ...hit('paragon', 'enemy', damageType).event, area };
+    const projectile = cast(f, row, { type: 'damage', event });
+    assert(projectile, family + ' projectile is rendered');
+    assert.equal(projectile.dataset.family, family, family + ' selects the expected visual family');
+    assert.equal(Number(projectile.dataset.effectHeight), 128, family + ' uses twice the 64px sprite height');
+    assert(Math.abs(Number(projectile.dataset.size) * extent / 20 - 128) < .1,
+      family + ' scales its longest base-geometry dimension to 128px');
+    f.effects.clear(); f.effects.sync(f.map);
+  }
+});
+
+test('green enemy attack projectiles follow their damage type and use the shared 2x scale', f => {
+  const projectile = cast(f, { actorId: 'enemy', sourcePath: 'chained', abilityId: 'venom_strike' }, hit('enemy', 'paragon', 'corrosion'));
+  assert.equal(projectile.dataset.damageType, 'corrosion');
+  assert.equal(projectile.dataset.family, 'wisp');
+  assert.equal(Number(projectile.dataset.effectHeight), 128, 'enemy projectile is 2x the 64px sprite height');
+  assert(projectile.getAttribute('style')?.includes(fx.damageColors.corrosion), 'the green color identifies corrosion damage');
 });
 
 test('recorded damage uses its source pathway while reactions use their actual actor', f => {
