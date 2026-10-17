@@ -437,18 +437,28 @@ function createCombatFx(wrap) {
       : Math.min(hold, Math.max(settings.minMs, Math.min(settings.maxMs, distance / (settings.speedPxPerMs || 1))));
     const delay = swordBasic ? 0 : Math.max(0, hold - duration);
     const angle = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+    const direction = distance ? { x: (b.x - a.x) / distance, y: (b.y - a.y) / distance } : { x: 1, y: 0 };
+    // Keep the sword mark between the sprites instead of letting it sit over
+    // their centers. The bounded insets also keep close formations moving forward.
+    const startInset = swordBasic ? Math.min(a.radius, distance * .24) : 0;
+    const endInset = swordBasic ? Math.min(originalTarget.radius, distance * .24) : 0;
+    const travelStart = { x: a.x + direction.x * startInset, y: a.y + direction.y * startInset };
+    const travelEnd = { x: b.x - direction.x * endInset, y: b.y - direction.y * endInset };
     const bend = pathKind === 'arc' ? Math.min(42, distance * .18) : 0;
-    const coords = t => ({ x: a.x + (b.x - a.x) * t + Math.sin(Math.PI * t) * bend,
-      y: a.y + (b.y - a.y) * t - Math.sin(Math.PI * t) * bend * .45 });
+    const coords = t => {
+      const from = swordBasic ? travelStart : a, to = swordBasic ? travelEnd : b;
+      return { x: from.x + (to.x - from.x) * t + Math.sin(Math.PI * t) * bend,
+        y: from.y + (to.y - from.y) * t - Math.sin(Math.PI * t) * bend * .45 };
+    };
     const make = (ghost = 0) => {
       const node = group(ghost ? 'gm-combat-afterimage' : swordBasic ? 'gm-combat-sword-slash-travel' : 'gm-combat-projectile', ownerId, targetId, colorFor(event));
       for (const [name, value] of Object.entries({ family, 'damage-type': event.damageType || 'default', 'path-kind': pathKind,
         'travel-ms': duration, 'travel-delay-ms': delay, ...(swordBasic ? { 'angle-deg': angle.toFixed(2) } : {}) })) node.setAttribute(`data-${name}`, value);
       node.setAttribute('opacity', '0');
       if (swordBasic) {
-        const size = Math.max(54, Math.min(88, originalTarget.radius * 2.5));
+        const size = Math.max(30, Math.min(48, originalTarget.radius * 1.6));
         const slash = element('image', { class: 'gm-combat-sword-slash-projectile', x: -size / 2, y: -size / 2,
-          width: size, height: size, href: 'data/assets/effects/sword-slash.png', transform: 'rotate(45)',
+          width: size, height: size, href: 'data/assets/effects/sword-slash.png',
           preserveAspectRatio: 'xMidYMid meet', opacity: 1 });
         slash.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', 'data/assets/effects/sword-slash.png');
         node.append(slash);
@@ -475,22 +485,6 @@ function createCombatFx(wrap) {
     if (!p || !layer()) return;
     const critical = !!event.critical, settings = config.impact || defaults.impact, hit = hitIndex(row, event);
     const duration = settings.durationMs || 160, stop = 0, total = duration;
-    const swordBasic = swordBasicSlash(row, event);
-    if (swordBasic) {
-      const slash = group('gm-combat-sword-slash', event.actorId ?? row.actorId, event.targetId, '#fff0dc');
-      slash.setAttribute('transform', `translate(${p.x} ${p.y})`);
-      slash.setAttribute('data-critical', String(critical));
-      slash.setAttribute('data-hit-stop-ms', '0');
-      slash.setAttribute('data-hit-index', hit.index); slash.setAttribute('data-hit-count', hit.count);
-      const size = Math.max(54, Math.min(100, p.radius * 2.5)) * (critical ? 1.12 : 1);
-      const image = element('image', { class: 'gm-combat-sword-slash-image', x: -size / 2, y: -size / 2, width: size, height: size,
-        href: 'data/assets/effects/sword-slash.png', preserveAspectRatio: 'xMidYMid meet', opacity: 1 });
-      image.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', 'data/assets/effects/sword-slash.png');
-      slash.append(image); layer().append(slash);
-      animate(image, [{ opacity: 0, transform: 'scale(.72)' }, { opacity: 1, offset: .24, transform: 'scale(1)' },
-        { opacity: 0, transform: 'scale(1.08)' }], duration, 0, { removeNode: slash, easing: 'ease-out' });
-      return;
-    }
     const burst = group('gm-combat-impact', event.actorId ?? row.actorId, event.targetId, colorFor(event));
     burst.setAttribute('transform', `translate(${p.x} ${p.y}) scale(${critical ? settings.critScale || 1.5 : 1})`);
     burst.setAttribute('data-critical', String(critical)); burst.setAttribute('data-frame', '0');
