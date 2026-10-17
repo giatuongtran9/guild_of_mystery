@@ -378,17 +378,18 @@ function createCombatFx(wrap) {
     const a = point(row.actorId), b = point(targetId);
     if (!a || !b || !layer()) return;
     const angle = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
-    const radians = angle * Math.PI / 180, size = Math.max(28, a.spriteHeight * 1.25);
+    const radians = angle * Math.PI / 180, size = effectHeight(a);
     const x = a.x + Math.cos(radians) * size * .34, y = a.y + Math.sin(radians) * size * .34;
     const node = group('gm-combat-gun-muzzle', row.actorId, targetId, '#f6bd72');
     node.setAttribute('data-angle-deg', angle.toFixed(2));
+    node.setAttribute('data-effect-height', size);
     image(node, 'data/assets/effects/gun-muzzle.png', size, size);
     layer().append(node);
     if (!compact()) animate(node, [
       { transform: `translate(${x}px,${y}px) rotate(${angle}deg) scale(.55)`, opacity: 0 },
-      { transform: `translate(${x}px,${y}px) rotate(${angle}deg) scale(1)`, opacity: .95, offset: .28 },
+      { transform: `translate(${x}px,${y}px) rotate(${angle}deg) scale(1.15)`, opacity: 1, offset: .28 },
       { transform: `translate(${x}px,${y}px) rotate(${angle}deg) scale(.75)`, opacity: 0 }
-    ], Math.min(190, Math.max(100, Number(phaseHold) || 600)));
+    ], Math.min(190, Math.max(100, Number(phaseHold) || 600)), 0, { playbackRateLimit: 1 });
     else node.setAttribute('transform', `translate(${x} ${y}) rotate(${angle})`);
   }
   function punchCue(row, next, phaseHold) {
@@ -400,16 +401,18 @@ function createCombatFx(wrap) {
     const to = { x: target.x - direction.x * target.radius * .55, y: target.y - direction.y * target.radius * .55 };
     const bend = Math.min(18, distance * .08), normal = { x: -direction.y, y: direction.x };
     const path = element('path', { class: 'gm-combat-punch-trail', d: `M ${from.x} ${from.y} Q ${(from.x + to.x) / 2 + normal.x * bend} ${(from.y + to.y) / 2 + normal.y * bend} ${to.x} ${to.y}`,
-      fill: 'none', stroke: '#e8d2aa', 'stroke-width': Math.max(2, actor.spriteHeight * .055), 'stroke-linecap': 'round', opacity: 0,
+      fill: 'none', stroke: '#fff0c9', 'stroke-width': Math.max(8, actor.spriteHeight * .18), 'stroke-linecap': 'round', opacity: 0,
       'stroke-dasharray': distance, 'stroke-dashoffset': distance });
     path.setAttribute('data-owner-id', row.actorId); path.setAttribute('data-target-id', event.targetId);
-    path.setAttribute('data-travel-ms', Math.min(240, Number(phaseHold) || 600));
+    path.setAttribute('data-effect-width', Math.max(8, actor.spriteHeight * .18));
+    const sweepDuration = Math.min(240, Math.max(100, Number(phaseHold) || 600));
+    path.setAttribute('data-travel-ms', sweepDuration);
     layer().append(path);
     if (!compact()) animate(path, [
       { opacity: 0, strokeDashoffset: distance },
-      { opacity: .9, strokeDashoffset: 0, offset: .28 },
+      { opacity: 1, strokeDashoffset: 0, offset: .28 },
       { opacity: 0, strokeDashoffset: -distance * .12 }
-    ], Math.min(240, Math.max(100, Number(phaseHold) || 600)));
+    ], sweepDuration, 0, { playbackRateLimit: 1 });
     else path.setAttribute('opacity', '.35');
   }
   function abilityCue(row, next, phaseHold) {
@@ -419,9 +422,9 @@ function createCombatFx(wrap) {
     const hold = Math.max(100, Math.min(Number(phaseHold) || 600, 560));
     const src = S9_EFFECTS[id];
     if (id === 'exploit_loophole' && target) {
-      const size = Math.max(52, target.spriteHeight * 1.7);
+      const size = effectHeight(target);
       const node = group('gm-combat-loophole-seal', row.actorId, targetId, '#e5c59b');
-      node.setAttribute('data-ability-id', id); image(node, src, size, size); layer().append(node);
+      node.setAttribute('data-ability-id', id); node.setAttribute('data-effect-height', size); image(node, src, size, size); layer().append(node);
       if (!compact()) animate(node, [
         { transform: `translate(${target.x}px,${target.y}px) rotate(-18deg) scale(.5)`, opacity: 0 },
         { transform: `translate(${target.x}px,${target.y}px) rotate(0deg) scale(1)`, opacity: .92, offset: .28 },
@@ -432,10 +435,10 @@ function createCombatFx(wrap) {
     }
     if (id === 'combat_theft' && target) {
       const dx = actor.x - target.x, dy = actor.y - target.y, distance = Math.hypot(dx, dy);
-      const angle = Math.atan2(dy, dx) * 180 / Math.PI, width = Math.max(72, distance), height = Math.max(48, width * .62);
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI, height = effectHeight(Math.min(actor.spriteHeight, target.spriteHeight) ? { spriteHeight: Math.min(actor.spriteHeight, target.spriteHeight) } : actor), width = Math.max(distance, height);
       const midX = (actor.x + target.x) / 2, midY = (actor.y + target.y) / 2;
       const node = group('gm-combat-theft-siphon', row.actorId, targetId, '#e7c38d');
-      node.setAttribute('data-ability-id', id); node.setAttribute('data-travel-direction', 'target-to-attacker');
+      node.setAttribute('data-ability-id', id); node.setAttribute('data-travel-direction', 'target-to-attacker'); node.setAttribute('data-effect-height', height);
       image(node, src, width, height); layer().append(node);
       if (!compact()) animate(node, [
         { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(.18)`, opacity: 0 },
@@ -451,9 +454,9 @@ function createCombatFx(wrap) {
       const direction = distance ? { x: dx / distance, y: dy / distance } : { x: 0, y: -1 };
       const start = { x: actor.x + direction.x * actor.radius * .7, y: actor.y + direction.y * actor.radius * .7 };
       const end = { x: target.x - direction.x * target.radius * .5, y: target.y - direction.y * target.radius * .5 };
-      const height = Math.max(54, Math.min(actor.spriteHeight, target.spriteHeight) * 1.25), width = height * .76;
+      const height = effectHeight({ spriteHeight: Math.min(actor.spriteHeight, target.spriteHeight) }), width = height * .76;
       const node = group('gm-combat-healing-touch-flight', row.actorId, targetId, '#ead8b5');
-      node.setAttribute('data-ability-id', id); node.setAttribute('data-travel-ms', hold);
+      node.setAttribute('data-ability-id', id); node.setAttribute('data-travel-ms', hold); node.setAttribute('data-effect-height', height);
       image(node, src, width, height); layer().append(node);
       if (!compact()) animate(node, [
         { transform: `translate(${start.x}px,${start.y}px) scale(.58)`, opacity: 0 },
@@ -466,7 +469,8 @@ function createCombatFx(wrap) {
   function animate(node, frames, duration, delay = 0, options = {}) {
     if (!node.animate || compact()) return null;
     const animation = node.animate(frames, { duration, delay, easing: options.easing || 'linear', fill: 'none' });
-    animation.playbackRate = speed;
+    animation._gmPlaybackRateLimit = options.playbackRateLimit ?? null;
+    animation.playbackRate = animation._gmPlaybackRateLimit ? Math.min(speed, animation._gmPlaybackRateLimit) : speed;
     animations.set(animation, node);
     if (paused) animation.pause();
     animation.onfinish = () => { animations.delete(animation); animation.cancel(); if (options.remove !== false) node.remove(); options.removeNode?.remove(); };
@@ -482,6 +486,11 @@ function createCombatFx(wrap) {
     if (!keepChip) { chip = null; chipRow = null; }
   }
   function colorFor(event) { return config.damageColors?.[event.damageType] || defaults.damageColors[event.damageType] || config.damageColors?.default || defaults.damageColors.default; }
+  const effectHeight = actor => Math.max(1, Number(actor?.spriteHeight) || 32) * 2;
+  function projectileShapeSize(family, actor) {
+    const extent = { slash: 20, bolt: 24, beam: 40, orb: 16, shard: 19, wisp: 19, thread: 24, wave: 20 }[family] || 24;
+    return effectHeight(actor) * 20 / extent;
+  }
   function sourcePath(row, event) {
     return event.sourcePath || (event.actorId == null || event.actorId === row.actorId ? row.sourcePath : null) || state(event.actorId ?? row.actorId)?.path;
   }
@@ -552,9 +561,14 @@ function createCombatFx(wrap) {
     const family = usesSlashArt ? 'slash' : area ? 'wave' : familyFor(row, event), settings = config.families?.[family] || defaults.families[family];
     const physical = event.damageType === 'physical' && !magicBasic(row, event), pathKind = physical || usesSlashArt ? 'straight' : settings.path;
     const distance = Math.hypot(b.x - a.x, b.y - a.y), hold = Math.max(1, Number(phaseHold) || 600);
-    const duration = swordBasic ? hold
-      : Math.min(hold, Math.max(settings.minMs, Math.min(settings.maxMs, distance / (settings.speedPxPerMs || 1))));
-    const delay = swordBasic ? 0 : Math.max(0, hold - duration);
+    const gunBasic = row?.abilityId === 'basic_attack' && row.attackKind === 'gun'
+      && event.actorId === row.actorId && !event.isReaction && !event.isReflect;
+    const naturalTravel = Math.max(settings.minMs, Math.min(settings.maxMs, distance / (settings.speedPxPerMs || 1)));
+    const duration = swordBasic ? hold : gunBasic && speed >= 2
+      ? Math.min(hold, Math.max(naturalTravel, Math.min(260, hold)))
+      : Math.min(hold, naturalTravel);
+    // Basic gun shots launch immediately and stay readable within the current cast hold.
+    const delay = swordBasic || gunBasic ? 0 : Math.max(0, hold - duration);
     const angle = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
     const direction = distance ? { x: (b.x - a.x) / distance, y: (b.y - a.y) / distance } : { x: 1, y: 0 };
     // Keep the sword mark between the sprites instead of letting it sit over
@@ -577,21 +591,28 @@ function createCombatFx(wrap) {
       if (usesSlashArt) {
         // Size against the sprite box. The established weapon-basic scale is 2x;
         // Brutal Strike is emphasized but leaves more character silhouette visible.
-        const size = Math.max(1, originalTarget.spriteHeight || originalTarget.radius / .38) * (swordBasic ? 2 : 1.55);
+        const size = effectHeight(originalTarget);
+        node.setAttribute('data-effect-height', size);
         const slash = element('image', { class: 'gm-combat-sword-slash-projectile', x: -size / 2, y: -size / 2,
           width: size, height: size, href: 'data/assets/effects/sword-slash.png', transform: 'rotate(180)',
           preserveAspectRatio: 'xMidYMid meet', opacity: 1 });
         slash.setAttribute('data-flip-deg', '180');
-        slash.setAttribute('data-sprite-scale', swordBasic ? '2' : '1.55');
+        slash.setAttribute('data-sprite-scale', '2');
         slash.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', 'data/assets/effects/sword-slash.png');
         node.append(slash);
-      } else node.append(shape(settings.shape || family, settings.size, area ? b.width : undefined));
+      } else {
+        const projectileFamily = settings.shape || family;
+        const projectileSize = projectileShapeSize(projectileFamily, a);
+        node.setAttribute('data-size', projectileSize);
+        node.setAttribute('data-effect-height', effectHeight(a));
+        node.append(shape(projectileFamily, projectileSize, area ? b.width : undefined));
+      }
       layer()?.append(node);
       const frames = Array.from({ length: 9 }, (_, index) => {
         const t = index / 8, p = coords(Math.max(0, t - ghost * .065));
         return { offset: t, transform: `translate(${p.x}px,${p.y}px) rotate(${family === 'wave' ? 0 : angle}deg)`, opacity: t === 1 ? 0 : ghost ? .25 / ghost : .95 };
       });
-      animate(node, frames, duration, delay);
+      animate(node, frames, duration, delay, gunBasic && speed >= 2 ? { playbackRateLimit: 1 } : {});
     };
     make();
     if (pathKind === 'arc') for (let index = 1; index <= Math.min(3, settings.afterimages || 0); index++) make(index);
@@ -609,7 +630,9 @@ function createCombatFx(wrap) {
     const critical = !!event.critical, settings = config.impact || defaults.impact, hit = hitIndex(row, event);
     const duration = settings.durationMs || 160, stop = 0, total = duration;
     const burst = group('gm-combat-impact', event.actorId ?? row.actorId, event.targetId, colorFor(event));
-    burst.setAttribute('transform', `translate(${p.x} ${p.y}) scale(${critical ? settings.critScale || 1.5 : 1})`);
+    const burstScale = effectHeight(p) / 34 * (critical ? settings.critScale || 1.5 : 1);
+    burst.setAttribute('transform', `translate(${p.x} ${p.y}) scale(${burstScale})`);
+    burst.setAttribute('data-effect-height', effectHeight(p));
     burst.setAttribute('data-critical', String(critical)); burst.setAttribute('data-frame', '0');
     burst.setAttribute('data-impact-scale', critical ? settings.critScale || 1.5 : 1); burst.setAttribute('data-hit-stop-ms', stop);
     burst.setAttribute('data-hit-index', hit.index); burst.setAttribute('data-hit-count', hit.count); burst.setAttribute('data-stagger-ms', hit.count > 1 ? 35 : 0);
@@ -635,8 +658,9 @@ function createCombatFx(wrap) {
     const punchBasic = row?.abilityId === 'basic_attack' && row.attackKind === 'unarmed'
       && !magicBasic(row, event) && event.actorId === row.actorId && !event.isReaction && !event.isReflect;
     if (punchBasic) {
-      const size = Math.max(38, p.spriteHeight * 1.28);
+      const size = effectHeight(p);
       const art = group('gm-combat-punch-impact', event.actorId ?? row.actorId, event.targetId, '#f2c39b');
+      art.setAttribute('data-effect-height', size);
       art.setAttribute('data-effect-src', 'data/assets/effects/unarmed-punch-impact.png');
       art.setAttribute('transform', `translate(${p.x} ${p.y})`);
       image(art, 'data/assets/effects/unarmed-punch-impact.png', size, size);
@@ -645,7 +669,7 @@ function createCombatFx(wrap) {
         { transform: `translate(${p.x}px,${p.y}px) scale(.35)`, opacity: 0 },
         { transform: `translate(${p.x}px,${p.y}px) scale(1.08)`, opacity: .96, offset: .32 },
         { transform: `translate(${p.x}px,${p.y}px) scale(1.22)`, opacity: 0 }
-      ], duration);
+      ], duration, 0, { playbackRateLimit: 1 });
       else art.setAttribute('opacity', '.9');
     }
     if (hit.count > 1 && !compact()) for (let index = 0; index < 3; index++) {
@@ -658,12 +682,14 @@ function createCombatFx(wrap) {
     if (!p || !layer()) return;
     const duration = config.support?.durationMs || 500, color = type === 'heal' || type === 'revive' ? '#91dda9' : type === 'shield' ? '#b6dced' : '#dfc898';
     const node = group(`gm-combat-${type === 'revive' ? 'heal' : type}`, event.actorId ?? row.actorId, id, color);
-    node.setAttribute('transform', `translate(${p.x} ${p.y})`); layer().append(node);
+    node.setAttribute('transform', `translate(${p.x} ${p.y})`);
+    node.setAttribute('data-effect-height', effectHeight(p));
+    layer().append(node);
     if (type === 'heal' || type === 'revive') {
       if (presentationAbility(row) === 'healing_touch') {
-        const size = Math.max(44, p.spriteHeight * 1.05);
+        const size = effectHeight(p);
         const emblem = group('gm-combat-healing-touch-impact', event.actorId ?? row.actorId, id, '#ead8b5');
-        emblem.setAttribute('data-ability-id', 'healing_touch'); emblem.setAttribute('transform', `translate(${p.x} ${p.y})`);
+        emblem.setAttribute('data-ability-id', 'healing_touch'); emblem.setAttribute('data-effect-height', size); emblem.setAttribute('transform', `translate(${p.x} ${p.y})`);
         image(emblem, 'data/assets/effects/healing-touch.png', size * .76, size);
         layer().append(emblem);
         if (!compact()) animate(emblem, [
@@ -674,17 +700,20 @@ function createCombatFx(wrap) {
         else emblem.setAttribute('opacity', '.9');
       }
       for (let index = 0; index < 4; index++) {
-        const mote = element('path', { d: 'M -1 -4 H 1 V -1 H 4 V 1 H 1 V 4 H -1 V 1 H -4 V -1 H -1 Z', fill: 'currentColor', transform: `translate(${(index - 1.5) * 7} ${index % 2 * 7})` });
+        const moteX = (index - 1.5) * 7, moteY = index % 2 * 7;
+        const mote = element('path', { d: 'M -1 -4 H 1 V -1 H 4 V 1 H 1 V 4 H -1 V 1 H -4 V -1 H -1 Z', fill: 'currentColor', transform: `translate(${moteX} ${moteY}) scale(2)` });
         node.append(mote);
-        animate(mote, [{ opacity: 0, transform: `translate(${(index - 1.5) * 7}px,8px)` }, { opacity: .9, offset: .3 }, { opacity: 0, transform: `translate(${(index - 1.5) * 7}px,-19px)` }], duration - index * 45, index * 45);
+        animate(mote, [{ opacity: 0, transform: `translate(${moteX}px,16px) scale(2)` }, { opacity: .9, offset: .3 }, { opacity: 0, transform: `translate(${moteX}px,-38px) scale(2)` }], duration - index * 45, index * 45);
       }
     } else if (type === 'shield') {
-      const ring = element('circle', { class: 'gm-combat-fx-outline', cx: 0, cy: 0, r: Math.max(8, p.radius), fill: 'none', stroke: 'currentColor', 'stroke-width': 2 }); node.append(ring);
+      node.setAttribute('data-effect-height', effectHeight(p));
+      const ring = element('circle', { class: 'gm-combat-fx-outline', cx: 0, cy: 0, r: p.spriteHeight, fill: 'none', stroke: 'currentColor', 'stroke-width': 4 }); node.append(ring);
       animate(ring, [{ opacity: .9, transform: 'scale(.7)' }, { opacity: .65, offset: .5 }, { opacity: 0, transform: 'scale(1.08)' }], duration);
     } else {
-      const icon = element('text', { x: 0, y: -p.radius - 8, 'text-anchor': 'middle', fill: 'currentColor', 'font-size': 15, 'font-weight': 700 });
+      node.setAttribute('data-effect-height', effectHeight(p));
+      const icon = element('text', { x: 0, y: -p.radius - 16, 'text-anchor': 'middle', fill: 'currentColor', 'font-size': 30, 'font-weight': 700 });
       icon.textContent = event.type === 'thread' ? '⌁' : event.status ? '!' : '◇'; node.append(icon);
-      animate(icon, [{ opacity: .9, transform: 'translate(0,3px)' }, { opacity: 1, offset: .4 }, { opacity: 0, transform: 'translate(0,-5px)' }], duration);
+      animate(icon, [{ opacity: .9, transform: 'translate(0,6px)' }, { opacity: 1, offset: .4 }, { opacity: 0, transform: 'translate(0,-10px)' }], duration);
     }
   }
   function abilityChip(row, event) {
@@ -723,7 +752,7 @@ function createCombatFx(wrap) {
     reflow: () => { clearPhase(false); surface?.remove(); surface = null; },
     pause: () => { paused = true; for (const animation of animations.keys()) animation.pause(); },
     resume: () => { paused = false; for (const animation of animations.keys()) animation.play(); },
-    setSpeed: value => { speed = Math.max(.1, Number(value) || 1); if (compact()) clearPhase(false); else for (const animation of animations.keys()) animation.playbackRate = speed; }
+    setSpeed: value => { speed = Math.max(.1, Number(value) || 1); if (compact()) clearPhase(false); else for (const animation of animations.keys()) animation.playbackRate = animation._gmPlaybackRateLimit ? Math.min(speed, animation._gmPlaybackRateLimit) : speed; }
   };
 }
 
