@@ -821,6 +821,7 @@ function createBattleEffects(wrap) {
   };
   arena?.addEventListener('gm-battlefield-layout', reflow);
   let layer = null, rate = 1, ending = false, pendingStrike = null;
+  let focusedRow = null, focusedUnits = new Set(), focusTimer = null;
   const fxConfig = (typeof G9_DATA !== 'undefined' && G9_DATA.fx) || (typeof G9D !== 'undefined' && G9D.fx);
   const reduced = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const unit = (id, name) => [...wrap.querySelectorAll('.gm-arena-unit')]
@@ -860,9 +861,54 @@ function createBattleEffects(wrap) {
     for (const a of touched) for (const name of [...a.classList]) if (name.startsWith('gm-cue-')) a.classList.remove(name);
     touched.clear(); layer?.remove(); layer = null;
   }
+  function clearTurnFocus() {
+    clearTimeout(focusTimer); focusTimer = null;
+    for (const node of focusedUnits) {
+      node.classList.remove('gm-turn-active', 'gm-turn-dim', 'gm-turn-focus-exempt');
+      node.querySelector('.gm-unit-sprite-anchor')?.classList.remove('gm-turn-active');
+    }
+    focusedUnits.clear(); focusedRow = null;
+  }
+  function focusTurn(row) {
+    if (!row?.actorId && !row?.actorName) return;
+    const actor = unit(row.actorId, row.actorName);
+    if (!actor) return;
+    if (focusedRow !== row) {
+      clearTurnFocus(); focusedRow = row;
+      const unaffected = new Set([String(actor.dataset.unitId)]);
+      if (row.targetId != null) unaffected.add(String(row.targetId));
+      else if (row.targetName) unaffected.add(String(row.targetName));
+      for (const step of row.timeline || []) {
+        const targetId = step?.event?.targetId, targetName = step?.event?.targetName;
+        if (targetId != null) unaffected.add(String(targetId));
+        else if (targetName) unaffected.add(String(targetName));
+      }
+      for (const node of wrap.querySelectorAll('.gm-arena-unit')) {
+        focusedUnits.add(node);
+        if (node === actor) {
+          node.classList.add('gm-turn-active');
+          node.querySelector('.gm-unit-sprite-anchor')?.classList.add('gm-turn-active');
+        } else if (unaffected.has(String(node.dataset.unitId))) {
+          node.classList.add('gm-turn-focus-exempt');
+        } else {
+          node.classList.add('gm-turn-dim');
+        }
+      }
+    }
+    clearTimeout(focusTimer); focusTimer = null;
+  }
+  function endTurnFocus(row) {
+    if (!row || focusedRow !== row) return;
+    clearTimeout(focusTimer);
+    focusTimer = setTimeout(clearTurnFocus, 300);
+  }
+  function finish() {
+    clearTransient(); pathwayEffects.clear(); combatFx.clear(); currentMap = Object.create(null);
+    if (focusedRow) endTurnFocus(focusedRow);
+  }
   function clear() {
     clearTransient(); pathwayEffects.clear(); combatFx.clear(); currentMap = Object.create(null);
-    arena?.removeEventListener('gm-battlefield-layout', reflow);
+    clearTurnFocus(); arena?.removeEventListener('gm-battlefield-layout', reflow);
   }
   function overlay() {
     if (!layer) {
@@ -938,11 +984,11 @@ function createBattleEffects(wrap) {
     combatFx.show(cue, rate, timingMs);
     if (!cue) return;
     ending = !!cue.isDone;
+    focusTurn(row);
     const actor = unit(event.actorId || row.actorId, event.actorName || row.actorName);
     const target = unit(event.targetId || row.targetId, event.targetName || row.targetName);
     const type = cue.type === 'row' ? (event.subtype === 'mythical_form' ? 'mythical' : event.type) : cue.type;
     if (resolvesStrike) animate(strike.sprite, [{ transform: strike.forward }, { transform: 'translate(0,0) scale(1)' }], 140);
-    if (!event.isDot && type !== 'settle') mark(actor, 'actor');
     if (type === 'cast') {
       if (row.abilityId === 'basic_attack' || row.attackKind) {
         const direct = [cue.next, ...(row.timeline || [])].find(step => step?.event?.targetId
@@ -950,13 +996,10 @@ function createBattleEffects(wrap) {
           && (['damage', 'reaction', 'reflect'].includes(step.type) || step.event.type === 'miss'));
         const nextTarget = row.targetId || direct?.event.targetId;
         attackMotion(actor, unit(nextTarget), row, timingMs);
-      } else { mark(actor, 'cast'); motion(actor, 'cast'); }
+      } else { motion(actor, 'cast'); }
     }
     else if (['damage', 'reaction', 'reflect'].includes(type)) {
-      mark(target, 'target');
       const hp = event.hpLoss ?? Math.max(0, (event.amount || 0) - (event.absorbed || 0));
-      mark(target, hp ? 'damage' : 'shield');
-      if (event.absorbed > 0 && event.shieldAfter === 0) mark(target, 'break');
       motion(target, 'hit');
       const label = hp ? `−${abbrNum(hp)}${event.absorbed ? ' · shield' : ''}` : event.absorbed > 0 ? `−${abbrNum(event.absorbed)} Shield` : 'Shield';
       number(target, label, hp ? '#f4b5ad' : '#c6e5fa', !!event.critical && (hp > 0 || event.absorbed > 0));
@@ -971,9 +1014,10 @@ function createBattleEffects(wrap) {
     } else if (type === 'thread' || event.type === 'thread' || event.status || row.isSkip
       || ['cc_loss', 'madness_loss', 'banished'].includes(event.subtype)) mark(target || actor, 'control');
     for (const node of cue.arrivals || []) { mark(node, 'arrive'); motion(node, 'arrive'); }
+    if (cue.type === 'settle' || cue.type === 'row') endTurnFocus(row);
     if (ending && !animations.size) clearTransient();
   }
-  return { show, clear,
+  return { show, clear, finish,
     sync: map => { currentMap = map || Object.create(null); pathwayEffects.sync(currentMap); combatFx.sync(currentMap); },
     reflow: () => { clearTransient(); pathwayEffects.show(null); pathwayEffects.sync(currentMap); combatFx.reflow(); },
     pause: () => { for (const a of animations) a.pause(); pathwayEffects.pause(); combatFx.pause(); },
@@ -1791,7 +1835,7 @@ if (typeof document !== 'undefined') (() => {
     });
     ensureBattleEffects(playing, wrap);
     if (cue) battleEffects.show({ ...cue, isDone, arrivals: [...wrap.querySelectorAll('.gm-arena-unit')].filter(node => !existing.has(node)) }, tickerSpeed, battlePresentationDelay(playing));
-    if (isDone) battleEffects.clear();
+    if (isDone) battleEffects.finish();
     if (playing.paused) battleEffects.pause();
     const completion = app.querySelector('.battle-completion');
     if (!isSim && completion) completion.hidden = !isDone;

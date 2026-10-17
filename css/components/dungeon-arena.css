@@ -731,3 +731,59 @@
     transition: none;
   }
 }
+
+/* Turn focus: highlight the acting unit without moving its formation slot. */
+.gm-arena-unit {
+  transition: opacity 0.2s ease, filter 0.2s ease;
+}
+
+.gm-arena-unit.gm-turn-dim:not(.dead) {
+  opacity: 0.34;
+  filter: saturate(0.58) brightness(0.62);
+}
+
+.gm-arena-unit.gm-turn-active:not(.dead) {
+  opacity: 1;
+  filter: none;
+}
+
+.gm-unit-sprite-anchor.gm-turn-active::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  bottom: 0;
+  width: 76%;
+  height: 9px;
+  box-sizing: border-box;
+  transform: translateX(-50%);
+  border: 2px solid rgba(255, 205, 116, 0.96);
+  border-radius: 50%;
+  background: rgba(255, 192, 92, 0.08);
+  box-shadow: 0 0 4px rgba(255, 196, 104, 0.75), 0 0 11px rgba(255, 175, 74, 0.48);
+  pointer-events: none;
+}
+
+.gm-unit-sprite-anchor.gm-turn-active .gm-unit-sprite :is(img, .combat-sprite-img) {
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.8))
+    drop-shadow(0 0 2px rgba(255, 226, 171, 0.95))
+    drop-shadow(0 0 6px rgba(255, 184, 87, 0.68));
+}
+
+/* The active-turn glow and ground ring replace the old actor/target boxes. */
+.gm-unit-sprite-anchor.gm-cue-actor::after,
+.gm-unit-sprite-anchor.gm-cue-target::after {
+  content: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gm-arena-unit,
+  .gm-unit-sprite-anchor::before {
+    transition: none;
+  }
+}
+
+.gm-unit-sprite-anchor.gm-turn-active::after,
+.gm-unit-sprite-anchor.gm-turn-focus-exempt::after {
+  content: none;
+}
