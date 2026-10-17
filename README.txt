@@ -21,12 +21,15 @@ Combat animation and playback
   Pause and speed changes preserve the remaining reading time in the phase.
   Projectile families and damage colors live in data/fx.json. Swords and knives
   share the slash presentation. Pistol basics fire a rounded tracer from a
-  compact directional muzzle flash; unarmed basics jab and land a punch impact,
+  compact gun-muzzle.png flash; unarmed basics jab and land a punch impact,
   including for caster characters. Explicit magic basics retain pathway effects.
   Pistol tracers and punch impacts use the sword's main-effect scale: 128px on
   phones and 192px on desktop. All three basic attack cues use the same 600ms
   cast phase (300ms at 2x). Punch impacts remain visible for up to 600ms inside
   their existing outcome phase; muzzle flashes and pixel sparks stay compact.
+  The muzzle PNG keeps its native proportions at 48px wide, rotates toward
+  the target, and anchors its bright ignition point to the forward hand/barrel.
+  It preloads before battle and retains the 140ms flash clock (70ms at 2x).
   Standalone missed basics show the weapon attempt before revealing Miss,
   without a false hit or changing the two-second action clock.
   Attacks anticipate, lunge inside their fixed artwork square, then return on

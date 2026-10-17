@@ -8,7 +8,10 @@ const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '..');
 const output = process.env.WEAPON_BROWSER_OUTPUT || '/workspace/guild_assessment/weapon-clarity';
 const source = fs.readFileSync(path.join(root, 'js/ui.js'), 'utf8').split('// ===== Browser UI =====')[0];
-const styles = [...fs.readFileSync(path.join(root, 'index.html'), 'utf8').matchAll(/href="(css\/[^"?]+\.css)/g)]
+const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const muzzlePreload = html.match(/<link rel="preload" as="image" href="data\/assets\/effects\/gun-muzzle\.png"[^>]*>/)?.[0];
+assert(muzzlePreload, 'the PNG muzzle preloads before the first battle');
+const styles = [...html.matchAll(/href="(css\/[^"?]+\.css)/g)]
   .map(match => fs.readFileSync(path.join(root, match[1]), 'utf8')).join('\n');
 const data = Object.fromEntries(['contracts', 'fx', 'balance'].map(name => [name, JSON.parse(fs.readFileSync(path.join(root, `data/${name}.json`), 'utf8'))]));
 const edgeArt = '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><path fill="#c79c58" d="M0 0h128v128H0z"/><path fill="#435d87" d="M4 4h120v120H4z"/></svg>';
@@ -27,7 +30,7 @@ async function fixture(browser, width, { reduced = false, realArt = false } = {}
     try { return route.fulfill({ body: fs.readFileSync(file), contentType: file.endsWith('.png') ? 'image/png' : 'application/octet-stream' }); }
     catch { return route.fulfill({ status: 404, body: 'Missing fixture asset' }); }
   });
-  await page.setContent(`<base href="https://weapon-review.test/"><style>${styles}</style><main id="fixture"></main>`);
+  await page.setContent(`<base href="https://weapon-review.test/">${muzzlePreload}<style>${styles}</style><main id="fixture"></main>`);
   await page.evaluate(value => {
     window.G9D = value; window.G9_DATA = { ...value, runtimeAssets: { entries: {} } };
     window.abbrNum = amount => String(Math.round(amount || 0));
@@ -72,6 +75,11 @@ async function fixture(browser, width, { reduced = false, realArt = false } = {}
     window.freeze = time => { fx.pause(); for (const animation of wrap.querySelector('.gm-dungeon-arena').getAnimations({ subtree: true })) animation.currentTime = time; };
   });
   await page.waitForFunction(() => [...document.images].every(image => image.complete));
+  const muzzleSize = await page.evaluate(async () => {
+    const image = new Image(); image.src = document.querySelector('link[as="image"]').href;
+    await image.decode(); return { width: image.naturalWidth, height: image.naturalHeight };
+  });
+  assert.deepEqual(muzzleSize, { width: 989, height: 559 }, 'the preloaded muzzle PNG decodes before the first shot');
   await page.evaluate(() => { layoutBattlefields(document); wrap.querySelector('.gm-dungeon-arena').scrollIntoView({ block: 'start' }); });
   return { page, errors };
 }
@@ -110,6 +118,7 @@ async function screenshot(page, name) {
             const origin = { x: Number(flash.dataset.startX), y: Number(flash.dataset.startY) };
             const angle = Number(flash.dataset.angleDeg), expectedAngle = Math.atan2(target.y - origin.y, target.x - origin.x) * 180 / Math.PI;
             const flashBox = flash.getBBox(), tracerBox = tracer.getBBox(), flashOpacity = Number(getComputedStyle(flash).opacity);
+            const flashArt = flash.querySelector('image');
             const tracerAnimation = tracer.getAnimations()[0], tracerTiming = tracerAnimation.effect.getTiming();
             const travelSamples = [.25, .5, .75].map(progress => {
               freeze(Number(tracerTiming.duration) * progress);
@@ -120,6 +129,8 @@ async function screenshot(page, name) {
               x: Number(tracer.dataset.startX), y: Number(tracer.dataset.startY), width: tracerBox.width, height: tracerBox.height,
               duration: Number(tracerTiming.duration), delay: Number(tracerTiming.delay), rate: tracerAnimation.playbackRate, samples: travelSamples },
               flash: { origin, paths: flash.querySelectorAll('path').length, imageCount: flash.querySelectorAll('image').length,
+                art: { source: flashArt.getAttribute('href'), x: Number(flashArt.getAttribute('x')), y: Number(flashArt.getAttribute('y')),
+                  width: Number(flashArt.getAttribute('width')), height: Number(flashArt.getAttribute('height')) },
                 opacity: flashOpacity, width: flashBox.width, height: flashBox.height,
                 angle, expectedAngle, animationRate: flashAnimation.playbackRate,
                 duration: Number(flashTiming.duration), delay: Number(flashTiming.delay) },
@@ -136,9 +147,12 @@ async function screenshot(page, name) {
           assert.notEqual(result.tracer.samples[0].box.top, result.tracer.samples[2].box.top, 'tracer visibly crosses the battlefield');
           assert(result.tracer.children.every(tag => tag.toLowerCase() === 'rect'), 'gunfire contains only rounded rectangles, without arrowhead paths');
           assert(result.tracer.rects.every(rect => rect.width > rect.height && rect.rx > 0), 'tracer reads as a narrow rounded bullet');
-          assert.equal(result.flash.paths, 2, 'directional outer flame and bright core replace the blocky bitmap');
-          assert.equal(result.flash.imageCount, 0, 'flash never reuses the old blocky PNG');
-          assert.equal(result.flash.width, 24); assert.equal(result.flash.height, 14);
+          assert.equal(result.flash.paths, 0, 'PNG flash replaces the procedural flame');
+          assert.equal(result.flash.imageCount, 1); assert.equal(result.flash.art.source, 'data/assets/effects/gun-muzzle.png');
+          assert.equal(result.flash.width, 48);
+          assert(Math.abs(result.flash.height - 559 * 48 / 989) < .01, 'PNG keeps its native proportions at compact size');
+          assert(Math.abs(result.flash.art.x + 110 * 48 / 989) < .01 && Math.abs(result.flash.art.y + 280 * 48 / 989) < .01,
+            'the bright PNG ignition point aligns with the hand/barrel anchor');
           assert(result.flash.opacity > .7, 'actual rendered flash is visible during its firing frame');
           assert(Math.abs(result.flash.angle - result.flash.expectedAngle) < .02, 'flash points from the source toward its target');
           assert(Math.abs(result.hand.relativeX - .68) < .01 && Math.abs(result.hand.relativeY - .55) < .01,
