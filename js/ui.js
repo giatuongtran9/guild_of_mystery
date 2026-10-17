@@ -830,8 +830,8 @@ function createCombatFx(wrap) {
     const origin = gunBasic ? firing : a;
     const distance = Math.hypot(b.x - origin.x, b.y - origin.y), hold = Math.max(1, Number(phaseHold) || 600);
     const naturalTravel = Math.max(settings.minMs, Math.min(settings.maxMs, distance / (settings.speedPxPerMs || 1)));
-    const duration = swordBasic || gunBasic ? hold : Math.min(hold, naturalTravel);
-    const delay = swordBasic || gunBasic ? 0 : Math.max(0, hold - duration);
+    const duration = usesSlashArt || gunBasic ? hold : Math.min(hold, naturalTravel);
+    const delay = usesSlashArt || gunBasic ? 0 : Math.max(0, hold - duration);
     const angle = gunBasic ? firing.angle : Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
     const direction = distance ? { x: (b.x - a.x) / distance, y: (b.y - a.y) / distance } : { x: 1, y: 0 };
     // Keep the sword mark between the sprites instead of letting it sit over
@@ -919,7 +919,7 @@ function createCombatFx(wrap) {
     const critical = !!event.critical, settings = config.impact || defaults.impact, hit = hitIndex(row, event);
     const punchHit = weaponBasic(row, event, 'unarmed');
     const brutalHit = presentationAbility(row) === 'brutal_strike' && event.actorId === row.actorId;
-    const duration = punchHit ? Math.max(settings.durationMs || 160, 320) : settings.durationMs || 160;
+    const duration = punchHit || brutalHit ? Math.max(settings.durationMs || 160, 320) : settings.durationMs || 160;
     const impactScale = critical ? settings.critScale || 1.5 : 1;
     const burst = group('gm-combat-impact', event.actorId ?? row.actorId, event.targetId,
       punchHit ? '#ffd36f' : brutalHit ? '#e63946' : critical ? settings.critColor || defaults.impact.critColor : colorFor(event));
@@ -953,7 +953,7 @@ function createCombatFx(wrap) {
           { transform: 'scale(1.15) rotate(-10deg)', opacity: 1 },
           { transform: 'scale(1) rotate(0deg)', opacity: 0.95, offset: 0.3 },
           { transform: 'scale(0.96) rotate(3deg)', opacity: 0 }
-        ], Math.min(260, duration));
+        ], Math.min(320, duration));
       }
       // Trailing embers
       const embers = element('g', { class: 'gm-combat-brutal-embers' });
@@ -967,7 +967,7 @@ function createCombatFx(wrap) {
           { transform: 'translate(0, 0) scale(1)', opacity: 1 },
           { transform: 'translate(4px, -12px) scale(0.8)', opacity: 0.7, offset: 0.5 },
           { transform: 'translate(8px, -24px) scale(0.4)', opacity: 0 }
-        ], Math.min(360, duration * 1.5));
+        ], Math.min(420, duration * 1.4));
       }
     }
     layer().append(burst);
