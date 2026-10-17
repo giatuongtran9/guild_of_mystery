@@ -689,8 +689,9 @@ function createCombatFx(wrap) {
         y: from.y + (to.y - from.y) * t - Math.sin(Math.PI * t) * bend * .45 };
     };
     const make = (ghost = 0) => {
-      const node = group(ghost ? 'gm-combat-afterimage' : usesSlashArt ? 'gm-combat-sword-slash-travel'
-        : gunBasic ? 'gm-combat-projectile gm-combat-gun-tracer' : 'gm-combat-projectile', ownerId, targetId, colorFor({ ...event, damageType }));
+      const node = group(`${ghost ? 'gm-combat-afterimage' : usesSlashArt ? 'gm-combat-sword-slash-travel'
+        : gunBasic ? 'gm-combat-projectile gm-combat-gun-tracer' : 'gm-combat-projectile'}${brutalStrike ? ' gm-combat-brutal-strike-travel' : ''}`,
+        ownerId, targetId, brutalStrike ? '#a92f42' : colorFor({ ...event, damageType }));
       for (const [name, value] of Object.entries({ family, 'damage-type': damageType, 'path-kind': pathKind,
         'travel-ms': duration, 'travel-delay-ms': delay, ...(usesSlashArt ? { 'angle-deg': angle.toFixed(2), ...(brutalStrike ? { 'ability-id': 'brutal_strike' } : {}) } : {}) })) node.setAttribute(`data-${name}`, value);
       node.setAttribute('opacity', '0');
@@ -706,6 +707,19 @@ function createCombatFx(wrap) {
         slash.setAttribute('data-sprite-scale', '2');
         slash.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', 'data/assets/effects/sword-slash.png');
         node.append(slash);
+        if (brutalStrike) {
+          // Abyss Criminal's Brutal Strike keeps the shared crescent art, but
+          // adds a short crimson fracture edge and a few ember pixels.
+          const edge = element('g', { class: 'gm-combat-brutal-strike-edge', 'data-pathway': 'abyss' });
+          edge.append(element('path', { d: `M ${-size * .34} ${size * .12} L ${-size * .12} ${-size * .06} L ${size * .03} ${size * .02} L ${size * .3} ${-size * .17}`,
+            fill: 'none', stroke: '#a92f42', 'stroke-width': 2.5, 'stroke-linecap': 'square', 'stroke-linejoin': 'miter' }));
+          edge.append(element('path', { d: `M ${-size * .24} ${size * .16} L ${-size * .1} ${size * .07} L ${-size * .02} ${size * .1}`,
+            fill: 'none', stroke: '#e5b477', 'stroke-width': 1.25, 'stroke-linecap': 'square' }));
+          for (const [x, y, side] of [[-.31, -.2, 3], [.23, .18, 2], [.35, -.04, 2]]) {
+            edge.append(element('rect', { x: size * x, y: size * y, width: side, height: side, fill: '#c54b43', opacity: .9 }));
+          }
+          node.append(edge);
+        }
       } else if (gunBasic) {
         const extent = effectHeight(a), thickness = extent * .09375;
         node.setAttribute('data-shape', 'bullet'); node.setAttribute('data-size', extent);
@@ -751,14 +765,16 @@ function createCombatFx(wrap) {
     if (!p || !layer()) return;
     const critical = !!event.critical, settings = config.impact || defaults.impact, hit = hitIndex(row, event);
     const punchHit = weaponBasic(row, event, 'unarmed');
+    const brutalHit = presentationAbility(row) === 'brutal_strike' && event.actorId === row.actorId;
     const duration = punchHit ? Math.max(settings.durationMs || 160, 320) : settings.durationMs || 160;
     const impactScale = critical ? settings.critScale || 1.5 : 1;
     const burst = group('gm-combat-impact', event.actorId ?? row.actorId, event.targetId,
-      punchHit ? '#ffd36f' : critical ? settings.critColor || defaults.impact.critColor : colorFor(event));
+      punchHit ? '#ffd36f' : brutalHit ? '#a92f42' : critical ? settings.critColor || defaults.impact.critColor : colorFor(event));
     burst.setAttribute('transform', `translate(${p.x} ${p.y}) scale(${impactScale})`);
     burst.setAttribute('data-critical', String(critical)); burst.setAttribute('data-frame', '0');
     burst.setAttribute('data-impact-scale', impactScale);
     if (punchHit) burst.setAttribute('data-punch-burst', 'true');
+    if (brutalHit) burst.setAttribute('data-brutal-strike', 'true');
     burst.setAttribute('data-hit-index', hit.index); burst.setAttribute('data-hit-count', hit.count); burst.setAttribute('data-stagger-ms', hit.count > 1 ? 35 : 0);
     let punchArt = null;
     if (punchHit) {
@@ -787,6 +803,15 @@ function createCombatFx(wrap) {
         // Step each keyframe segment. Stepping the whole effect would hold only
         // the first frame and skip the intermediate pixel shapes entirely.
         animate(frame, frames.map(key => ({ ...key, easing: 'steps(1,end)' })), duration);
+      }
+      if (brutalHit) {
+        const fracture = element('g', { class: 'gm-combat-brutal-strike-impact-edge', 'data-pathway': 'abyss' });
+        fracture.append(element('path', { d: 'M -23 -13 L -11 -5 L -16 2 M -11 -5 L -1 4 L 5 -7 M 5 7 L 12 1 L 22 12',
+          fill: 'none', stroke: '#a92f42', 'stroke-width': 3, 'stroke-linecap': 'square', 'stroke-linejoin': 'miter' }));
+        fracture.append(element('path', { d: 'M -17 -10 L -10 -6 M 0 2 L 5 -4',
+          fill: 'none', stroke: '#e5b477', 'stroke-width': 1.5, 'stroke-linecap': 'square' }));
+        burst.append(fracture);
+        if (!compact()) animate(fracture, [{ opacity: .98 }, { opacity: .82, offset: .35 }, { opacity: 0 }], Math.min(240, duration));
       }
     }
     layer().append(burst);
