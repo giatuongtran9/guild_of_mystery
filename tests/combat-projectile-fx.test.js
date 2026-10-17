@@ -84,14 +84,18 @@ test('gun and unarmed basics retain procedural projectiles while weapon basics t
   assert.equal(travelingSlash.dataset.targetId, 'enemy');
   assert.equal(travelingSlash.querySelector('image').getAttribute('href'), 'data/assets/effects/sword-slash.png');
   const travelingArt = travelingSlash.querySelector('image');
-  assert(!travelingArt.hasAttribute('transform'), 'the art has no extra fixed rotation; the group bearing sets its direction');
-  assert(Number(travelingArt.getAttribute('width')) <= 48, 'the traveling slash is kept small enough to leave the sprites readable');
+  assert.equal(travelingArt.getAttribute('transform'), 'rotate(180)', 'the slash art is flipped upside down locally');
+  assert.equal(travelingArt.dataset.flipDeg, '180');
+  assert.equal(Number(travelingArt.getAttribute('width')), 128, 'the slash is twice the 64px character sprite height');
+  assert.equal(Number(travelingArt.getAttribute('height')), 128, 'the slash stays square at twice the character sprite height');
+  assert.equal(travelingArt.dataset.spriteScale, '2');
   assert.equal(Number(travelingSlash.dataset.travelMs), 450,
     'slash uses the full existing cast window for a clearly readable flight');
   assert.equal(Number(travelingSlash.dataset.travelDelayMs), 0,
     'slash launches as soon as the attacker cue appears, without extending the turn');
   const travelAnimation = active(f).find(animation => animation.element === travelingSlash);
   assert(travelAnimation?.keyframes.some(frame => /rotate\(/.test(frame.transform || '')), 'slash rotates along the attacker-to-target direction');
+  assert(travelAnimation.keyframes.every(frame => !/rotate\(180\)/.test(frame.transform || '')), 'the local upside-down flip does not reverse the travel bearing');
   const firstTravel = travelAnimation.keyframes[0].transform;
   const lastTravel = travelAnimation.keyframes.at(-1).transform;
   assert.match(firstTravel, /translate\(\d+(?:\.\d+)?px,\d+(?:\.\d+)?px\)/, 'slash begins inset from the attacker center');
