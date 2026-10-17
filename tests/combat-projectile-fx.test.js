@@ -338,9 +338,18 @@ test('Sequence 9 active abilities have distinct cast and outcome visuals within 
     assert(animation, ability + ' effect animates within cast');
     assert(animation.timing.duration <= 480, ability + ' does not extend cast window');
     if (ability === 'combat_theft') assert.equal(effect.dataset.travelDirection, 'target-to-attacker');
-    if (ability === 'brutal_strike') assert.equal(Number(effect.dataset.effectHeight), 128, 'Brutal Strike slash is 2x sprite height');
+    if (ability === 'brutal_strike') {
+      assert.equal(Number(effect.dataset.effectHeight), 128, 'Brutal Strike slash is 2x sprite height');
+      assert(effect.classList.contains('gm-combat-brutal-strike-travel'), 'Abyss gets its sequence-specific travel treatment');
+      assert.equal(effect.querySelector('.gm-combat-brutal-strike-edge')?.dataset.pathway, 'abyss', 'Abyss crimson fracture edge is present');
+    }
     f.effects.clear(); f.effects.sync(f.map);
   }
+  const brutalRow = { actorId: 'paragon', sourcePath: 'abyss', abilityId: 'brutal_strike', sourceAbilityId: 'brutal_strike' };
+  f.effects.show({ ...hit('paragon', 'enemy'), row: brutalRow }, 1, 480);
+  assert.equal(f.find('.gm-combat-impact')?.dataset.brutalStrike, 'true', 'Brutal Strike impact is marked distinctly');
+  assert(f.find('.gm-combat-brutal-strike-impact-edge'), 'Brutal Strike impact has an Abyss-colored fracture cue');
+  f.effects.clear(); f.effects.sync(f.map);
   const row = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'healing_touch', sourceAbilityId: 'healing_touch' };
   f.effects.show({ type: 'cast', row, next: { type: 'heal', event: { type: 'heal', actorId: 'paragon', targetId: 'fool', amount: 20 } } }, 1, 480);
   const flight = f.find('.gm-combat-healing-touch-flight');
