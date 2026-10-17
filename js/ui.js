@@ -340,7 +340,7 @@ function createCombatFx(wrap) {
     if (!box || !field || !arena || !box.width || !box.height || !field.width || !field.height
       || box.bottom <= Math.max(0, arena.top) || box.top >= Math.min(window.innerHeight, arena.bottom)
       || box.right <= Math.max(0, arena.left) || box.left >= Math.min(window.innerWidth, arena.right)) return null;
-    return { x: box.left - field.left + box.width / 2, y: box.top - field.top + box.height / 2, radius: Math.min(box.width, box.height) * .38 };
+    return { x: box.left - field.left + box.width / 2, y: box.top - field.top + box.height / 2, radius: Math.min(box.width, box.height) * .38, spriteHeight: box.height };
   }
   function group(kind, ownerId, targetId, color) {
     const node = element('g', { class: kind, style: `--gm-fx-color:${color}` });
@@ -456,10 +456,15 @@ function createCombatFx(wrap) {
         'travel-ms': duration, 'travel-delay-ms': delay, ...(swordBasic ? { 'angle-deg': angle.toFixed(2) } : {}) })) node.setAttribute(`data-${name}`, value);
       node.setAttribute('opacity', '0');
       if (swordBasic) {
-        const size = Math.max(30, Math.min(48, originalTarget.radius * 1.6));
+        // Size against the sprite box, not its combat radius: the slash should
+        // read at roughly twice character height. Flip the art locally while
+        // the parent group's rotation continues to follow attacker -> target.
+        const size = Math.max(1, originalTarget.spriteHeight || originalTarget.radius / .38) * 2;
         const slash = element('image', { class: 'gm-combat-sword-slash-projectile', x: -size / 2, y: -size / 2,
-          width: size, height: size, href: 'data/assets/effects/sword-slash.png',
+          width: size, height: size, href: 'data/assets/effects/sword-slash.png', transform: 'rotate(180)',
           preserveAspectRatio: 'xMidYMid meet', opacity: 1 });
+        slash.setAttribute('data-flip-deg', '180');
+        slash.setAttribute('data-sprite-scale', '2');
         slash.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', 'data/assets/effects/sword-slash.png');
         node.append(slash);
       } else node.append(shape(settings.shape || family, settings.size, area ? b.width : undefined));
