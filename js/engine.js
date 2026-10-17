@@ -228,7 +228,7 @@ function groupEventsToRows(events, battleSnapshot) {
         actorId: ev.actorId,
         actorName: ev.actorName,
         actorTeam: ev.actorTeam,
-        ability: 'Attack',
+        ability: ev.ability || 'Attack',
         targetName: ev.targetName,
         targetTeam: ev.targetTeam,
         isMiss: true,
@@ -239,6 +239,10 @@ function groupEventsToRows(events, battleSnapshot) {
         subrows: [],
         deaths: []
       };
+      // Standalone basic misses already own an action row. Expose its attempt
+      // before the miss through the existing two-second presentation window;
+      // same-actor utility/bonus misses above keep their original grouping.
+      if (ev.abilityId === 'basic_attack') step(activeTurn, 'note', ev);
       continue;
     }
 
@@ -1161,8 +1165,8 @@ function maybeCounter(target,attacker,state,lines=[],r){if(!lines)lines=[];if(!t
 }
 function consumeAttackMiss(actor,r){const chance=Number(actor._nextAttackMiss||0);actor._nextAttackMiss=0;return chance>0&&r()<chance;}
 function consumeCritFailure(actor){const blocked=!!actor._nextCritFail;actor._nextCritFail=0;return blocked;}
-function attackHit(agent,actor,target,state,lines=[],r,{forcedMiss=false,weaponAttack=false,ability='Attack'}={}){
- const miss=text=>{lines.push({text,kind:'status'});emitCombatEvent(state,{round:state?.currentRound||1,type:'miss',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:target.id,targetName:target.name,targetTeam:teamOf(target,state),text});signatureFailedAttack(actor,state,lines,r);return false;};
+function attackHit(agent,actor,target,state,lines=[],r,{forcedMiss=false,weaponAttack=false,ability='Attack',presentation=null}={}){
+ const miss=text=>{lines.push({text,kind:'status'});emitCombatEvent(state,{...(presentation||{}),round:state?.currentRound||1,type:'miss',actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:target.id,targetName:target.name,targetTeam:teamOf(target,state),text});signatureFailedAttack(actor,state,lines,r);return false;};
  const fortuneDodge=()=>{if(getCombatAgent(target).path==='wheel_of_fortune'&&!target.summoned)signatureBonus(target,state);};
  // Stage-three Spirit Threads prevent every target dodge, including guaranteed
  // Evade. The attacker's independent accuracy checks still apply below.
@@ -1186,7 +1190,8 @@ function attackOnce(agent,actor,enemy,state,lines=[],r,mult=1,options={}){if(!li
  if(!canAffect(agent.sequence,enemy.sequence)) { lines.push({text:`${actor.name}'s attack is suppressed by the enemy's higher Authority.`,kind:'system'}); return false; }
  const pm=passiveCombatModifier(agent), weapon=weaponStats(agent);
  const openingCrit=traitOpeningCritical(actor,enemy,critFailure||forcedMiss);
- if(!attackHit(agent,actor,enemy,state,lines,r,{forcedMiss,weaponAttack:true,ability:'attack'}))return false;
+ const missPresentation=options.emitCast===false?null:{abilityId:'basic_attack',attackKind:weapon.kind,sourcePath:agent.path,ability:weapon.name==='Bare Hands'?'Attack':weapon.name,weaponId:weapon.id};
+ if(!attackHit(agent,actor,enemy,state,lines,r,{forcedMiss,weaponAttack:true,ability:'attack',presentation:missPresentation}))return false;
  // Open the successful attack before its opening costs and companion hooks,
  // so those notes cannot attach to a preceding Curse/other periodic tick.
  if(options.emitCast!==false)emitCombatEvent(state, {

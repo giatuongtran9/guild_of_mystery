@@ -413,21 +413,24 @@ function createCombatFx(wrap) {
     if (!weaponBasic(row, event, 'unarmed') || !actor || !target || !layer()) return;
     const dx = target.x - actor.x, dy = target.y - actor.y, distance = Math.hypot(dx, dy);
     const direction = distance ? { x: dx / distance, y: dy / distance } : { x: 1, y: 0 };
-    const from = { x: actor.x + direction.x * actor.radius * .4, y: actor.y + direction.y * actor.radius * .4 };
-    const length = Math.min(18, Math.max(0, distance * .25));
+    const from = { x: actor.x + direction.x * actor.radius * .25, y: actor.y + direction.y * actor.radius * .25 };
+    const length = Math.min(actor.spriteHeight * .4, Math.max(0, distance * .25));
+    const thickness = actor.spriteHeight * .09375;
     const to = { x: from.x + direction.x * length, y: from.y + direction.y * length };
     const path = element('path', { class: 'gm-combat-punch-trail gm-combat-punch-jab', d: `M ${from.x} ${from.y} L ${to.x} ${to.y}`,
-      fill: 'none', stroke: '#fff0c9', 'stroke-width': 3, 'stroke-linecap': 'round', opacity: 0,
+      fill: 'none', stroke: '#fff0c9', 'stroke-width': thickness, 'stroke-linecap': 'round', opacity: 0,
       'stroke-dasharray': length, 'stroke-dashoffset': length });
     path.setAttribute('data-owner-id', row.actorId); path.setAttribute('data-target-id', event.targetId);
-    path.setAttribute('data-effect-width', 3); path.setAttribute('data-length', length);
+    path.setAttribute('data-effect-width', thickness); path.setAttribute('data-length', length);
+    path.setAttribute('data-reference-height', effectHeight(actor));
     for (const [name, value] of Object.entries({ 'start-x': from.x, 'start-y': from.y, 'end-x': to.x, 'end-y': to.y })) path.setAttribute(`data-${name}`, value);
-    const hold = Math.max(1, Number(phaseHold) || 600), sweepDuration = Math.min(140, hold), delay = hold - sweepDuration;
+    const hold = Math.max(1, Number(phaseHold) || 600), sweepDuration = hold, delay = 0;
     path.setAttribute('data-travel-ms', sweepDuration); path.setAttribute('data-travel-delay-ms', delay);
     layer().append(path);
     if (!compact() && path.animate) animate(path, [
       { opacity: 0, strokeDashoffset: length },
-      { opacity: 1, strokeDashoffset: 0, offset: .28 },
+      { opacity: 1, strokeDashoffset: 0, offset: .2 },
+      { opacity: 1, strokeDashoffset: 0, offset: .75 },
       { opacity: 0, strokeDashoffset: -length * .12 }
     ], sweepDuration, delay);
     else { path.setAttribute('opacity', '.5'); path.setAttribute('stroke-dashoffset', 0); }
@@ -560,12 +563,13 @@ function createCombatFx(wrap) {
   }
   function travel(row, step, phaseHold) {
     const event = step?.event;
+    const basicMiss = event?.type === 'miss' && ['gun', 'weapon', 'unarmed'].some(kind => weaponBasic(row, event, kind));
     const swordBasic = swordBasicSlash(row, event);
     const abilityId = presentationAbility(row), brutalStrike = abilityId === 'brutal_strike' && event?.actorId === row.actorId;
     const customS9 = ['exploit_loophole', 'combat_theft'].includes(abilityId) && event?.actorId === row.actorId;
     const unarmedBasic = weaponBasic(row, event, 'unarmed');
     // Punches land as a distinct burst; weapon basics and Brutal Strike use the provided crescent art.
-    if (!event || !damageTypes.has(step.type) || event.isDot || customS9) return;
+    if (!event || (!damageTypes.has(step.type) && !basicMiss) || event.isDot || customS9) return;
     if (unarmedBasic) { punchCue(row, step, phaseHold); return; }
     const ownerId = event.actorId ?? row.actorId, targetId = event.targetId;
     const a = point(ownerId), originalTarget = point(targetId);
@@ -581,14 +585,13 @@ function createCombatFx(wrap) {
     const b = area ? targetRank(targetId) || originalTarget : originalTarget;
     const usesSlashArt = swordBasic || brutalStrike;
     const family = usesSlashArt ? 'slash' : area ? 'wave' : familyFor(row, event), settings = config.families?.[family] || defaults.families[family];
-    const physical = event.damageType === 'physical' && !magicBasic(row, event), pathKind = physical || usesSlashArt ? 'straight' : settings.path;
+    const damageType = event.damageType || (basicMiss ? 'physical' : 'default');
+    const physical = damageType === 'physical' && !magicBasic(row, event), pathKind = physical || usesSlashArt ? 'straight' : settings.path;
     const origin = gunBasic ? firing : a;
     const distance = Math.hypot(b.x - origin.x, b.y - origin.y), hold = Math.max(1, Number(phaseHold) || 600);
     const naturalTravel = Math.max(settings.minMs, Math.min(settings.maxMs, distance / (settings.speedPxPerMs || 1)));
-    const duration = swordBasic ? hold : gunBasic
-      ? Math.min(hold, Math.max(140, naturalTravel))
-      : Math.min(hold, naturalTravel);
-    const delay = swordBasic ? 0 : Math.max(0, hold - duration);
+    const duration = swordBasic || gunBasic ? hold : Math.min(hold, naturalTravel);
+    const delay = swordBasic || gunBasic ? 0 : Math.max(0, hold - duration);
     const angle = gunBasic ? firing.angle : Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
     const direction = distance ? { x: (b.x - a.x) / distance, y: (b.y - a.y) / distance } : { x: 1, y: 0 };
     // Keep the sword mark between the sprites instead of letting it sit over
@@ -605,8 +608,8 @@ function createCombatFx(wrap) {
     };
     const make = (ghost = 0) => {
       const node = group(ghost ? 'gm-combat-afterimage' : usesSlashArt ? 'gm-combat-sword-slash-travel'
-        : gunBasic ? 'gm-combat-projectile gm-combat-gun-tracer' : 'gm-combat-projectile', ownerId, targetId, colorFor(event));
-      for (const [name, value] of Object.entries({ family, 'damage-type': event.damageType || 'default', 'path-kind': pathKind,
+        : gunBasic ? 'gm-combat-projectile gm-combat-gun-tracer' : 'gm-combat-projectile', ownerId, targetId, colorFor({ ...event, damageType }));
+      for (const [name, value] of Object.entries({ family, 'damage-type': damageType, 'path-kind': pathKind,
         'travel-ms': duration, 'travel-delay-ms': delay, ...(usesSlashArt ? { 'angle-deg': angle.toFixed(2), ...(brutalStrike ? { 'ability-id': 'brutal_strike' } : {}) } : {}) })) node.setAttribute(`data-${name}`, value);
       node.setAttribute('opacity', '0');
       if (usesSlashArt) {
@@ -622,13 +625,20 @@ function createCombatFx(wrap) {
         slash.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', 'data/assets/effects/sword-slash.png');
         node.append(slash);
       } else if (gunBasic) {
-        node.setAttribute('data-shape', 'bullet'); node.setAttribute('data-size', 14);
-        node.setAttribute('data-effect-width', 26); node.setAttribute('data-effect-height', 4);
+        const extent = effectHeight(a), thickness = extent * .09375;
+        node.setAttribute('data-shape', 'bullet'); node.setAttribute('data-size', extent);
+        node.setAttribute('data-effect-width', extent); node.setAttribute('data-effect-height', thickness);
+        node.setAttribute('data-reference-height', extent);
         node.setAttribute('data-start-x', firing.x); node.setAttribute('data-start-y', firing.y);
         node.setAttribute('data-angle-deg', firing.angle.toFixed(2));
-        node.append(element('rect', { x: -19, y: -1, width: 12, height: 2, rx: 1, fill: 'currentColor', opacity: .35 }));
-        node.append(element('rect', { x: -7, y: -2, width: 14, height: 4, rx: 2, fill: 'currentColor' }));
-        node.append(element('rect', { x: 3, y: -1, width: 3, height: 2, rx: 1, fill: '#fff4d5' }));
+        node.append(element('rect', { x: -extent * .75, y: -thickness * .125, width: extent * .25, height: thickness * .25,
+          rx: thickness * .125, fill: 'currentColor', opacity: .15 }));
+        node.append(element('rect', { x: -extent * .5, y: -thickness * .25, width: extent * .25, height: thickness * .5,
+          rx: thickness * .25, fill: 'currentColor', opacity: .4 }));
+        node.append(element('rect', { x: -extent * .25, y: -thickness / 2, width: extent * .5, height: thickness,
+          rx: thickness / 2, fill: 'currentColor' }));
+        node.append(element('rect', { x: extent * .08, y: -thickness * .25, width: extent * .1, height: thickness * .5,
+          rx: thickness * .25, fill: '#fff4d5' }));
       } else {
         const projectileFamily = settings.shape || family;
         const projectileSize = projectileShapeSize(projectileFamily, a);
@@ -653,7 +663,7 @@ function createCombatFx(wrap) {
       && step.event.targetId === event.targetId && step.event.actorId === event.actorId);
     return { index: Math.max(1, hits.findIndex(step => step.event === event) + 1), count: hits.length };
   }
-  function impact(row, event) {
+  function impact(row, event, phaseHold = 600) {
     if (event.isDot) return;
     const p = point(event.targetId);
     if (!p || !layer()) return;
@@ -687,8 +697,10 @@ function createCombatFx(wrap) {
     const punchBasic = weaponBasic(row, event, 'unarmed');
     if (punchBasic) {
       const size = effectHeight(p);
+      const punchDuration = Math.min(600, Math.max(1, Number(phaseHold) || 600));
       const art = group('gm-combat-punch-impact', event.actorId ?? row.actorId, event.targetId, '#f2c39b');
       art.setAttribute('data-effect-height', size);
+      art.setAttribute('data-effect-duration-ms', punchDuration);
       art.setAttribute('data-effect-src', 'data/assets/effects/unarmed-punch-impact.png');
       art.setAttribute('transform', `translate(${p.x} ${p.y})`);
       image(art, 'data/assets/effects/unarmed-punch-impact.png', size, size);
@@ -697,9 +709,10 @@ function createCombatFx(wrap) {
       layer().insertBefore(art, burst);
       if (!compact()) animate(art, [
         { transform: `translate(${p.x}px,${p.y}px) scale(.35)`, opacity: 0 },
-        { transform: `translate(${p.x}px,${p.y}px) scale(1.08)`, opacity: .96, offset: .32 },
-        { transform: `translate(${p.x}px,${p.y}px) scale(1.22)`, opacity: 0 }
-      ], duration);
+        { transform: `translate(${p.x}px,${p.y}px) scale(1)`, opacity: .96, offset: .2 },
+        { transform: `translate(${p.x}px,${p.y}px) scale(1)`, opacity: .96, offset: .75 },
+        { transform: `translate(${p.x}px,${p.y}px) scale(1.08)`, opacity: 0 }
+      ], punchDuration);
       else art.setAttribute('opacity', '.9');
     }
     if (hit.count > 1 && !compact()) for (let index = 0; index < 3; index++) {
@@ -770,7 +783,7 @@ function createCombatFx(wrap) {
       areaRows.delete(row); abilityChip(row, event);
       abilityCue(row, cue.next, phaseHoldMs);
     }
-    if (damageTypes.has(type)) impact(row, event);
+    if (damageTypes.has(type)) impact(row, event, phaseHoldMs);
     else if (['heal', 'shield', 'revive'].includes(type)) support(type, event, row);
     else if (event.status || event.type === 'thread' || ['cc_loss', 'madness_loss', 'banished'].includes(event.subtype)) support('status', event, row);
     travel(row, cue.next, phaseHoldMs);
@@ -1304,7 +1317,7 @@ function renderTurnRowHtml(row, showDetails) {
     return `<div class="battle-round-title"><span class="round-badge">── Round ${row.round} ──</span>${statsHtml}${showDetails && row.initiative ? `<span class="round-init">Init: ${esc(row.initiative)}</span>` : ''}</div>`;
   }
   if (row.isSkip) return `<div class="b-row skip-row ${row.actorTeam}-turn"><span class="b-actor ${row.actorTeam}">${esc(row.actorName)}</span><span class="muted">${esc(row.text || 'loses action to status')}</span></div>`;
-  if (row.isMiss) return `<div class="b-row ${row.actorTeam}-turn"><span class="b-actor ${row.actorTeam}">${esc(row.actorName)}</span><span class="b-arrow">→</span><span class="b-target ${row.targetTeam || 'enemy'}">${esc(row.targetName || 'Enemy')}</span><span class="b-outcome miss">💨 ${esc(row.text || 'Missed')}</span></div>`;
+  if (row.isMiss && (!row.presentationPartial || row.timeline?.length)) return `<div class="b-row ${row.actorTeam}-turn"><span class="b-actor ${row.actorTeam}">${esc(row.actorName)}</span><span class="b-arrow">→</span><span class="b-target ${row.targetTeam || 'enemy'}">${esc(row.targetName || 'Enemy')}</span><span class="b-outcome miss">💨 ${esc(row.text || 'Missed')}</span></div>`;
 
   if (row.type === 'thread' || row.type === 'status') {
     const isTh = row.type === 'thread';

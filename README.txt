@@ -23,6 +23,12 @@ Combat animation and playback
   share the slash presentation. Pistol basics fire a rounded tracer from a
   compact directional muzzle flash; unarmed basics jab and land a punch impact,
   including for caster characters. Explicit magic basics retain pathway effects.
+  Pistol tracers and punch impacts use the sword's main-effect scale: 128px on
+  phones and 192px on desktop. All three basic attack cues use the same 600ms
+  cast phase (300ms at 2x). Punch impacts remain visible for up to 600ms inside
+  their existing outcome phase; muzzle flashes and pixel sparks stay compact.
+  Standalone missed basics show the weapon attempt before revealing Miss,
+  without a false hit or changing the two-second action clock.
   Attacks anticipate, lunge inside their fixed artwork square, then return on
   the recorded impact. Abilities use a brief casting cue and their existing
   effects. New weapon cues for paid abilities are deferred.

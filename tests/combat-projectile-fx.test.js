@@ -76,7 +76,7 @@ function approx(actual, expected, message, tolerance = .11) {
   assert(Math.abs(Number(actual) - expected) <= tolerance, `${message}: ${actual} versus ${expected}`);
 }
 
-test('gun basics fire a small rounded tracer from the forward hand in every aim direction', f => {
+test('gun basics match the sword reference while firing from the forward hand in every direction', f => {
   for (const size of [64, 96]) for (const speed of [1, 2]) for (const targetPosition of [[10, 350], [270, 350], [110, 80], [110, 480]]) {
     f.setSpriteSize(size);
     const actorId = 'paragon', targetId = 'enemy';
@@ -94,9 +94,16 @@ test('gun basics fire a small rounded tracer from the forward hand in every aim 
     assert.equal(muzzle.querySelector('image'), null, 'a tiny procedural flash replaces the old large muzzle image');
     assert.equal(Number(muzzle.dataset.effectWidth), 24, 'flash stays 24px wide');
     assert.equal(Number(muzzle.dataset.effectHeight), 14, 'flash stays 14px high');
-    assert(Number(projectile.dataset.size) <= 24, 'the tracer remains small relative to the 64px character');
-    assert.equal(Number(projectile.dataset.effectWidth), 26, 'tracer length stays fixed on desktop');
-    assert.equal(Number(projectile.dataset.effectHeight), 4, 'tracer thickness stays fixed on desktop');
+    assert.equal(Number(projectile.dataset.size), size * 2, 'main tracer uses the same 2x sprite reference as the sword slash');
+    assert.equal(Number(projectile.dataset.effectWidth), size * 2, 'tracer length scales to 128px on phones and 192px on desktop');
+    assert.equal(Number(projectile.dataset.effectHeight), size * 2 * .09375, 'rounded tracer thickness scales with the sword reference');
+    assert.equal(Number(projectile.dataset.referenceHeight), size * 2);
+    const rectangles = [...projectile.querySelectorAll('rect')];
+    const minX = Math.min(...rectangles.map(rect => Number(rect.getAttribute('x'))));
+    const maxX = Math.max(...rectangles.map(rect => Number(rect.getAttribute('x')) + Number(rect.getAttribute('width'))));
+    approx(maxX - minX, size * 2, 'actual rounded tracer geometry spans the sword reference width');
+    approx(Math.max(...rectangles.map(rect => Number(rect.getAttribute('height')))), size * 2 * .09375, 'actual bullet body has proportional thickness');
+    assert(rectangles.some(rect => Number(rect.getAttribute('opacity')) > 0 && Number(rect.getAttribute('opacity')) < .5), 'the main bullet has a fading rounded tail');
     const from = pointFor(f, actorId, size), target = pointFor(f, targetId, size);
     const [left, top] = f.positions[actorId];
     const expectedHand = { x: left + size * (target.x < from.x ? .32 : .68), y: top + size * .55 };
@@ -113,6 +120,8 @@ test('gun basics fire a small rounded tracer from the forward hand in every aim 
     const flash = active(f).find(animation => animation.element === muzzle);
     assert(flight && flash, 'the tracer and flash share the replay animation clock');
     const delay = Number(projectile.dataset.travelDelayMs), duration = Number(projectile.dataset.travelMs);
+    assert.equal(delay, 0, 'the main tracer launches immediately like the sword slash');
+    assert.equal(duration, 600, 'the main tracer uses the full sword cast window');
     approx(delay + duration, 600, 'tracer reaches the next HP update');
     approx(muzzle.dataset.launchDelayMs, delay, 'muzzle fires when the tracer launches');
     approx(flight.timing.delay || 0, delay, 'flight waits through the cast windup');
@@ -139,16 +148,19 @@ test('physical unarmed basics use a bounded jab and retain their target punch ar
     assert.equal(cast(f, row, hit('paragon'), speed, 600), null, 'physical punches do not fly across the field');
     const jab = f.find('.gm-combat-punch-trail');
     assert(jab, 'the attacker receives a short jab cue');
-    assert.equal(Number(jab.getAttribute('stroke-width')), 3, 'jab is a thin strike cue');
+    assert.equal(Number(jab.getAttribute('stroke-width')), size * .09375, 'jab thickness grows with the character while remaining a local strike');
     const coordinates = jab.getAttribute('d').match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/gi).map(Number);
     assert(coordinates.length >= 4 && coordinates.length % 2 === 0, 'jab uses inspectable vector geometry');
     const points = Array.from({ length: coordinates.length / 2 }, (_, index) => ({ x: coordinates[index * 2], y: coordinates[index * 2 + 1] }));
     const actor = pointFor(f, 'paragon', size);
     assert(points.every(point => Math.hypot(point.x - actor.x, point.y - actor.y) <= size / 2 + 24), 'the entire jab stays beside its attacker');
     const span = Math.hypot(points.at(-1).x - points[0].x, points.at(-1).y - points[0].y);
-    assert(span >= 12 && span <= 24, 'the jab is approximately 18px long rather than a full-field sweep');
+    approx(span, size * .4, 'the jab grows with the character while remaining shorter than arm reach');
+    assert.equal(Number(jab.dataset.referenceHeight), size * 2, 'jab shares the sword artwork reference');
     const jabAnimation = active(f).find(animation => animation.element === jab);
-    assert(jabAnimation && jabAnimation.timing.duration <= 600, 'jab stays inside the existing phase');
+    assert(jabAnimation, 'the jab has a replay animation');
+    assert.equal(Number(jabAnimation.timing.duration), 600, 'jab uses the same full phase as the sword slash');
+    assert.equal(Number(jabAnimation.timing.delay || 0), 0, 'jab launches immediately like the sword slash');
     assert.equal(jabAnimation.playbackRate, speed, 'jab follows battle playback speed');
     approx(Number(jabAnimation.timing.delay || 0) + Number(jabAnimation.timing.duration), 600, 'jab completes at the target impact boundary');
     assert.equal(f.find('.gm-combat-gun-muzzle'), null);
@@ -157,12 +169,78 @@ test('physical unarmed basics use a bounded jab and retain their target punch ar
     assert(punch, 'the existing target punch artwork still lands with HP loss');
     assert.equal(punch.querySelector('image').getAttribute('href'), 'data/assets/effects/unarmed-punch-impact.png');
     assert.equal(Number(punch.dataset.effectHeight), size * 2, 'target impact remains 128px on phones and 192px on desktop');
+    assert.equal(Number(punch.querySelector('image').getAttribute('width')), size * 2, 'the visible punch art uses the reference width');
+    assert.equal(Number(punch.querySelector('image').getAttribute('height')), size * 2, 'the visible punch art uses the reference height');
     const punchAnimation = active(f).find(animation => animation.element === punch);
     assert(punchAnimation, 'the target punch artwork has its own replay animation');
     assert.equal(punchAnimation.playbackRate, speed, 'the target punch impact follows the selected battle speed');
+    assert.equal(Number(punchAnimation.timing.duration), 450, 'punch artwork remains readable through the shorter available outcome phase');
+    assert.equal(Number(punchAnimation.timing.delay || 0), 0);
     assert.equal(f.find('.gm-combat-punch-trail'), null, 'the short jab ends before the impact phase');
     f.effects.clear(); f.effects.sync(f.map);
   }
+});
+
+test('gun, unarmed and sword main effects share the same scale and real playback duration', f => {
+  for (const size of [64, 96]) for (const speed of [1, 2]) {
+    f.setSpriteSize(size);
+    const measurements = [];
+    for (const attackKind of ['weapon', 'gun', 'unarmed']) {
+      const row = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind };
+      cast(f, row, hit('paragon'), speed, 600);
+      let main;
+      if (attackKind === 'unarmed') {
+        f.effects.show({ ...hit('paragon'), row }, speed, 1400);
+        main = f.find('.gm-combat-punch-impact');
+      } else main = f.find(attackKind === 'gun' ? '.gm-combat-gun-tracer' : '.gm-combat-sword-slash-travel');
+      assert(main, attackKind + ' has a main attack effect');
+      const animation = active(f).find(item => item.element === main);
+      assert(animation, attackKind + ' main effect follows the replay clock');
+      const extent = Number(attackKind === 'gun' ? main.dataset.effectWidth : main.dataset.effectHeight);
+      const duration = Number(animation.timing.duration), delay = Number(animation.timing.delay || 0);
+      assert.equal(extent, size * 2, attackKind + ' main effect is twice the character size');
+      assert.equal(duration, 600, attackKind + ' main effect uses the 600ms reference animation');
+      assert.equal(delay, 0, attackKind + ' main effect starts in its current phase');
+      assert.equal(animation.playbackRate, speed);
+      measurements.push({ extent, duration: duration / animation.playbackRate, delay });
+      if (attackKind === 'unarmed') {
+        const visible = animation.keyframes.filter(frame => Number(frame.opacity) >= .8);
+        assert(visible.some(frame => Number(frame.offset) <= .2), 'punch becomes clear near the start');
+        assert(visible.some(frame => Number(frame.offset) >= .75), 'punch remains visible through most of its reference duration');
+      }
+      f.effects.clear(); f.effects.sync(f.map);
+    }
+    assert.deepEqual(measurements[1], measurements[0], 'pistol main effect matches sword size and real duration');
+    assert.deepEqual(measurements[2], measurements[0], 'unarmed main effect matches sword size and real duration');
+  }
+});
+
+test('basic misses animate the attack attempt but never a successful impact', f => {
+  const initial = JSON.stringify(f.map);
+  for (const speed of [1, 2]) for (const attackKind of ['gun', 'weapon', 'unarmed']) {
+    const row = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind };
+    const miss = { type: 'note', event: { type: 'miss', actorId: 'paragon', targetId: 'enemy', reason: 'evade', text: 'The target dodges.' } };
+    cast(f, row, miss, speed, 600);
+    const attempt = f.find(attackKind === 'gun' ? '.gm-combat-gun-tracer' : attackKind === 'weapon' ? '.gm-combat-sword-slash-travel' : '.gm-combat-punch-trail');
+    assert(attempt, attackKind + ' misses retain their normal attack attempt');
+    if (attackKind === 'gun') assert(f.find('.gm-combat-gun-muzzle'), 'a missed shot still fires at the hand');
+    const animation = active(f).find(item => item.element === attempt);
+    assert(animation);
+    assert.equal(Number(animation.timing.duration), 600, 'a missed attempt uses the same reference phase');
+    assert.equal(Number(animation.timing.delay || 0), 0);
+    assert.equal(animation.playbackRate, speed);
+    f.effects.show({ ...miss, row }, speed, 450);
+    assert.equal(f.find('.gm-combat-impact'), null, 'a miss has no successful pixel burst');
+    assert.equal(f.find('.gm-combat-punch-impact'), null, 'a missed punch has no contact artwork');
+    assert.equal(f.find('.gm-combat-gun-tracer'), null, 'the prior attempt ends with the miss phase');
+    assert.equal(JSON.stringify(f.map), initial, 'attempt effects never alter combat HP or state');
+    f.effects.clear(); f.effects.sync(f.map);
+  }
+  const activeRow = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'precision_shot', attackKind: 'gun' };
+  const miss = { type: 'note', event: { type: 'miss', actorId: 'paragon', targetId: 'enemy' } };
+  cast(f, activeRow, miss);
+  assert.equal(f.find('.gm-combat-gun-tracer'), null, 'active misses do not borrow basic weapon animations');
+  assert.equal(f.find('.gm-combat-gun-muzzle'), null);
 });
 
 test('weapon launch cues wait for direct damage and survive intervening replay notes', f => {
@@ -314,8 +392,8 @@ test('unarmed caster basics use the same short jab and punch impact as other una
     assert.equal(cast(f, row, hit('hermit', 'enemy', damageType)), null, 'a caster without a weapon punches instead of shooting magic');
     const jab = f.find('.gm-combat-punch-trail');
     assert(jab, 'caster unarmed attacks have a short jab');
-    assert.equal(Number(jab.getAttribute('stroke-width')), 3);
-    assert.equal(Number(jab.dataset.length), 18);
+    assert.equal(Number(jab.getAttribute('stroke-width')), 6);
+    approx(jab.dataset.length, 64 * .4, 'caster jab uses the same character-relative reach');
     f.effects.show({ type: 'damage', row, event: hit('hermit', 'enemy', damageType).event }, 1, 450);
     assert(f.find('.gm-combat-punch-impact'), 'caster unarmed attacks retain the target punch artwork');
     assert.equal(f.find('.gm-combat-projectile'), null);
@@ -403,8 +481,8 @@ test('distance changes travel duration and both near and far projectiles arrive 
   assert.equal(Number(movement.timing.delay || 0) + Number(movement.timing.duration), 600);
 });
 
-test('physical shots are fast and straight while spell paths curve with afterimages', f => {
-  const shot = cast(f, { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: 'gun' });
+test('physical ability projectiles are straight while spell paths curve with afterimages', f => {
+  const shot = cast(f, { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'precision_shot' });
   const shotDuration = Number(shot.dataset.travelMs);
   assert.equal(shot.dataset.pathKind, 'straight');
   const spell = cast(f, { actorId: 'hermit', sourcePath: 'hermit', abilityId: 'mystic_orb' }, hit('hermit', 'enemy', 'mystic'));
