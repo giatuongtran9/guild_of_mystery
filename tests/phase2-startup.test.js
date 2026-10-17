@@ -161,6 +161,10 @@ async function test(name, body) {
     const bundle = rawBundle(); bundle.other.fx.families.orb.svg = '<script>bad</script>';
     await assert.rejects(browser({ current: release(bundle) }).load(), /fx\.json.*orb family/i);
   });
+  await test('obsolete critical hit-stop settings are rejected before entering the renderer', async () => {
+    const bundle = rawBundle(); bundle.other.fx.impact.critHitStopMs = 0;
+    await assert.rejects(browser({ current: release(bundle) }).load(), /fx\.json.*impact settings/i);
+  });
   await test('missing pathway is a readable data-bundle failure', async () => {
     const bundle = rawBundle(); delete bundle.pathwayFiles.fool;
     await assert.rejects(browser({ current: release(bundle) }).load(), /all 22 pathways/i);

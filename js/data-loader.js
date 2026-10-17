@@ -93,9 +93,10 @@
       || ['melee', 'unarmed', 'gun', 'caster'].some(key => !family(fx.basicAttack[key]))
       || (fx.basicAttack.pathways !== undefined && (!record(fx.basicAttack.pathways)
         || Object.entries(fx.basicAttack.pathways).some(([key, value]) => !paths.has(key) || !family(value))))) fail('invalid basic attack family');
-    if (!fields(fx.impact, ['frames', 'durationMs', 'critScale', 'critHitStopMs'])
+    if (!fields(fx.impact, ['frames', 'durationMs', 'critScale', 'critColor', 'critNumberScale'])
       || !number(fx.impact.frames, 3, 4, true) || !number(fx.impact.durationMs, 80, 500, true)
-      || !number(fx.impact.critScale, 1, 2) || !number(fx.impact.critHitStopMs, 0, 100, true)) fail('invalid impact settings');
+      || !number(fx.impact.critScale, 1, 2) || typeof fx.impact.critColor !== 'string' || !/^#[a-f0-9]{6}$/i.test(fx.impact.critColor)
+      || !number(fx.impact.critNumberScale, 1, 2)) fail('invalid impact settings');
     if (!fields(fx.support, ['durationMs']) || !number(fx.support.durationMs, 100, 1000, true)
       || !number(fx.abilityChipMs, 100, 1000, true)) fail('invalid support or ability chip duration');
     return fx;

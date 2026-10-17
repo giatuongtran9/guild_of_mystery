@@ -12,7 +12,7 @@ let passed = 0, failed = 0;
 function fixture(reduced = false) {
   const dom = new JSDOM('<main></main>', { runScripts: 'dangerously', pretendToBeVisual: true });
   const w = dom.window, animations = [];
-  let now = 0;
+  let now = 0, spriteSize = 64;
   Object.defineProperty(w.performance, 'now', { value: () => now });
   w.abbrNum = number => String(Math.round(number || 0));
   w.matchMedia = () => ({ matches: reduced });
@@ -34,7 +34,7 @@ function fixture(reduced = false) {
   w.Element.prototype.getBoundingClientRect = function () {
     const id = this.closest?.('[data-unit-id]')?.dataset.unitId;
     const [left, top] = positions[id] || [0, 0];
-    const width = id ? 64 : 390, height = id ? 64 : 600;
+    const width = id ? spriteSize : 390, height = id ? spriteSize : 600;
     return { x: left, y: top, left, top, width, height, right: left + width, bottom: top + height, toJSON() {} };
   };
   w.eval(source);
@@ -48,7 +48,7 @@ function fixture(reduced = false) {
   const wrap = w.document.querySelector('.battle-log-wrap');
   const effects = w.createCombatFx(wrap);
   effects.sync(map);
-  return { dom, w, wrap, effects, map, positions, animations, setNow: value => { now = value; },
+  return { dom, w, wrap, effects, map, positions, animations, setNow: value => { now = value; }, setSpriteSize: value => { spriteSize = value; },
     find: selector => wrap.querySelector(selector), all: selector => [...wrap.querySelectorAll(selector)] };
 }
 
@@ -68,21 +68,120 @@ function cast(f, row, next = hit(row.actorId), speed = 1, hold = 600) {
 }
 function active(f) { return f.animations.filter(animation => !animation.cancelled && animation.playState !== 'finished'); }
 
-test('gun basics retain procedural shots, unarmed basics use a punch impact, and weapon basics travel as a directional slash', f => {
-  const gun = cast(f, { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: 'gun' });
-  assert(gun, 'gun retains its existing projectile cue');
-  assert.equal(gun.dataset.family, 'bolt');
-  assert.equal(gun.dataset.pathKind, 'straight');
-  assert(f.find('.gm-combat-gun-muzzle'), 'gun gets a brief muzzle cue at cast');
-  assert.equal(f.find('.gm-combat-gun-muzzle image').getAttribute('href'), 'data/assets/effects/gun-muzzle.png');
-  assert.equal(Number(f.find('.gm-combat-gun-muzzle').dataset.effectHeight), 128, 'gun muzzle effect is 2x the 64px sprite height');
-  const unarmed = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: 'unarmed' };
-  assert.equal(cast(f, unarmed), null, 'a physical punch does not stack a generic projectile on the custom impact');
-  assert(f.find('.gm-combat-punch-trail'), 'punch gets a short attacker-to-target sweep during cast');
-  assert(Number(f.find('.gm-combat-punch-trail').dataset.travelMs) <= 400, 'punch cue fits the cast window');
-  f.effects.show({ type: 'damage', row: unarmed, event: hit().event }, 1, 400);
-  assert(f.find('.gm-combat-punch-impact'), 'physical unarmed basics use the custom impact art');
-  assert.equal(f.find('.gm-combat-punch-impact image').getAttribute('href'), 'data/assets/effects/unarmed-punch-impact.png');
+function pointFor(f, id, size = 64) {
+  const [left, top] = f.positions[id];
+  return { x: left + size / 2, y: top + size / 2 };
+}
+function approx(actual, expected, message, tolerance = .11) {
+  assert(Math.abs(Number(actual) - expected) <= tolerance, `${message}: ${actual} versus ${expected}`);
+}
+
+test('gun basics fire a small rounded tracer from the forward hand in every aim direction', f => {
+  for (const size of [64, 96]) for (const speed of [1, 2]) for (const targetPosition of [[10, 350], [270, 350], [110, 80], [110, 480]]) {
+    f.setSpriteSize(size);
+    const actorId = 'paragon', targetId = 'enemy';
+    f.positions[targetId] = targetPosition;
+    const row = { actorId, sourcePath: f.map[actorId].path, abilityId: 'basic_attack', attackKind: 'gun' };
+    const projectile = cast(f, row, hit(actorId, targetId), speed, 600);
+    const muzzle = f.find('.gm-combat-gun-muzzle');
+    assert(projectile && muzzle, 'gun has a moving tracer and a stationary flash');
+    assert.equal(projectile.dataset.family, 'bolt');
+    assert.equal(projectile.dataset.pathKind, 'straight');
+    assert(projectile.classList.contains('gm-combat-gun-tracer'), 'gun uses a dedicated rounded tracer rather than the generic bolt arrow');
+    assert.equal(projectile.dataset.shape, 'bullet');
+    assert(projectile.querySelector('rect[rx]'), 'the bullet uses rounded tracer geometry');
+    assert.equal(projectile.querySelector('path'), null, 'gun shots do not reuse the generic arrow path');
+    assert.equal(muzzle.querySelector('image'), null, 'a tiny procedural flash replaces the old large muzzle image');
+    assert.equal(Number(muzzle.dataset.effectWidth), 24, 'flash stays 24px wide');
+    assert.equal(Number(muzzle.dataset.effectHeight), 14, 'flash stays 14px high');
+    assert(Number(projectile.dataset.size) <= 24, 'the tracer remains small relative to the 64px character');
+    assert.equal(Number(projectile.dataset.effectWidth), 26, 'tracer length stays fixed on desktop');
+    assert.equal(Number(projectile.dataset.effectHeight), 4, 'tracer thickness stays fixed on desktop');
+    const from = pointFor(f, actorId, size), target = pointFor(f, targetId, size);
+    const [left, top] = f.positions[actorId];
+    const expectedHand = { x: left + size * (target.x < from.x ? .32 : .68), y: top + size * .55 };
+    const angle = Math.atan2(target.y - expectedHand.y, target.x - expectedHand.x) * 180 / Math.PI;
+    approx(projectile.dataset.angleDeg, angle, 'tracer faces its actual target');
+    approx(muzzle.dataset.angleDeg, angle, 'muzzle faces its actual target');
+    approx(projectile.dataset.startX, Number(muzzle.dataset.startX), 'tracer and flash share their launch x');
+    approx(projectile.dataset.startY, Number(muzzle.dataset.startY), 'tracer and flash share their launch y');
+    approx(muzzle.dataset.startX, expectedHand.x, 'flash is anchored to the forward hand, using the right hand for a vertical target');
+    approx(muzzle.dataset.startY, expectedHand.y, 'flash uses the middle hand height rather than the head or sprite edge');
+    const normalizedHeight = (Number(muzzle.dataset.startY) - top) / size;
+    assert(normalizedHeight >= .45 && normalizedHeight <= .65, 'the muzzle remains within the character torso band');
+    const flight = active(f).find(animation => animation.element === projectile);
+    const flash = active(f).find(animation => animation.element === muzzle);
+    assert(flight && flash, 'the tracer and flash share the replay animation clock');
+    const delay = Number(projectile.dataset.travelDelayMs), duration = Number(projectile.dataset.travelMs);
+    approx(delay + duration, 600, 'tracer reaches the next HP update');
+    approx(muzzle.dataset.launchDelayMs, delay, 'muzzle fires when the tracer launches');
+    approx(flight.timing.delay || 0, delay, 'flight waits through the cast windup');
+    approx(flash.timing.delay || 0, delay, 'flash waits through the same cast windup');
+    assert.equal(Number(flash.timing.duration), 140, 'muzzle is a brief flash');
+    assert.equal(flight.playbackRate, speed, 'flight follows the selected battle speed');
+    assert.equal(flash.playbackRate, speed, 'muzzle follows the same speed');
+    for (const animation of [flight, flash]) {
+      const translation = animation.keyframes[0].transform.match(/translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/);
+      assert(translation, 'the visible cue starts at the declared muzzle position');
+      approx(translation[1], Number(muzzle.dataset.startX), 'visible launch x follows the forward hand');
+      approx(translation[2], Number(muzzle.dataset.startY), 'visible launch y follows the forward hand');
+    }
+    assert.equal(f.find('.gm-combat-punch-trail'), null);
+    assert.equal(f.find('.gm-combat-ability-chip'), null, 'basic attacks do not show an ability chip');
+    f.effects.clear(); f.effects.sync(f.map);
+  }
+});
+
+test('physical unarmed basics use a bounded jab and retain their target punch artwork', f => {
+  for (const size of [64, 96]) for (const speed of [1, 2]) {
+    f.setSpriteSize(size);
+    const row = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: 'unarmed' };
+    assert.equal(cast(f, row, hit('paragon'), speed, 600), null, 'physical punches do not fly across the field');
+    const jab = f.find('.gm-combat-punch-trail');
+    assert(jab, 'the attacker receives a short jab cue');
+    assert.equal(Number(jab.getAttribute('stroke-width')), 3, 'jab is a thin strike cue');
+    const coordinates = jab.getAttribute('d').match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/gi).map(Number);
+    assert(coordinates.length >= 4 && coordinates.length % 2 === 0, 'jab uses inspectable vector geometry');
+    const points = Array.from({ length: coordinates.length / 2 }, (_, index) => ({ x: coordinates[index * 2], y: coordinates[index * 2 + 1] }));
+    const actor = pointFor(f, 'paragon', size);
+    assert(points.every(point => Math.hypot(point.x - actor.x, point.y - actor.y) <= size / 2 + 24), 'the entire jab stays beside its attacker');
+    const span = Math.hypot(points.at(-1).x - points[0].x, points.at(-1).y - points[0].y);
+    assert(span >= 12 && span <= 24, 'the jab is approximately 18px long rather than a full-field sweep');
+    const jabAnimation = active(f).find(animation => animation.element === jab);
+    assert(jabAnimation && jabAnimation.timing.duration <= 600, 'jab stays inside the existing phase');
+    assert.equal(jabAnimation.playbackRate, speed, 'jab follows battle playback speed');
+    approx(Number(jabAnimation.timing.delay || 0) + Number(jabAnimation.timing.duration), 600, 'jab completes at the target impact boundary');
+    assert.equal(f.find('.gm-combat-gun-muzzle'), null);
+    f.effects.show({ type: 'damage', row, event: hit('paragon').event }, speed, 450);
+    const punch = f.find('.gm-combat-punch-impact');
+    assert(punch, 'the existing target punch artwork still lands with HP loss');
+    assert.equal(punch.querySelector('image').getAttribute('href'), 'data/assets/effects/unarmed-punch-impact.png');
+    assert.equal(Number(punch.dataset.effectHeight), size * 2, 'target impact remains 128px on phones and 192px on desktop');
+    const punchAnimation = active(f).find(animation => animation.element === punch);
+    assert(punchAnimation, 'the target punch artwork has its own replay animation');
+    assert.equal(punchAnimation.playbackRate, speed, 'the target punch impact follows the selected battle speed');
+    assert.equal(f.find('.gm-combat-punch-trail'), null, 'the short jab ends before the impact phase');
+    f.effects.clear(); f.effects.sync(f.map);
+  }
+});
+
+test('weapon launch cues wait for direct damage and survive intervening replay notes', f => {
+  for (const attackKind of ['gun', 'unarmed']) {
+    const row = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind };
+    const note = { type: 'note', event: { type: 'note', actorId: 'paragon', text: 'A weapon effect is prepared.' } };
+    cast(f, row, note, 1, 600);
+    assert.equal(f.find('.gm-combat-gun-muzzle'), null, 'a note does not invent a muzzle flash');
+    assert.equal(f.find('.gm-combat-punch-trail'), null, 'a note does not invent a punch swing');
+    f.effects.show({ ...note, row, next: hit('paragon') }, 1, 180);
+    assert(f.find(attackKind === 'gun' ? '.gm-combat-gun-muzzle' : '.gm-combat-punch-trail'), 'the actual pre-damage phase emits the matching cue');
+    f.effects.show({ type: 'cast', row, next: { type: 'shield', event: { actorId: 'paragon', targetId: 'paragon', amount: 20 } } }, 1, 600);
+    assert.equal(f.find('.gm-combat-gun-muzzle'), null, 'a shield phase never shoots a bullet');
+    assert.equal(f.find('.gm-combat-punch-trail'), null, 'a shield phase never punches');
+    f.effects.clear(); f.effects.sync(f.map);
+  }
+});
+
+test('weapon basics retain a directional slash with a distinct target impact', f => {
   const weapon = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: 'weapon' };
   f.effects.show({ type: 'cast', row: weapon, next: hit('paragon') }, 1, 450);
   assert.equal(f.find('.gm-combat-projectile'), null, 'the custom weapon slash is not layered over a procedural slash');
@@ -115,7 +214,7 @@ test('gun basics retain procedural shots, unarmed basics use a punch impact, and
   assert(impactFlash, 'the landing uses the existing distinct impact flash instead of repeating the traveling crescent');
   assert(f.find('.gm-combat-impact-frame'), 'the target receives the short impact/spark frames');
   assert.equal(f.find('.gm-combat-sword-slash-image'), null, 'the full slash artwork is not stamped over the target a second time');
-  assert.equal(Number(impactFlash.dataset.hitStopMs), 0, 'the distinct landing effect adds no hit-stop');
+  assert.equal(impactFlash.hasAttribute('data-hit-stop-ms'), false, 'the distinct landing effect adds no hit-stop');
   const flashAnimation = active(f).find(animation => animation.element.closest?.('.gm-combat-impact') === impactFlash);
   assert(flashAnimation, 'the landing flash is visual-only and animated in place');
   assert.equal(Number(flashAnimation.timing.duration), fx.impact.durationMs, 'impact stays within the existing effect timing');
@@ -159,50 +258,81 @@ test('Sequence 9 active abilities have distinct cast and outcome visuals within 
   assert.equal(Number(f.find('.gm-combat-healing-touch-impact').dataset.effectHeight), 128, 'Healing Touch impact is 2x sprite height');
 });
 
-test('gun and unarmed attack cues stay readable at 2x inside the existing cast window', f => {
-  const gun = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: 'gun' };
-  cast(f, gun, hit('paragon'), 2, 300);
-  const muzzle = f.find('.gm-combat-gun-muzzle');
-  const muzzleAnimation = active(f).find(animation => animation.element === muzzle);
-  const projectile = f.find('.gm-combat-projectile');
-  const projectileAnimation = active(f).find(animation => animation.element === projectile);
-  assert(muzzle && muzzleAnimation, '2x gun attack has an animated muzzle flash');
-  assert.equal(muzzleAnimation.timing.duration, 190, 'muzzle cue retains a readable animation duration');
-  assert.equal(muzzleAnimation.playbackRate, 1, 'muzzle cue is not accelerated a second time');
-  assert(projectile && projectileAnimation, 'gun attack has a moving shot');
-  assert(Number(projectile.dataset.size) > 24, 'shot is enlarged from the tiny default bolt');
-  assert.equal(Number(projectile.dataset.effectHeight), 128, 'gun shot is 2x character height');
-  assert.equal(Number(projectile.dataset.travelDelayMs), 0, 'shot launches immediately');
-  assert.equal(Number(projectile.dataset.travelMs), 260, 'shot uses a readable 260ms within the 300ms 2x cast window');
-  assert.equal(projectileAnimation.playbackRate, 1, 'shot stays readable without delaying the phase');
-
-  f.effects.clear();
-  const unarmed = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: 'unarmed' };
-  cast(f, unarmed, hit('paragon'), 2, 300);
-  const trail = f.find('.gm-combat-punch-trail');
-  const trailAnimation = active(f).find(animation => animation.element === trail);
-  assert(trail && trailAnimation, '2x unarmed attack has an animated punch sweep');
-  assert(Number(trail.getAttribute('stroke-width')) >= 5, 'punch sweep is thick enough to read at sprite scale');
-  assert.equal(Number(trail.dataset.travelMs), 240, 'punch sweep uses most of the available cast window');
-  assert.equal(trailAnimation.playbackRate, 1, 'punch sweep is not accelerated a second time');
-  f.effects.show({ type: 'damage', row: unarmed, event: hit('paragon').event }, 2, 225);
-  const punch = f.find('.gm-combat-punch-impact');
-  const punchAnimation = active(f).find(animation => animation.element === punch);
-  assert(punch && punchAnimation, 'impact art animates for the unarmed hit');
-  assert.equal(Number(punch.dataset.effectHeight), 128, 'punch impact scales to 2x sprite height');
-  assert.equal(punchAnimation.playbackRate, 1, 'punch impact remains visible at 2x');
+test('knife and sword weapon basics use the same directional slash artwork and scale', f => {
+  for (const size of [64, 96]) {
+    f.setSpriteSize(size);
+    const results = [];
+    for (const weapon of ['sword', 'knife']) {
+      const row = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: 'weapon', ability: weapon };
+      cast(f, row, hit('paragon'), 1, 600);
+      const slash = f.find('.gm-combat-sword-slash-travel');
+      assert(slash, weapon + ' uses the shared directional weapon slash');
+      const image = slash.querySelector('image');
+      results.push({ src: image.getAttribute('href'), width: image.getAttribute('width'), height: image.getAttribute('height'), transform: image.getAttribute('transform') });
+      assert.equal(Number(image.getAttribute('height')), size * 2);
+      assert.equal(f.find('.gm-combat-punch-trail'), null);
+      assert.equal(f.find('.gm-combat-gun-muzzle'), null);
+      f.effects.clear(); f.effects.sync(f.map);
+    }
+    assert.deepEqual(results[0], results[1], 'blade names do not change the shared weapon cue');
+  }
 });
 
-test('caster basics use pathway magic, retaining damage type color', f => {
-  const projectile = cast(f, { actorId: 'hermit', sourcePath: 'hermit', abilityId: 'basic_attack', attackKind: 'unarmed' }, hit('hermit', 'enemy', 'mystic'));
+test('critical punch feedback remains visible above the existing punch artwork', f => {
+  const row = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'basic_attack', attackKind: 'unarmed' };
+  f.effects.show({ ...hit('paragon', 'enemy', 'physical', { critical: true }), row }, 1, 450);
+  const punch = f.find('.gm-combat-punch-impact'), burst = f.find('.gm-combat-impact');
+  assert(punch && burst);
+  assert(burst.compareDocumentPosition(punch) & f.w.Node.DOCUMENT_POSITION_PRECEDING,
+    'the broad punch image must not cover the stepped critical burst');
+  assert.equal(burst.dataset.critical, 'true');
+  assert(burst.getAttribute('style').includes(fx.impact.critColor));
+  assert(Number(burst.dataset.impactScale) > 1);
+});
+
+test('gun and fist cues are restricted to basic attacks, including when an active row carries attackKind', f => {
+  for (const attackKind of ['gun', 'unarmed']) {
+    for (const abilityId of ['mystic_orb', 'brutal_strike', 'healing_touch', 'exploit_loophole', 'combat_theft']) {
+      const row = { actorId: 'paragon', sourcePath: 'paragon', abilityId, sourceAbilityId: abilityId, attackKind };
+      const next = abilityId === 'healing_touch'
+        ? { type: 'heal', event: { type: 'heal', actorId: 'paragon', targetId: 'fool', amount: 20 } }
+        : hit('paragon');
+      cast(f, row, next, 1, 600);
+      assert.equal(f.find('.gm-combat-gun-muzzle'), null, abilityId + ' is not a gun basic');
+      assert.equal(f.find('.gm-combat-gun-tracer'), null, abilityId + ' does not borrow the gun basic tracer');
+      assert.equal(f.find('.gm-combat-punch-trail'), null, abilityId + ' is not a fist basic');
+      f.effects.show({ ...next, row }, 1, 450);
+      assert.equal(f.find('.gm-combat-punch-impact'), null, abilityId + ' does not borrow the unarmed basic impact');
+      f.effects.clear(); f.effects.sync(f.map);
+    }
+  }
+});
+
+test('unarmed caster basics use the same short jab and punch impact as other unarmed characters', f => {
+  for (const damageType of ['physical', 'mystic']) {
+    const row = { actorId: 'hermit', sourcePath: 'hermit', abilityId: 'basic_attack', attackKind: 'unarmed' };
+    assert.equal(cast(f, row, hit('hermit', 'enemy', damageType)), null, 'a caster without a weapon punches instead of shooting magic');
+    const jab = f.find('.gm-combat-punch-trail');
+    assert(jab, 'caster unarmed attacks have a short jab');
+    assert.equal(Number(jab.getAttribute('stroke-width')), 3);
+    assert.equal(Number(jab.dataset.length), 18);
+    f.effects.show({ type: 'damage', row, event: hit('hermit', 'enemy', damageType).event }, 1, 450);
+    assert(f.find('.gm-combat-punch-impact'), 'caster unarmed attacks retain the target punch artwork');
+    assert.equal(f.find('.gm-combat-projectile'), null);
+    f.effects.clear(); f.effects.sync(f.map);
+  }
+});
+
+test('explicit magic basics use pathway magic, retaining damage type color', f => {
+  const projectile = cast(f, { actorId: 'hermit', sourcePath: 'hermit', abilityId: 'basic_attack', attackKind: 'magic' }, hit('hermit', 'enemy', 'mystic'));
   assert.equal(projectile.dataset.family, fx.basicAttack.pathways.hermit);
   assert.equal(projectile.dataset.damageType, 'mystic');
   assert.equal(Number(projectile.dataset.effectHeight), 128, 'spell projectile scales to 2x sprite height');
   assert(projectile.getAttribute('style')?.includes(fx.damageColors.mystic) || projectile.outerHTML.includes(fx.damageColors.mystic));
 });
 
-test('caster basics retain magical arcs and trails even when their recorded damage is physical', f => {
-  const row = { actorId: 'hermit', sourcePath: 'hermit', abilityId: 'basic_attack', attackKind: 'unarmed' };
+test('explicit magic basics retain magical arcs and trails even when their recorded damage is physical', f => {
+  const row = { actorId: 'hermit', sourcePath: 'hermit', abilityId: 'basic_attack', attackKind: 'magic' };
   const projectile = cast(f, row, hit('hermit', 'enemy', 'physical'));
   assert.equal(projectile.dataset.family, fx.basicAttack.pathways.hermit);
   assert.equal(projectile.dataset.pathKind, 'arc');
@@ -285,24 +415,27 @@ test('physical shots are fast and straight while spell paths curve with afterima
   assert(movement.keyframes.length >= 3, 'the spell has a curved intermediate travel point');
 });
 
-test('impact feedback retains stepped frames and critical hits scale visually without any hit-stop', f => {
+test('impact feedback has four stepped pixel frames and larger orange crits without added time', f => {
   const row = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'shot' };
   f.effects.show({ ...hit(), row }, 1, 450);
   const normal = f.find('.gm-combat-impact');
   assert(normal); assert.equal(normal.querySelectorAll('.gm-combat-impact-frame').length, 4);
   const normalScale = Number(normal.dataset.impactScale || 1);
-  assert.equal(Number(normal.dataset.hitStopMs), 0, 'ordinary hits do not receive a critical stop');
-  assert(active(f).filter(animation => animation.element.closest?.('.gm-combat-impact') === normal)
-    .every(animation => Number(animation.timing.duration) === fx.impact.durationMs));
-  f.effects.show({ ...hit('paragon', 'enemy', 'physical', { critical: true }), row }, 1, 500);
+  assert.equal(normal.hasAttribute('data-hit-stop-ms'), false);
+  assert(normal.getAttribute('style').includes(fx.damageColors.physical));
+  const normalFrames = active(f).filter(animation => animation.element.closest?.('.gm-combat-impact') === normal);
+  assert(normalFrames.every(animation => Number(animation.timing.duration) === fx.impact.durationMs));
+  f.effects.show({ ...hit('paragon', 'enemy', 'physical', { critical: true }), row }, 1, 450);
   const critical = f.find('.gm-combat-impact');
   assert.equal(critical.dataset.critical, 'true');
   assert(Number(critical.dataset.impactScale) > normalScale);
-  assert.equal(Number(critical.dataset.hitStopMs), 0);
+  assert.equal(critical.hasAttribute('data-hit-stop-ms'), false);
+  assert(critical.getAttribute('style').includes(fx.impact.critColor || '#ffa64d'));
   const frameAnimations = active(f).filter(animation => animation.element.closest?.('.gm-combat-impact') === critical);
   assert(frameAnimations.length >= 4, 'each stepped frame is represented in the visible burst');
-  assert(frameAnimations.every(animation => Number(animation.timing.duration) === fx.impact.durationMs), 'critical visuals never extend the impact clock');
-  for (const animation of frameAnimations) {
+  assert(frameAnimations.every(animation => Number(animation.timing.duration) === fx.impact.durationMs));
+  for (const [index, animation] of frameAnimations.entries()) {
+    assert.deepEqual(animation.keyframes, normalFrames[index].keyframes, 'critical frames follow the same impact rhythm');
     assert.equal(animation.timing.easing, 'linear', 'the overall clock must reach intermediate pixel frames');
     assert(animation.keyframes.every(key => key.easing === 'steps(1,end)'), 'pixel opacity steps belong to individual keyframe segments');
   }
@@ -312,11 +445,30 @@ test('sword slash and critical number styles preserve mobile readability and dra
   const css = fs.readFileSync(path.join(root, 'css/components/dungeon-arena.css'), 'utf8');
   assert.match(css, /\.gm-combat-fx-layer\s*\{[^}]*z-index:\s*4/s);
   assert.match(css, /\.gm-battle-fx-layer\s*\{[^}]*z-index:\s*5/s);
-  assert.match(css, /\.gm-battle-fx-number-critical\s*\{[^}]*font-size:\s*16px/s);
-  assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*?\.gm-battle-fx-number-critical\s*\{[^}]*font-size:\s*15px/s);
+  assert.match(css, /\.gm-battle-fx-number-critical\s*\{[^}]*font-size:\s*calc\(13px\s*\*\s*var\(--gm-fx-number-scale,\s*1\.25\)\)/s);
+  assert.match(css, /@media \(max-width:\s*560px\)[\s\S]*?\.gm-battle-fx-number-critical\s*\{[^}]*font-size:\s*calc\(12px\s*\*\s*var\(--gm-fx-number-scale,\s*1\.25\)\)/s);
   assert.match(css, /\.gm-combat-sword-slash-image,\s*\.gm-combat-sword-slash-projectile\s*\{[^}]*transform-origin:\s*center/s);
   assert.match(css, /\.gm-unit-sprite-anchor\.gm-cue-actor\s*\{[^}]*#ffd078/s, 'attacker cue is gold and distinct from the red target cue');
   assert.match(css, /\.gm-unit-sprite-anchor\.gm-cue-damage\s*\{[^}]*#f39991/s, 'target damage cue remains red');
+});
+
+test('criticals keep normal impact timing at Read, 1x, 2x and 4x speeds', f => {
+  const row = { actorId: 'paragon', sourcePath: 'paragon', abilityId: 'shot' };
+  for (const speed of [.5, 1, 2, 4]) {
+    const timings = [];
+    for (const critical of [false, true]) {
+      f.effects.show({ ...hit('paragon', 'enemy', 'physical', { critical }), row }, speed, 450);
+      const burst = f.find('.gm-combat-impact');
+      const frames = active(f).filter(animation => animation.element.closest?.('.gm-combat-impact') === burst);
+      assert.equal(frames.length, speed === 4 ? 0 : fx.impact.frames);
+      assert.equal(Number(burst.dataset.impactScale), critical ? fx.impact.critScale : 1);
+      assert.equal(burst.hasAttribute('data-hit-stop-ms'), false);
+      timings.push(frames.map(animation => [animation.timing.duration, animation.timing.delay, animation.playbackRate]));
+      for (const animation of frames) assert.equal(animation.playbackRate, speed);
+      if (speed === 4) assert.equal(burst.querySelector('.gm-combat-impact-frame:last-child').getAttribute('opacity'), '1');
+    }
+    assert.deepEqual(timings[0], timings[1], `critical timing matches normal timing at ${speed}x`);
+  }
 });
 
 test('a heal rises as green motes with no damaging projectile or impact', f => {

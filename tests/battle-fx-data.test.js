@@ -44,9 +44,14 @@ test('basic attack families distinguish weapons and caster pathways', () => {
 test('impact and chip settings retain the requested readable timings', () => {
   assert.equal(original.impact.frames, 4);
   assert.equal(original.impact.durationMs, 160);
-  assert.equal(original.impact.critHitStopMs, 0, 'critical hits never add a stop to replay timing');
   assert(original.impact.critScale > 1);
   assert.equal(original.abilityChipMs, 500);
+});
+test('critical feedback uses stronger orange bursts and larger numbers without a hit-stop setting', () => {
+  assert.equal(original.impact.critColor, '#ffa64d');
+  assert.equal(original.impact.critScale, 1.5);
+  assert.equal(original.impact.critNumberScale, 1.25);
+  assert.equal(Object.hasOwn(original.impact, 'critHitStopMs'), false);
 });
 test('basic caster pathway overrides are optional', () => {
   const data = JSON.parse(JSON.stringify(original)); delete data.basicAttack.pathways;
@@ -84,7 +89,16 @@ rejects('unlisted basic pathway is rejected', data => { data.basicAttack.pathway
 rejects('unlisted basic pathway family is rejected', data => { data.basicAttack.pathways.fool = 'custom'; });
 rejects('invalid impact frame count is rejected', data => { data.impact.frames = 20; });
 rejects('unbounded critical scale is rejected', data => { data.impact.critScale = 50; });
-rejects('unbounded critical hit-stop is rejected', data => { data.impact.critHitStopMs = 1000; });
+rejects('obsolete critical hit-stop settings are rejected even when zero', data => { data.impact.critHitStopMs = 0; });
+rejects('missing critical colors are rejected', data => { delete data.impact.critColor; });
+rejects('critical CSS color fragments are rejected', data => { data.impact.critColor = 'orange;background:url(test)'; });
+rejects('critical CSS function colors are rejected', data => { data.impact.critColor = 'var(--color)'; });
+rejects('short critical hex colors are rejected', data => { data.impact.critColor = '#fa6'; });
+rejects('missing critical number scale is rejected', data => { delete data.impact.critNumberScale; });
+rejects('critical numbers cannot shrink below normal size', data => { data.impact.critNumberScale = .5; });
+rejects('unbounded critical number sizes are rejected', data => { data.impact.critNumberScale = 3; });
+rejects('non-finite critical number sizes are rejected', data => { data.impact.critNumberScale = Infinity; });
+rejects('string critical number sizes are rejected', data => { data.impact.critNumberScale = '1.25'; });
 rejects('string durations are rejected', data => { data.support.durationMs = '500'; });
 rejects('unbounded ability chips are rejected', data => { data.abilityChipMs = 10000; });
 test('Node bootstrap accepts the same authored FX without a browser global', () => {

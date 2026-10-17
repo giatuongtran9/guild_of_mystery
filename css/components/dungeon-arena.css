@@ -213,7 +213,7 @@
 
 /* Playback owns cue lifetimes. Keep feedback inside the artwork anchor so
    character sizes, formation geometry and gauge positions never change. */
-.gm-unit-sprite-anchor:is(.gm-cue-actor, .gm-cue-target, .gm-cue-damage,
+.gm-unit-sprite-anchor:is(.gm-cue-actor, .gm-cue-cast, .gm-cue-target, .gm-cue-damage,
   .gm-cue-heal, .gm-cue-shield, .gm-cue-break, .gm-cue-miss, .gm-cue-control,
   .gm-cue-mythical, .gm-cue-arrive, .gm-cue-death, .gm-cue-revive)::after {
   content: "";
@@ -232,6 +232,17 @@
   --gm-cue-color: #ffd078;
   --gm-cue-wash: rgba(245, 176, 63, 0.12);
   --gm-cue-glow: rgba(255, 186, 74, 0.34);
+}
+
+.gm-unit-sprite-anchor.gm-cue-cast {
+  --gm-cue-color: #ceb9f3;
+  --gm-cue-wash: rgba(161, 136, 215, 0.07);
+  --gm-cue-glow: rgba(185, 155, 238, 0.35);
+}
+
+.gm-unit-sprite-anchor.gm-cue-cast::after {
+  inset: 4px;
+  border-radius: 50%;
 }
 
 .gm-unit-sprite-anchor.gm-cue-target {
@@ -321,6 +332,15 @@
     -1px 1px 0 #11151a, 1px 1px 0 #11151a, 0 2px 3px #11151a;
 }
 
+.gm-battle-fx-number-critical {
+  color: var(--gm-fx-color, #ffa64d);
+  font-size: calc(13px * var(--gm-fx-number-scale, 1.25));
+  font-weight: 800;
+  text-shadow: -1px -1px 0 #11151a, 1px -1px 0 #11151a,
+    -1px 1px 0 #11151a, 1px 1px 0 #11151a,
+    0 2px 3px #11151a, 0 0 5px rgba(255, 166, 77, 0.6);
+}
+
 /* Projectiles and impact frames use the same canvas coordinates as the
    formation. Playback owns their clocks, including pause and speed changes. */
 .gm-combat-fx-layer {
@@ -337,6 +357,7 @@
 
 .gm-combat-projectile,
 .gm-combat-afterimage,
+.gm-combat-gun-muzzle,
 .gm-combat-impact,
 .gm-combat-sword-slash,
 .gm-combat-heal,
@@ -351,14 +372,6 @@
   transform-box: fill-box;
   transform-origin: center;
   will-change: opacity, transform;
-}
-
-.gm-battle-fx-number-critical {
-  color: #ff9b3d;
-  font-size: 16px;
-  font-weight: 800;
-  text-shadow: -1px -1px 0 #11151a, 1px -1px 0 #11151a,
-    -1px 1px 0 #11151a, 1px 1px 0 #11151a, 0 2px 4px #11151a;
 }
 
 .gm-combat-fx-layer :is(path, line, polyline, polygon, circle, ellipse, rect) {
@@ -701,7 +714,7 @@
   }
 
   .gm-battle-fx-number-critical {
-    font-size: 15px;
+    font-size: calc(12px * var(--gm-fx-number-scale, 1.25));
   }
 }
 
