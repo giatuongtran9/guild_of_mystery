@@ -396,7 +396,7 @@ function createCombatFx(wrap) {
     // The original art is preserved in a pixel-exact 979x547 crop. Its bright
     // ignition point is at (105, 274) within that crop; anchor only that point
     // to the estimated hand/barrel firing position.
-    const width = 48, scale = width / 979, height = 547 * scale;
+    const width = 96, scale = width / 979, height = 547 * scale;
     const src = 'data/assets/effects/gun-muzzle.png?v=d1d63c953370484e';
     node.setAttribute('data-angle-deg', angle.toFixed(2));
     node.setAttribute('data-effect-width', width); node.setAttribute('data-effect-height', height);
