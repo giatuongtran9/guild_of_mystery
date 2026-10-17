@@ -393,11 +393,11 @@ function createCombatFx(wrap) {
     if (!weaponBasic(row, event, 'gun') || !launch || !layer()) return;
     const { x, y, angle, delay, flashDuration } = launch;
     const node = group('gm-combat-gun-muzzle', row.actorId, targetId, '#f6bd72');
-    // The existing art points right, with its bright ignition at (110, 280)
-    // inside the 989x559 source. Anchor that point to the hand/barrel instead
-    // of centering the full image over the character.
-    const width = 48, scale = width / 989, height = 559 * scale;
-    const src = 'data/assets/effects/gun-muzzle.png';
+    // The original art is preserved in a pixel-exact 979x547 crop. Its bright
+    // ignition point is at (105, 274) within that crop; anchor only that point
+    // to the estimated hand/barrel firing position.
+    const width = 48, scale = width / 979, height = 547 * scale;
+    const src = 'data/assets/effects/gun-muzzle.png?v=d1d63c953370484e';
     node.setAttribute('data-angle-deg', angle.toFixed(2));
     node.setAttribute('data-effect-width', width); node.setAttribute('data-effect-height', height);
     node.setAttribute('data-effect-src', src);
@@ -405,7 +405,7 @@ function createCombatFx(wrap) {
     node.setAttribute('data-launch-delay-ms', delay); node.setAttribute('data-effect-duration-ms', flashDuration);
     node.setAttribute('opacity', '0');
     const flash = image(node, src, width, height, 'gm-combat-gun-muzzle-image');
-    flash.setAttribute('x', -110 * scale); flash.setAttribute('y', -280 * scale);
+    flash.setAttribute('x', -105 * scale); flash.setAttribute('y', -274 * scale);
     layer().append(node);
     if (!compact() && node.animate) animate(node, [
       { transform: `translate(${x}px,${y}px) rotate(${angle}deg)`, opacity: 1 },
