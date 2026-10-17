@@ -16,7 +16,7 @@
     "js/engine.js": "bd197186d0ba96c3",
     "js/state.js": "06b4d9cd538f377d",
     "js/campaign.js": "cc4a4e65446ccee4",
-    "js/ui.js": "11cf407a9467a957"
+    "js/ui.js": "843f31facbeaba93"
   },
-  "serviceWorkerVersion": "b264aa1c0838d57f"
+  "serviceWorkerVersion": "843f31facbeaba93"
 }
