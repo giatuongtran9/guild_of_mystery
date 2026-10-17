@@ -875,25 +875,25 @@ function createBattleEffects(wrap) {
     if (!actor) return;
     if (focusedRow !== row) {
       clearTurnFocus(); focusedRow = row;
-      const unaffected = new Set([String(actor.dataset.unitId)]);
-      if (row.targetId != null) unaffected.add(String(row.targetId));
-      else if (row.targetName) unaffected.add(String(row.targetName));
-      for (const step of row.timeline || []) {
-        const targetId = step?.event?.targetId, targetName = step?.event?.targetName;
-        if (targetId != null) unaffected.add(String(targetId));
-        else if (targetName) unaffected.add(String(targetName));
-      }
-      for (const node of wrap.querySelectorAll('.gm-arena-unit')) {
-        focusedUnits.add(node);
-        if (node === actor) {
-          node.classList.add('gm-turn-active');
-          node.querySelector('.gm-unit-sprite-anchor')?.classList.add('gm-turn-active');
-        } else if (unaffected.has(String(node.dataset.unitId))) {
-          node.classList.add('gm-turn-focus-exempt');
-        } else {
-          node.classList.add('gm-turn-dim');
-        }
-      }
+    }
+    const unaffected = new Set([String(actor.dataset.unitId)]);
+    if (row.targetId != null) unaffected.add(String(row.targetId));
+    else if (row.targetName) unaffected.add(String(row.targetName));
+    for (const step of row.timeline || []) {
+      const targetId = step?.event?.targetId, targetName = step?.event?.targetName;
+      if (targetId != null) unaffected.add(String(targetId));
+      else if (targetName) unaffected.add(String(targetName));
+    }
+    // Battle playback re-renders the unit cards between recorded events. Reapply
+    // the state to the live nodes on every cue instead of retaining stale nodes.
+    for (const node of wrap.querySelectorAll('.gm-arena-unit')) {
+      focusedUnits.add(node);
+      const isActor = node === actor;
+      const isExempt = !isActor && unaffected.has(String(node.dataset.unitId));
+      node.classList.toggle('gm-turn-active', isActor);
+      node.querySelector('.gm-unit-sprite-anchor')?.classList.toggle('gm-turn-active', isActor);
+      node.classList.toggle('gm-turn-dim', !isActor && !isExempt);
+      node.classList.toggle('gm-turn-focus-exempt', isExempt);
     }
     clearTimeout(focusTimer); focusTimer = null;
   }
