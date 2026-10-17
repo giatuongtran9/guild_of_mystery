@@ -45,16 +45,16 @@ function battlePresentationDelay(playing, speed = 1) {
   const rate = [.5, 1, 2, 4].includes(Number(speed)) ? Number(speed) : 1;
   const timeline = row.timeline || [];
   const count = playing.eventCount;
-  if (!timeline.length) return (row.isRoundHeader ? 300 : row.type === 'turn' ? 2000 : 750) / rate;
+  if (!timeline.length) return (row.isRoundHeader ? 300 : row.type === 'turn' ? 1000 : 400) / rate;
   if (!Number.isInteger(count)) return 0;
   const periodic = !!timeline[0]?.event.isDot;
-  if (count === 0) return (periodic ? 0 : 600) / rate;
-  const weights = { damage: 450, reaction: 650, reflect: 550, heal: 400,
-    shield: 400, mythical: 900, death: 700, revive: 600, note: 180 };
-  const holds = timeline.map(step => Math.max(weights[step.type] || 180,
-    step.event.presentationEffect && !step.event.presentationEffect.endsWith('_end') ? 500 : step.event.type === 'thread' ? 350 : 0));
-  const total = (periodic ? 0 : 600) + holds.reduce((sum, value) => sum + value, 0);
-  const padding = count === timeline.length ? Math.max(0, (periodic ? 650 : 2000) - total) : 0;
+  if (count === 0) return (periodic ? 0 : 300) / rate;
+  const weights = { damage: 225, reaction: 325, reflect: 275, heal: 200,
+    shield: 200, mythical: 450, death: 350, revive: 300, note: 90 };
+  const holds = timeline.map(step => Math.max(weights[step.type] || 90,
+    step.event.presentationEffect && !step.event.presentationEffect.endsWith('_end') ? 250 : step.event.type === 'thread' ? 175 : 0));
+  const total = (periodic ? 0 : 300) + holds.reduce((sum, value) => sum + value, 0);
+  const padding = count === timeline.length ? Math.max(0, (periodic ? 300 : 1000) - total) : 0;
   return ((holds[count - 1] || 0) + padding) / rate;
 }
 
@@ -927,6 +927,7 @@ function createCombatFx(wrap) {
     burst.setAttribute('data-critical', String(critical)); burst.setAttribute('data-frame', '0');
     burst.setAttribute('data-impact-scale', impactScale);
     if (punchHit) burst.setAttribute('data-punch-burst', 'true');
+    let punchArt = null;
     if (brutalHit) {
       burst.setAttribute('data-brutal-strike', 'true');
       // Screen micro-shake on the battlefield canvas
@@ -939,7 +940,7 @@ function createCombatFx(wrap) {
           { transform: 'translate(-2px, -1px)', offset: 0.6 },
           { transform: 'translate(1px, 1px)', offset: 0.8 },
           { transform: 'translate(0, 0)' }
-        ], { duration: 220, easing: 'ease-out' });
+        ], { duration: 160, easing: 'ease-out' });
       }
       // High-opacity crimson slash flash across defender
       const slashWidth = effectHeight(p) * 1.6, slashHeight = slashWidth * 0.5;
@@ -953,7 +954,7 @@ function createCombatFx(wrap) {
           { transform: 'scale(1.15) rotate(-10deg)', opacity: 1 },
           { transform: 'scale(1) rotate(0deg)', opacity: 0.95, offset: 0.3 },
           { transform: 'scale(0.96) rotate(3deg)', opacity: 0 }
-        ], Math.min(320, duration));
+        ], Math.min(220, duration));
       }
       // Trailing embers
       const embers = element('g', { class: 'gm-combat-brutal-embers' });
@@ -967,7 +968,32 @@ function createCombatFx(wrap) {
           { transform: 'translate(0, 0) scale(1)', opacity: 1 },
           { transform: 'translate(4px, -12px) scale(0.8)', opacity: 0.7, offset: 0.5 },
           { transform: 'translate(8px, -24px) scale(0.4)', opacity: 0 }
-        ], Math.min(420, duration * 1.4));
+        ], Math.min(300, duration * 1.4));
+      }
+    } else if (punchHit) {
+      // Use the original authored punch artwork, not a procedurally redrawn burst.
+      const height = Math.max(120, Math.min(210, (Number(p.spriteHeight) || 96) * 1.5));
+      const width = height * 880 / 929;
+      const src = 'data/assets/effects/unarmed-punch-impact.png?v=0ec09b43c3593bab';
+      burst.setAttribute('data-effect-src', src);
+      burst.setAttribute('data-effect-width', width); burst.setAttribute('data-effect-height', height);
+      punchArt = image(burst, src, width, height, 'gm-combat-impact-image gm-combat-impact-image-punch');
+    } else {
+      const pixels = [ [[-2,-2,4,4]], [[-2,-10,4,6],[-2,4,4,6],[-10,-2,6,4],[4,-2,6,4]],
+        [[-2,-14,4,5],[-2,9,4,5],[-14,-2,5,4],[9,-2,5,4],[-9,-9,3,3],[6,6,3,3]],
+        [[-2,-17,3,3],[-2,14,3,3],[-17,-2,3,3],[14,-2,3,3],[-12,-12,2,2],[10,10,2,2]] ];
+      const frameCount = settings.frames || 4;
+      for (let index = 0; index < frameCount; index++) {
+        const frame = element('g', { class: 'gm-combat-impact-frame', 'data-frame': index, opacity: compact() ? index === frameCount - 1 ? 1 : 0 : index === 0 ? 1 : 0 });
+        const pixelIndex = Math.round(index * (pixels.length - 1) / (frameCount - 1));
+        for (const [x,y,width,height] of pixels[pixelIndex]) frame.append(element('rect', { x,y,width,height, fill: 'currentColor' }));
+        burst.append(frame);
+        const start = index / frameCount, end = (index + 1) / frameCount;
+        const frames = [{ opacity: index === 0 ? 1 : 0, offset: 0 }];
+        if (start > 0) frames.push({ opacity: 1, offset: start });
+        frames.push({ opacity: 0, offset: end });
+        if (end < 1) frames.push({ opacity: 0, offset: 1 });
+        animate(frame, frames.map(key => ({ ...key, easing: 'steps(1,end)' })), duration);
       }
     }
     layer().append(burst);
@@ -1151,12 +1177,11 @@ function createBattleEffects(wrap) {
   }
   function endTurnFocus(row) {
     if (!row || focusedRow !== row) return;
-    clearTimeout(focusTimer);
-    focusTimer = setTimeout(clearTurnFocus, 300);
+    clearTurnFocus();
   }
   function finish() {
     clearTransient(); pathwayEffects.clear(); combatFx.clear(); currentMap = Object.create(null);
-    if (focusedRow) endTurnFocus(focusedRow);
+    clearTurnFocus();
   }
   function clear() {
     clearTransient(); pathwayEffects.clear(); combatFx.clear(); currentMap = Object.create(null);
@@ -1186,7 +1211,7 @@ function createBattleEffects(wrap) {
     const fieldWidth = wrap.querySelector('.gm-battlefield-canvas')?.getBoundingClientRect().width || 0;
     const halfWidth = element.offsetWidth / 2;
     if (halfWidth && fieldWidth) element.style.left = `${Math.max(halfWidth + 4, Math.min(fieldWidth - halfWidth - 4, p.x))}px`;
-    animate(element, [{ opacity: 1, transform: 'translate(-50%,-50%)' }, { opacity: 1, offset: .55 }, { opacity: 0, transform: 'translate(-50%,calc(-50% - 6px))' }], 850);
+    animate(element, [{ opacity: 1, transform: 'translate(-50%,-50%)' }, { opacity: 1, offset: .55 }, { opacity: 0, transform: 'translate(-50%,calc(-50% - 6px))' }], 550);
   }
   function motion(node, kind) {
     if (!node) return;
@@ -1211,26 +1236,19 @@ function createBattleEffects(wrap) {
     const dy = b ? b.top + b.height / 2 - a.top - a.height / 2 : actor.classList.contains('ally') ? -1 : 1;
     const distance = Math.hypot(dx, dy) || 1, direction = { x: dx / distance, y: dy / distance };
     const gun = row.attackKind === 'gun', magic = row.attackKind === 'magic';
-    const reach = Math.min(a.width, a.height) * (gun ? .08 : magic ? .018 : .055);
+    const reach = Math.min(a.width, a.height) * (gun ? .025 : magic ? .018 : .055);
     // Each pose's translation fits the margin created by its scale, even for
     // edge-reaching artwork and the smallest companion anchors.
     const pose = (amount, scale) => `translate(${direction.x * amount}px,${direction.y * amount}px) scale(${scale})`;
     const forward = pose(reach, gun ? .94 : magic ? .96 : .88);
-    const frames = gun ? [
-      { transform: 'translate(0,0) scale(1)', offset: 0, easing: 'ease-out' },
-      { transform: pose(-reach * .35, .99), offset: .27, easing: 'ease-in' },
-      { transform: forward, offset: .4, easing: 'linear' },
-      { transform: pose(-reach * .55, .99), offset: .47, easing: 'ease-out' },
-      { transform: 'translate(0,0) scale(1)', offset: .56, easing: 'ease-out' },
-      { transform: 'translate(0,0) scale(1)', offset: 1 }
-    ] : [
+    const frames = [
       { transform: 'translate(0,0) scale(1)', offset: 0, easing: 'ease-out' },
       { transform: pose(-reach * .3, .96), offset: .18, easing: 'ease-in' },
       { transform: forward, offset: .4, easing: 'linear' },
       { transform: forward, offset: 1 }
     ];
     const sprite = actor.querySelector('.gm-unit-sprite');
-    const animation = animate(sprite, frames, Math.max(1, Number(hold) || 600), { hold: true, easing: 'linear' });
+    const animation = animate(sprite, frames, Math.max(1, Number(hold) || 300), { hold: true, easing: 'linear' });
     if (animation) pendingStrike = { animation, sprite, forward, row, targetId: target?.dataset.unitId };
   }
   function show(cue, speed = 1, timingMs = 600) {
