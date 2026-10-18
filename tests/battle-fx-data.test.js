@@ -44,12 +44,12 @@ test('basic attack families distinguish weapons and caster pathways', () => {
 test('impact and chip settings retain the requested readable timings', () => {
   assert.equal(original.impact.frames, 4);
   assert.equal(original.impact.durationMs, 160);
-  assert(original.impact.critScale > 1);
+  assert.equal(Object.hasOwn(original.impact, 'critScale'), false);
   assert.equal(original.abilityChipMs, 500);
 });
-test('critical feedback uses stronger orange bursts and larger numbers without a hit-stop setting', () => {
+test('critical feedback changes only number color and size, without impact scaling or hit-stop', () => {
   assert.equal(original.impact.critColor, '#ffa64d');
-  assert.equal(original.impact.critScale, 1.5);
+  assert.equal(Object.hasOwn(original.impact, 'critScale'), false);
   assert.equal(original.impact.critNumberScale, 1.25);
   assert.equal(Object.hasOwn(original.impact, 'critHitStopMs'), false);
 });
@@ -88,7 +88,7 @@ rejects('unlisted basic family is rejected', data => { data.basicAttack.gun = 'c
 rejects('unlisted basic pathway is rejected', data => { data.basicAttack.pathways.unknown = 'orb'; });
 rejects('unlisted basic pathway family is rejected', data => { data.basicAttack.pathways.fool = 'custom'; });
 rejects('invalid impact frame count is rejected', data => { data.impact.frames = 20; });
-rejects('unbounded critical scale is rejected', data => { data.impact.critScale = 50; });
+rejects('obsolete critical impact scaling is rejected even at normal size', data => { data.impact.critScale = 1; });
 rejects('obsolete critical hit-stop settings are rejected even when zero', data => { data.impact.critHitStopMs = 0; });
 rejects('missing critical colors are rejected', data => { delete data.impact.critColor; });
 rejects('critical CSS color fragments are rejected', data => { data.impact.critColor = 'orange;background:url(test)'; });

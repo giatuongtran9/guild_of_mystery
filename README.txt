@@ -49,8 +49,13 @@ Combat animation and playback
   the recorded impact. Abilities use a brief casting cue and their existing
   effects. New weapon cues for paid abilities are deferred.
   Spells curve with afterimages; distance controls travel within the recorded phase.
-  Pixel impacts use four stepped frames, with larger orange critical bursts
-  and damage numbers, without an additional delay. Heals, shields and statuses
+  Pixel impacts use four stepped frames. Criticals keep the same attack and
+  impact animation; only their numbers become larger and orange, with no delay.
+  Landed impacts share a brief battlefield shake, tracked by Pause, speed and
+  Skip controls and disabled in reduced-motion/compact playback. Traveling PNGs
+  keep their heading on impact; Raging Blow flips 180 degrees in both phases,
+  Heavy Cleave travels to its single target, and Counter uses its actor's normal
+  weapon presentation without changing its reaction rules. Heals, shields and statuses
   appear on recipients.
   Area casts share one wave; repeated hits retain their ordered impacts.
   Abilities display a brief name chip above the caster; basic attacks do not.

@@ -102,9 +102,9 @@
         || typeof effect.color !== 'string' || !/^#[a-f0-9]{6}$/i.test(effect.color)
         || !['travel', 'strike', 'support', 'caster'].includes(effect.mode)) fail(`invalid Sequence 8 effect ${id}`);
     }
-    if (!fields(fx.impact, ['frames', 'durationMs', 'critScale', 'critColor', 'critNumberScale'])
+    if (!fields(fx.impact, ['frames', 'durationMs', 'critColor', 'critNumberScale'])
       || !number(fx.impact.frames, 3, 4, true) || !number(fx.impact.durationMs, 80, 500, true)
-      || !number(fx.impact.critScale, 1, 2) || typeof fx.impact.critColor !== 'string' || !/^#[a-f0-9]{6}$/i.test(fx.impact.critColor)
+      || typeof fx.impact.critColor !== 'string' || !/^#[a-f0-9]{6}$/i.test(fx.impact.critColor)
       || !number(fx.impact.critNumberScale, 1, 2)) fail('invalid impact settings');
     if (!fields(fx.support, ['durationMs']) || !number(fx.support.durationMs, 100, 1000, true)
       || !number(fx.abilityChipMs, 100, 1000, true)) fail('invalid support or ability chip duration');

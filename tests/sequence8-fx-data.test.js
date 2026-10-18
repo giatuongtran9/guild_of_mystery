@@ -45,7 +45,7 @@ test('the authored modes respect support recipients and conditional hostile outc
   assert.equal(original.sequence8Abilities.bad_luck_curse.mode, 'caster', 'intent does not claim the crit restriction succeeded');
   assert.equal(original.sequence8Abilities.provocation.mode, 'caster', 'intent does not claim an immune target was taunted');
   assert.equal(original.sequence8Abilities.nature_growth.mode, 'strike', 'growth is an attack rather than a healing cue');
-  assert.equal(original.sequence8Abilities.heavy_cleave.mode, 'strike', 'the single-target cleave is not an area wave');
+  assert.equal(original.sequence8Abilities.heavy_cleave.mode, 'travel', 'the single-target cleave travels to its target without becoming an area wave');
 });
 test('colors retain established pathway identities rather than generic physical orange', () => {
   const entries = original.sequence8Abilities;
