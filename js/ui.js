@@ -485,11 +485,13 @@ function createCombatFx(wrap) {
     const fieldWidth = canvas()?.getBoundingClientRect().width || 320;
     const size = Math.min(fieldWidth - 8, effectHeight(mode === 'support' ? actor : destination) * 1.08);
     const hold = Math.max(1, Number(phaseHold) || readableCastDuration(row));
-    const moving = mode === 'travel' || mode === 'support';
+    const id = presentationAbility(row);
+    // Beast Command in support mode manifests directly over companion without launching a missile
+    const moving = (mode === 'travel' || mode === 'support') && (id !== 'beast_command' || mode !== 'support');
     const finalPoint = mode === 'caster' ? actor : destination;
     const node = sequence8Image(row, 'cast', targetId, mode, finalPoint, size);
     if (!node) return;
-    const id = presentationAbility(row), dx = destination.x - actor.x, dy = destination.y - actor.y;
+    const dx = destination.x - actor.x, dy = destination.y - actor.y;
     const angle = moving ? Math.atan2(dy, dx) * 180 / Math.PI : 0;
     node.setAttribute('data-angle-deg', String(angle));
     node.setAttribute('transform', `translate(${finalPoint.x} ${finalPoint.y}) rotate(${angle})`);
@@ -501,6 +503,62 @@ function createCombatFx(wrap) {
         y: actor.y + dy * progress } : finalPoint;
       return `translate(${p.x}px,${p.y}px) rotate(${angle + turn}deg) scale(${scale})`;
     };
+    if (id === 'beast_command' && mode === 'support') {
+      // Lunar Blessing over companion: manifests directly over beast companion, rising and pulsing with lunar authority
+      animate(node, [
+        { transform: `translate(${finalPoint.x}px,${finalPoint.y + 12}px) scale(0.55)`, opacity: 0 },
+        { transform: `translate(${finalPoint.x}px,${finalPoint.y - 12}px) scale(1.18)`, opacity: 1, offset: 0.28 },
+        { transform: `translate(${finalPoint.x}px,${finalPoint.y - 18}px) scale(0.96)`, opacity: 0.95, offset: 0.55 },
+        { transform: `translate(${finalPoint.x}px,${finalPoint.y - 24}px) scale(1.12)`, opacity: 0.88, offset: 0.78 },
+        { transform: `translate(${finalPoint.x}px,${finalPoint.y - 30}px) scale(0.95)`, opacity: 0 }
+      ], hold);
+      return;
+    }
+    if (id === 'nature_growth') {
+      // Botanical Eruption: starts rooted at base of target, shoots upward with rapid vertical stretch, living sway
+      animate(node, [
+        { transform: `translate(${finalPoint.x}px,${finalPoint.y + 20}px) scale(0.7, 0.2) rotate(0deg)`, opacity: 0 },
+        { transform: `translate(${finalPoint.x}px,${finalPoint.y - 8}px) scale(1.08, 1.25) rotate(0deg)`, opacity: 1, offset: 0.22 },
+        { transform: `translate(${finalPoint.x}px,${finalPoint.y}px) scale(1.02, 1.1) rotate(4deg)`, opacity: 0.98, offset: 0.55 },
+        { transform: `translate(${finalPoint.x}px,${finalPoint.y}px) scale(0.98, 1.05) rotate(-3deg)`, opacity: 0.95, offset: 0.78 },
+        { transform: `translate(${finalPoint.x}px,${finalPoint.y}px) scale(1, 1) rotate(0deg)`, opacity: 0.9, offset: 0.92 },
+        { transform: `translate(${finalPoint.x}px,${finalPoint.y}px) scale(1, 1) rotate(0deg)`, opacity: 0 }
+      ], hold);
+      return;
+    }
+    if (id === 'shadow_strike') {
+      // Abyssal Diagonal Slash: high-speed surge forward with shadow acceleration
+      animate(node, [
+        { transform: pose(0, 0.6, -20), opacity: 0 },
+        { transform: pose(0.08, 0.95, -10), opacity: 1, offset: 0.15 },
+        { transform: pose(0.55, 1.1, 5), opacity: 0.98, offset: 0.6 },
+        { transform: pose(1, 1.2, 0), opacity: 0.95, offset: 0.8 },
+        { transform: pose(1, 1.1, 0), opacity: 0 }
+      ], hold);
+      return;
+    }
+    if (id === 'crafted_blade') {
+      // Heavy Forged Cleave: straight high-velocity forged blade advance
+      animate(node, [
+        { transform: pose(0, 0.65), opacity: 0 },
+        { transform: pose(0.06, 0.95), opacity: 1, offset: 0.14 },
+        { transform: pose(0.5, 1.06), opacity: 0.98, offset: 0.58 },
+        { transform: pose(1, 1.18), opacity: 0.98, offset: 0.8 },
+        { transform: pose(1, 1.08), opacity: 0 }
+      ], hold);
+      return;
+    }
+    if (id === 'beast_command' && mode === 'travel') {
+      // Savage Fallback Lunge: charges across field into savage claw attack
+      animate(node, [
+        { transform: pose(0, 0.7, -15), opacity: 0 },
+        { transform: pose(0.08, 0.92, -8), opacity: 0.95, offset: 0.15 },
+        { transform: pose(0.65, 1.12, 6), opacity: 1, offset: 0.6 },
+        { transform: pose(1, 1.22, 10), opacity: 1, offset: 0.85 },
+        { transform: pose(1, 1.05, 0), opacity: 0 }
+      ], hold);
+      return;
+    }
     // The anticipation, readable flight/stamp and fade share the scheduler's
     // cast clock. Damage, recovery and control cues remain separate events.
     animate(node, [
@@ -526,13 +584,25 @@ function createCombatFx(wrap) {
     node.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${angle})`);
     node.setAttribute('data-critical', String(!!event.critical));
     node.setAttribute('data-signature-release', String(!!event.isSignature));
+    const id = presentationAbility(row);
+    const impactDuration = Math.max(1, Math.min(225, Number(phaseHold) || 225));
+    if (compact()) return;
+    if (id === 'nature_growth') {
+      // Thorn Constriction: vines violently clamp inward (scale(0.86) with twisting bite)
+      animate(node, [
+        { transform: `translate(${p.x}px,${p.y}px) rotate(0deg) scale(1.08)`, opacity: 0.9 },
+        { transform: `translate(${p.x}px,${p.y}px) rotate(14deg) scale(0.86)`, opacity: 1, offset: 0.35 },
+        { transform: `translate(${p.x}px,${p.y}px) rotate(18deg) scale(0.72)`, opacity: 0 }
+      ], impactDuration);
+      return;
+    }
     // The arrival keeps the flight's orientation. Criticals change numbers only.
-    if (!compact()) animate(node, [
+    animate(node, [
       { transform: `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(.84)`, opacity: .25 },
       { transform: `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(1.05)`, opacity: 1, offset: .22 },
       { transform: `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(1)`, opacity: .9, offset: .55 },
       { transform: `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(1.1)`, opacity: 0 }
-    ], Math.max(1, Math.min(225, Number(phaseHold) || 225)));
+    ], impactDuration);
   }
   function weaponBasic(row, event, kind) {
     return row?.abilityId === 'basic_attack' && row.attackKind === kind && event
@@ -1086,14 +1156,28 @@ function createCombatFx(wrap) {
     if (!p || !layer()) return;
     const critical = !!event.critical, settings = config.impact || defaults.impact, hit = hitIndex(row, event);
     const punchHit = weaponBasic(row, event, 'unarmed');
-    const brutalHit = presentationAbility(row) === 'brutal_strike' && event.actorId === row.actorId;
-    const duration = punchHit || brutalHit ? Math.max(settings.durationMs || 160, 320) : settings.durationMs || 160;
+    const hitAbilityId = presentationAbility(row);
+    const brutalHit = hitAbilityId === 'brutal_strike' && event.actorId === row.actorId;
+    const shadowHit = hitAbilityId === 'shadow_strike' && event.actorId === row.actorId;
+    const craftedHit = hitAbilityId === 'crafted_blade' && event.actorId === row.actorId;
+    const natureHit = hitAbilityId === 'nature_growth' && event.actorId === row.actorId;
+    const beastFallbackHit = hitAbilityId === 'beast_command' && sequence8Config(row)
+      && (!row.timeline?.some(s => s.event?.presentationEffect === 'beast_command' && s.event?.targetId !== event.targetId))
+      && event.actorId === row.actorId;
+    const hasCustomHit = brutalHit || shadowHit || craftedHit || natureHit || beastFallbackHit;
+    const duration = punchHit || hasCustomHit ? Math.max(settings.durationMs || 160, 320) : settings.durationMs || 160;
     const actorPoint = point(event.actorId ?? row.actorId);
     const impactAngle = actorPoint ? Math.atan2(p.y - actorPoint.y, p.x - actorPoint.x) * 180 / Math.PI : 0;
     const impactScale = 1;
-    const burst = group('gm-combat-impact', event.actorId ?? row.actorId, event.targetId,
-      punchHit ? '#ffd36f' : brutalHit ? '#e63946' : colorFor(event));
-    burst.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${brutalHit ? 0 : impactAngle}) scale(${impactScale})`);
+    const burstColor = punchHit ? '#ffd36f'
+      : brutalHit ? '#e63946'
+      : shadowHit ? '#7b2cbf'
+      : craftedHit ? '#e7bc79'
+      : natureHit ? '#2dc653'
+      : beastFallbackHit ? '#ff4d6d'
+      : colorFor(event);
+    const burst = group('gm-combat-impact', event.actorId ?? row.actorId, event.targetId, burstColor);
+    burst.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${hasCustomHit ? 0 : impactAngle}) scale(${impactScale})`);
     burst.setAttribute('data-angle-deg', String(impactAngle));
     burst.setAttribute('data-critical', String(critical)); burst.setAttribute('data-frame', '0');
     burst.setAttribute('data-impact-scale', impactScale);
@@ -1140,6 +1224,142 @@ function createCombatFx(wrap) {
           { transform: 'translate(4px, -12px) scale(0.8)', opacity: 0.7, offset: 0.5 },
           { transform: 'translate(8px, -24px) scale(0.4)', opacity: 0 }
         ], Math.min(300, duration * 1.4));
+      }
+    } else if (shadowHit) {
+      burst.setAttribute('data-shadow-strike', 'true');
+      // Abyssal Diagonal Slash: high-opacity dark crescent slash tearing across defender
+      const slashWidth = effectHeight(p) * 1.6, slashHeight = slashWidth * 0.5;
+      const slash = element('g', { class: 'gm-combat-shadow-strike-impact-slash', transform: `rotate(${impactAngle + 180})` });
+      slash.append(element('path', {
+        d: `M ${-slashWidth * 0.45} ${slashHeight * 0.35} Q 0 ${-slashHeight * 0.55} ${slashWidth * 0.45} ${-slashHeight * 0.25} Q ${slashWidth * 0.15} ${slashHeight * 0.1} ${-slashWidth * 0.45} ${slashHeight * 0.35} Z`,
+        fill: '#10002b', stroke: '#7b2cbf', 'stroke-width': '3', opacity: '0.98'
+      }));
+      slash.append(element('path', {
+        d: `M ${-slashWidth * 0.35} ${slashHeight * 0.25} Q 0 ${-slashHeight * 0.45} ${slashWidth * 0.4} ${-slashHeight * 0.2} Q ${slashWidth * 0.1} ${slashHeight * 0.05} ${-slashWidth * 0.35} ${slashHeight * 0.25} Z`,
+        fill: '#9d4edd', opacity: '0.95'
+      }));
+      slash.append(element('path', {
+        d: `M ${-slashWidth * 0.2} ${slashHeight * 0.12} Q 0 ${-slashHeight * 0.32} ${slashWidth * 0.32} ${-slashHeight * 0.15}`,
+        stroke: '#e0aaff', 'stroke-width': '2.5', fill: 'none', opacity: '0.95'
+      }));
+      burst.append(slash);
+      if (!compact()) {
+        animate(slash, [
+          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(1.18)`, opacity: 1 },
+          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(1) rotate(0deg)`, opacity: 0.95, offset: 0.3 },
+          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(0.95)`, opacity: 0 }
+        ], Math.min(220, duration));
+      }
+      // Trailing shadow embers
+      const shadowEmbers = element('g', { class: 'gm-combat-shadow-embers' });
+      const shadowCoords = [[-32, -18, 5, '#5a189a'], [-16, -26, 3.5, '#7b2cbf'], [18, -14, 4.5, '#9d4edd'], [32, 10, 3.5, '#3c096c'], [-10, 20, 4, '#7b2cbf'], [24, 24, 3, '#c77dff']];
+      for (const [ex, ey, r, col] of shadowCoords) {
+        shadowEmbers.append(element('circle', { cx: ex, cy: ey, r: r / 2, fill: col, opacity: 0.92 }));
+      }
+      burst.append(shadowEmbers);
+      if (!compact()) {
+        animate(shadowEmbers, [
+          { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+          { transform: 'translate(4px, -14px) scale(0.75)', opacity: 0.7, offset: 0.5 },
+          { transform: 'translate(8px, -28px) scale(0.35)', opacity: 0 }
+        ], Math.min(300, duration * 1.4));
+      }
+    } else if (craftedHit) {
+      burst.setAttribute('data-crafted-blade', 'true');
+      // Heavy Forged Cleave: massive gleaming metallic brass/steel blade cleave
+      const slashWidth = effectHeight(p) * 1.6, slashHeight = slashWidth * 0.5;
+      const slash = element('g', { class: 'gm-combat-crafted-blade-impact-slash', transform: `rotate(${impactAngle + 180})` });
+      slash.append(element('path', {
+        d: `M ${-slashWidth * 0.48} ${slashHeight * 0.38} Q 0 ${-slashHeight * 0.58} ${slashWidth * 0.48} ${-slashHeight * 0.28} Q ${slashWidth * 0.12} ${slashHeight * 0.12} ${-slashWidth * 0.48} ${slashHeight * 0.38} Z`,
+        fill: '#7f5539', stroke: '#ddb892', 'stroke-width': '2.5', opacity: '0.98'
+      }));
+      slash.append(element('path', {
+        d: `M ${-slashWidth * 0.4} ${slashHeight * 0.28} Q 0 ${-slashHeight * 0.48} ${slashWidth * 0.42} ${-slashHeight * 0.22} Q ${slashWidth * 0.08} ${slashHeight * 0.08} ${-slashWidth * 0.4} ${slashHeight * 0.28} Z`,
+        fill: '#e7bc79', opacity: '0.95'
+      }));
+      slash.append(element('path', {
+        d: `M ${-slashWidth * 0.25} ${slashHeight * 0.15} Q 0 ${-slashHeight * 0.35} ${slashWidth * 0.35} ${-slashHeight * 0.18}`,
+        stroke: '#ffffff', 'stroke-width': '3', fill: 'none', opacity: '1'
+      }));
+      burst.append(slash);
+      if (!compact()) {
+        animate(slash, [
+          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(1.15)`, opacity: 1 },
+          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(1) rotate(0deg)`, opacity: 0.95, offset: 0.3 },
+          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(0.96)`, opacity: 0 }
+        ], Math.min(220, duration));
+      }
+      // Flying forged sparks
+      const sparks = element('g', { class: 'gm-combat-crafted-sparks' });
+      const sparkCoords = [[-24, -12, 4, '#ffd166'], [-8, -20, 3, '#ffffff'], [14, -8, 4, '#f4a261'], [26, 6, 3, '#ffb703'], [-6, 14, 3.5, '#ffd166'], [20, 18, 2.5, '#ffffff']];
+      for (const [sx, sy, r, col] of sparkCoords) {
+        sparks.append(element('rect', { x: sx, y: sy, width: r, height: r, fill: col, opacity: 0.95 }));
+      }
+      burst.append(sparks);
+      if (!compact()) {
+        animate(sparks, [
+          { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+          { transform: 'translate(-6px, -12px) scale(0.8)', opacity: 0.75, offset: 0.5 },
+          { transform: 'translate(-12px, -24px) scale(0.3)', opacity: 0 }
+        ], Math.min(280, duration * 1.3));
+      }
+    } else if (natureHit) {
+      burst.setAttribute('data-nature-growth', 'true');
+      // Emerald particles bursting outward when hit lands
+      const emeraldParticles = element('g', { class: 'gm-combat-nature-particles' });
+      const emeraldCoords = [
+        [-22, -18, 4.5, '#2dc653'], [0, -26, 4, '#52b788'], [22, -16, 5, '#74c69d'],
+        [-26, 4, 4, '#d8f3dc'], [26, 8, 4.5, '#2dc653'], [-16, 22, 3.5, '#52b788'],
+        [14, 20, 4, '#74c69d'], [0, 26, 3, '#d8f3dc']
+      ];
+      for (const [px, py, r, col] of emeraldCoords) {
+        emeraldParticles.append(element('circle', { cx: px, cy: py, r: r / 2, fill: col, opacity: 0.95 }));
+      }
+      burst.append(emeraldParticles);
+      if (!compact()) {
+        animate(emeraldParticles, [
+          { transform: 'translate(0, 0) scale(0.4)', opacity: 1 },
+          { transform: 'scale(1.2)', opacity: 0.85, offset: 0.45 },
+          { transform: 'scale(1.5)', opacity: 0 }
+        ], Math.min(260, duration * 1.2));
+      }
+    } else if (beastFallbackHit) {
+      burst.setAttribute('data-beast-command-fallback', 'true');
+      // Triple Primal Claw Rend: three savage luminous diagonal claw lacerations
+      const clawWidth = effectHeight(p) * 1.5, clawHeight = clawWidth * 0.6;
+      const clawSlash = element('g', { class: 'gm-combat-beast-claw-slash', transform: `rotate(${impactAngle + 180})` });
+      const clawOffsets = [-clawHeight * 0.28, 0, clawHeight * 0.28];
+      for (const yOff of clawOffsets) {
+        clawSlash.append(element('path', {
+          d: `M ${-clawWidth * 0.42} ${yOff + clawHeight * 0.2} Q 0 ${yOff - clawHeight * 0.3} ${clawWidth * 0.42} ${yOff - clawHeight * 0.15}`,
+          stroke: '#ff4d6d', 'stroke-width': '4', fill: 'none', 'stroke-linecap': 'round', opacity: '0.95'
+        }));
+        clawSlash.append(element('path', {
+          d: `M ${-clawWidth * 0.35} ${yOff + clawHeight * 0.18} Q 0 ${yOff - clawHeight * 0.25} ${clawWidth * 0.35} ${yOff - clawHeight * 0.12}`,
+          stroke: '#ffffff', 'stroke-width': '2', fill: 'none', 'stroke-linecap': 'round', opacity: '1'
+        }));
+      }
+      burst.append(clawSlash);
+      if (!compact()) {
+        animate(clawSlash, [
+          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(1.15)`, opacity: 1 },
+          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(1) rotate(0deg)`, opacity: 0.95, offset: 0.3 },
+          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(0.96)`, opacity: 0 }
+        ], Math.min(220, duration));
+      }
+      // Ripping blood/lunar sparks
+      const clawSparks = element('g', { class: 'gm-combat-beast-claw-sparks' });
+      const clawCoords = [[-22, -14, 4, '#ff4d6d'], [-6, -22, 3, '#c8b9e8'], [16, -12, 4, '#ff758f'], [28, 8, 3.5, '#ffffff'], [-10, 16, 3, '#ff4d6d'], [20, 22, 2.5, '#c8b9e8']];
+      for (const [cx, cy, r, col] of clawCoords) {
+        clawSparks.append(element('circle', { cx, cy, r: r / 2, fill: col, opacity: 0.95 }));
+      }
+      burst.append(clawSparks);
+      if (!compact()) {
+        animate(clawSparks, [
+          { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+          { transform: 'translate(6px, -14px) scale(0.75)', opacity: 0.7, offset: 0.5 },
+          { transform: 'translate(12px, -26px) scale(0.35)', opacity: 0 }
+        ], Math.min(280, duration * 1.3));
       }
     } else if (punchHit) {
       // Use the original authored punch artwork, not a procedurally redrawn burst.

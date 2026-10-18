@@ -320,5 +320,42 @@ test('passive abilities and ordinary attacks cannot accidentally use Sequence 8 
   }
 });
 
+test('Shadow Strike, Crafted Blade, Nature Growth and Beast Command render distinct custom choreography', f => {
+  // Shadow Strike
+  const shadow = cast(f, 'shadow_strike');
+  f.effects.show({ type: 'damage', row: shadow.row, event: shadow.next.event }, 1, 225);
+  assert(f.find('.gm-combat-shadow-strike-impact-slash'), 'Shadow strike has abyssal slash');
+  assert(f.find('.gm-combat-shadow-embers'), 'Shadow strike has shadow embers');
+  f.effects.clear(); f.effects.sync(f.map);
+
+  // Crafted Blade
+  const crafted = cast(f, 'crafted_blade');
+  f.effects.show({ type: 'damage', row: crafted.row, event: crafted.next.event }, 1, 225);
+  assert(f.find('.gm-combat-crafted-blade-impact-slash'), 'Crafted blade has forged cleave');
+  assert(f.find('.gm-combat-crafted-sparks'), 'Crafted blade has forged sparks');
+  f.effects.clear(); f.effects.sync(f.map);
+
+  // Nature Growth
+  const nature = cast(f, 'nature_growth');
+  const natureCastNode = f.find('.gm-combat-sequence8[data-stage="cast"]');
+  const natureTracks = tracksFor(f, natureCastNode);
+  const natureFrames = natureTracks[0]?.keyframes || [];
+  assert(natureFrames.some(kf => kf.transform && kf.transform.includes('scale(1.08, 1.25)')), 'Nature growth has rapid vertical stretch');
+  f.effects.show({ type: 'damage', row: nature.row, event: nature.next.event }, 1, 225);
+  const natureImpactNode = f.find('.gm-combat-sequence8[data-stage="impact"]');
+  const natureImpactTracks = tracksFor(f, natureImpactNode);
+  const natureImpactFrames = natureImpactTracks[0]?.keyframes || [];
+  assert(natureImpactFrames.some(kf => kf.transform && kf.transform.includes('scale(0.86)')), 'Nature growth impact clamps inward at scale 0.86');
+  assert(f.find('.gm-combat-nature-particles'), 'Nature growth has emerald particles on impact');
+  f.effects.clear(); f.effects.sync(f.map);
+
+  // Beast Command fallback
+  const beastFallback = cast(f, 'beast_command', 1, { companion: false });
+  f.effects.show({ type: 'damage', row: beastFallback.row, event: beastFallback.next.event }, 1, 225);
+  assert(f.find('.gm-combat-beast-claw-slash'), 'Beast Command fallback has savage claw slash');
+  assert(f.find('.gm-combat-beast-claw-sparks'), 'Beast Command fallback has blood/lunar sparks');
+  f.effects.clear(); f.effects.sync(f.map);
+});
+
 console.log(`\nSequence 8 FX: ${passed} passed, ${failed} failed.`);
 if (failed) process.exitCode = 1;
