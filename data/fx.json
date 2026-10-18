@@ -263,7 +263,7 @@
       "pathway": "error",
       "asset": "data/assets/effects/sequence8/deceptive-feint.png",
       "color": "#c6a0e8",
-      "mode": "travel"
+      "mode": "strike"
     },
     "holy_flash": {
       "pathway": "sun",
@@ -293,7 +293,7 @@
       "pathway": "darkness",
       "asset": "data/assets/effects/sequence8/midnight-requiem.png",
       "color": "#a79bd6",
-      "mode": "travel"
+      "mode": "strike"
     },
     "undying_touch": {
       "pathway": "death",
@@ -317,13 +317,13 @@
       "pathway": "demoness",
       "asset": "data/assets/effects/sequence8/instigation.png",
       "color": "#cab0df",
-      "mode": "travel"
+      "mode": "strike"
     },
     "mystic_spell": {
       "pathway": "hermit",
       "asset": "data/assets/effects/sequence8/mystic-spell.png",
       "color": "#c6afea",
-      "mode": "travel"
+      "mode": "strike"
     },
     "crafted_blade": {
       "pathway": "paragon",
@@ -354,13 +354,13 @@
       "pathway": "abyss",
       "asset": "data/assets/effects/sequence8/desire-ignition.png",
       "color": "#a92f42",
-      "mode": "travel"
+      "mode": "strike"
     },
     "madness_curse": {
       "pathway": "chained",
       "asset": "data/assets/effects/sequence8/madness-curse.png",
       "color": "#b998d0",
-      "mode": "travel"
+      "mode": "strike"
     },
     "fines_penalties": {
       "pathway": "justiciar",

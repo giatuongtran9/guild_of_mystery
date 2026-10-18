@@ -42,8 +42,10 @@ test('every ability has its own local PNG and a valid palette color', () => {
   assert.equal(assets.size, active.length, 'abilities cannot accidentally share their primary PNG');
   assert.notEqual(original.sequence8Abilities.beast_command.fallbackAsset, original.sequence8Abilities.beast_command.asset);
 });
-test('the authored modes respect support recipients and conditional hostile outcomes', () => {
-  assert.equal(original.sequence8Abilities.beast_command.mode, 'support');
+test('the authored modes respect support recipients and stationary target strikes', () => {
+  for (const id of ['deceptive_feint', 'midnight_requiem', 'instigation', 'desire_ignition', 'madness_curse', 'mystic_spell'])
+    assert.equal(original.sequence8Abilities[id].mode, 'strike', id + ' resolves directly on the target');
+  assert.equal(original.sequence8Abilities.beast_command.mode, 'support', 'companion support remains recipient-targeted');
   assert.equal(original.sequence8Abilities.bad_luck_curse.mode, 'caster', 'intent does not claim the crit restriction succeeded');
   assert.equal(original.sequence8Abilities.provocation.mode, 'caster', 'intent does not claim an immune target was taunted');
   assert.equal(original.sequence8Abilities.nature_growth.mode, 'strike', 'growth is an attack rather than a healing cue');

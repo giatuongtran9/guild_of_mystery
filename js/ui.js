@@ -458,7 +458,7 @@ function createCombatFx(wrap) {
     const spec = sequence8Config(row), root = layer();
     if (!spec || !root) return null;
     const abilityId = presentationAbility(row);
-    const src = assetOverride || (abilityId === 'beast_command' && mode === 'travel' && spec.fallbackAsset) || spec.asset;
+    const src = assetOverride || (abilityId === 'beast_command' && mode === 'strike' && spec.fallbackAsset) || spec.asset;
     const aspect = abilityId === 'crafted_blade' ? 1321 / 339
       : abilityId === 'beast_command' && src === spec.fallbackAsset ? 2
         : abilityId === 'beast_command' ? 876 / 995 : 1;
@@ -483,7 +483,7 @@ function createCombatFx(wrap) {
     let mode = spec.mode, targetId = endpoints.target?.targetId ?? row.targetId;
     if (mode === 'support') {
       if (endpoints.command) targetId = endpoints.command.targetId;
-      else if (endpoints.hit) { mode = 'travel'; targetId = endpoints.hit.targetId; }
+      else if (endpoints.hit) { mode = 'strike'; targetId = endpoints.hit.targetId; }
       else mode = 'caster';
     }
     if (mode === 'caster') targetId = row.actorId;
@@ -504,9 +504,11 @@ function createCombatFx(wrap) {
     const dx = destination.x - actor.x, dy = destination.y - actor.y;
     const angle = moving ? Math.atan2(dy, dx) * 180 / Math.PI : 0;
     node.setAttribute('data-angle-deg', String(angle));
+    const directPath = ['paper_card_dagger', 'deceptive_feint', 'crafted_blade', 'fines_penalties', 'heavy_cleave', 'shadow_strike'].includes(id);
+    node.setAttribute('data-flight-path', moving ? (directPath ? 'straight' : 'curved') : 'stationary');
     node.setAttribute('transform', `translate(${finalPoint.x} ${finalPoint.y}) rotate(${angle})`);
     if (compact()) return;
-    const straight = ['paper_card_dagger', 'deceptive_feint', 'crafted_blade', 'fines_penalties', 'heavy_cleave'].includes(id);
+    const straight = ['paper_card_dagger', 'deceptive_feint', 'crafted_blade', 'fines_penalties', 'heavy_cleave', 'shadow_strike'].includes(id);
     const bend = moving && !straight ? Math.min(28, Math.hypot(dx, dy) * .08) : 0;
     const pose = (progress, scale = 1, turn = 0) => {
       const p = moving ? { x: actor.x + dx * progress + Math.sin(progress * Math.PI) * bend,
@@ -537,13 +539,13 @@ function createCombatFx(wrap) {
       return;
     }
     if (id === 'shadow_strike') {
-      // Abyssal Diagonal Slash: high-speed surge forward with shadow acceleration
+      // Shadow Strike surges straight from attacker to target, keeping a stable heading.
       animate(node, [
-        { transform: pose(0, 0.6, -20), opacity: 0 },
-        { transform: pose(0.08, 0.95, -10), opacity: 1, offset: 0.15 },
-        { transform: pose(0.55, 1.1, 5), opacity: 0.98, offset: 0.6 },
-        { transform: pose(1, 1.2, 0), opacity: 0.95, offset: 0.8 },
-        { transform: pose(1, 1.1, 0), opacity: 0 }
+        { transform: pose(0, 0.68), opacity: 0 },
+        { transform: pose(0.08, 0.94), opacity: 1, offset: 0.15 },
+        { transform: pose(0.55, 1.04), opacity: 0.98, offset: 0.6 },
+        { transform: pose(1, 1.12), opacity: 0.95, offset: 0.8 },
+        { transform: pose(1, 1.04), opacity: 0 }
       ], hold);
       return;
     }
@@ -591,13 +593,15 @@ function createCombatFx(wrap) {
       fallbackImpact ? spec.fallbackAsset : undefined);
     if (!node) return;
     const actor = point(event.actorId ?? row.actorId);
-    const moving = ['travel', 'support'].includes(spec.mode);
+    const id = presentationAbility(row);
+    const isFallbackClaw = id === 'beast_command'
+      && !row.timeline?.some(step => step.event?.presentationEffect === 'beast_command' && step.event?.targetId !== event.targetId);
+    const moving = ['travel', 'support'].includes(spec.mode) && !isFallbackClaw;
     const angle = moving && actor ? Math.atan2(p.y - actor.y, p.x - actor.x) * 180 / Math.PI : 0;
     node.setAttribute('data-angle-deg', String(angle));
     node.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${angle})`);
     node.setAttribute('data-critical', String(!!event.critical));
     node.setAttribute('data-signature-release', String(!!event.isSignature));
-    const id = presentationAbility(row);
     const impactDuration = Math.max(1, Math.min(225, Number(phaseHold) || 225));
     if (compact()) return;
     if (id === 'nature_growth') {
@@ -1278,44 +1282,9 @@ function createCombatFx(wrap) {
         ], Math.min(300, duration * 1.4));
       }
     } else if (craftedHit) {
+      // Crafted Blade's authored Brutal Strike-style PNG is rendered by sequence8Impact.
+      // Do not layer the legacy procedural brass slash or sparks over that artwork.
       burst.setAttribute('data-crafted-blade', 'true');
-      // Heavy Forged Cleave: massive gleaming metallic brass/steel blade cleave
-      const slashWidth = effectHeight(p) * 1.6, slashHeight = slashWidth * 0.5;
-      const slash = element('g', { class: 'gm-combat-crafted-blade-impact-slash', transform: `rotate(${impactAngle + 180})` });
-      slash.append(element('path', {
-        d: `M ${-slashWidth * 0.48} ${slashHeight * 0.38} Q 0 ${-slashHeight * 0.58} ${slashWidth * 0.48} ${-slashHeight * 0.28} Q ${slashWidth * 0.12} ${slashHeight * 0.12} ${-slashWidth * 0.48} ${slashHeight * 0.38} Z`,
-        fill: '#7f5539', stroke: '#ddb892', 'stroke-width': '2.5', opacity: '0.98'
-      }));
-      slash.append(element('path', {
-        d: `M ${-slashWidth * 0.4} ${slashHeight * 0.28} Q 0 ${-slashHeight * 0.48} ${slashWidth * 0.42} ${-slashHeight * 0.22} Q ${slashWidth * 0.08} ${slashHeight * 0.08} ${-slashWidth * 0.4} ${slashHeight * 0.28} Z`,
-        fill: '#e7bc79', opacity: '0.95'
-      }));
-      slash.append(element('path', {
-        d: `M ${-slashWidth * 0.25} ${slashHeight * 0.15} Q 0 ${-slashHeight * 0.35} ${slashWidth * 0.35} ${-slashHeight * 0.18}`,
-        stroke: '#ffffff', 'stroke-width': '3', fill: 'none', opacity: '1'
-      }));
-      burst.append(slash);
-      if (!compact()) {
-        animate(slash, [
-          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(1.15)`, opacity: 1 },
-          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(1) rotate(0deg)`, opacity: 0.95, offset: 0.3 },
-          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(0.96)`, opacity: 0 }
-        ], Math.min(220, duration));
-      }
-      // Flying forged sparks
-      const sparks = element('g', { class: 'gm-combat-crafted-sparks' });
-      const sparkCoords = [[-24, -12, 4, '#ffd166'], [-8, -20, 3, '#ffffff'], [14, -8, 4, '#f4a261'], [26, 6, 3, '#ffb703'], [-6, 14, 3.5, '#ffd166'], [20, 18, 2.5, '#ffffff']];
-      for (const [sx, sy, r, col] of sparkCoords) {
-        sparks.append(element('rect', { x: sx, y: sy, width: r, height: r, fill: col, opacity: 0.95 }));
-      }
-      burst.append(sparks);
-      if (!compact()) {
-        animate(sparks, [
-          { transform: 'translate(0, 0) scale(1)', opacity: 1 },
-          { transform: 'translate(-6px, -12px) scale(0.8)', opacity: 0.75, offset: 0.5 },
-          { transform: 'translate(-12px, -24px) scale(0.3)', opacity: 0 }
-        ], Math.min(280, duration * 1.3));
-      }
     } else if (natureHit) {
       burst.setAttribute('data-nature-growth', 'true');
       // Emerald particles bursting outward when hit lands
@@ -1616,6 +1585,14 @@ function createBattleEffects(wrap) {
     const nudge = Math.min(2, size * .02), direction = node.classList.contains('ally') ? -1 : 1;
     if (['death', 'arrive', 'revive', 'mythical'].includes(kind)) {
       animate(sprite, [{ opacity: kind === 'death' ? 1 : .25 }, { opacity: kind === 'death' ? .4 : 1 }], 240);
+    } else if (kind === 'nature-growth-hit') {
+      const direction = node.classList.contains('ally') ? 1 : -1;
+      animate(sprite, [
+        { transform: 'translate(0,0) scale(1)' },
+        { transform: `translate(${direction * Math.min(7, size * .1)}px,0) scale(.94)`, offset: .22 },
+        { transform: `translate(${-direction * Math.min(3, size * .04)}px,0) scale(1.025)`, offset: .48 },
+        { transform: 'translate(0,0) scale(1)' }
+      ], 260);
     } else {
       const frames = [{ transform: 'translate(0,0) scale(1)', offset: 0 }];
       frames.push({ transform: kind === 'cast' ? `translate(0,${direction*nudge}px) scale(.94)` : `translate(${nudge}px,0) scale(.94)`, offset: .5 },
@@ -1677,7 +1654,9 @@ function createBattleEffects(wrap) {
     }
     else if (['damage', 'reaction', 'reflect'].includes(type)) {
       const hp = event.hpLoss ?? Math.max(0, (event.amount || 0) - (event.absorbed || 0));
-      motion(target, 'hit');
+      const natureGrowthHit = String(row?.sourceAbilityId || row?.abilityId || '').split(':').pop() === 'nature_growth'
+        && (Number(event.hpLoss ?? Math.max(0, (event.amount || 0) - (event.absorbed || 0))) > 0 || Number(event.absorbed) > 0);
+      motion(target, natureGrowthHit ? 'nature-growth-hit' : 'hit');
       const label = hp ? `−${abbrNum(hp)}${event.absorbed ? ' · shield' : ''}` : event.absorbed > 0 ? `−${abbrNum(event.absorbed)} Shield` : 'Shield';
       number(target, label, hp ? '#f4b5ad' : '#c6e5fa', !!event.critical && (hp > 0 || event.absorbed > 0));
     } else if (type === 'mythical') { mark(actor, 'mythical'); motion(actor, 'mythical'); }

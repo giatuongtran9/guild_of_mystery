@@ -153,7 +153,9 @@ test('Beast Command fallback strikes its real opponent without inventing a beast
   const { row, next } = cast(f, 'beast_command', 1, { fallback: true });
   const node = f.find('.gm-combat-sequence8');
   assert.equal(node.dataset.targetId, 'enemy');
-  assert.equal(node.dataset.mode, 'travel');
+  assert.equal(node.dataset.mode, 'strike');
+  assert.equal(node.dataset.flightPath, 'stationary');
+  assert.equal(node.dataset.effectSrc, fx.sequence8Abilities.beast_command.fallbackAsset);
   assert.equal(f.find('[data-effect="beast_command"]'), null);
   f.effects.show({ type: 'damage', row, event: next.event }, 1, 225);
   assert.equal(f.find('.gm-combat-sequence8[data-stage="impact"]').dataset.targetId, 'enemy');
@@ -327,6 +329,8 @@ test('passive abilities and ordinary attacks cannot accidentally use Sequence 8 
 test('Shadow Strike, Crafted Blade, Nature Growth and Beast Command render distinct custom choreography', f => {
   // Shadow Strike
   const shadow = cast(f, 'shadow_strike');
+  const shadowCast = f.find('.gm-combat-sequence8[data-stage="cast"]');
+  assert.equal(shadowCast.dataset.flightPath, 'straight', 'Shadow Strike travels directly to the target without a curved arc');
   f.effects.show({ type: 'damage', row: shadow.row, event: shadow.next.event }, 1, 225);
   assert(f.find('.gm-combat-shadow-strike-impact-slash'), 'Shadow strike has abyssal slash');
   assert(f.find('.gm-combat-shadow-embers'), 'Shadow strike has shadow embers');
@@ -336,6 +340,7 @@ test('Shadow Strike, Crafted Blade, Nature Growth and Beast Command render disti
   const crafted = cast(f, 'crafted_blade');
   f.effects.show({ type: 'damage', row: crafted.row, event: crafted.next.event }, 1, 225);
   assert.equal(f.find('.gm-combat-sequence8[data-stage="impact"]').dataset.effectSrc, fx.sequence8Abilities.crafted_blade.asset, 'Crafted Blade uses the authored brutal-strike-style PNG on impact');
+  assert.equal(f.find('.gm-combat-crafted-blade-impact-slash, .gm-combat-crafted-sparks'), null, 'the legacy brass slash/sparks no longer cover the authored PNG');
   f.effects.clear(); f.effects.sync(f.map);
 
   // Nature Growth
@@ -358,6 +363,27 @@ test('Shadow Strike, Crafted Blade, Nature Growth and Beast Command render disti
   assert.equal(f.find('.gm-combat-sequence8[data-stage="impact"]').dataset.effectSrc, fx.sequence8Abilities.beast_command.fallbackAsset, 'Beast Command fallback uses the dedicated authored claw PNG');
   assert(f.find('.gm-combat-beast-claw-sparks'), 'Beast Command fallback retains blood/lunar impact motes');
   f.effects.clear(); f.effects.sync(f.map);
+});
+
+
+for (const id of ['deceptive_feint', 'midnight_requiem', 'instigation', 'desire_ignition', 'madness_curse', 'mystic_spell']) test(id + ' stays at the target during its cast', f => {
+  cast(f, id);
+  const node = f.find('.gm-combat-sequence8[data-stage="cast"]');
+  assert.equal(node.dataset.mode, 'strike');
+  assert.equal(node.dataset.flightPath, 'stationary');
+  assert.equal(node.dataset.targetId, 'enemy');
+});
+
+
+test('Nature Growth landed damage gives the target a distinct recoil kick', f => {
+  const controller = f.w.createBattleEffects(f.wrap);
+  controller.sync(f.map);
+  const { row, next } = makeEvents('nature_growth');
+  controller.show({ type: 'damage', row, event: next.event }, 1, 225);
+  const targetSprite = f.find('[data-unit-id="enemy"] .gm-unit-sprite');
+  assert(tracksFor(f, targetSprite).some(animation => Number(animation.timing.duration) === 260),
+    'Nature Growth adds its vine-clamp target recoil');
+  controller.clear();
 });
 
 console.log(`\nSequence 8 FX: ${passed} passed, ${failed} failed.`);
