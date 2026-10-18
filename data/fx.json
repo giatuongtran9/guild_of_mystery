@@ -378,5 +378,116 @@
   "support": {
     "durationMs": 500
   },
-  "abilityChipMs": 500
+  "abilityChipMs": 500,
+  "sequence7Abilities": {
+    "paper_figurine_rebound": {
+      "pathway": "fool",
+      "asset": "data/assets/effects/sequence7/fool-paper-figurine-rebound-guard.png?v=f45433bf9c346b55",
+      "color": "#c5badf",
+      "mode": "support",
+      "reflectAsset": "data/assets/effects/sequence7/fool-paper-figurine-rebound-fire.png?v=0c473dce4d84a0ce"
+    },
+    "psychic_frenzy": {
+      "pathway": "visionary",
+      "asset": "data/assets/effects/sequence7/visionary-psychic-frenzy.png?v=e7654df7d35001fb",
+      "color": "#e5aed6",
+      "mode": "travel"
+    },
+    "purification_halo": {
+      "pathway": "sun",
+      "asset": "data/assets/effects/sequence7/sun-purification-halo.png?v=3f5c35e46dfa48ee",
+      "color": "#ead291",
+      "mode": "support"
+    },
+    "wind_step": {
+      "pathway": "tyrant",
+      "asset": "data/assets/effects/sequence7/tyrant-wind-step.png?v=23cb647e41e3fc4a",
+      "color": "#a9cfe5",
+      "mode": "caster"
+    },
+    "flesh_healing": {
+      "pathway": "hanged_man",
+      "asset": "data/assets/effects/sequence7/hanged-man-flesh-healing.png?v=5d6a0461863bbd15",
+      "color": "#b0c897",
+      "mode": "support"
+    },
+    "peaceful_rest": {
+      "pathway": "darkness",
+      "asset": "data/assets/effects/sequence7/darkness-peaceful-rest.png?v=41490c6aca8e0026",
+      "color": "#a79bd6",
+      "mode": "support"
+    },
+    "necromancy_summon": {
+      "pathway": "death",
+      "asset": "data/assets/effects/sequence7/death-necromancy-summon.png?v=4e7c81e1dce2ffa2",
+      "color": "#a6bebc",
+      "mode": "caster"
+    },
+    "dawn_shield": {
+      "pathway": "twilight_giant",
+      "asset": "data/assets/effects/sequence7/twilight-giant-dawn-shield.png?v=a92e3b9e1f111b24",
+      "color": "#ead291",
+      "mode": "support"
+    },
+    "fireball_barrage": {
+      "pathway": "red_priest",
+      "asset": "data/assets/effects/sequence7/red-priest-fireball-barrage.png?v=a5da03051df81419",
+      "color": "#df9b7a",
+      "mode": "travel"
+    },
+    "witch_s_curse": {
+      "pathway": "demoness",
+      "asset": "data/assets/effects/sequence7/demoness-witchs-curse.png?v=961fd20f07c9563a",
+      "color": "#cab0df",
+      "mode": "travel"
+    },
+    "scroll_ward": {
+      "pathway": "hermit",
+      "asset": "data/assets/effects/sequence7/hermit-scroll-ward.png?v=b41c58d95d73f8b0",
+      "color": "#c6afea",
+      "mode": "support"
+    },
+    "runic_shield": {
+      "pathway": "paragon",
+      "asset": "data/assets/effects/sequence7/paragon-runic-shield.png?v=7da69918eab7e20d",
+      "color": "#e7bc79",
+      "mode": "support"
+    },
+    "lucky_break": {
+      "pathway": "wheel_of_fortune",
+      "asset": "data/assets/effects/sequence7/wheel-of-fortune-lucky-break.png?v=d8cbf77ba22f2b15",
+      "color": "#e4d294",
+      "mode": "support"
+    },
+    "harvest_blessing": {
+      "pathway": "mother",
+      "asset": "data/assets/effects/sequence7/mother-harvest-blessing.png?v=4a12dc61843442b7",
+      "color": "#a1d69a",
+      "mode": "support"
+    },
+    "blood_siphon": {
+      "pathway": "moon",
+      "asset": "data/assets/effects/sequence7/moon-blood-siphon.png?v=9392e27895b62508",
+      "color": "#df8397",
+      "mode": "travel"
+    },
+    "possession_phase": {
+      "pathway": "chained",
+      "asset": "data/assets/effects/sequence7/chained-possession-phase.png?v=8c842d80cdfdc561",
+      "color": "#b998d0",
+      "mode": "caster"
+    },
+    "bribe_weakening": {
+      "pathway": "black_emperor",
+      "asset": "data/assets/effects/sequence7/black-emperor-bribe-weakening.png?v=c193d77be4dd70c3",
+      "color": "#deb282",
+      "mode": "travel"
+    },
+    "prohibition_barrier": {
+      "pathway": "justiciar",
+      "asset": "data/assets/effects/sequence7/justiciar-prohibition-barrier.png?v=3e18eb3d652facee",
+      "color": "#e2c9aa",
+      "mode": "support"
+    }
+  }
 }

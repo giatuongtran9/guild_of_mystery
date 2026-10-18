@@ -70,7 +70,7 @@
     const family = value => typeof value === 'string' && familyKeys.includes(value);
     const paths = new Set(pathwayKeys);
     const safeKey = key => /^[a-z][a-z0-9_]*$/.test(key) && !['constructor', 'prototype'].includes(key);
-    if (!fields(fx, ['schema', 'damageColors', 'families', 'pathwayDefaults', 'pathwayDamageOverrides', 'basicAttack', 'sequence8Abilities', 'impact', 'support', 'abilityChipMs'])
+    if (!fields(fx, ['schema', 'damageColors', 'families', 'pathwayDefaults', 'pathwayDamageOverrides', 'basicAttack', 'sequence8Abilities', 'sequence7Abilities', 'impact', 'support', 'abilityChipMs'])
       || fx.schema !== 'guild.battle-fx.v1') fail('invalid battle FX schema');
     if (!record(fx.damageColors) || !['default', 'physical', 'true'].every(key => Object.prototype.hasOwnProperty.call(fx.damageColors, key))
       || Object.entries(fx.damageColors).some(([key, value]) => !safeKey(key) || typeof value !== 'string' || !/^#[a-f0-9]{6}$/i.test(value))) fail('damage colors must be six-digit hex colors');
@@ -93,6 +93,30 @@
       || ['melee', 'unarmed', 'gun', 'caster'].some(key => !family(fx.basicAttack[key]))
       || (fx.basicAttack.pathways !== undefined && (!record(fx.basicAttack.pathways)
         || Object.entries(fx.basicAttack.pathways).some(([key, value]) => !paths.has(key) || !family(value))))) fail('invalid basic attack family');
+    if (!record(fx.sequence7Abilities) || Object.keys(fx.sequence7Abilities).length !== 18
+      || new Set(Object.values(fx.sequence7Abilities).map(value => value?.pathway)).size !== 18) fail('Sequence 7 effects must cover eighteen distinct active pathways');
+    const sequence7Pathways = {
+      paper_figurine_rebound: 'fool', psychic_frenzy: 'visionary', purification_halo: 'sun', wind_step: 'tyrant',
+      flesh_healing: 'hanged_man', peaceful_rest: 'darkness', necromancy_summon: 'death', dawn_shield: 'twilight_giant',
+      fireball_barrage: 'red_priest', witch_s_curse: 'demoness', scroll_ward: 'hermit', runic_shield: 'paragon',
+      lucky_break: 'wheel_of_fortune', harvest_blessing: 'mother', blood_siphon: 'moon', possession_phase: 'chained',
+      bribe_weakening: 'black_emperor', prohibition_barrier: 'justiciar'
+    };
+    const sequence7Asset = value => typeof value === 'string'
+      && /^data\/assets\/effects\/sequence7\/[a-z][a-z0-9-]*\.png\?v=[a-f0-9]{16}$/.test(value);
+    const sequence7Assets = new Set();
+    for (const [id, effect] of Object.entries(fx.sequence7Abilities)) {
+      const required = ['pathway', 'asset', 'color', 'mode'];
+      const optional = id === 'paper_figurine_rebound' ? ['reflectAsset'] : [];
+      if (!safeKey(id) || !Object.hasOwn(sequence7Pathways, id) || !fields(effect, required, optional)
+        || effect.pathway !== sequence7Pathways[id] || !paths.has(effect.pathway)
+        || !sequence7Asset(effect.asset) || sequence7Assets.has(effect.asset)
+        || typeof effect.color !== 'string' || !/^#[a-f0-9]{6}$/i.test(effect.color)
+        || !['travel', 'strike', 'support', 'caster'].includes(effect.mode)
+        || (id === 'paper_figurine_rebound' && !sequence7Asset(effect.reflectAsset))
+        || (id !== 'paper_figurine_rebound' && effect.reflectAsset !== undefined)) fail(`invalid Sequence 7 effect ${id}`);
+      sequence7Assets.add(effect.asset);
+    }
     if (!record(fx.sequence8Abilities) || Object.keys(fx.sequence8Abilities).length !== 20
       || new Set(Object.values(fx.sequence8Abilities).map(value => value?.pathway)).size !== 20) fail('Sequence 8 effects must cover twenty distinct active pathways');
     for (const [id, effect] of Object.entries(fx.sequence8Abilities)) {

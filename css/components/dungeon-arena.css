@@ -368,6 +368,7 @@
   pointer-events: none;
 }
 
+.gm-combat-sequence7-image,
 .gm-combat-sequence8-image {
   image-rendering: pixelated;
   overflow: visible;

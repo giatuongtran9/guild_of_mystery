@@ -426,12 +426,112 @@ function createCombatFx(wrap) {
   function sequence8Config(row) {
     return config.sequence8Abilities?.[presentationAbility(row)];
   }
+  function sequence7Config(row) {
+    return config.sequence7Abilities?.[presentationAbility(row)];
+  }
   function prepareSequence8Asset(spec) {
     if (!spec || typeof window.Image !== 'function') return;
     for (const src of [spec.asset, spec.fallbackAsset].filter(Boolean)) {
       if (preparedAssets.has(src)) continue;
       preparedAssets.add(src);
       const preload = new window.Image(); preload.src = src;
+    }
+  }
+  function prepareSequence7Asset(spec) {
+    if (!spec || typeof window.Image !== 'function') return;
+    for (const src of [spec.asset, spec.reflectAsset].filter(Boolean)) {
+      if (preparedAssets.has(src)) continue;
+      preparedAssets.add(src);
+      const preload = new window.Image(); preload.src = src;
+    }
+  }
+  function sequence7Image(row, stage, targetId, mode, p, assetOverride) {
+    const spec = sequence7Config(row), root = layer();
+    if (!spec || !root || !p) return null;
+    const src = assetOverride || spec.asset;
+    const size = Math.min((canvas()?.getBoundingClientRect().width || 320) - 8, effectHeight(point(targetId) || p) * 1.25);
+    const origin = mode === 'travel' ? point(row.actorId) : null;
+    const angle = origin ? Math.atan2(p.y - origin.y, p.x - origin.x) * 180 / Math.PI : 0;
+    const node = group('gm-combat-sequence7', row.actorId, targetId, spec.color);
+    for (const [key, value] of Object.entries({ 'ability-id': presentationAbility(row), stage, mode, 'effect-src': src, 'angle-deg': angle })) node.setAttribute(`data-${key}`, value);
+    node.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${angle})`);
+    image(node, src, size, size, 'gm-combat-effect-image gm-combat-sequence7-image');
+    root.append(node);
+    return node;
+  }
+  function prepareSequence7Assets(map) {
+    const paths = new Set(Object.values(map || {}).filter(entry => entry && Number(entry.sequence) <= 7).map(entry => entry.path));
+    for (const spec of Object.values(config.sequence7Abilities || {})) if (paths.has(spec.pathway)) prepareSequence7Asset(spec);
+  }
+  function sequence7Endpoint(row, mode) {
+    const steps = row.timeline || [];
+    const own = event => event.actorId == null || event.actorId === row.actorId;
+    const outcome = steps.find(step => own(step.event) && step.event.targetId != null
+      && ['heal', 'shield', 'status'].includes(step.type));
+    const hit = steps.find(step => own(step.event) && step.event.targetId != null
+      && damageTypes.has(step.type) && !step.event.isDot && !step.event.isReaction && !step.event.isReflect);
+    const target = mode === 'support' ? (outcome?.event || null)
+      : hit?.event || outcome?.event || steps.find(step => own(step.event) && step.event.targetId != null)?.event;
+    return target?.targetId ?? (mode === 'caster' || mode === 'support' ? row.actorId : row.targetId ?? row.actorId);
+  }
+  function sequence7Cast(row, phaseHold) {
+    const spec = sequence7Config(row), actor = point(row.actorId);
+    if (!spec || !actor) return;
+    const targetId = sequence7Endpoint(row, spec.mode);
+    const target = point(targetId) || actor;
+    const mode = spec.mode;
+    const node = sequence7Image(row, 'cast', targetId, mode, mode === 'caster' ? actor : target);
+    if (!node || compact()) return;
+    const angle = Number(node.dataset.angleDeg) || 0;
+    const duration = Math.max(1, Number(phaseHold) || readableCastDuration(row));
+    if (mode === 'travel' && targetId !== row.actorId) {
+      const dx = target.x - actor.x, dy = target.y - actor.y;
+      animate(node, [
+        { transform: `translate(${actor.x}px,${actor.y}px) rotate(${angle}deg) scale(.58)`, opacity: 0 },
+        { transform: `translate(${actor.x + dx * .12}px,${actor.y + dy * .12}px) rotate(${angle}deg) scale(.92)`, opacity: 1, offset: .18 },
+        { transform: `translate(${actor.x + dx * .58}px,${actor.y + dy * .58}px) rotate(${angle}deg) scale(1)`, opacity: .98, offset: .6 },
+        { transform: `translate(${target.x}px,${target.y}px) rotate(${angle}deg) scale(1.04)`, opacity: .95, offset: .86 },
+        { transform: `translate(${target.x}px,${target.y}px) rotate(${angle}deg) scale(.94)`, opacity: 0 }
+      ], duration);
+    } else {
+      animate(node, [
+        { transform: `translate(${target.x}px,${target.y}px) rotate(${angle}deg) scale(.68)`, opacity: 0 },
+        { transform: `translate(${target.x}px,${target.y - 4}px) rotate(${angle}deg) scale(1.04)`, opacity: .98, offset: .3 },
+        { transform: `translate(${target.x}px,${target.y - 8}px) rotate(${angle}deg) scale(1)`, opacity: .9, offset: .72 },
+        { transform: `translate(${target.x}px,${target.y - 12}px) rotate(${angle}deg) scale(.96)`, opacity: 0 }
+      ], duration);
+    }
+  }
+  function sequence7Impact(row, event, phaseHold) {
+    const reflecting = event?.isReflect || event?.type === 'reflect';
+    const abilityId = reflecting ? String(event?.sourceAbilityId || '').split(':').pop() : presentationAbility(row);
+    const spec = config.sequence7Abilities?.[abilityId];
+    if (!spec || event?.isDot || (!reflecting && event?.actorId != null && event.actorId !== row.actorId)) return;
+    const target = point(event.targetId), actor = point(event.actorId ?? row.actorId);
+    if (!target) return;
+    const ownerId = reflecting ? event.actorId : row.actorId;
+    const impactRow = reflecting ? { ...row, actorId: ownerId, sourceAbilityId: abilityId } : row;
+    const node = sequence7Image(impactRow, reflecting ? 'reflect' : 'impact', event.targetId, 'travel', target, reflecting ? spec.reflectAsset : undefined);
+    if (!node) return;
+    const angle = actor ? Math.atan2(target.y - actor.y, target.x - actor.x) * 180 / Math.PI : 0;
+    node.setAttribute('data-angle-deg', String(angle));
+    node.setAttribute('data-owner-id', ownerId ?? row.actorId);
+    node.setAttribute('transform', `translate(${target.x} ${target.y}) rotate(${angle})`);
+    if (!compact()) {
+      const duration = Math.max(1, Math.min(300, Number(phaseHold) || 225));
+      if (reflecting && actor) animate(node, [
+        { transform: `translate(${actor.x}px,${actor.y}px) rotate(${angle}deg) scale(.56)`, opacity: 0 },
+        { transform: `translate(${actor.x + (target.x - actor.x) * .18}px,${actor.y + (target.y - actor.y) * .18}px) rotate(${angle}deg) scale(.9)`, opacity: 1, offset: .2 },
+        { transform: `translate(${actor.x + (target.x - actor.x) * .68}px,${actor.y + (target.y - actor.y) * .68}px) rotate(${angle}deg) scale(1)`, opacity: 1, offset: .72 },
+        { transform: `translate(${target.x}px,${target.y}px) rotate(${angle}deg) scale(1.08)`, opacity: .95, offset: .9 },
+        { transform: `translate(${target.x}px,${target.y}px) rotate(${angle}deg) scale(.82)`, opacity: 0 }
+      ], duration);
+      else animate(node, [
+        { transform: `translate(${target.x}px,${target.y}px) rotate(${angle}deg) scale(.72)`, opacity: .2 },
+        { transform: `translate(${target.x}px,${target.y}px) rotate(${angle}deg) scale(1.06)`, opacity: 1, offset: .24 },
+        { transform: `translate(${target.x}px,${target.y}px) rotate(${angle}deg) scale(1)`, opacity: .9, offset: .64 },
+        { transform: `translate(${target.x}px,${target.y}px) rotate(${angle}deg) scale(.88)`, opacity: 0 }
+      ], duration);
     }
   }
   function prepareSequence8Assets(map) {
@@ -782,6 +882,7 @@ function createCombatFx(wrap) {
     const actor = point(row.actorId), targetId = event?.targetId ?? row.targetId, target = point(targetId);
     if (!actor || !layer()) return;
     if (sequence8Config(row)) { sequence8Cast(row, phaseHold); return; }
+    if (sequence7Config(row)) { sequence7Cast(row, phaseHold); return; }
     const hold = Math.max(100, Math.min(Number(phaseHold) || 600, 560));
     const abilityHold = isReadableAbility(row)
       ? Math.max(1, Number(phaseHold) || readableCastDuration(row)) : hold;
@@ -1079,9 +1180,12 @@ function createCombatFx(wrap) {
     const customS9 = ['exploit_loophole', 'combat_theft'].includes(abilityId) && event?.actorId === row.actorId;
     const unarmedBasic = weaponBasic(row, event, 'unarmed');
     // Punches land as a distinct burst; weapon basics and Brutal Strike use the provided crescent art.
+    const reflectAbility = event?.isReflect ? String(event.sourceAbilityId || '').split(':').pop() : '';
+    const customS7 = !!(reflectAbility && config.sequence7Abilities?.[reflectAbility])
+      || (sequence7Config(row) && (event?.actorId == null || event.actorId === row.actorId));
     const customS8 = sequence8Config(row) && (event?.actorId == null || event.actorId === row.actorId)
       && !event?.isReflect && (!event?.isReaction || event?.isSignature);
-    if (!event || (!damageTypes.has(step.type) && !basicMiss) || event.isDot || customS9 || customS8) return;
+    if (!event || (!damageTypes.has(step.type) && !basicMiss) || event.isDot || customS9 || customS8 || customS7) return;
     if (unarmedBasic) { punchCue(row, step, phaseHold); return; }
     const ownerId = event.actorId ?? row.actorId, targetId = event.targetId;
     const a = point(ownerId), originalTarget = point(targetId);
@@ -1449,17 +1553,18 @@ function createCombatFx(wrap) {
       areaRows.delete(row); abilityChip(row, event);
       abilityCue(row, cue.next, phaseHoldMs);
     }
-    if (damageTypes.has(type)) {
+    if (damageTypes.has(type) || type === 'reflect') {
+      sequence7Impact(row, event, phaseHoldMs);
       sequence8Impact(row, event, phaseHoldMs);
       impact(row, event, phaseHoldMs);
     }
     else if (['heal', 'shield', 'revive'].includes(type)) support(type, event, row, phaseHoldMs);
-    else if (event.status || (sequence8Config(row) && event.type === 'status' && event.targetId != null
+    else if (event.status || ((sequence8Config(row) || sequence7Config(row)) && event.type === 'status' && event.targetId != null
       && !event.presentationEffect) || event.type === 'thread' || ['cc_loss', 'madness_loss', 'banished'].includes(event.subtype)) support('status', event, row, phaseHoldMs);
     travel(row, cue.next, phaseHoldMs);
   }
-  return { sync: map => { hpMap = map || Object.create(null); prepareSequence8Assets(hpMap); }, show,
-    prepare: rows => { for (const row of rows || []) prepareSequence8Asset(sequence8Config(row)); },
+  return { sync: map => { hpMap = map || Object.create(null); prepareSequence8Assets(hpMap); prepareSequence7Assets(hpMap); }, show,
+    prepare: rows => { for (const row of rows || []) { prepareSequence8Asset(sequence8Config(row)); prepareSequence7Asset(sequence7Config(row)); } },
     clear: () => { clearPhase(false); surface?.remove(); surface = null; hpMap = Object.create(null); paused = false; areaRows = new WeakSet(); phaseRow = null; phaseType = null; },
     reflow: () => { clearPhase(false); surface?.remove(); surface = null; },
     pause: () => { paused = true; for (const animation of animations.keys()) animation.pause(); },
