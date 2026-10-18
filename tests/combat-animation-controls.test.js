@@ -261,8 +261,9 @@ function clean(f) {
         f.tick();
         if (ability === 'healing_touch') assert.equal(hp(ally), '70/100');
         else assert(log(f).textContent.includes('Steals'), 'the first recorded theft appears only after the cue');
-        assert.equal(f.timers.values().next().value.delay, 400 / speed,
-          'outcome reading phases retain the selected ordinary playback speed');
+        const expectedOutcomeMs = ability === 'healing_touch' ? 500 : 400 / speed;
+        assert.equal(f.timers.values().next().value.delay, expectedOutcomeMs,
+          'healing outcomes keep a 500ms visible effect at faster playback; other outcomes retain their ordinary timing');
         if (ability === 'exploit_loophole') { f.tick(); assert.equal(hp(enemy), '30/100'); }
       }, { readableAbility: ability, copied });
     }
@@ -293,7 +294,7 @@ function clean(f) {
       assert.equal(f.timers.values().next().value.delay, 200, 'compact playback retains its 4x scheduler rate');
       assert(f.animations.every(animation => animation.cancelled), 'switching to compact speed removes moving cues');
       assert.equal(hp(f.card(f.enemyId)), '100/100');
-      f.tick(); assert.equal(f.timers.values().next().value.delay, 100);
+      f.tick(); assert.equal(f.timers.values().next().value.delay, ability === 'healing_touch' ? 500 : 100);
     }, { readableAbility: ability });
   }
 

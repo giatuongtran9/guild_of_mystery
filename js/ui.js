@@ -53,18 +53,59 @@ function hasReadableOutcomeHold(row) {
     String(row?.sourceAbilityId || row?.abilityId || '').split(':').pop());
 }
 
+function presentationAbilityId(row) {
+  return String(row?.sourceAbilityId || row?.abilityId || '').split(':').pop();
+}
+
+function isPaperRebound(row) { return presentationAbilityId(row) === 'paper_figurine_rebound'; }
+
+function isDedicatedSupportAbility(row) {
+  return ['paper_figurine_rebound', 'healing_touch', 'purification_halo', 'historical_summoning',
+    'steal_destiny_turn', 'dream_tether', 'wind_step', 'thunder_god_stance',
+    'deceive_impact', 'prophetic_intervention', 'magic_barrier', 'omniscient_rewrite',
+    'flesh_healing', 'flesh_creation', 'peaceful_rest', 'dawn_shield',
+    'guardian_stance', 'dawn_guardian_barrier', 'scroll_ward', 'runic_shield',
+    'harvest_blessing', 'life_bloom', 'nature_s_growth_surge', 'mother_s_touch',
+    'lunar_blessing', 'prohibition_barrier', 'matter_fortification',
+    'alchemical_overclock', 'misfortune_inversion', 'thunder_god_stance',
+    'purifying_sunfire'].includes(presentationAbilityId(row));
+}
+
+function isPositiveSupportEvent(event, row) {
+  const value = event?.event || event || {};
+  if (['heal', 'revive'].includes(value.type)) return isDedicatedSupportAbility(row);
+  if (value.type === 'shield') {
+    return isDedicatedSupportAbility(row) && (value.actorId == null || row?.actorId == null || value.actorId === row.actorId);
+  }
+  if (value.isReflect && String(value.sourceAbilityId || '').split(':').pop() === 'paper_figurine_rebound') return true;
+  return isDedicatedSupportAbility(row) && value.type === 'status'
+    && /\b(?:gains?\s+\+|reflecting ward|cleanses?:|restores?\s+\d)/i.test(String(value.text || ''));
+}
+
+function hasPositiveSupportOutcome(row) {
+  return isDedicatedSupportAbility(row) || (row?.timeline || []).some(step => isPositiveSupportEvent(step?.event || step, row));
+}
+
+function isPositiveSupportPhase(row, phaseType, event) {
+  if (phaseType === 'cast') return isPaperRebound(row) || (!isReadableAbility(row) && hasPositiveSupportOutcome(row));
+  return isPositiveSupportEvent(event, row);
+}
+
 function isCastOnlyAbilityRow(row) {
   return row?.type === 'turn' && isReadableAbility(row) && !row.timeline?.length;
 }
 
-function readableCastDuration(row) { return isReadableAbility(row) ? 800 : 300; }
+function readableCastDuration(row) { return isReadableAbility(row) || isPaperRebound(row) ? 800 : 300; }
 
 // The longer ability casts keep at least 500ms at 2x. Other phases and compact
 // playback use their ordinary rate; 1.6 is accepted when a controller forwards
 // an already resolved cast rate to its child effect controllers.
-function battleAnimationRate(row, speed = 1, phaseType) {
-  const rate = [.5, 1, 1.6, 2, 4].includes(Number(speed)) ? Number(speed) : 1;
-  return phaseType === 'cast' && isReadableAbility(row) && rate === 2 ? 1.6 : rate;
+function battleAnimationRate(row, speed = 1, phaseType, event) {
+  const rate = [.5, 1, 1.25, 1.6, 2, 4].includes(Number(speed)) ? Number(speed) : 1;
+  if (isPositiveSupportPhase(row, phaseType, event)) return Math.min(rate, 1.25);
+  if (phaseType === 'cast' && isReadableAbility(row) && rate === 2) return 1.6;
+  if (phaseType === 'cast' && isPositiveSupportPhase(row, phaseType, event)) return Math.min(rate, 1.25);
+  return rate;
 }
 
 function battlePresentationRate(playing, speed = 1) {
@@ -72,7 +113,10 @@ function battlePresentationRate(playing, speed = 1) {
   const rate = [.5, 1, 2, 4].includes(Number(speed)) ? Number(speed) : 1;
   const casting = playing.eventCount === 0 && (row?.timeline?.length || isCastOnlyAbilityRow(row))
     && !row?.timeline?.[0]?.event?.isDot;
-  return battleAnimationRate(row, rate, casting ? 'cast' : null);
+  const event = Number.isInteger(playing.eventCount) && playing.eventCount > 0
+    ? row?.timeline?.[playing.eventCount - 1]?.event : null;
+  const phaseType = casting ? 'cast' : event?.type === 'status' ? 'note' : event?.type;
+  return battleAnimationRate(row, rate, phaseType, event);
 }
 
 // Hold each visible stage, including the final impact, before exposing the
@@ -90,16 +134,33 @@ function battlePresentationDelay(playing, speed = 1) {
   }
   if (!Number.isInteger(count)) return 0;
   const periodic = !!timeline[0]?.event.isDot;
-  const castDuration = periodic ? 0 : readableCastDuration(row);
+  const extendedSupport = hasPositiveSupportOutcome(row) && !isReadableAbility(row);
+  const castDuration = periodic ? 0 : extendedSupport ? 800 : readableCastDuration(row);
   if (count === 0) return castDuration / rate;
   const weights = { damage: 225, reaction: 325, reflect: 275, heal: 200,
     shield: 200, mythical: 450, death: 350, revive: 300, note: 90 };
   const activeAbility = hasReadableOutcomeHold(row);
-  const holds = timeline.map(step => activeAbility ? 400 : Math.max(weights[step.type] || 90,
+  const holds = timeline.map(step => isPositiveSupportEvent(step.event, row) ? 500 : activeAbility ? 400 : Math.max(weights[step.type] || 90,
     step.event.presentationEffect && !step.event.presentationEffect.endsWith('_end') ? 250 : step.event.type === 'thread' ? 175 : 0));
   const total = castDuration + holds.reduce((sum, value) => sum + value, 0);
   const padding = count === timeline.length ? Math.max(0, (periodic ? 300 : 1000) - total) : 0;
-  return ((holds[count - 1] || 0) + padding) / rate;
+  const currentEvent = timeline[count - 1]?.event;
+  const phaseHold = (holds[count - 1] || 0) + padding;
+  return phaseHold / rate;
+}
+
+
+function battlePresentationDuration(playing, speed = 1) {
+  const base = battlePresentationDelay(playing);
+  const row = playing?.turnRows?.[playing.currentTurn];
+  const casting = playing?.eventCount === 0 && (row?.timeline?.length || isCastOnlyAbilityRow(row))
+    && !row?.timeline?.[0]?.event?.isDot;
+  const event = Number.isInteger(playing?.eventCount) && playing.eventCount > 0
+    ? row?.timeline?.[playing.eventCount - 1]?.event : null;
+  const phaseType = casting ? 'cast' : event?.type === 'status' ? 'note' : event?.type;
+  return isPositiveSupportPhase(row, phaseType, event)
+    ? base * Math.max(1, battlePresentationRate(playing, speed))
+    : base;
 }
 
 function advanceBattlePresentation(playing) {
@@ -359,9 +420,9 @@ function createCombatFx(wrap) {
   const config = data.fx || defaults, animations = new Map(), preparedAssets = new Set();
   const casterPaths = new Set(['fool', 'door', 'visionary', 'sun', 'white_tower', 'hermit', 'paragon', 'wheel_of_fortune', 'moon']);
   let hpMap = Object.create(null), surface = null, chip = null, chipRow = null, speed = 1, paused = false, areaRows = new WeakSet();
-  let phaseRow = null, phaseType = null;
+  let phaseRow = null, phaseType = null, phaseEvent = null;
   const reduced = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  const compact = () => reduced() || speed >= 4;
+  const compact = () => reduced() || (speed >= 4 && !isPositiveSupportPhase(phaseRow, phaseType, phaseEvent));
   const canvas = () => wrap.querySelector('.gm-battlefield-canvas');
   const unit = id => id == null ? null : [...wrap.querySelectorAll('.gm-arena-unit')].find(node => node.dataset.unitId === String(id));
   const state = id => id == null ? null : hpMap[id];
@@ -518,7 +579,9 @@ function createCombatFx(wrap) {
     node.setAttribute('data-owner-id', ownerId ?? row.actorId);
     node.setAttribute('transform', `translate(${target.x} ${target.y}) rotate(${angle})`);
     if (!compact()) {
-      const duration = Math.max(1, Math.min(300, Number(phaseHold) || 225));
+      const duration = isPositiveSupportEvent(event, row)
+        ? Math.max(1, Number(phaseHold) || 500)
+        : Math.max(1, Math.min(300, Number(phaseHold) || 225));
       if (reflecting && actor) animate(node, [
         { transform: `translate(${actor.x}px,${actor.y}px) rotate(${angle}deg) scale(.56)`, opacity: 0 },
         { transform: `translate(${actor.x + (target.x - actor.x) * .18}px,${actor.y + (target.y - actor.y) * .18}px) rotate(${angle}deg) scale(.9)`, opacity: 1, offset: .2 },
@@ -718,7 +781,9 @@ function createCombatFx(wrap) {
     node.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${angle})`);
     node.setAttribute('data-critical', String(!!event.critical));
     node.setAttribute('data-signature-release', String(!!event.isSignature));
-    const impactDuration = Math.max(1, Math.min(225, Number(phaseHold) || 225));
+    const impactDuration = isPositiveSupportEvent(event, row)
+      ? Math.max(1, Number(phaseHold) || 500)
+      : Math.max(1, Math.min(225, Number(phaseHold) || 225));
     if (compact()) return;
     if (id === 'nature_growth') {
       // Thorn Constriction: vines violently clamp inward (scale(0.86) with twisting bite)
@@ -1488,9 +1553,11 @@ function createCombatFx(wrap) {
   function support(type, event, row, phaseHoldMs) {
     const id = event.targetId ?? event.actorId ?? row.targetId ?? row.actorId, p = point(id);
     if (!p || !layer()) return;
-    const duration = presentationAbility(row) === 'healing_touch'
-      ? Math.min(config.support?.durationMs || 500, Math.max(1, Number(phaseHoldMs) || 500))
-      : config.support?.durationMs || 500;
+    const duration = isPositiveSupportEvent(event, row)
+      ? Math.max(1, Number(phaseHoldMs) || 500)
+      : presentationAbility(row) === 'healing_touch'
+        ? Math.min(config.support?.durationMs || 500, Math.max(1, Number(phaseHoldMs) || 500))
+        : config.support?.durationMs || 500;
     const color = type === 'heal' || type === 'revive' ? '#91dda9' : type === 'shield' ? '#b6dced' : '#dfc898';
     const node = group(`gm-combat-${type === 'revive' ? 'heal' : type}`, event.actorId ?? row.actorId, id, color);
     node.setAttribute('transform', `translate(${p.x} ${p.y})`);
@@ -1508,7 +1575,7 @@ function createCombatFx(wrap) {
           { transform: `translate(${p.x}px,${p.y}px) scale(.62)`, opacity: 0 },
           { transform: `translate(${p.x}px,${p.y}px) scale(1)`, opacity: .96, offset: .3 },
           { transform: `translate(${p.x}px,${p.y}px) scale(1.08)`, opacity: 0 }
-        ], Math.min(420, duration));
+        ], duration);
         else emblem.setAttribute('opacity', '.9');
       }
       for (let index = 0; index < 4; index++) {
@@ -1545,8 +1612,8 @@ function createCombatFx(wrap) {
   function show(cue, playbackSpeed = 1, phaseHoldMs = 600) {
     const event = cue?.event || {}, row = cue?.row || event;
     const type = cue?.type === 'row' ? event.type : cue?.type;
-    phaseRow = row; phaseType = type;
-    speed = battleAnimationRate(row, playbackSpeed, type);
+    phaseRow = row; phaseType = type; phaseEvent = event;
+    speed = battleAnimationRate(row, playbackSpeed, type, event);
     if (chipRow && row !== chipRow) clearPhase(false); else clearPhase(true);
     if (!cue || cue.type === 'settle') return;
     if (type === 'cast') {
@@ -1569,7 +1636,7 @@ function createCombatFx(wrap) {
     reflow: () => { clearPhase(false); surface?.remove(); surface = null; },
     pause: () => { paused = true; for (const animation of animations.keys()) animation.pause(); },
     resume: () => { paused = false; for (const animation of animations.keys()) animation.play(); },
-    setSpeed: value => { speed = battleAnimationRate(phaseRow, value, phaseType); if (compact()) clearPhase(false); else for (const animation of animations.keys()) animation.playbackRate = speed; }
+    setSpeed: value => { speed = battleAnimationRate(phaseRow, value, phaseType, phaseEvent); if (compact()) clearPhase(false); else for (const animation of animations.keys()) animation.playbackRate = speed; }
   };
 }
 
@@ -1592,7 +1659,7 @@ function createBattleEffects(wrap) {
   };
   arena?.addEventListener('gm-battlefield-layout', reflow);
   let layer = null, rate = 1, ending = false, pendingStrike = null;
-  let currentRow = null, currentPhaseType = null;
+  let currentRow = null, currentPhaseType = null, currentPhaseEvent = null;
   let focusedRow = null, focusedUnits = new Set(), focusTimer = null;
   const fxConfig = (typeof G9_DATA !== 'undefined' && G9_DATA.fx) || (typeof G9D !== 'undefined' && G9D.fx);
   const reduced = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -1611,7 +1678,7 @@ function createBattleEffects(wrap) {
     a.classList.add(`gm-cue-${kind}`); touched.add(a);
   }
   function animate(node, frames, duration = 180, options = {}) {
-    if (!node?.animate || reduced() || rate >= 4 || !isVisible(node)) return;
+    if (!node?.animate || reduced() || (rate >= 4 && !isPositiveSupportPhase(currentRow, currentPhaseType, currentPhaseEvent)) || !isVisible(node)) return;
     const animation = node.animate(frames, { duration, easing: options.easing || 'ease-out', fill: options.hold ? 'forwards' : 'none' });
     animation.playbackRate = rate;
     animations.add(animation);
@@ -1691,7 +1758,7 @@ function createBattleEffects(wrap) {
     const canvas = wrap.querySelector('.gm-battlefield-canvas').getBoundingClientRect();
     return { x: box.left - canvas.left + box.width / 2, y: box.top - canvas.top + box.height / 2 };
   }
-  function number(node, text, color, critical = false) {
+  function number(node, text, color, critical = false, duration = 550) {
     if (!isVisible(anchor(node)) || !text) return;
     const p = point(node), element = document.createElement('span');
     element.className = `gm-battle-fx-number${critical ? ' gm-battle-fx-number-critical' : ''}`;
@@ -1702,16 +1769,16 @@ function createBattleEffects(wrap) {
     const fieldWidth = wrap.querySelector('.gm-battlefield-canvas')?.getBoundingClientRect().width || 0;
     const halfWidth = element.offsetWidth / 2;
     if (halfWidth && fieldWidth) element.style.left = `${Math.max(halfWidth + 4, Math.min(fieldWidth - halfWidth - 4, p.x))}px`;
-    animate(element, [{ opacity: 1, transform: 'translate(-50%,-50%)' }, { opacity: 1, offset: .55 }, { opacity: 0, transform: 'translate(-50%,calc(-50% - 6px))' }], 550);
+    animate(element, [{ opacity: 1, transform: 'translate(-50%,-50%)' }, { opacity: 1, offset: .55 }, { opacity: 0, transform: 'translate(-50%,calc(-50% - 6px))' }], duration);
   }
-  function motion(node, kind) {
+  function motion(node, kind, timingMs = 240) {
     if (!node) return;
     const sprite = node.querySelector('.gm-unit-sprite'), size = anchor(node)?.getBoundingClientRect().width || 0;
     // The scaled pose leaves more room than the nudge consumes, even for a
     // 28px companion; art stays inside its fixed square throughout the motion.
     const nudge = Math.min(2, size * .02), direction = node.classList.contains('ally') ? -1 : 1;
     if (['death', 'arrive', 'revive', 'mythical'].includes(kind)) {
-      animate(sprite, [{ opacity: kind === 'death' ? 1 : .25 }, { opacity: kind === 'death' ? .4 : 1 }], 240);
+      animate(sprite, [{ opacity: kind === 'death' ? 1 : .25 }, { opacity: kind === 'death' ? .4 : 1 }], ['heal', 'shield', 'revive'].includes(kind) ? timingMs : 240);
     } else if (kind === 'nature-growth-hit') {
       const direction = node.classList.contains('ally') ? 1 : -1;
       animate(sprite, [
@@ -1728,7 +1795,7 @@ function createBattleEffects(wrap) {
     }
   }
   function attackMotion(actor, target, row, hold) {
-    if (!actor || reduced() || rate >= 4) return;
+    if (!actor || reduced() || (rate >= 4 && !isPositiveSupportPhase(row, currentPhaseType, currentPhaseEvent))) return;
     const a = anchor(actor)?.getBoundingClientRect(), b = anchor(target)?.getBoundingClientRect();
     if (!a?.width) return;
     const dx = b ? b.left + b.width / 2 - a.left - a.width / 2 : 0;
@@ -1759,8 +1826,8 @@ function createBattleEffects(wrap) {
     const resolvesStrike = sameStrike && (['damage', 'reaction', 'reflect'].includes(cue?.type)
       && event.actorId === row.actorId || event.type === 'miss' || row.isMiss);
     clearTransient(sameStrike && !resolvesStrike && cue?.type !== 'settle');
-    currentRow = row; currentPhaseType = cue?.type === 'row' ? event.type : cue?.type;
-    rate = battleAnimationRate(currentRow, speed, currentPhaseType);
+    currentRow = row; currentPhaseType = cue?.type === 'row' ? event.type : cue?.type; currentPhaseEvent = event;
+    rate = battleAnimationRate(currentRow, speed, currentPhaseType, currentPhaseEvent);
     pathwayEffects.show(cue, rate, timingMs);
     combatFx.show(cue, rate, timingMs);
     if (!cue) return;
@@ -1789,8 +1856,9 @@ function createBattleEffects(wrap) {
     } else if (type === 'mythical') { mark(actor, 'mythical'); motion(actor, 'mythical'); }
     else if (type === 'heal' || type === 'shield' || type === 'revive') {
       const recipient = target || actor;
-      mark(recipient, type); motion(recipient, type);
-      number(recipient, type === 'shield' ? `+${abbrNum(event.amount)} Shield` : `+${abbrNum(event.amount)}`, type === 'shield' ? '#c6e5fa' : '#b4edc4');
+      mark(recipient, type); motion(recipient, type, timingMs);
+      number(recipient, type === 'shield' ? `+${abbrNum(event.amount)} Shield` : `+${abbrNum(event.amount)}`,
+        type === 'shield' ? '#c6e5fa' : '#b4edc4', false, Math.max(1, Number(timingMs) || 500));
     } else if (type === 'death') { mark(target || actor, 'death'); motion(target || actor, 'death'); }
     else if (event.type === 'miss' || (cue.type === 'row' && row.isMiss)) {
       mark(target, 'miss'); motion(target, 'miss'); number(target, 'Miss', '#d5deea');
@@ -1829,7 +1897,7 @@ function createBattleEffects(wrap) {
     reflow: () => { clearTransient(); pathwayEffects.show(null); pathwayEffects.sync(currentMap); combatFx.reflow(); },
     pause: () => { for (const a of animations) a.pause(); pathwayEffects.pause(); combatFx.pause(); },
     resume: () => { for (const a of animations) a.play(); pathwayEffects.resume(); combatFx.resume(); },
-    setSpeed: speed => { rate = battleAnimationRate(currentRow, speed, currentPhaseType); if (rate >= 4) clearTransient(); else for (const a of animations) a.playbackRate = rate; pathwayEffects.setSpeed(rate); combatFx.setSpeed(rate); }
+    setSpeed: speed => { rate = battleAnimationRate(currentRow, speed, currentPhaseType, currentPhaseEvent); if (rate >= 4) clearTransient(); else for (const a of animations) a.playbackRate = rate; pathwayEffects.setSpeed(rate); combatFx.setSpeed(rate); }
   };
 }
 
@@ -2603,7 +2671,7 @@ if (typeof document !== 'undefined') (() => {
       }
       const phase = `${playing.currentTurn}:${playing.eventCount ?? 'start'}`;
       if (!tickerWait || tickerWait.playing !== playing || tickerWait.phase !== phase) {
-        tickerWait = { playing, phase, remaining: battlePresentationDelay(playing), started: 0, speed: tickerSpeed };
+        tickerWait = { playing, phase, remaining: battlePresentationDuration(playing, tickerSpeed), started: 0, speed: tickerSpeed };
       }
       tickerWait.started = performance.now(); tickerWait.speed = battlePresentationRate(playing, tickerSpeed);
       const delay = tickerWait.remaining / tickerWait.speed;
@@ -2642,7 +2710,7 @@ if (typeof document !== 'undefined') (() => {
       battlefieldImage: battlefieldImageFor(isSim ? {} : playing.quest, isSim)
     });
     ensureBattleEffects(playing, wrap);
-    if (cue) battleEffects.show({ ...cue, isDone, arrivals: [...wrap.querySelectorAll('.gm-arena-unit')].filter(node => !existing.has(node)) }, tickerSpeed, battlePresentationDelay(playing));
+    if (cue) battleEffects.show({ ...cue, isDone, arrivals: [...wrap.querySelectorAll('.gm-arena-unit')].filter(node => !existing.has(node)) }, tickerSpeed, battlePresentationDuration(playing, tickerSpeed));
     if (isDone) battleEffects.finish();
     if (playing.paused) battleEffects.pause();
     const completion = app.querySelector('.battle-completion');

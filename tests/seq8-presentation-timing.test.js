@@ -9,7 +9,7 @@ const root = path.resolve(__dirname, '..');
 const source = fs.readFileSync(path.join(root, 'js/ui.js'), 'utf8');
 const api = new Function(source.slice(0, source.indexOf('function createPathwayEffects')) + `
   return { isReadableAbility, readableCastDuration, battleAnimationRate,
-    battlePresentationRate, battlePresentationDelay, advanceBattlePresentation,
+    battlePresentationRate, battlePresentationDelay, battlePresentationDuration, advanceBattlePresentation,
     battlePresentationRows };`)();
 const catalog = g.PATH_KEYS.flatMap(key => g.tierFor(key, 8).abilities
   .filter(spec => spec.type === 'active').map(spec => ({ key, spec })));
@@ -81,6 +81,33 @@ test('Sequence 8 outcomes retain their existing short reading phases instead of 
     assert.equal(api.battlePresentationDelay(old, 1), 400, abilityId + ' retains its established outcome hold');
     api.advanceBattlePresentation(old);
     assert.equal(api.battlePresentationDelay(old, 1), 400);
+  }
+});
+
+test('healing, positive buffs, and Paper Figurine Rebound retain readable outcome and cast effects at fast playback', () => {
+  const cases = [
+    { abilityId: 'healing_touch', event: { type: 'heal', targetId: 'ally', actorId: 'ally', amount: 8 } },
+    { abilityId: 'wind_step', event: { type: 'status', targetId: 'ally', actorId: 'ally', text: 'Ally gains +20% Dodge for 2 turns' } },
+    { abilityId: 'paper_figurine_rebound', event: { type: 'damage', targetId: 'ally', actorId: 'enemy',
+      isReflect: true, sourceAbilityId: 'paper_figurine_rebound', amount: 8 } }
+  ];
+  for (const { abilityId, event } of cases) for (const speed of [1, 2, 4]) {
+    const row = { type: 'turn', abilityId, actorId: 'ally', timeline: [{ type: event.type === 'heal' ? 'heal' : event.type === 'status' ? 'note' : 'reflect', event }] };
+    const p = playing(row);
+    assert.equal(api.advanceBattlePresentation(p).type, 'cast');
+    const expectedCastWall = abilityId === 'paper_figurine_rebound' ? 800 : 800 / (abilityId === 'healing_touch' ? (speed === 2 ? 1.6 : speed) : (speed === 2 ? 1.6 : speed));
+    if (abilityId === 'paper_figurine_rebound') assert.equal(api.battlePresentationDuration(p, speed), 800 * (speed > 1 ? 1.25 : 1));
+    assert(Number.isFinite(expectedCastWall));
+    const expectedCastRate = abilityId === 'paper_figurine_rebound' || abilityId === 'wind_step'
+      ? Math.min(speed, 1.25) : speed === 2 ? 1.6 : speed;
+    assert.equal(api.battlePresentationRate(p, speed), expectedCastRate);
+    api.advanceBattlePresentation(p);
+    const expectedOutcomeRate = abilityId === 'healing_touch' ? Math.min(speed, 1.25) : Math.min(speed, 1.25);
+    assert.equal(api.battlePresentationRate(p, speed), expectedOutcomeRate);
+    assert.equal(api.battlePresentationDelay(p, speed) * expectedOutcomeRate, 500);
+    assert.equal(api.battlePresentationDuration(p, speed), speed > 1 ? 625 : 500);
+    assert.equal(api.battlePresentationDuration(p, speed) / api.battlePresentationRate(p, speed), 500,
+      `${abilityId} remains visible for 500ms at ${speed}x`);
   }
 });
 

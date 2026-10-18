@@ -157,14 +157,14 @@ test('Healing Touch ally completion disposes of its reveal mask', f => {
   assert.equal(f.all('clipPath').length, 0);
 });
 
-test('Healing Touch recovery stays within the separate 400ms outcome phase', f => {
+test('Healing Touch recovery stays readable for 500ms in its outcome phase, including at 2x', f => {
   const { row, next } = cast(f, 'healing_touch', 2);
-  f.effects.show({ type: 'heal', row, event: next.event }, 2, 400);
+  f.effects.show({ type: 'heal', row, event: next.event }, 2, 625);
   const emblem = ownAnimations(f, '.gm-combat-healing-touch-impact');
-  assertDuration(emblem, 400);
-  assert(active(f).every(a => Number(a.timing.duration) + Number(a.timing.delay || 0) <= 400
+  assertDuration(emblem, 625);
+  assert(active(f).every(a => Number(a.timing.duration) + Number(a.timing.delay || 0) <= 625
     || a.element.closest?.('.gm-combat-ability-chip')), 'recovery tracks fit before the next outcome');
-  assert(emblem.every(a => a.playbackRate === 2), 'the 500ms casting exception does not slow the heal outcome');
+  assert(emblem.every(a => a.playbackRate === 1.25), 'the readable heal phase uses its 1.25x support clock');
   assert.equal(f.find('.gm-combat-impact'), null);
 });
 
@@ -180,9 +180,10 @@ for (const id of readable) test(id + ' shares pause, resume and live speed chang
   f.effects.resume();
   assert(active(f).every(a => a.playState === 'running'));
   f.effects.show({ type: next.type, row, event: next.event }, 2, 400);
-  assert(active(f).filter(a => !a.element.closest?.('.gm-combat-ability-chip')).every(a => a.playbackRate === 2), 'recorded outcomes resume ordinary 2x');
+  const outcomeRate = id === 'healing_touch' ? 1.25 : 2;
+  assert(active(f).filter(a => !a.element.closest?.('.gm-combat-ability-chip')).every(a => a.playbackRate === outcomeRate), 'recorded outcome effects match their replay phase rate');
   f.effects.setSpeed(1); f.effects.setSpeed(2);
-  assert(active(f).every(a => a.playbackRate === 2));
+  assert(active(f).every(a => a.playbackRate === (id === 'healing_touch' ? 1.25 : 2)));
 });
 
 test('copied utility casts retain the original effect and readable rate', f => {
