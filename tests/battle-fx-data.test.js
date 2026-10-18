@@ -57,6 +57,21 @@ test('basic caster pathway overrides are optional', () => {
   const data = JSON.parse(JSON.stringify(original)); delete data.basicAttack.pathways;
   assert.equal(validateBattleFx(data, paths), data);
 });
+test('Sequence 7 direction metadata preserves outgoing, diagonal and siphoning artwork axes', () => {
+  const data = JSON.parse(JSON.stringify(original));
+  assert.equal(data.sequence7Abilities.witch_s_curse.nativeAngleDeg, 30);
+  assert.equal(data.sequence7Abilities.bribe_weakening.nativeAngleDeg, -35);
+  assert.equal(data.sequence7Abilities.blood_siphon.nativeAngleDeg, 180);
+  assert.equal(data.sequence7Abilities.blood_siphon.travelDirection, 'target_to_caster');
+  delete data.sequence7Abilities.witch_s_curse.nativeAngleDeg;
+  assert.equal(validateBattleFx(data, paths), data, 'horizontal native axes remain the default');
+});
+rejects('unbounded Sequence 7 native artwork angles are rejected', data => { data.sequence7Abilities.witch_s_curse.nativeAngleDeg = 181; });
+rejects('non-finite Sequence 7 native artwork angles are rejected', data => { data.sequence7Abilities.witch_s_curse.nativeAngleDeg = NaN; });
+rejects('text Sequence 7 native artwork angles are rejected', data => { data.sequence7Abilities.witch_s_curse.nativeAngleDeg = '30'; });
+rejects('unknown Sequence 7 travel directions are rejected', data => { data.sequence7Abilities.blood_siphon.travelDirection = 'sideways'; });
+rejects('support effects cannot receive traveling orientation metadata', data => { data.sequence7Abilities.flesh_healing.nativeAngleDeg = 30; });
+rejects('support effects cannot receive a travel direction', data => { data.sequence7Abilities.flesh_healing.travelDirection = 'target_to_caster'; });
 rejects('unknown schema is rejected', data => { data.schema = 'guild.battle-fx.v2'; });
 rejects('unknown top-level settings are rejected', data => { data.html = '<script>bad</script>'; });
 rejects('missing damage color fallback is rejected', data => { delete data.damageColors.default; });

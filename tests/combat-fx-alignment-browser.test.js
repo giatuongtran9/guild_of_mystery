@@ -154,7 +154,9 @@ let passed = 0;
           assert.deepEqual(critical.tracks, normal.tracks, id + ' critical uses identical effect frames and timing');
           assert.equal(critical.numberColor, 'rgb(255, 166, 77)'); assert(critical.numberSize > normal.numberSize);
           assert.equal(critical.critical, 'true'); assert.equal(normal.critical, 'false');
-          assert.equal(critical.hold, normal.hold); assert.equal(critical.shakeDuration, 160); passed++;
+          assert.equal(critical.hold, normal.hold);
+          assert.equal(critical.shakeDuration, normal.shakeDuration, 'criticals add no shake time');
+          assert.equal(critical.shakeDuration, id === 'basic_attack' ? 160 : 225); passed++;
         }
 
         for (const [kind, selector] of [['weapon', '.gm-combat-sword-slash-travel'], ['gun', '.gm-combat-gun-muzzle'], ['unarmed', '.gm-combat-punch-trail']]) {

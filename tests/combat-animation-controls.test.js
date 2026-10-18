@@ -261,9 +261,9 @@ function clean(f) {
         f.tick();
         if (ability === 'healing_touch') assert.equal(hp(ally), '70/100');
         else assert(log(f).textContent.includes('Steals'), 'the first recorded theft appears only after the cue');
-        const expectedOutcomeMs = ability === 'healing_touch' ? 500 : 90 / speed;
+        const expectedOutcomeMs = ability === 'healing_touch' ? speed === 2 ? 400 : 600 : 90 / speed;
         assert.equal(f.timers.values().next().value.delay, expectedOutcomeMs,
-          'support effects retain their 500ms hold; other outcomes use Sequence 8 phase holds');
+          'support results use their 600/400ms clock; other outcomes retain ordinary phase holds');
         if (ability === 'exploit_loophole') { f.tick(); assert.equal(hp(enemy), '30/100'); }
       }, { readableAbility: ability, copied });
     }
@@ -294,9 +294,35 @@ function clean(f) {
       assert.equal(f.timers.values().next().value.delay, 200, 'compact playback retains its 4x scheduler rate');
       assert(f.animations.every(animation => animation.cancelled), 'switching to compact speed removes moving cues');
       assert.equal(hp(f.card(f.enemyId)), '100/100');
-      f.tick(); assert.equal(f.timers.values().next().value.delay, ability === 'healing_touch' ? 500 : 90 / 4);
+      f.tick(); assert.equal(f.timers.values().next().value.delay, ability === 'healing_touch' ? 150 : 90 / 4);
     }, { readableAbility: ability });
   }
+
+  for (const startSpeed of [1, 2]) await test(`healing outcome preserves one base clock across Pause and ${startSpeed}x speed changes`, f => {
+    f.w.G9.setTickerSpeed(startSpeed); f.tick(); f.tick(); f.tick();
+    assert.equal(hp(f.card(f.allyId)), '70/100');
+    assert.equal(f.timers.values().next().value.delay, startSpeed === 2 ? 400 : 600);
+    const active = () => f.animations.filter(animation => !animation.cancelled
+      && !animation.element.closest('.gm-combat-ability-chip'));
+    assert(active().every(animation => animation.playbackRate === (startSpeed === 2 ? 1.5 : 1)));
+    f.elapse(100); f.w.G9.toggleTickerPause();
+    assert.equal(f.timers.size, 0);
+    assert(active().every(animation => animation.playState === 'paused'));
+    f.elapse(10000);
+    const nextSpeed = startSpeed === 1 ? 2 : 1;
+    f.w.G9.setTickerSpeed(nextSpeed);
+    assert.equal(f.timers.size, 0, 'changing speed while paused cannot settle the result');
+    assert(active().every(animation => animation.playState === 'paused'
+      && animation.playbackRate === (nextSpeed === 2 ? 1.5 : 1)));
+    f.w.G9.toggleTickerPause();
+    const remaining = 600 - 100 * (startSpeed === 2 ? 1.5 : 1);
+    assert.equal(f.timers.values().next().value.delay, remaining / (nextSpeed === 2 ? 1.5 : 1));
+    f.w.G9.setTickerSpeed(4);
+    assert.equal(f.timers.values().next().value.delay, remaining / 4, 'compact uses that same remaining clock');
+    assert(f.animations.every(animation => animation.cancelled), 'compact clears moving support cues');
+    f.tick();
+    assert.equal(log(f).textContent.split('20 HP').length - 1, 1, 'the heal resolves exactly once');
+  }, { readableAbility: 'healing_touch' });
 
   await test('readable timing recognizes copied prefixes while ordinary and periodic casts stay unchanged', f => {
     for (const ability of ['exploit_loophole', 'combat_theft', 'healing_touch']) {
