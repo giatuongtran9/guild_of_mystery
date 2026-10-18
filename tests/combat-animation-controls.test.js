@@ -21,15 +21,15 @@ async function fixture(options = {}) {
   const timers = new Map(), animations = [];
   w.setTimeout = (fn, delay) => { timers.set(++timerId, { fn, delay }); return timerId; };
   w.clearTimeout = id => timers.delete(id);
-  w.HTMLElement.prototype.animate = function () {
+  w.Element.prototype.animate = function (keyframes, timing) {
     const animation = {
-      playState: 'running', playbackRate: 1,
+      element: this, keyframes, timing, playState: 'running', playbackRate: 1,
       pause() { this.playState = 'paused'; }, play() { this.playState = 'running'; },
       cancel() { this.playState = 'idle'; this.cancelled = true; this.oncancel?.(); }
     };
     animations.push(animation); return animation;
   };
-  w.HTMLElement.prototype.getBoundingClientRect = function () {
+  w.Element.prototype.getBoundingClientRect = function () {
     const card = this.closest?.('[data-unit-id]'), canvas = this.matches('.gm-dungeon-arena, .gm-battlefield-canvas');
     const left = canvas ? 0 : card?.classList.contains('enemy') ? 180 : 60;
     const top = canvas ? 0 : card?.classList.contains('enemy') ? 80 : 350;
@@ -71,6 +71,25 @@ async function fixture(options = {}) {
       { round: 1, type: 'resources', units: [{ ...ally, sp: 16 }, { ...enemy, hp: 30 }] },
       { round: 1, type: 'story', text: 'The encounter is recorded.' }
     ];
+    if (options.readableAbility) {
+      const id = options.readableAbility;
+      const cast = { round: 1, type: 'cast', actorId: allyId, actorName: ally.name, actorTeam: 'ally',
+        ability: id, abilityId: options.copied ? `record:${id}` : id,
+        ...(options.copied ? { sourceAbilityId: id, ownedPower: 'record' } : {}),
+        sourcePath: id === 'healing_touch' ? 'moon' : id === 'combat_theft' ? 'error' : 'black_emperor', costSP: 4 };
+      const status = stat => ({ round: 1, type: 'status', subtype: 'steal_stat', actorId: allyId,
+        actorName: ally.name, actorTeam: 'ally', targetId: enemyId, targetName: enemy.name,
+        targetTeam: 'enemy', text: `Steals ${stat} from Curse Vessel` });
+      const outcomes = id === 'healing_touch'
+        ? [{ round: 1, type: 'heal', actorId: allyId, actorName: ally.name, actorTeam: 'ally',
+          targetId: allyId, targetName: ally.name, targetTeam: 'ally', amount: 20, hpAfter: 70, maxHp: 100 }]
+        : id === 'combat_theft' ? [status('ATK'), status('DEF')]
+          : [status('DEF'), result.events[2]];
+      result.events = [{ round: 1, type: 'round_start' }, cast, ...outcomes,
+        { round: 1, type: 'resources', units: [{ ...ally, hp: id === 'healing_touch' ? 70 : 50, sp: 16 },
+          { ...enemy, hp: id === 'exploit_loophole' ? 30 : 100 }] },
+        { round: 1, type: 'story', text: 'The encounter is recorded.' }];
+    }
     result.success = false; result.battleOutcome = 'defeat';
     result.battleSnapshot = {
       ...result.battleSnapshot, outcome: 'defeat',
@@ -224,6 +243,79 @@ function clean(f) {
     f.tick(); assert.equal(f.time - started, 1000 / speed);
     assert.equal(f.app.querySelector('.battle-partial-row'), null);
   }, { basic: true, critical });
+
+  for (const ability of ['exploit_loophole', 'combat_theft', 'healing_touch']) {
+    for (const copied of [false, true]) for (const speed of [1, 2]) {
+      const expected = speed === 2 ? 500 : 800;
+      await test(`${copied ? 'recorded' : 'native'} ${ability} keeps its entire ${expected}ms cast at ${speed}x`, f => {
+        f.w.G9.setTickerSpeed(speed); f.tick(); f.tick();
+        const ally = f.card(f.allyId), enemy = f.card(f.enemyId);
+        assert.equal(f.timers.values().next().value.delay, expected, 'the outcome waits for the complete readable cue');
+        assert.equal(hp(ally), '50/100'); assert.equal(hp(enemy), '100/100');
+        assert(!log(f).textContent.includes('Steals'), 'the cast does not reveal its later stat theft');
+        assert(!log(f).textContent.includes('70 HP'), 'the cast does not reveal its later damage');
+        const castAnimations = f.animations.filter(animation => !animation.cancelled);
+        assert(castAnimations.length > 0, 'the cast has an active visual cue');
+        assert(castAnimations.every(animation => animation.playbackRate === (speed === 2 ? 1.6 : 1)),
+          'character and SVG cues use the same effective clock as the scheduler');
+        f.tick();
+        if (ability === 'healing_touch') assert.equal(hp(ally), '70/100');
+        else assert(log(f).textContent.includes('Steals'), 'the first recorded theft appears only after the cue');
+        assert.equal(f.timers.values().next().value.delay, 400 / speed,
+          'outcome reading phases retain the selected ordinary playback speed');
+        if (ability === 'exploit_loophole') { f.tick(); assert.equal(hp(enemy), '30/100'); }
+      }, { readableAbility: ability, copied });
+    }
+
+    await test(`${ability} preserves remaining cast progress across Pause and live speed changes`, f => {
+      f.tick(); f.tick();
+      assert.equal(f.timers.values().next().value.delay, 800);
+      f.elapse(200); f.w.G9.toggleTickerPause();
+      assert.equal(f.timers.size, 0);
+      assert(f.animations.filter(animation => !animation.cancelled).every(animation => animation.playState === 'paused'));
+      f.elapse(10000); f.w.G9.setTickerSpeed(2);
+      assert.equal(f.timers.size, 0, 'changing speed while paused cannot schedule an outcome');
+      assert(f.animations.filter(animation => !animation.cancelled).every(animation => animation.playbackRate === 1.6));
+      f.w.G9.toggleTickerPause();
+      assert.equal(f.timers.values().next().value.delay, 375, '600 animation-clock ms remain at the 1.6x readable rate');
+      f.elapse(125); f.w.G9.setTickerSpeed(1);
+      assert.equal(f.timers.values().next().value.delay, 400, '125ms at 1.6x consumes 200 animation-clock ms');
+      assert.equal(hp(f.card(f.enemyId)), '100/100'); assert.equal(hp(f.card(f.allyId)), '50/100');
+      f.tick();
+      if (ability === 'healing_touch') assert.equal(hp(f.card(f.allyId)), '70/100');
+      else assert(log(f).textContent.includes('Steals'));
+    }, { readableAbility: ability });
+
+    await test(`${ability} keeps Read timing and 4x compact playback without a minimum-duration backlog`, f => {
+      f.w.G9.setTickerSpeed(.5); f.tick(); f.tick();
+      assert.equal(f.timers.values().next().value.delay, 1600);
+      f.w.G9.setTickerSpeed(4);
+      assert.equal(f.timers.values().next().value.delay, 200, 'compact playback retains its 4x scheduler rate');
+      assert(f.animations.every(animation => animation.cancelled), 'switching to compact speed removes moving cues');
+      assert.equal(hp(f.card(f.enemyId)), '100/100');
+      f.tick(); assert.equal(f.timers.values().next().value.delay, 100);
+    }, { readableAbility: ability });
+  }
+
+  await test('readable timing recognizes copied prefixes while ordinary and periodic casts stay unchanged', f => {
+    for (const ability of ['exploit_loophole', 'combat_theft', 'healing_touch']) {
+      for (const row of [{ abilityId: ability }, { abilityId: `asset_soul:${ability}` },
+        { abilityId: 'record:stored_power', sourceAbilityId: ability }]) {
+        const playing = { turnRows: [{ ...row, timeline: [{ type: 'note', event: { type: 'status' } }] }], currentTurn: 0, eventCount: 0 };
+        assert.equal(f.w.battlePresentationDelay(playing, 1), 800);
+        assert.equal(f.w.battlePresentationDelay(playing, 2), 500);
+        assert.equal(f.w.battleAnimationRate(row, 1.6, 'cast'), 1.6, 'forwarding an effective rate is idempotent');
+        playing.turnRows[0].timeline[0].event.isDot = true;
+        assert.equal(f.w.battlePresentationDelay(playing, 2), 0, 'periodic damage never invents a new cast');
+        assert.equal(f.w.battlePresentationRate(playing, 2), 2);
+      }
+    }
+    for (const ability of ['basic_attack', 'brutal_strike', 'unrelated_ability']) {
+      const playing = { turnRows: [{ abilityId: ability, timeline: [{ type: 'damage', event: {} }] }], currentTurn: 0, eventCount: 0 };
+      assert.equal(f.w.battlePresentationDelay(playing, 1), 300);
+      assert.equal(f.w.battlePresentationDelay(playing, 2), 150);
+    }
+  });
 
   await test('complex actions retain extra reading time and Pause preserves the remaining phase clock', f => {
     f.tick(); f.tick(); const started = f.time;
