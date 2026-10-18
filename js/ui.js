@@ -463,7 +463,10 @@ function createCombatFx(wrap) {
       : abilityId === 'beast_command' && src === spec.fallbackAsset ? 2
         : abilityId === 'beast_command' ? 876 / 995 : 1;
     const maxWidth = Math.max(1, (canvas()?.getBoundingClientRect().width || 320) - 8);
-    const width = Math.min(size * aspect, maxWidth), height = width / aspect;
+    // Keep the long blade and fallback claw readable without overpowering units.
+    const artScale = abilityId === 'crafted_blade' ? 0.45
+      : abilityId === 'beast_command' && src === spec.fallbackAsset ? 0.55 : 1;
+    const width = Math.min(size * artScale * aspect, maxWidth), height = width / aspect;
     const node = group('gm-combat-sequence8', row.actorId, targetId, spec.color);
     for (const [key, value] of Object.entries({ 'ability-id': abilityId, stage, mode,
       'effect-src': src, 'effect-width': width, 'effect-height': height })) node.setAttribute(`data-${key}`, value);
@@ -498,11 +501,23 @@ function createCombatFx(wrap) {
     const id = presentationAbility(row);
     // Beast Command in support mode manifests directly over companion without launching a missile
     const moving = (mode === 'travel' || mode === 'support') && (id !== 'beast_command' || mode !== 'support');
-    const finalPoint = mode === 'caster' ? actor : destination;
+    const centerDx = destination.x - actor.x, centerDy = destination.y - actor.y;
+    const centerDistance = Math.hypot(centerDx, centerDy) || 1;
+    const bladeStop = moving && id === 'crafted_blade' && target
+      ? { x: destination.x - centerDx / centerDistance * destination.radius,
+          y: destination.y - centerDy / centerDistance * destination.radius }
+      : destination;
+    const finalPoint = mode === 'caster' ? actor : id === 'crafted_blade' && moving ? bladeStop : destination;
     const node = sequence8Image(row, 'cast', targetId, mode, finalPoint, size);
     if (!node) return;
-    const dx = destination.x - actor.x, dy = destination.y - actor.y;
-    const angle = moving ? Math.atan2(dy, dx) * 180 / Math.PI : 0;
+    const dx = moving && id === 'crafted_blade' ? bladeStop.x - actor.x : centerDx;
+    const dy = moving && id === 'crafted_blade' ? bladeStop.y - actor.y : centerDy;
+    const angle = moving ? Math.atan2(centerDy, centerDx) * 180 / Math.PI : 0;
+    if (id === 'crafted_blade' && moving) {
+      node.setAttribute('data-contact-x', String(bladeStop.x));
+      node.setAttribute('data-contact-y', String(bladeStop.y));
+      node.setAttribute('data-stop-before-target', String(destination.radius));
+    }
     node.setAttribute('data-angle-deg', String(angle));
     const directPath = ['paper_card_dagger', 'deceptive_feint', 'crafted_blade', 'fines_penalties', 'heavy_cleave', 'shadow_strike'].includes(id);
     node.setAttribute('data-flight-path', moving ? (directPath ? 'straight' : 'curved') : 'stationary');
@@ -550,14 +565,15 @@ function createCombatFx(wrap) {
       return;
     }
     if (id === 'crafted_blade') {
-      // Heavy Forged Cleave: straight high-velocity forged blade advance
+      // Heavy Forged Cleave advances straight to the target's edge, then
+      // holds its contact pose until the recorded hit replaces the cast art.
       animate(node, [
         { transform: pose(0, 0.65), opacity: 0 },
-        { transform: pose(0.06, 0.95), opacity: 1, offset: 0.14 },
-        { transform: pose(0.5, 1.06), opacity: 0.98, offset: 0.58 },
-        { transform: pose(1, 1.18), opacity: 0.98, offset: 0.8 },
-        { transform: pose(1, 1.08), opacity: 0 }
-      ], hold);
+        { transform: pose(0.06, 0.92), opacity: 1, offset: 0.14 },
+        { transform: pose(0.5, 0.98), opacity: 1, offset: 0.58 },
+        { transform: pose(1, 0.96), opacity: 1, offset: 0.82 },
+        { transform: pose(1, 0.96), opacity: 1 }
+      ], hold, 0, { fill: 'forwards', remove: false, hold: true });
       return;
     }
     if (id === 'beast_command' && mode === 'travel') {
@@ -976,11 +992,17 @@ function createCombatFx(wrap) {
   }
   function animate(node, frames, duration, delay = 0, options = {}) {
     if (!node.animate || compact()) return null;
-    const animation = node.animate(frames, { duration, delay, easing: options.easing || 'linear', fill: 'none' });
+    const animation = node.animate(frames, { duration, delay, easing: options.easing || 'linear', fill: options.fill || 'none' });
     animation.playbackRate = speed;
     animations.set(animation, node);
     if (paused) animation.pause();
-    animation.onfinish = () => { animations.delete(animation); animation.cancel(); if (options.remove !== false) node.remove(); options.removeNode?.remove(); options.onfinish?.(); };
+    animation.onfinish = () => {
+      animations.delete(animation);
+      if (options.hold) return; // Leave the completed, filled pose visible until the hit cue clears it.
+      animation.cancel();
+      if (options.remove !== false) node.remove();
+      options.removeNode?.remove(); options.onfinish?.();
+    };
     animation.oncancel = () => animations.delete(animation);
     return animation;
   }
