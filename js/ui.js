@@ -48,36 +48,28 @@ function presentationAbilityId(row) {
 
 function isPaperRebound(row) { return presentationAbilityId(row) === 'paper_figurine_rebound'; }
 
-function isDedicatedSupportAbility(row) {
-  return ['paper_figurine_rebound', 'healing_touch', 'purification_halo', 'historical_summoning',
-    'steal_destiny_turn', 'dream_tether', 'wind_step', 'thunder_god_stance',
-    'deceive_impact', 'prophetic_intervention', 'magic_barrier', 'omniscient_rewrite',
-    'flesh_healing', 'flesh_creation', 'peaceful_rest', 'dawn_shield',
-    'guardian_stance', 'dawn_guardian_barrier', 'scroll_ward', 'runic_shield',
-    'harvest_blessing', 'life_bloom', 'nature_s_growth_surge', 'mother_s_touch',
-    'lunar_blessing', 'prohibition_barrier', 'matter_fortification',
-    'alchemical_overclock', 'misfortune_inversion', 'thunder_god_stance',
-    'purifying_sunfire'].includes(presentationAbilityId(row));
-}
-
 function isPositiveSupportEvent(event, row) {
   const value = event?.event || event || {};
-  if (['heal', 'revive'].includes(value.type)) return isDedicatedSupportAbility(row);
-  if (value.type === 'shield') {
-    return isDedicatedSupportAbility(row) && (value.actorId == null || row?.actorId == null || value.actorId === row.actorId);
-  }
-  if (value.isReflect && String(value.sourceAbilityId || '').split(':').pop() === 'paper_figurine_rebound') return true;
-  return isDedicatedSupportAbility(row) && value.type === 'status'
-    && /\b(?:gains?\s+\+|reflecting ward|cleanses?:|restores?\s+\d)/i.test(String(value.text || ''));
-}
-
-function hasPositiveSupportOutcome(row) {
-  return isDedicatedSupportAbility(row) || (row?.timeline || []).some(step => isPositiveSupportEvent(step?.event || step, row));
+  // A Paper ward belongs to the incoming hit, and its reflected projectile to
+  // the defender. Both are recorded outcomes, even inside another actor's row.
+  if (value.paperReboundOwnerId != null) return true;
+  if ((value.isReflect || value.type === 'reflect')
+    && String(value.sourceAbilityId || '').split(':').pop() === 'paper_figurine_rebound') return true;
+  if (!isReadableAbility(row) || value.isDot || value.isReaction || value.isReflect
+    || value.recoveryKind === 'lifesteal'
+    || (value.actorId != null && row?.actorId != null && value.actorId !== row.actorId)) return false;
+  if (['heal', 'shield', 'revive'].includes(value.type)) return Number(value.amount ?? 1) > 0;
+  if (value.type !== 'status' || value.beneficial === false) return false;
+  if (value.beneficial === true || value.subtype === 'buff' || value.subtype === 'cleanse'
+    || value.presentationEffect === 'beast_command') return true;
+  // Older saved replays lack beneficial metadata. Recognize their structured
+  // self-status names without depending on translated log text or skill IDs.
+  return value.targetId != null && value.targetId === row?.actorId
+    && ['guarded', 'evade', 'inspired', 'untargetable'].includes(value.status);
 }
 
 function isPositiveSupportPhase(row, phaseType, event) {
-  if (phaseType === 'cast') return isPaperRebound(row) || (!isReadableAbility(row) && hasPositiveSupportOutcome(row));
-  return isPositiveSupportEvent(event, row);
+  return phaseType !== 'cast' && isPositiveSupportEvent(event, row);
 }
 
 function isCastOnlyAbilityRow(row) {
@@ -86,12 +78,12 @@ function isCastOnlyAbilityRow(row) {
 
 function readableCastDuration(row) { return isReadableAbility(row) ? 800 : 300; }
 
-// Active ability casts keep at least 500ms at 2x. Other phases and compact
-// playback use their ordinary rate; 1.6 is accepted when a controller forwards
-// an already resolved cast rate to its child effect controllers.
+// One stable animation clock owns each phase. Effective 2x rates give active
+// casts 800/1.6=500ms and support results 600/1.5=400ms. Forwarded rates remain
+// unchanged; Read and compact playback keep their proportional rates.
 function battleAnimationRate(row, speed = 1, phaseType, event) {
-  const rate = [.5, 1, 1.25, 1.6, 2, 4].includes(Number(speed)) ? Number(speed) : 1;
-  if (isPositiveSupportPhase(row, phaseType, event)) return Math.min(rate, 1.25);
+  const rate = [.5, 1, 1.5, 1.6, 2, 4].includes(Number(speed)) ? Number(speed) : 1;
+  if (isPositiveSupportPhase(row, phaseType, event) && rate === 2) return 1.5;
   if (phaseType === 'cast' && isReadableAbility(row) && rate === 2) return 1.6;
   return rate;
 }
@@ -122,32 +114,22 @@ function battlePresentationDelay(playing, speed = 1) {
   }
   if (!Number.isInteger(count)) return 0;
   const periodic = !!timeline[0]?.event.isDot;
-  const extendedSupport = hasPositiveSupportOutcome(row) && !isReadableAbility(row);
-  const castDuration = periodic ? 0 : extendedSupport ? 800 : readableCastDuration(row);
+  const castDuration = periodic ? 0 : readableCastDuration(row);
   if (count === 0) return castDuration / rate;
   const weights = { damage: 225, reaction: 325, reflect: 275, heal: 200,
     shield: 200, mythical: 450, death: 350, revive: 300, note: 90 };
-  const holds = timeline.map(step => isPositiveSupportEvent(step.event, row) ? 500 : Math.max(weights[step.type] || 90,
+  const holds = timeline.map(step => isPositiveSupportEvent(step.event, row) ? 600 : Math.max(weights[step.type] || 90,
     step.event.presentationEffect && !step.event.presentationEffect.endsWith('_end') ? 250 : step.event.type === 'thread' ? 175 : 0));
   const total = castDuration + holds.reduce((sum, value) => sum + value, 0);
-  const padding = count === timeline.length ? Math.max(0, (periodic ? 300 : 1000) - total) : 0;
-  const currentEvent = timeline[count - 1]?.event;
+  const padding = count === timeline.length && !isPositiveSupportEvent(timeline[count - 1]?.event, row)
+    ? Math.max(0, (periodic ? 300 : 1000) - total) : 0;
   const phaseHold = (holds[count - 1] || 0) + padding;
   return phaseHold / rate;
 }
 
 
-function battlePresentationDuration(playing, speed = 1) {
-  const base = battlePresentationDelay(playing);
-  const row = playing?.turnRows?.[playing.currentTurn];
-  const casting = playing?.eventCount === 0 && (row?.timeline?.length || isCastOnlyAbilityRow(row))
-    && !row?.timeline?.[0]?.event?.isDot;
-  const event = Number.isInteger(playing?.eventCount) && playing.eventCount > 0
-    ? row?.timeline?.[playing.eventCount - 1]?.event : null;
-  const phaseType = casting ? 'cast' : event?.type === 'status' ? 'note' : event?.type;
-  return isPositiveSupportPhase(row, phaseType, event)
-    ? base * Math.max(1, battlePresentationRate(playing, speed))
-    : base;
+function battlePresentationDuration(playing) {
+  return battlePresentationDelay(playing);
 }
 
 function advanceBattlePresentation(playing) {
@@ -409,7 +391,7 @@ function createCombatFx(wrap) {
   let hpMap = Object.create(null), surface = null, chip = null, chipRow = null, speed = 1, paused = false, areaRows = new WeakSet();
   let phaseRow = null, phaseType = null, phaseEvent = null;
   const reduced = () => !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  const compact = () => reduced() || (speed >= 4 && !isPositiveSupportPhase(phaseRow, phaseType, phaseEvent));
+  const compact = () => reduced() || speed >= 4;
   const canvas = () => wrap.querySelector('.gm-battlefield-canvas');
   const unit = id => id == null ? null : [...wrap.querySelectorAll('.gm-arena-unit')].find(node => node.dataset.unitId === String(id));
   const state = id => id == null ? null : hpMap[id];
@@ -493,15 +475,27 @@ function createCombatFx(wrap) {
       const preload = new window.Image(); preload.src = src;
     }
   }
-  function sequence7Image(row, stage, targetId, mode, p, assetOverride) {
+  function sequence7Direction(row, targetId, reflecting = false) {
+    const spec = sequence7Config(row), actor = point(row.actorId), target = point(targetId);
+    if (!spec || !actor || !target) return null;
+    const reverse = !reflecting && spec.travelDirection === 'target_to_caster';
+    const from = reverse ? target : actor, to = reverse ? actor : target;
+    const flowAngle = Math.atan2(to.y - from.y, to.x - from.x) * 180 / Math.PI;
+    const nativeAngle = reflecting ? 0 : Number(spec.nativeAngleDeg) || 0;
+    return { from, to, flowAngle, nativeAngle, angle: flowAngle - nativeAngle,
+      fromId: reverse ? targetId : row.actorId, toId: reverse ? row.actorId : targetId };
+  }
+  function sequence7Image(row, stage, targetId, mode, p, assetOverride, direction) {
     const spec = sequence7Config(row), root = layer();
     if (!spec || !root || !p) return null;
     const src = assetOverride || spec.asset;
     const size = Math.min((canvas()?.getBoundingClientRect().width || 320) - 8, effectHeight(point(targetId) || p) * 1.25);
-    const origin = mode === 'travel' ? point(row.actorId) : null;
-    const angle = origin ? Math.atan2(p.y - origin.y, p.x - origin.x) * 180 / Math.PI : 0;
+    const travel = direction || (mode === 'travel' ? sequence7Direction(row, targetId, stage === 'reflect') : null);
+    const angle = travel?.angle || 0;
     const node = group('gm-combat-sequence7', row.actorId, targetId, spec.color);
     for (const [key, value] of Object.entries({ 'ability-id': presentationAbility(row), stage, mode, 'effect-src': src, 'angle-deg': angle })) node.setAttribute(`data-${key}`, value);
+    if (travel) for (const [key, value] of Object.entries({ 'flow-angle-deg': travel.flowAngle,
+      'native-angle-deg': travel.nativeAngle, 'flow-from-id': travel.fromId, 'flow-to-id': travel.toId })) node.setAttribute(`data-${key}`, value);
     node.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${angle})`);
     image(node, src, size, size, 'gm-combat-effect-image gm-combat-sequence7-image');
     root.append(node);
@@ -512,10 +506,16 @@ function createCombatFx(wrap) {
     for (const spec of Object.values(config.sequence7Abilities || {})) if (paths.has(spec.pathway)) prepareSequence7Asset(spec);
   }
   function sequence7Endpoint(row, mode) {
+    if (mode === 'caster') return row.actorId;
     const steps = row.timeline || [];
     const own = event => event.actorId == null || event.actorId === row.actorId;
-    const outcome = steps.find(step => own(step.event) && step.event.targetId != null
-      && ['heal', 'shield', 'status'].includes(step.type));
+    // Copied powers can first narrate their reproduction on the enemy. That
+    // narration is not a support recipient; prefer the actual recovery/ward.
+    const recovery = steps.find(step => own(step.event) && step.event.targetId != null
+      && ['heal', 'shield'].includes(step.type));
+    const selfStatus = steps.find(step => own(step.event) && step.event.targetId === row.actorId
+      && step.event.type === 'status' && (step.event.status || step.event.subtype === 'cleanse'));
+    const outcome = recovery || selfStatus;
     const hit = steps.find(step => own(step.event) && step.event.targetId != null
       && damageTypes.has(step.type) && !step.event.isDot && !step.event.isReaction && !step.event.isReflect);
     const target = mode === 'support' ? (outcome?.event || null)
@@ -524,31 +524,78 @@ function createCombatFx(wrap) {
   }
   function sequence7Cast(row, phaseHold) {
     const spec = sequence7Config(row), actor = point(row.actorId);
-    if (!spec || !actor) return;
+    // The guard artwork depicts an incoming hit being deflected, so reserve
+    // it for the recorded ward trigger rather than the stance preparation.
+    if (!spec || !actor || isPaperRebound(row)) return;
+    if (presentationAbility(row) === 'necromancy_summon' && !(row.timeline || []).some(step =>
+      (step.event.actorId == null || step.event.actorId === row.actorId)
+      && (step.event.presentationEffect === 'necromancy_summon'
+        || (step.event.type === 'heal' && Number(step.event.amount) > 0 && step.event.targetId !== row.actorId)))) return;
     const targetId = sequence7Endpoint(row, spec.mode);
     const target = point(targetId) || actor;
-    const mode = spec.mode;
-    const node = sequence7Image(row, 'cast', targetId, mode, mode === 'caster' ? actor : target);
+    const mode = spec.mode, direction = mode === 'travel' ? sequence7Direction(row, targetId) : null;
+    const destination = direction?.to || target;
+    const node = sequence7Image(row, 'cast', direction?.toId ?? targetId, mode, destination, undefined, direction);
+    if (node && direction && direction.toId !== targetId) node.setAttribute('data-damage-target-id', targetId);
     if (!node || compact()) return;
     const angle = Number(node.dataset.angleDeg) || 0;
     const duration = Math.max(1, Number(phaseHold) || readableCastDuration(row));
     if (mode === 'travel' && targetId !== row.actorId) {
-      const dx = target.x - actor.x, dy = target.y - actor.y;
+      const from = direction?.from || actor, to = direction?.to || target;
+      const dx = to.x - from.x, dy = to.y - from.y;
       animate(node, [
-        { transform: `translate(${actor.x}px,${actor.y}px) rotate(${angle}deg) scale(.58)`, opacity: 0 },
-        { transform: `translate(${actor.x + dx * .12}px,${actor.y + dy * .12}px) rotate(${angle}deg) scale(.92)`, opacity: 1, offset: .18 },
-        { transform: `translate(${actor.x + dx * .58}px,${actor.y + dy * .58}px) rotate(${angle}deg) scale(1)`, opacity: .98, offset: .6 },
-        { transform: `translate(${target.x}px,${target.y}px) rotate(${angle}deg) scale(1.04)`, opacity: .95, offset: .86 },
-        { transform: `translate(${target.x}px,${target.y}px) rotate(${angle}deg) scale(.94)`, opacity: 0 }
+        { transform: `translate(${from.x}px,${from.y}px) rotate(${angle}deg) scale(.58)`, opacity: 0 },
+        { transform: `translate(${from.x + dx * .12}px,${from.y + dy * .12}px) rotate(${angle}deg) scale(.92)`, opacity: 1, offset: .18 },
+        { transform: `translate(${from.x + dx * .58}px,${from.y + dy * .58}px) rotate(${angle}deg) scale(1)`, opacity: .98, offset: .6 },
+        { transform: `translate(${to.x}px,${to.y}px) rotate(${angle}deg) scale(1.04)`, opacity: .95, offset: .86 },
+        { transform: `translate(${to.x}px,${to.y}px) rotate(${angle}deg) scale(.94)`, opacity: 0 }
       ], duration);
     } else {
       animate(node, [
         { transform: `translate(${target.x}px,${target.y}px) rotate(${angle}deg) scale(.68)`, opacity: 0 },
-        { transform: `translate(${target.x}px,${target.y - 4}px) rotate(${angle}deg) scale(1.04)`, opacity: .98, offset: .3 },
-        { transform: `translate(${target.x}px,${target.y - 8}px) rotate(${angle}deg) scale(1)`, opacity: .9, offset: .72 },
-        { transform: `translate(${target.x}px,${target.y - 12}px) rotate(${angle}deg) scale(.96)`, opacity: 0 }
+        { transform: `translate(${target.x}px,${target.y - 2}px) rotate(${angle}deg) scale(1)`, opacity: 1, offset: .15 },
+        { transform: `translate(${target.x}px,${target.y - 4}px) rotate(${angle}deg) scale(1.02)`, opacity: 1, offset: .85 },
+        { transform: `translate(${target.x}px,${target.y - 6}px) rotate(${angle}deg) scale(.98)`, opacity: 0 }
       ], duration);
     }
+  }
+  function sequence7Support(row, event, phaseHold, stage = 'support') {
+    const spec = sequence7Config(row), id = event.targetId;
+    const summoning = event.presentationEffect === 'necromancy_summon';
+    const p = point(id) || (summoning ? point(row.actorId) : null);
+    const recovery = ['heal', 'shield', 'revive'].includes(event.type) && Number(event.amount) > 0;
+    const positiveStatus = event.type === 'status' && (event.beneficial === true || event.subtype === 'cleanse');
+    if (!spec || spec.mode === 'travel' || isPaperRebound(row) || !p
+      || (event.actorId != null && event.actorId !== row.actorId) || (!recovery && !positiveStatus)) return;
+    const node = sequence7Image(row, stage, id, 'support', p);
+    if (!node) return;
+    if (summoning) node.setAttribute('data-companion-id', event.companionId);
+    if (compact()) return;
+    const duration = Math.max(1, Number(phaseHold) || 600);
+    animate(node, [
+      { transform: `translate(${p.x}px,${p.y}px) scale(.82)`, opacity: 0 },
+      { transform: `translate(${p.x}px,${p.y}px) scale(1)`, opacity: 1, offset: .15 },
+      { transform: `translate(${p.x}px,${p.y - 2}px) scale(1.02)`, opacity: 1, offset: .85 },
+      { transform: `translate(${p.x}px,${p.y - 4}px) scale(.98)`, opacity: 0 }
+    ], duration);
+  }
+  function sequence7Guard(row, event, phaseHold) {
+    const ownerId = event.paperReboundOwnerId;
+    if (ownerId == null || ownerId !== event.targetId || event.isDot || event.isReflect) return;
+    const p = point(ownerId), attacker = point(event.actorId);
+    if (!p) return;
+    const guardRow = { ...row, actorId: ownerId, sourceAbilityId: 'paper_figurine_rebound', sourcePath: 'fool' };
+    const node = sequence7Image(guardRow, 'guard', ownerId, 'support', p);
+    if (!node) return;
+    const angle = attacker ? Math.atan2(attacker.y - p.y, attacker.x - p.x) * 180 / Math.PI : 0;
+    node.setAttribute('data-angle-deg', angle);
+    node.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${angle})`);
+    if (!compact()) animate(node, [
+      { transform: `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(.82)`, opacity: 0 },
+      { transform: `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(1)`, opacity: 1, offset: .15 },
+      { transform: `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(1.02)`, opacity: 1, offset: .85 },
+      { transform: `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(.98)`, opacity: 0 }
+    ], Math.max(1, Number(phaseHold) || 600));
   }
   function sequence7Impact(row, event, phaseHold) {
     const reflecting = event?.isReflect || event?.type === 'reflect';
@@ -559,12 +606,19 @@ function createCombatFx(wrap) {
     if (!target) return;
     const ownerId = reflecting ? event.actorId : row.actorId;
     const impactRow = reflecting ? { ...row, actorId: ownerId, sourceAbilityId: abilityId } : row;
-    const node = sequence7Image(impactRow, reflecting ? 'reflect' : 'impact', event.targetId, 'travel', target, reflecting ? spec.reflectAsset : undefined);
+    const direction = sequence7Direction(impactRow, event.targetId, reflecting);
+    // A siphon arrives at its caster. Keep its artwork there rather than
+    // jumping back to the victim; the recorded damage cue still hits the victim.
+    const reverse = !reflecting && spec.travelDirection === 'target_to_caster';
+    const impactPoint = reverse && direction ? direction.to : target;
+    const visualTargetId = reverse && direction ? direction.toId : event.targetId;
+    const node = sequence7Image(impactRow, reflecting ? 'reflect' : 'impact', visualTargetId, 'travel', impactPoint, reflecting ? spec.reflectAsset : undefined, direction);
     if (!node) return;
-    const angle = actor ? Math.atan2(target.y - actor.y, target.x - actor.x) * 180 / Math.PI : 0;
+    const angle = direction?.angle || 0;
     node.setAttribute('data-angle-deg', String(angle));
     node.setAttribute('data-owner-id', ownerId ?? row.actorId);
-    node.setAttribute('transform', `translate(${target.x} ${target.y}) rotate(${angle})`);
+    if (reverse) node.setAttribute('data-damage-target-id', event.targetId);
+    node.setAttribute('transform', `translate(${impactPoint.x} ${impactPoint.y}) rotate(${angle})`);
     if (!compact()) {
       const duration = Math.max(1, Number(phaseHold) || (isPositiveSupportEvent(event, row) ? 500 : 225));
       if (reflecting && actor) animate(node, [
@@ -575,10 +629,10 @@ function createCombatFx(wrap) {
         { transform: `translate(${target.x}px,${target.y}px) rotate(${angle}deg) scale(.82)`, opacity: 0 }
       ], duration);
       else animate(node, [
-        { transform: `translate(${target.x}px,${target.y}px) rotate(${angle}deg) scale(.72)`, opacity: .2 },
-        { transform: `translate(${target.x}px,${target.y}px) rotate(${angle}deg) scale(1.06)`, opacity: 1, offset: .24 },
-        { transform: `translate(${target.x}px,${target.y}px) rotate(${angle}deg) scale(1)`, opacity: .9, offset: .64 },
-        { transform: `translate(${target.x}px,${target.y}px) rotate(${angle}deg) scale(.88)`, opacity: 0 }
+        { transform: `translate(${impactPoint.x}px,${impactPoint.y}px) rotate(${angle}deg) scale(.72)`, opacity: .2 },
+        { transform: `translate(${impactPoint.x}px,${impactPoint.y}px) rotate(${angle}deg) scale(1.06)`, opacity: 1, offset: .24 },
+        { transform: `translate(${impactPoint.x}px,${impactPoint.y}px) rotate(${angle}deg) scale(1)`, opacity: .9, offset: .64 },
+        { transform: `translate(${impactPoint.x}px,${impactPoint.y}px) rotate(${angle}deg) scale(.88)`, opacity: 0 }
       ], duration);
     }
   }
@@ -1536,8 +1590,9 @@ function createCombatFx(wrap) {
   }
   function support(type, event, row, phaseHoldMs) {
     const id = event.targetId ?? event.actorId ?? row.targetId ?? row.actorId, p = point(id);
-    if (!p || !layer()) return;
     const duration = Math.max(1, Number(phaseHoldMs) || config.support?.durationMs || 500);
+    sequence7Support(row, event, duration);
+    if (!p || !layer()) return;
     const color = type === 'heal' || type === 'revive' ? '#91dda9' : type === 'shield' ? '#b6dced' : '#dfc898';
     const node = group(`gm-combat-${type === 'revive' ? 'heal' : type}`, event.actorId ?? row.actorId, id, color);
     node.setAttribute('transform', `translate(${p.x} ${p.y})`);
@@ -1553,7 +1608,8 @@ function createCombatFx(wrap) {
         layer().append(emblem);
         if (!compact()) animate(emblem, [
           { transform: `translate(${p.x}px,${p.y}px) scale(.62)`, opacity: 0 },
-          { transform: `translate(${p.x}px,${p.y}px) scale(1)`, opacity: .96, offset: .3 },
+          { transform: `translate(${p.x}px,${p.y}px) scale(1)`, opacity: .96, offset: .15 },
+          { transform: `translate(${p.x}px,${p.y}px) scale(1.04)`, opacity: .96, offset: .85 },
           { transform: `translate(${p.x}px,${p.y}px) scale(1.08)`, opacity: 0 }
         ], duration);
         else emblem.setAttribute('opacity', '.9');
@@ -1562,17 +1618,25 @@ function createCombatFx(wrap) {
         const moteX = (index - 1.5) * 7, moteY = index % 2 * 7;
         const mote = element('path', { d: 'M -1 -4 H 1 V -1 H 4 V 1 H 1 V 4 H -1 V 1 H -4 V -1 H -1 Z', fill: 'currentColor', transform: `translate(${moteX} ${moteY}) scale(2)` });
         node.append(mote);
-        animate(mote, [{ opacity: 0, transform: `translate(${moteX}px,16px) scale(2)` }, { opacity: .9, offset: .3 }, { opacity: 0, transform: `translate(${moteX}px,-38px) scale(2)` }], duration - index * 45, index * 45);
+        const delay = Math.min(index * 45, duration * .2);
+        animate(mote, [
+          { opacity: 0, transform: `translate(${moteX}px,16px) scale(2)` },
+          { opacity: .9, transform: `translate(${moteX}px,8px) scale(2)`, offset: .15 },
+          { opacity: .9, transform: `translate(${moteX}px,-26px) scale(2)`, offset: .85 },
+          { opacity: 0, transform: `translate(${moteX}px,-38px) scale(2)` }
+        ], Math.max(1, duration - delay), delay);
       }
     } else if (type === 'shield') {
       node.setAttribute('data-effect-height', effectHeight(p));
       const ring = element('circle', { class: 'gm-combat-fx-outline', cx: 0, cy: 0, r: p.spriteHeight, fill: 'none', stroke: 'currentColor', 'stroke-width': 4 }); node.append(ring);
-      animate(ring, [{ opacity: .9, transform: 'scale(.7)' }, { opacity: .65, offset: .5 }, { opacity: 0, transform: 'scale(1.08)' }], duration);
+      animate(ring, [{ opacity: .4, transform: 'scale(.7)' }, { opacity: .9, transform: 'scale(1)', offset: .15 },
+        { opacity: .9, transform: 'scale(1.04)', offset: .85 }, { opacity: 0, transform: 'scale(1.08)' }], duration);
     } else {
       node.setAttribute('data-effect-height', effectHeight(p));
       const icon = element('text', { x: 0, y: -p.radius - 16, 'text-anchor': 'middle', fill: 'currentColor', 'font-size': 30, 'font-weight': 700 });
       icon.textContent = event.type === 'thread' ? '⌁' : event.status ? '!' : '◇'; node.append(icon);
-      animate(icon, [{ opacity: .9, transform: 'translate(0,6px)' }, { opacity: 1, offset: .4 }, { opacity: 0, transform: 'translate(0,-10px)' }], duration);
+      animate(icon, [{ opacity: .4, transform: 'translate(0,6px)' }, { opacity: 1, transform: 'translate(0,0)', offset: .15 },
+        { opacity: 1, transform: 'translate(0,-6px)', offset: .85 }, { opacity: 0, transform: 'translate(0,-10px)' }], duration);
     }
   }
   function abilityChip(row, event, phaseHoldMs) {
@@ -1602,12 +1666,13 @@ function createCombatFx(wrap) {
       abilityCue(row, cue.next, phaseHoldMs);
     }
     if (damageTypes.has(type) || type === 'reflect') {
+      sequence7Guard(row, event, phaseHoldMs);
       sequence7Impact(row, event, phaseHoldMs);
       sequence8Impact(row, event, phaseHoldMs);
       impact(row, event, phaseHoldMs);
     }
     else if (['heal', 'shield', 'revive'].includes(type)) support(type, event, row, phaseHoldMs);
-    else if (event.status || ((sequence8Config(row) || sequence7Config(row)) && event.type === 'status' && event.targetId != null
+    else if (event.status || event.beneficial || ((sequence8Config(row) || sequence7Config(row)) && event.type === 'status' && event.targetId != null
       && !event.presentationEffect) || event.type === 'thread' || ['cc_loss', 'madness_loss', 'banished'].includes(event.subtype)) support('status', event, row, phaseHoldMs);
     travel(row, cue.next, phaseHoldMs);
   }
@@ -1659,7 +1724,7 @@ function createBattleEffects(wrap) {
     a.classList.add(`gm-cue-${kind}`); touched.add(a);
   }
   function animate(node, frames, duration = 180, options = {}) {
-    if (!node?.animate || reduced() || (rate >= 4 && !isPositiveSupportPhase(currentRow, currentPhaseType, currentPhaseEvent)) || !isVisible(node)) return;
+    if (!node?.animate || reduced() || rate >= 4 || !isVisible(node)) return;
     const animation = node.animate(frames, { duration, easing: options.easing || 'ease-out', fill: options.hold ? 'forwards' : 'none' });
     animation.playbackRate = rate;
     animations.add(animation);
@@ -1776,7 +1841,7 @@ function createBattleEffects(wrap) {
     }
   }
   function attackMotion(actor, target, row, hold) {
-    if (!actor || reduced() || (rate >= 4 && !isPositiveSupportPhase(row, currentPhaseType, currentPhaseEvent))) return;
+    if (!actor || reduced() || rate >= 4) return;
     const a = anchor(actor)?.getBoundingClientRect(), b = anchor(target)?.getBoundingClientRect();
     if (!a?.width) return;
     const dx = b ? b.left + b.width / 2 - a.left - a.width / 2 : 0;
@@ -2652,7 +2717,7 @@ if (typeof document !== 'undefined') (() => {
       }
       const phase = `${playing.currentTurn}:${playing.eventCount ?? 'start'}`;
       if (!tickerWait || tickerWait.playing !== playing || tickerWait.phase !== phase) {
-        tickerWait = { playing, phase, remaining: battlePresentationDuration(playing, tickerSpeed), started: 0, speed: tickerSpeed };
+        tickerWait = { playing, phase, remaining: battlePresentationDuration(playing), started: 0, speed: tickerSpeed };
       }
       tickerWait.started = performance.now(); tickerWait.speed = battlePresentationRate(playing, tickerSpeed);
       const delay = tickerWait.remaining / tickerWait.speed;
@@ -2691,7 +2756,7 @@ if (typeof document !== 'undefined') (() => {
       battlefieldImage: battlefieldImageFor(isSim ? {} : playing.quest, isSim)
     });
     ensureBattleEffects(playing, wrap);
-    if (cue) battleEffects.show({ ...cue, isDone, arrivals: [...wrap.querySelectorAll('.gm-arena-unit')].filter(node => !existing.has(node)) }, tickerSpeed, battlePresentationDuration(playing, tickerSpeed));
+    if (cue) battleEffects.show({ ...cue, isDone, arrivals: [...wrap.querySelectorAll('.gm-arena-unit')].filter(node => !existing.has(node)) }, tickerSpeed, battlePresentationDuration(playing));
     if (isDone) battleEffects.finish();
     if (playing.paused) battleEffects.pause();
     const completion = app.querySelector('.battle-completion');

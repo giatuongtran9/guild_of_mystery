@@ -107,12 +107,14 @@
     const sequence7Assets = new Set();
     for (const [id, effect] of Object.entries(fx.sequence7Abilities)) {
       const required = ['pathway', 'asset', 'color', 'mode'];
-      const optional = id === 'paper_figurine_rebound' ? ['reflectAsset'] : [];
+      const optional = ['nativeAngleDeg', 'travelDirection', ...(id === 'paper_figurine_rebound' ? ['reflectAsset'] : [])];
       if (!safeKey(id) || !Object.hasOwn(sequence7Pathways, id) || !fields(effect, required, optional)
         || effect.pathway !== sequence7Pathways[id] || !paths.has(effect.pathway)
         || !sequence7Asset(effect.asset) || sequence7Assets.has(effect.asset)
         || typeof effect.color !== 'string' || !/^#[a-f0-9]{6}$/i.test(effect.color)
         || !['travel', 'strike', 'support', 'caster'].includes(effect.mode)
+        || (effect.nativeAngleDeg !== undefined && (effect.mode !== 'travel' || !Number.isFinite(effect.nativeAngleDeg) || effect.nativeAngleDeg < -180 || effect.nativeAngleDeg > 180))
+        || (effect.travelDirection !== undefined && (effect.mode !== 'travel' || !['caster_to_target', 'target_to_caster'].includes(effect.travelDirection)))
         || (id === 'paper_figurine_rebound' && !sequence7Asset(effect.reflectAsset))
         || (id !== 'paper_figurine_rebound' && effect.reflectAsset !== undefined)) fail(`invalid Sequence 7 effect ${id}`);
       sequence7Assets.add(effect.asset);

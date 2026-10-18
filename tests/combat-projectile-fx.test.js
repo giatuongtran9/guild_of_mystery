@@ -510,7 +510,8 @@ test('impact feedback preserves all four normal pixel frames for critical hits w
   assert.equal(normal.hasAttribute('data-hit-stop-ms'), false);
   assert(normal.getAttribute('style').includes(fx.damageColors.physical));
   const normalFrames = active(f).filter(animation => animation.element.closest?.('.gm-combat-impact') === normal);
-  assert(normalFrames.every(animation => Number(animation.timing.duration) === fx.impact.durationMs));
+  assert(normalFrames.every(animation => Number(animation.timing.duration) === 450),
+    'active-ability impacts use the supplied outcome window');
   f.effects.show({ ...hit('paragon', 'enemy', 'physical', { critical: true }), row }, 1, 450);
   const critical = f.find('.gm-combat-impact');
   assert.equal(critical.dataset.critical, 'true');
@@ -519,7 +520,8 @@ test('impact feedback preserves all four normal pixel frames for critical hits w
   assert.equal(critical.getAttribute('style'), normal.getAttribute('style'), 'criticals keep the normal effect color');
   const frameAnimations = active(f).filter(animation => animation.element.closest?.('.gm-combat-impact') === critical);
   assert(frameAnimations.length >= 4, 'each stepped frame is represented in the visible burst');
-  assert(frameAnimations.every(animation => Number(animation.timing.duration) === fx.impact.durationMs));
+  assert(frameAnimations.every(animation => Number(animation.timing.duration) === 450),
+    'critical impacts retain the same outcome window');
   for (const [index, animation] of frameAnimations.entries()) {
     assert.deepEqual(animation.keyframes, normalFrames[index].keyframes, 'critical frames follow the same impact rhythm');
     assert.equal(animation.timing.easing, 'linear', 'the overall clock must reach intermediate pixel frames');
@@ -633,13 +635,13 @@ test('multi-hit follow-ups expose their hit order and stagger a compact burst', 
   assert.deepEqual(staggered.map(animation => Number(animation.timing.delay)), [0, 35, 70], 'three secondary sparks stagger on the second recorded hit');
 });
 
-test('ability chips last half a second across short notes and never show for basics', f => {
+test('ability chips cover the readable active cast across short notes and never show for basics', f => {
   const row = { actorId: 'hermit', sourcePath: 'hermit', abilityId: 'mystic_orb', ability: '<Mystic Orb>' };
-  cast(f, row, hit('hermit', 'enemy', 'mystic'));
+  cast(f, row, hit('hermit', 'enemy', 'mystic'), 1, 800);
   const chip = f.find('.gm-combat-ability-chip');
   assert.equal(chip.textContent, '<Mystic Orb>'); assert.equal(chip.querySelector('mystic'), null, 'ability labels are text, not markup');
   const lifetime = active(f).find(animation => animation.element === chip);
-  assert.equal(Number(lifetime.timing.duration), 500);
+  assert.equal(Number(lifetime.timing.duration), 800, 'the ability label covers the complete active cast');
   f.setNow(100);
   f.effects.show({ type: 'note', row, event: { type: 'note', text: 'A short supporting note.' } }, 1, 180);
   assert.equal(f.find('.gm-combat-ability-chip'), chip, 'short notes do not erase an ability chip');
@@ -649,10 +651,11 @@ test('ability chips last half a second across short notes and never show for bas
 
 test('effects pause, resume and change speed together without mutating cards or combat state', f => {
   const state = JSON.stringify(f.map), cards = f.all('.gm-arena-unit'), html = cards.map(card => card.innerHTML);
-  cast(f, { actorId: 'hermit', sourcePath: 'hermit', abilityId: 'mystic_orb', ability: 'Mystic Orb' }, hit('hermit', 'enemy', 'mystic'));
+  cast(f, { actorId: 'hermit', sourcePath: 'hermit', abilityId: 'mystic_orb', ability: 'Mystic Orb' }, hit('hermit', 'enemy', 'mystic'), 1, 800);
   assert(active(f).length > 0);
   f.effects.pause(); assert(active(f).every(animation => animation.playState === 'paused'));
-  f.effects.setSpeed(2); assert(active(f).every(animation => animation.playbackRate === 2));
+  f.effects.setSpeed(2); assert(active(f).every(animation => animation.playbackRate === 1.6),
+    'active casts preserve the readable 500ms minimum at 2x');
   f.effects.resume(); assert(active(f).every(animation => animation.playState === 'running'));
   assert.equal(JSON.stringify(f.map), state);
   assert.deepEqual(f.all('.gm-arena-unit'), cards); assert.deepEqual(cards.map(card => card.innerHTML), html);
