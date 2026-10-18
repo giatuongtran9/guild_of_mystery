@@ -209,6 +209,28 @@ test('critical HP and shield-only hits use larger orange numbers without adding 
   assert.equal(f.clocks.length, 0, 'critical feedback cannot create extra replay timers');
 });
 
+test('critical melee, pistol, unarmed and Brutal Strike hits preserve the complete normal impact animation', f => {
+  for (const kind of ['weapon', 'gun', 'unarmed', 'brutal_strike']) {
+    const next = damage(), action = kind === 'brutal_strike'
+      ? { ...row('weapon', next), abilityId: 'brutal_strike', ability: 'Brutal Strike' }
+      : row(kind, next);
+    const snapshots = [];
+    for (const critical of [false, true]) {
+      f.effects.show({ ...damage({ critical }), row: action }, 1, 450);
+      const burst = f.find('.gm-combat-impact'); assert(burst, kind + ' has a target impact');
+      const artwork = burst.cloneNode(true); artwork.removeAttribute('data-critical');
+      snapshots.push({ artwork: artwork.outerHTML,
+        tracks: active(f).filter(animation => animation.element === burst || burst.contains(animation.element))
+          .map(animation => ({ frames: JSON.parse(JSON.stringify(animation.keyframes)),
+            timing: { ...animation.timing }, rate: animation.playbackRate })),
+        targetMotion: active(f).filter(animation => animation.element === f.sprite('defender'))
+          .map(animation => ({ frames: JSON.parse(JSON.stringify(animation.keyframes)), timing: { ...animation.timing } })) });
+      f.effects.clear(); f.effects.sync(f.map);
+    }
+    assert.deepEqual(snapshots[1], snapshots[0], kind + ' critical uses identical artwork, size, color, keyframes and duration');
+  }
+});
+
 test('healing and shield abilities have a contained cast cue and distinct support feedback', f => {
   for (const type of ['heal', 'shield']) {
     const next = { type, event: { type, actorId: 'attacker', targetId: 'defender', amount: 10 } };

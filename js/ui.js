@@ -354,7 +354,7 @@ function createCombatFx(wrap) {
       wave: { path: 'straight', size: 32, speedPxPerMs: 1.8, minMs: 140, maxMs: 460, afterimages: 1 }
     },
     pathwayDefaults: {}, pathwayDamageOverrides: {}, basicAttack: { melee: 'slash', unarmed: 'slash', gun: 'bolt', caster: 'orb', pathways: {} },
-    impact: { frames: 4, durationMs: 160, critScale: 1.5, critColor: '#ffa64d' }, support: { durationMs: 500 }, abilityChipMs: 500
+    impact: { frames: 4, durationMs: 160, critColor: '#ffa64d' }, support: { durationMs: 500 }, abilityChipMs: 500
   };
   const config = data.fx || defaults, animations = new Map(), preparedAssets = new Set();
   const casterPaths = new Set(['fool', 'door', 'visionary', 'sun', 'white_tower', 'hermit', 'paragon', 'wheel_of_fortune', 'moon']);
@@ -458,7 +458,11 @@ function createCombatFx(wrap) {
     for (const [key, value] of Object.entries({ 'ability-id': presentationAbility(row), stage, mode,
       'effect-src': spec.asset, 'effect-height': size })) node.setAttribute(`data-${key}`, value);
     node.setAttribute('transform', `translate(${p.x} ${p.y})`);
-    image(node, spec.asset, size, size, 'gm-combat-effect-image gm-combat-sequence8-image');
+    const art = image(node, spec.asset, size, size, 'gm-combat-effect-image gm-combat-sequence8-image');
+    if (presentationAbility(row) === 'raging_blow') {
+      art.setAttribute('transform', 'rotate(180)');
+      art.setAttribute('data-flip-deg', '180');
+    }
     root.append(node);
     return node;
   }
@@ -484,10 +488,13 @@ function createCombatFx(wrap) {
     const moving = mode === 'travel' || mode === 'support';
     const finalPoint = mode === 'caster' ? actor : destination;
     const node = sequence8Image(row, 'cast', targetId, mode, finalPoint, size);
-    if (!node || compact()) return;
+    if (!node) return;
     const id = presentationAbility(row), dx = destination.x - actor.x, dy = destination.y - actor.y;
     const angle = moving ? Math.atan2(dy, dx) * 180 / Math.PI : 0;
-    const straight = ['paper_card_dagger', 'deceptive_feint', 'crafted_blade', 'fines_penalties'].includes(id);
+    node.setAttribute('data-angle-deg', String(angle));
+    node.setAttribute('transform', `translate(${finalPoint.x} ${finalPoint.y}) rotate(${angle})`);
+    if (compact()) return;
+    const straight = ['paper_card_dagger', 'deceptive_feint', 'crafted_blade', 'fines_penalties', 'heavy_cleave'].includes(id);
     const bend = moving && !straight ? Math.min(28, Math.hypot(dx, dy) * .08) : 0;
     const pose = (progress, scale = 1, turn = 0) => {
       const p = moving ? { x: actor.x + dx * progress + Math.sin(progress * Math.PI) * bend,
@@ -509,23 +516,28 @@ function createCombatFx(wrap) {
     const spec = sequence8Config(row), p = point(event.targetId);
     if (!spec || !p || event.isDot || (event.actorId != null && event.actorId !== row.actorId)
       || event.isReflect || (event.isReaction && !event.isSignature)) return;
-    const size = Math.min((canvas()?.getBoundingClientRect().width || 320) - 8,
-      effectHeight(p) * (event.critical ? config.impact?.critScale || 1.5 : 1));
+    const size = Math.min((canvas()?.getBoundingClientRect().width || 320) - 8, effectHeight(p));
     const node = sequence8Image(row, 'impact', event.targetId, spec.mode, p, size);
     if (!node) return;
+    const actor = point(event.actorId ?? row.actorId);
+    const moving = ['travel', 'support'].includes(spec.mode);
+    const angle = moving && actor ? Math.atan2(p.y - actor.y, p.x - actor.x) * 180 / Math.PI : 0;
+    node.setAttribute('data-angle-deg', String(angle));
+    node.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${angle})`);
     node.setAttribute('data-critical', String(!!event.critical));
     node.setAttribute('data-signature-release', String(!!event.isSignature));
-    // Criticals change emphasis, never the duration or combat-event ordering.
+    // The arrival keeps the flight's orientation. Criticals change numbers only.
     if (!compact()) animate(node, [
-      { transform: `translate(${p.x}px,${p.y}px) scale(.84)`, opacity: .25 },
-      { transform: `translate(${p.x}px,${p.y}px) scale(1.05)`, opacity: 1, offset: .22 },
-      { transform: `translate(${p.x}px,${p.y}px) scale(1)`, opacity: .9, offset: .55 },
-      { transform: `translate(${p.x}px,${p.y}px) scale(1.1)`, opacity: 0 }
+      { transform: `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(.84)`, opacity: .25 },
+      { transform: `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(1.05)`, opacity: 1, offset: .22 },
+      { transform: `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(1)`, opacity: .9, offset: .55 },
+      { transform: `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(1.1)`, opacity: 0 }
     ], Math.max(1, Math.min(225, Number(phaseHold) || 225)));
   }
   function weaponBasic(row, event, kind) {
     return row?.abilityId === 'basic_attack' && row.attackKind === kind && event
-      && (event.actorId == null || event.actorId === row.actorId) && !event.isReaction && !event.isReflect && !event.isDot;
+      && (event.actorId == null || event.actorId === row.actorId)
+      && (!event.isReaction || event.isCounter || row.isCounter) && !event.isReflect && !event.isDot;
   }
   function firingPoint(actor, target) {
     // Character art has no authored barrel anchor yet. Use its forward hand,
@@ -948,7 +960,7 @@ function createCombatFx(wrap) {
   }
   function swordBasicSlash(row, event) {
     return row?.abilityId === 'basic_attack' && row.attackKind === 'weapon'
-      && event?.actorId === row.actorId && !event.isReaction && !event.isReflect;
+      && event?.actorId === row.actorId && (!event.isReaction || event.isCounter || row.isCounter) && !event.isReflect && !event.isDot;
   }
   function travel(row, step, phaseHold) {
     const event = step?.event;
@@ -1076,44 +1088,43 @@ function createCombatFx(wrap) {
     const punchHit = weaponBasic(row, event, 'unarmed');
     const brutalHit = presentationAbility(row) === 'brutal_strike' && event.actorId === row.actorId;
     const duration = punchHit || brutalHit ? Math.max(settings.durationMs || 160, 320) : settings.durationMs || 160;
-    const impactScale = critical ? settings.critScale || 1.5 : 1;
+    const actorPoint = point(event.actorId ?? row.actorId);
+    const impactAngle = actorPoint ? Math.atan2(p.y - actorPoint.y, p.x - actorPoint.x) * 180 / Math.PI : 0;
+    const impactScale = 1;
     const burst = group('gm-combat-impact', event.actorId ?? row.actorId, event.targetId,
-      punchHit ? '#ffd36f' : brutalHit ? '#e63946' : critical ? settings.critColor || defaults.impact.critColor : colorFor(event));
-    burst.setAttribute('transform', `translate(${p.x} ${p.y}) scale(${impactScale})`);
+      punchHit ? '#ffd36f' : brutalHit ? '#e63946' : colorFor(event));
+    burst.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${brutalHit ? 0 : impactAngle}) scale(${impactScale})`);
+    burst.setAttribute('data-angle-deg', String(impactAngle));
     burst.setAttribute('data-critical', String(critical)); burst.setAttribute('data-frame', '0');
     burst.setAttribute('data-impact-scale', impactScale);
     if (punchHit) burst.setAttribute('data-punch-burst', 'true');
+    const landed = Number(event.hpLoss ?? Math.max(0, (event.amount || 0) - (event.absorbed || 0))) > 0 || Number(event.absorbed) > 0;
+    const field = canvas();
+    if (landed && field && !compact()) animate(field, [
+      { transform: 'translate(0, 0)' },
+      { transform: 'translate(-3px, 2px)', offset: .15 },
+      { transform: 'translate(3px, -2px)', offset: .35 },
+      { transform: 'translate(-2px, -1px)', offset: .6 },
+      { transform: 'translate(1px, 1px)', offset: .8 },
+      { transform: 'translate(0, 0)' }
+    ], Math.min(160, Math.max(1, Number(phaseHold) || 160)), 0, { remove: false, easing: 'ease-out' });
     let punchArt = null;
     if (brutalHit) {
       burst.setAttribute('data-brutal-strike', 'true');
-      // Screen micro-shake on the battlefield canvas
-      const field = canvas();
-      if (field && !compact()) {
-        field.animate([
-          { transform: 'translate(0, 0)' },
-          { transform: 'translate(-3px, 2px)', offset: 0.15 },
-          { transform: 'translate(3px, -2px)', offset: 0.35 },
-          { transform: 'translate(-2px, -1px)', offset: 0.6 },
-          { transform: 'translate(1px, 1px)', offset: 0.8 },
-          { transform: 'translate(0, 0)' }
-        ], { duration: 160, easing: 'ease-out' });
-      }
       // High-opacity crimson slash flash across defender
       const slashWidth = effectHeight(p) * 1.6, slashHeight = slashWidth * 0.5;
-      const actorPoint = point(event.actorId ?? row.actorId);
-      const impactAngle = actorPoint ? Math.atan2(p.y - actorPoint.y, p.x - actorPoint.x) * 180 / Math.PI : 0;
       const slashImpact = element('image', { class: 'gm-combat-brutal-strike-impact-slash',
         x: -slashWidth / 2, y: -slashHeight / 2, width: slashWidth, height: slashHeight,
-        href: 'data/assets/effects/brutal-strike.png', transform: 'rotate(180)',
+        href: 'data/assets/effects/brutal-strike.png', transform: `rotate(${impactAngle + 180})`,
         preserveAspectRatio: 'xMidYMid meet' });
       slashImpact.setAttribute('data-flip-deg', '180');
       slashImpact.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', 'data/assets/effects/brutal-strike.png');
       burst.append(slashImpact);
       if (!compact()) {
         animate(slashImpact, [
-          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(1.15) rotate(-10deg)`, opacity: 1 },
+          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(1.15)`, opacity: 1 },
           { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(1) rotate(0deg)`, opacity: 0.95, offset: 0.3 },
-          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(0.96) rotate(3deg)`, opacity: 0 }
+          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(0.96)`, opacity: 0 }
         ], Math.min(220, duration));
       }
       // Trailing embers
@@ -1258,6 +1269,7 @@ function createCombatFx(wrap) {
 
 function createBattleEffects(wrap) {
   const animations = new Set(), touched = new Set();
+  const counterPresentations = new WeakMap();
   const pathwayEffects = createPathwayEffects(wrap);
   const combatFx = createCombatFx(wrap);
   const arena = wrap.querySelector('.gm-dungeon-arena');
@@ -1424,6 +1436,9 @@ function createBattleEffects(wrap) {
     if (animation) pendingStrike = { animation, sprite, forward, row, targetId: target?.dataset.unitId };
   }
   function show(cue, speed = 1, timingMs = 600) {
+    const originalRow = cue?.row || cue?.event;
+    const presentationRow = originalRow && counterPresentations.get(originalRow);
+    if (presentationRow) cue = { ...cue, row: presentationRow };
     const event = cue?.event || {}, row = cue?.row || event;
     const strike = pendingStrike, sameStrike = strike?.row === row;
     const resolvesStrike = sameStrike && (['damage', 'reaction', 'reflect'].includes(cue?.type)
@@ -1470,7 +1485,30 @@ function createBattleEffects(wrap) {
   }
   return { show, clear, finish,
     sync: map => { currentMap = map || Object.create(null); pathwayEffects.sync(currentMap); combatFx.sync(currentMap); },
-    prepare: rows => combatFx.prepare(rows),
+    prepare: rows => {
+      // Older saved Counters predate weapon metadata. Borrow only an actual
+      // recorded basic from this actor, including one later in the replay.
+      // Stable copies preserve held poses without mutating saved outcomes.
+      const basics = new Map();
+      for (const row of rows || []) {
+        if (row?.abilityId !== 'basic_attack' || row.isCounter
+          || row.ability === 'Counter' && row.damages?.some(hit => hit.isCounter)
+          || row.actorId == null || !row.attackKind) continue;
+        const metadata = basics.get(row.actorId) || {};
+        for (const key of ['attackKind', 'weaponId', 'sourcePath']) if (row[key] != null) metadata[key] = row[key];
+        basics.set(row.actorId, metadata);
+      }
+      for (const row of rows || []) {
+        const counter = row?.isCounter || row?.ability === 'Counter' && row.damages?.some(hit => hit.isCounter);
+        const metadata = counter && basics.get(row.actorId);
+        if (!metadata || counterPresentations.has(row) || row.abilityId === 'basic_attack' && row.attackKind) continue;
+        const presentation = { ...row, abilityId: 'basic_attack' };
+        for (const key of ['attackKind', 'weaponId', 'sourcePath'])
+          if (presentation[key] == null && metadata[key] != null) presentation[key] = metadata[key];
+        counterPresentations.set(row, presentation);
+      }
+      combatFx.prepare((rows || []).map(row => counterPresentations.get(row) || row));
+    },
     reflow: () => { clearTransient(); pathwayEffects.show(null); pathwayEffects.sync(currentMap); combatFx.reflow(); },
     pause: () => { for (const a of animations) a.pause(); pathwayEffects.pause(); combatFx.pause(); },
     resume: () => { for (const a of animations) a.play(); pathwayEffects.resume(); combatFx.resume(); },

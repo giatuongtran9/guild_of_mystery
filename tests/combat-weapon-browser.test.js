@@ -251,7 +251,7 @@ async function screenshot(page, name) {
         assert.deepEqual(errors, []);
       } finally { await page.close(); }
     });
-    for (const speed of [1, 2]) await test(`critical number and impact are larger/orange without playback delay at ${speed}×`, async () => {
+    for (const speed of [1, 2]) await test(`critical numbers are larger/orange with unchanged impact and playback timing at ${speed}×`, async () => {
       const { page, errors } = await fixture(browser, 390);
       try {
         const result = await page.evaluate(speed => {
@@ -271,11 +271,13 @@ async function screenshot(page, name) {
         }, speed);
         assert.equal(result.critical.total, result.normal.total, 'critical flag adds no playback hold or hit-stop');
         assert.equal(result.critical.total, 2000 / speed);
-        assert.equal(result.critical.numberColor, 'rgb(255, 166, 77)'); assert.equal(result.critical.burstColor, 'rgb(255, 166, 77)');
+        assert.equal(result.critical.numberColor, 'rgb(255, 166, 77)');
+        assert.equal(result.critical.burstColor, result.normal.burstColor, 'criticals preserve the normal effect palette');
         assert(result.critical.fontSize > result.normal.fontSize); assert(result.critical.fontSize < 24, 'critical text stays readable without becoming character-sized');
-        assert(result.critical.impactScale > result.normal.impactScale); assert.equal(result.critical.impactDuration, result.normal.impactDuration);
+        assert.equal(result.critical.impactScale, result.normal.impactScale); assert.equal(result.critical.impactDuration, result.normal.impactDuration);
         assert.equal(result.critical.rate, speed);
         assert.deepEqual(result.critical.samples, [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]], 'browser displays all four stepped impact frames');
+        assert.deepEqual(result.critical.samples, result.normal.samples, 'criticals preserve all normal stepped frame timing');
         assert.deepEqual(errors, []); observations.push({ speed, critical: result });
       } finally { await page.close(); }
     });

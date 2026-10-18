@@ -122,7 +122,7 @@
     "shadow_strike": { "pathway": "hanged_man", "asset": "data/assets/effects/sequence8/shadow-strike.png", "color": "#b0c897", "mode": "travel" },
     "midnight_requiem": { "pathway": "darkness", "asset": "data/assets/effects/sequence8/midnight-requiem.png", "color": "#a79bd6", "mode": "travel" },
     "undying_touch": { "pathway": "death", "asset": "data/assets/effects/sequence8/undying-touch.png", "color": "#a6bebc", "mode": "strike" },
-    "heavy_cleave": { "pathway": "twilight_giant", "asset": "data/assets/effects/sequence8/heavy-cleave.png", "color": "#ead291", "mode": "strike" },
+    "heavy_cleave": { "pathway": "twilight_giant", "asset": "data/assets/effects/sequence8/heavy-cleave.png", "color": "#ead291", "mode": "travel" },
     "provocation": { "pathway": "red_priest", "asset": "data/assets/effects/sequence8/provocation.png", "color": "#df9b7a", "mode": "caster" },
     "instigation": { "pathway": "demoness", "asset": "data/assets/effects/sequence8/instigation.png", "color": "#cab0df", "mode": "travel" },
     "mystic_spell": { "pathway": "hermit", "asset": "data/assets/effects/sequence8/mystic-spell.png", "color": "#c6afea", "mode": "travel" },
@@ -134,7 +134,7 @@
     "madness_curse": { "pathway": "chained", "asset": "data/assets/effects/sequence8/madness-curse.png", "color": "#b998d0", "mode": "travel" },
     "fines_penalties": { "pathway": "justiciar", "asset": "data/assets/effects/sequence8/fines-penalties.png", "color": "#e2c9aa", "mode": "travel" }
   },
-  "impact": { "frames": 4, "durationMs": 160, "critScale": 1.5, "critColor": "#ffa64d", "critNumberScale": 1.25 },
+  "impact": { "frames": 4, "durationMs": 160, "critColor": "#ffa64d", "critNumberScale": 1.25 },
   "support": { "durationMs": 500 },
   "abilityChipMs": 500
 }

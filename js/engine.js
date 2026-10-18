@@ -1158,7 +1158,9 @@ function maybeCounter(target,attacker,state,lines=[],r){if(!lines)lines=[];if(!t
  if(r()<rates.counter){const w=weaponStats(a),stats=a.stats||a;
   const dmg=Math.max(1,Math.round((stats.atk*.38+w.atk)*damageMultiplier(a.sequence,d.sequence,a.path,d.path)-(d.stats?.def||attacker.def||10)*.15));
   lines.push({text:`${target.name} counters for ${dmg} damage (${Math.round(rates.counter*100)}% counter chance).`,kind:'quirk'});
-  emitCombatEvent(state,{round:state?.currentRound||1,type:'cast',actorId:target.id,actorName:target.name,actorTeam:teamOf(target,state),ability:'Counter',costSP:0,cooldown:0,isCounter:true});
+  // Counters remain reactions with their existing damage rules; replay their
+  // attack cue using the reacting character's actual equipped weapon.
+  emitCombatEvent(state,{round:state?.currentRound||1,type:'cast',actorId:target.id,actorName:target.name,actorTeam:teamOf(target,state),ability:'Counter',abilityId:'basic_attack',attackKind:w.kind,sourcePath:a.path,weaponId:w.id,costSP:0,cooldown:0,isCounter:true});
   const hit=resolveIncoming(target,attacker,dmg,state,lines,r,{damageType:'physical'});
   emitResolvedDamage(state,hit,{round:state?.currentRound||1,type:'damage',actorId:target.id,actorName:target.name,actorTeam:teamOf(target,state),targetId:attacker.id,targetName:attacker.name,targetTeam:teamOf(attacker,state),amount:hit.hpLoss+hit.absorbed,absorbed:hit.absorbed,hpLoss:hit.hpLoss,shieldAfter:attacker.shield||0,damageType:'physical',isCounter:true,hpAfter:attacker.hp,maxHp:attacker.maxHp});
  }

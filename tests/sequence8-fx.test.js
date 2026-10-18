@@ -228,7 +228,7 @@ test('Chained signature release keeps the curse owner and real dark-damage recip
   assert.equal(f.find('.gm-combat-sequence8[data-stage="impact"]').dataset.signatureRelease, 'false');
 });
 
-test('critical Sequence 8 hits use a larger orange treatment without hit-stop or extra phase duration', f => {
+test('critical Sequence 8 hits keep identical impact animation and emphasize only the orange damage number', f => {
   const normal = makeEvents('raging_blow'), critical = makeEvents('raging_blow');
   critical.next.event.critical = true;
   const holds = [];
@@ -236,7 +236,9 @@ test('critical Sequence 8 hits use a larger orange treatment without hit-stop or
     f.effects.show({ type: 'damage', row: result.row, event: result.next.event }, 2, 225);
     const node = f.find('.gm-combat-sequence8[data-stage="impact"]'), number = f.find('.gm-battle-fx-number');
     const tracks = tracksFor(f, node);
-    holds.push({ size: Number(node.dataset.effectHeight), tracks: tracks.map(animation => ({ duration: animation.timing.duration,
+    holds.push({ size: Number(node.dataset.effectHeight), color: node.style.getPropertyValue('--gm-fx-color'),
+      artwork: node.querySelector('image')?.outerHTML,
+      tracks: tracks.map(animation => ({ frames: JSON.parse(JSON.stringify(animation.keyframes)), duration: animation.timing.duration,
       delay: animation.timing.delay || 0, rate: animation.playbackRate })),
       phase: f.w.battlePresentationDelay({ turnRows: [result.row], currentTurn: 0, eventCount: 1 }, 2) });
     if (result === critical) {
@@ -248,8 +250,10 @@ test('critical Sequence 8 hits use a larger orange treatment without hit-stop or
     assert(active(f).every(animation => animation.playState === 'running' && animation.playbackRate === 2), 'criticals do not pause the playback clock');
     f.effects.clear(); f.effects.sync(f.map);
   }
-  assert(holds[1].size > holds[0].size);
-  assert.deepEqual(holds[1].tracks, holds[0].tracks, 'critical emphasis cannot add a delay or lengthen the impact');
+  assert.equal(holds[1].size, holds[0].size, 'critical hits cannot enlarge the impact artwork');
+  assert.equal(holds[1].color, holds[0].color, 'critical hits cannot recolor the impact effect');
+  assert.equal(holds[1].artwork, holds[0].artwork, 'critical hits use the same PNG and artwork geometry');
+  assert.deepEqual(holds[1].tracks, holds[0].tracks, 'critical hits use identical keyframes, playback rate and duration');
   assert.equal(holds[1].phase, holds[0].phase);
 });
 
