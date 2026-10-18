@@ -3,8 +3,8 @@ Guild of Mystery — v17 JSON Data Layer
 Combat animation and playback
   Battles replay their already-resolved combat events in chronological order.
   At every speed, casts reveal each hit, awakening, shield, reaction and defeat
-  separately, including intermediate HP and SP. Typical actions take 2 seconds
-  at 1x, 4 seconds in Read, 1 second at 2x and 0.5 seconds at 4x. Awakenings and
+  separately, including intermediate HP and SP. Ordinary actions take 1 second
+  at 1x, 2 seconds in Read, 0.5 seconds at 2x and 0.25 seconds at 4x. Awakenings and
   reactions get extra reading time. Faster playback simplifies visual motion.
   Existing artwork supports brief attack motions, impact and recovery cues,
   projectiles, companion arrival, and Mythical transformation feedback.
@@ -19,6 +19,11 @@ Combat animation and playback
   Chained curse links pulse on their actual echo. Faint connections last only
   while the recorded binding or curse is active and follow battlefield reflow.
   Pause and speed changes preserve the remaining reading time in the phase.
+  Exploit Loophole, Combat Theft and Healing Touch show their complete cast
+  for 800ms at 1x and 500ms at 2x before revealing the outcome. Their effect
+  clock and replay clock stay synchronized through Pause and speed changes.
+  Read gives these casts 1600ms; 4x retains compact 200ms feedback. Their PNGs
+  preload before battle. Recorded/copied uses retain the same presentation.
   Projectile families and damage colors live in data/fx.json. Swords and knives
   share the slash presentation. Pistol basics fire a rounded tracer from a
   compact gun-muzzle.png flash; unarmed basics jab and land a punch impact,
