@@ -112,6 +112,28 @@
       "black_emperor": "beam"
     }
   },
+  "sequence8Abilities": {
+    "paper_card_dagger": { "pathway": "fool", "asset": "data/assets/effects/sequence8/paper-card-dagger.png", "color": "#c5badf", "mode": "travel" },
+    "elemental_spark": { "pathway": "door", "asset": "data/assets/effects/sequence8/elemental-spark.png", "color": "#91d1df", "mode": "travel" },
+    "deceptive_feint": { "pathway": "error", "asset": "data/assets/effects/sequence8/deceptive-feint.png", "color": "#c6a0e8", "mode": "travel" },
+    "holy_flash": { "pathway": "sun", "asset": "data/assets/effects/sequence8/holy-flash.png", "color": "#ead291", "mode": "travel" },
+    "raging_blow": { "pathway": "tyrant", "asset": "data/assets/effects/sequence8/raging-blow.png", "color": "#a9cfe5", "mode": "travel" },
+    "analysis_weakness": { "pathway": "white_tower", "asset": "data/assets/effects/sequence8/analysis-weakness.png", "color": "#bbaee8", "mode": "strike" },
+    "shadow_strike": { "pathway": "hanged_man", "asset": "data/assets/effects/sequence8/shadow-strike.png", "color": "#b0c897", "mode": "travel" },
+    "midnight_requiem": { "pathway": "darkness", "asset": "data/assets/effects/sequence8/midnight-requiem.png", "color": "#a79bd6", "mode": "travel" },
+    "undying_touch": { "pathway": "death", "asset": "data/assets/effects/sequence8/undying-touch.png", "color": "#a6bebc", "mode": "strike" },
+    "heavy_cleave": { "pathway": "twilight_giant", "asset": "data/assets/effects/sequence8/heavy-cleave.png", "color": "#ead291", "mode": "strike" },
+    "provocation": { "pathway": "red_priest", "asset": "data/assets/effects/sequence8/provocation.png", "color": "#df9b7a", "mode": "caster" },
+    "instigation": { "pathway": "demoness", "asset": "data/assets/effects/sequence8/instigation.png", "color": "#cab0df", "mode": "travel" },
+    "mystic_spell": { "pathway": "hermit", "asset": "data/assets/effects/sequence8/mystic-spell.png", "color": "#c6afea", "mode": "travel" },
+    "crafted_blade": { "pathway": "paragon", "asset": "data/assets/effects/sequence8/crafted-blade.png", "color": "#e7bc79", "mode": "travel" },
+    "bad_luck_curse": { "pathway": "wheel_of_fortune", "asset": "data/assets/effects/sequence8/bad-luck-curse.png", "color": "#e4d294", "mode": "caster" },
+    "nature_growth": { "pathway": "mother", "asset": "data/assets/effects/sequence8/nature-growth.png", "color": "#a1d69a", "mode": "strike" },
+    "beast_command": { "pathway": "moon", "asset": "data/assets/effects/sequence8/beast-command.png", "color": "#c8b9e8", "mode": "support" },
+    "desire_ignition": { "pathway": "abyss", "asset": "data/assets/effects/sequence8/desire-ignition.png", "color": "#a92f42", "mode": "travel" },
+    "madness_curse": { "pathway": "chained", "asset": "data/assets/effects/sequence8/madness-curse.png", "color": "#b998d0", "mode": "travel" },
+    "fines_penalties": { "pathway": "justiciar", "asset": "data/assets/effects/sequence8/fines-penalties.png", "color": "#e2c9aa", "mode": "travel" }
+  },
   "impact": { "frames": 4, "durationMs": 160, "critScale": 1.5, "critColor": "#ffa64d", "critNumberScale": 1.25 },
   "support": { "durationMs": 500 },
   "abilityChipMs": 500

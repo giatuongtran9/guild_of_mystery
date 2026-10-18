@@ -356,6 +356,7 @@
 }
 
 .gm-combat-projectile,
+.gm-combat-sequence8,
 .gm-combat-afterimage,
 .gm-combat-gun-muzzle,
 .gm-combat-impact,
@@ -365,6 +366,10 @@
 .gm-combat-status {
   color: var(--gm-fx-color, #dce9f0);
   pointer-events: none;
+}
+
+.gm-combat-sequence8-image {
+  image-rendering: pixelated;
 }
 
 .gm-combat-sword-slash-image,

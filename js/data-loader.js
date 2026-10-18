@@ -70,7 +70,7 @@
     const family = value => typeof value === 'string' && familyKeys.includes(value);
     const paths = new Set(pathwayKeys);
     const safeKey = key => /^[a-z][a-z0-9_]*$/.test(key) && !['constructor', 'prototype'].includes(key);
-    if (!fields(fx, ['schema', 'damageColors', 'families', 'pathwayDefaults', 'pathwayDamageOverrides', 'basicAttack', 'impact', 'support', 'abilityChipMs'])
+    if (!fields(fx, ['schema', 'damageColors', 'families', 'pathwayDefaults', 'pathwayDamageOverrides', 'basicAttack', 'sequence8Abilities', 'impact', 'support', 'abilityChipMs'])
       || fx.schema !== 'guild.battle-fx.v1') fail('invalid battle FX schema');
     if (!record(fx.damageColors) || !['default', 'physical', 'true'].every(key => Object.prototype.hasOwnProperty.call(fx.damageColors, key))
       || Object.entries(fx.damageColors).some(([key, value]) => !safeKey(key) || typeof value !== 'string' || !/^#[a-f0-9]{6}$/i.test(value))) fail('damage colors must be six-digit hex colors');
@@ -93,6 +93,15 @@
       || ['melee', 'unarmed', 'gun', 'caster'].some(key => !family(fx.basicAttack[key]))
       || (fx.basicAttack.pathways !== undefined && (!record(fx.basicAttack.pathways)
         || Object.entries(fx.basicAttack.pathways).some(([key, value]) => !paths.has(key) || !family(value))))) fail('invalid basic attack family');
+    if (!record(fx.sequence8Abilities) || Object.keys(fx.sequence8Abilities).length !== 20
+      || new Set(Object.values(fx.sequence8Abilities).map(value => value?.pathway)).size !== 20) fail('Sequence 8 effects must cover twenty distinct active pathways');
+    for (const [id, effect] of Object.entries(fx.sequence8Abilities)) {
+      if (!safeKey(id) || !fields(effect, ['pathway', 'asset', 'color', 'mode'])
+        || !paths.has(effect.pathway)
+        || effect.asset !== `data/assets/effects/sequence8/${id.replace(/_/g, '-')}.png`
+        || typeof effect.color !== 'string' || !/^#[a-f0-9]{6}$/i.test(effect.color)
+        || !['travel', 'strike', 'support', 'caster'].includes(effect.mode)) fail(`invalid Sequence 8 effect ${id}`);
+    }
     if (!fields(fx.impact, ['frames', 'durationMs', 'critScale', 'critColor', 'critNumberScale'])
       || !number(fx.impact.frames, 3, 4, true) || !number(fx.impact.durationMs, 80, 500, true)
       || !number(fx.impact.critScale, 1, 2) || typeof fx.impact.critColor !== 'string' || !/^#[a-f0-9]{6}$/i.test(fx.impact.critColor)

@@ -37,13 +37,29 @@ function battlePresentationRows(rows, shownCount, eventCount) {
 }
 
 function isReadableAbility(row) {
+  return ['exploit_loophole', 'combat_theft', 'healing_touch',
+    'paper_card_dagger', 'elemental_spark', 'deceptive_feint', 'holy_flash',
+    'raging_blow', 'analysis_weakness', 'shadow_strike', 'midnight_requiem',
+    'undying_touch', 'heavy_cleave', 'provocation', 'instigation', 'mystic_spell',
+    'crafted_blade', 'bad_luck_curse', 'nature_growth', 'beast_command',
+    'desire_ignition', 'madness_curse', 'fines_penalties'].includes(
+    String(row?.sourceAbilityId || row?.abilityId || '').split(':').pop());
+}
+
+function hasReadableOutcomeHold(row) {
+  // Keep the existing Sequence 9 outcome-reading time separate from the
+  // longer Sequence 8 cast cues; those retain ordinary outcome durations.
   return ['exploit_loophole', 'combat_theft', 'healing_touch'].includes(
     String(row?.sourceAbilityId || row?.abilityId || '').split(':').pop());
 }
 
+function isCastOnlyAbilityRow(row) {
+  return row?.type === 'turn' && isReadableAbility(row) && !row.timeline?.length;
+}
+
 function readableCastDuration(row) { return isReadableAbility(row) ? 800 : 300; }
 
-// The longer utility casts keep at least 500ms at 2x. Other phases and compact
+// The longer ability casts keep at least 500ms at 2x. Other phases and compact
 // playback use their ordinary rate; 1.6 is accepted when a controller forwards
 // an already resolved cast rate to its child effect controllers.
 function battleAnimationRate(row, speed = 1, phaseType) {
@@ -54,12 +70,13 @@ function battleAnimationRate(row, speed = 1, phaseType) {
 function battlePresentationRate(playing, speed = 1) {
   const row = playing.turnRows[playing.currentTurn];
   const rate = [.5, 1, 2, 4].includes(Number(speed)) ? Number(speed) : 1;
-  const casting = playing.eventCount === 0 && row?.timeline?.length && !row.timeline[0].event.isDot;
+  const casting = playing.eventCount === 0 && (row?.timeline?.length || isCastOnlyAbilityRow(row))
+    && !row?.timeline?.[0]?.event?.isDot;
   return battleAnimationRate(row, rate, casting ? 'cast' : null);
 }
 
 // Hold each visible stage, including the final impact, before exposing the
-// completed action. Ordinary actions take one second; utility casts, reactions
+// completed action. Ordinary actions take one second; ability casts, reactions
 // and awakenings get their own reading time. Effects share this same clock.
 function battlePresentationDelay(playing, speed = 1) {
   const row = playing.turnRows[playing.currentTurn];
@@ -67,14 +84,17 @@ function battlePresentationDelay(playing, speed = 1) {
   const rate = battlePresentationRate(playing, speed);
   const timeline = row.timeline || [];
   const count = playing.eventCount;
-  if (!timeline.length) return (row.isRoundHeader ? 300 : row.type === 'turn' ? 1000 : 400) / rate;
+  if (!timeline.length) {
+    if (isCastOnlyAbilityRow(row)) return Number.isInteger(count) ? readableCastDuration(row) / rate : 0;
+    return (row.isRoundHeader ? 300 : row.type === 'turn' ? 1000 : 400) / rate;
+  }
   if (!Number.isInteger(count)) return 0;
   const periodic = !!timeline[0]?.event.isDot;
   const castDuration = periodic ? 0 : readableCastDuration(row);
   if (count === 0) return castDuration / rate;
   const weights = { damage: 225, reaction: 325, reflect: 275, heal: 200,
     shield: 200, mythical: 450, death: 350, revive: 300, note: 90 };
-  const activeAbility = isReadableAbility(row);
+  const activeAbility = hasReadableOutcomeHold(row);
   const holds = timeline.map(step => activeAbility ? 400 : Math.max(weights[step.type] || 90,
     step.event.presentationEffect && !step.event.presentationEffect.endsWith('_end') ? 250 : step.event.type === 'thread' ? 175 : 0));
   const total = castDuration + holds.reduce((sum, value) => sum + value, 0);
@@ -87,9 +107,13 @@ function advanceBattlePresentation(playing) {
   if (!row) return null;
   const timeline = row.timeline || [];
   if (!timeline.length) {
+    if (isCastOnlyAbilityRow(row) && !Number.isInteger(playing.eventCount)) {
+      playing.eventCount = 0;
+      return { type: 'cast', event: row, row, next: null };
+    }
     playing.currentTurn++;
     playing.eventCount = null;
-    return { type: 'row', event: row, row };
+    return { type: isCastOnlyAbilityRow(row) ? 'settle' : 'row', event: row, row };
   }
   if (!Number.isInteger(playing.eventCount)) {
     playing.eventCount = 0;
@@ -332,7 +356,7 @@ function createCombatFx(wrap) {
     pathwayDefaults: {}, pathwayDamageOverrides: {}, basicAttack: { melee: 'slash', unarmed: 'slash', gun: 'bolt', caster: 'orb', pathways: {} },
     impact: { frames: 4, durationMs: 160, critScale: 1.5, critColor: '#ffa64d' }, support: { durationMs: 500 }, abilityChipMs: 500
   };
-  const config = data.fx || defaults, animations = new Map();
+  const config = data.fx || defaults, animations = new Map(), preparedAssets = new Set();
   const casterPaths = new Set(['fool', 'door', 'visionary', 'sun', 'white_tower', 'hermit', 'paragon', 'wheel_of_fortune', 'moon']);
   let hpMap = Object.create(null), surface = null, chip = null, chipRow = null, speed = 1, paused = false, areaRows = new WeakSet();
   let phaseRow = null, phaseType = null;
@@ -398,6 +422,106 @@ function createCombatFx(wrap) {
     layer()?.append(node);
     if (!compact()) animate(node, frames, duration);
     return node;
+  }
+  function sequence8Config(row) {
+    return config.sequence8Abilities?.[presentationAbility(row)];
+  }
+  function prepareSequence8Asset(spec) {
+    if (!spec || preparedAssets.has(spec.asset) || typeof window.Image !== 'function') return;
+    preparedAssets.add(spec.asset);
+    const preload = new window.Image(); preload.src = spec.asset;
+  }
+  function prepareSequence8Assets(map) {
+    const paths = new Set(Object.values(map || {}).filter(entry => entry && Number(entry.sequence) <= 8).map(entry => entry.path));
+    for (const spec of Object.values(config.sequence8Abilities || {})) {
+      // Warm only participating pathways, rather than downloading twenty PNGs
+      // at startup. The replay never waits on a network or image callback.
+      if (paths.has(spec.pathway)) prepareSequence8Asset(spec);
+    }
+  }
+  function sequence8Endpoint(row) {
+    const steps = row.timeline || [];
+    const own = event => event.actorId == null || event.actorId === row.actorId;
+    // Signature bookkeeping can precede the command or hit. Find its actual
+    // recipient rather than assigning an effect to the first note in the row.
+    const command = steps.find(step => step.event.presentationEffect === 'beast_command'
+      && (step.event.ownerId === row.actorId || own(step.event)) && step.event.targetId != null);
+    const hit = steps.find(step => own(step.event) && step.event.targetId != null
+      && damageTypes.has(step.type) && !step.event.isDot && !step.event.isReaction && !step.event.isReflect);
+    const target = steps.find(step => own(step.event) && step.event.targetId != null);
+    return { command: command?.event, hit: hit?.event, target: hit?.event || target?.event };
+  }
+  function sequence8Image(row, stage, targetId, mode, p, size) {
+    const spec = sequence8Config(row), root = layer();
+    if (!spec || !root) return null;
+    const node = group('gm-combat-sequence8', row.actorId, targetId, spec.color);
+    for (const [key, value] of Object.entries({ 'ability-id': presentationAbility(row), stage, mode,
+      'effect-src': spec.asset, 'effect-height': size })) node.setAttribute(`data-${key}`, value);
+    node.setAttribute('transform', `translate(${p.x} ${p.y})`);
+    image(node, spec.asset, size, size, 'gm-combat-effect-image gm-combat-sequence8-image');
+    root.append(node);
+    return node;
+  }
+  function sequence8Cast(row, phaseHold) {
+    const spec = sequence8Config(row), actor = point(row.actorId);
+    if (!spec || !actor) return;
+    const endpoints = sequence8Endpoint(row);
+    let mode = spec.mode, targetId = endpoints.target?.targetId ?? row.targetId;
+    if (mode === 'support') {
+      if (endpoints.command) targetId = endpoints.command.targetId;
+      else if (endpoints.hit) { mode = 'travel'; targetId = endpoints.hit.targetId; }
+      else mode = 'caster';
+    }
+    if (mode === 'caster') targetId = row.actorId;
+    const target = point(targetId);
+    // Missing/offscreen endpoints receive only a local casting cue. Never
+    // choose another enemy or invent a companion to fill an unavailable slot.
+    if (!target) { mode = 'caster'; targetId = row.actorId; }
+    const destination = target || actor;
+    const fieldWidth = canvas()?.getBoundingClientRect().width || 320;
+    const size = Math.min(fieldWidth - 8, effectHeight(mode === 'support' ? actor : destination) * 1.08);
+    const hold = Math.max(1, Number(phaseHold) || readableCastDuration(row));
+    const moving = mode === 'travel' || mode === 'support';
+    const finalPoint = mode === 'caster' ? actor : destination;
+    const node = sequence8Image(row, 'cast', targetId, mode, finalPoint, size);
+    if (!node || compact()) return;
+    const id = presentationAbility(row), dx = destination.x - actor.x, dy = destination.y - actor.y;
+    const angle = moving ? Math.atan2(dy, dx) * 180 / Math.PI : 0;
+    const straight = ['paper_card_dagger', 'deceptive_feint', 'crafted_blade', 'fines_penalties'].includes(id);
+    const bend = moving && !straight ? Math.min(28, Math.hypot(dx, dy) * .08) : 0;
+    const pose = (progress, scale = 1, turn = 0) => {
+      const p = moving ? { x: actor.x + dx * progress + Math.sin(progress * Math.PI) * bend,
+        y: actor.y + dy * progress } : finalPoint;
+      return `translate(${p.x}px,${p.y}px) rotate(${angle + turn}deg) scale(${scale})`;
+    };
+    // The anticipation, readable flight/stamp and fade share the scheduler's
+    // cast clock. Damage, recovery and control cues remain separate events.
+    animate(node, [
+      { transform: pose(0, .62, id === 'paper_card_dagger' ? -35 : 0), opacity: 0 },
+      { transform: pose(.03, .88), opacity: .96, offset: .18 },
+      { transform: pose(.52, 1), opacity: .98, offset: .58 },
+      { transform: pose(1, 1.04), opacity: .98, offset: .78 },
+      { transform: pose(1, 1.08), opacity: .85, offset: .9 },
+      { transform: pose(1, .94), opacity: 0 }
+    ], hold);
+  }
+  function sequence8Impact(row, event, phaseHold) {
+    const spec = sequence8Config(row), p = point(event.targetId);
+    if (!spec || !p || event.isDot || (event.actorId != null && event.actorId !== row.actorId)
+      || event.isReflect || (event.isReaction && !event.isSignature)) return;
+    const size = Math.min((canvas()?.getBoundingClientRect().width || 320) - 8,
+      effectHeight(p) * (event.critical ? config.impact?.critScale || 1.5 : 1));
+    const node = sequence8Image(row, 'impact', event.targetId, spec.mode, p, size);
+    if (!node) return;
+    node.setAttribute('data-critical', String(!!event.critical));
+    node.setAttribute('data-signature-release', String(!!event.isSignature));
+    // Criticals change emphasis, never the duration or combat-event ordering.
+    if (!compact()) animate(node, [
+      { transform: `translate(${p.x}px,${p.y}px) scale(.84)`, opacity: .25 },
+      { transform: `translate(${p.x}px,${p.y}px) scale(1.05)`, opacity: 1, offset: .22 },
+      { transform: `translate(${p.x}px,${p.y}px) scale(1)`, opacity: .9, offset: .55 },
+      { transform: `translate(${p.x}px,${p.y}px) scale(1.1)`, opacity: 0 }
+    ], Math.max(1, Math.min(225, Number(phaseHold) || 225)));
   }
   function weaponBasic(row, event, kind) {
     return row?.abilityId === 'basic_attack' && row.attackKind === kind && event
@@ -542,6 +666,7 @@ function createCombatFx(wrap) {
     const id = presentationAbility(row), event = next?.event;
     const actor = point(row.actorId), targetId = event?.targetId ?? row.targetId, target = point(targetId);
     if (!actor || !layer()) return;
+    if (sequence8Config(row)) { sequence8Cast(row, phaseHold); return; }
     const hold = Math.max(100, Math.min(Number(phaseHold) || 600, 560));
     const abilityHold = isReadableAbility(row)
       ? Math.max(1, Number(phaseHold) || readableCastDuration(row)) : hold;
@@ -833,7 +958,9 @@ function createCombatFx(wrap) {
     const customS9 = ['exploit_loophole', 'combat_theft'].includes(abilityId) && event?.actorId === row.actorId;
     const unarmedBasic = weaponBasic(row, event, 'unarmed');
     // Punches land as a distinct burst; weapon basics and Brutal Strike use the provided crescent art.
-    if (!event || (!damageTypes.has(step.type) && !basicMiss) || event.isDot || customS9) return;
+    const customS8 = sequence8Config(row) && (event?.actorId == null || event.actorId === row.actorId)
+      && !event?.isReflect && (!event?.isReaction || event?.isSignature);
+    if (!event || (!damageTypes.has(step.type) && !basicMiss) || event.isDot || customS9 || customS8) return;
     if (unarmedBasic) { punchCue(row, step, phaseHold); return; }
     const ownerId = event.actorId ?? row.actorId, targetId = event.targetId;
     const a = point(ownerId), originalTarget = point(targetId);
@@ -1109,12 +1236,17 @@ function createCombatFx(wrap) {
       areaRows.delete(row); abilityChip(row, event);
       abilityCue(row, cue.next, phaseHoldMs);
     }
-    if (damageTypes.has(type)) impact(row, event, phaseHoldMs);
+    if (damageTypes.has(type)) {
+      sequence8Impact(row, event, phaseHoldMs);
+      impact(row, event, phaseHoldMs);
+    }
     else if (['heal', 'shield', 'revive'].includes(type)) support(type, event, row, phaseHoldMs);
-    else if (event.status || event.type === 'thread' || ['cc_loss', 'madness_loss', 'banished'].includes(event.subtype)) support('status', event, row, phaseHoldMs);
+    else if (event.status || (sequence8Config(row) && event.type === 'status' && event.targetId != null
+      && !event.presentationEffect) || event.type === 'thread' || ['cc_loss', 'madness_loss', 'banished'].includes(event.subtype)) support('status', event, row, phaseHoldMs);
     travel(row, cue.next, phaseHoldMs);
   }
-  return { sync: map => { hpMap = map || Object.create(null); }, show,
+  return { sync: map => { hpMap = map || Object.create(null); prepareSequence8Assets(hpMap); }, show,
+    prepare: rows => { for (const row of rows || []) prepareSequence8Asset(sequence8Config(row)); },
     clear: () => { clearPhase(false); surface?.remove(); surface = null; hpMap = Object.create(null); paused = false; areaRows = new WeakSet(); phaseRow = null; phaseType = null; },
     reflow: () => { clearPhase(false); surface?.remove(); surface = null; },
     pause: () => { paused = true; for (const animation of animations.keys()) animation.pause(); },
@@ -1338,6 +1470,7 @@ function createBattleEffects(wrap) {
   }
   return { show, clear, finish,
     sync: map => { currentMap = map || Object.create(null); pathwayEffects.sync(currentMap); combatFx.sync(currentMap); },
+    prepare: rows => combatFx.prepare(rows),
     reflow: () => { clearTransient(); pathwayEffects.show(null); pathwayEffects.sync(currentMap); combatFx.reflow(); },
     pause: () => { for (const a of animations) a.pause(); pathwayEffects.pause(); combatFx.pause(); },
     resume: () => { for (const a of animations) a.play(); pathwayEffects.resume(); combatFx.resume(); },
@@ -2094,6 +2227,7 @@ if (typeof document !== 'undefined') (() => {
   function ensureBattleEffects(playing, wrap) {
     if (battleEffectsWrap !== wrap) {
       clearBattleEffects(); battleEffectsWrap = wrap; battleEffects = createBattleEffects(wrap);
+      battleEffects.prepare(playing.turnRows);
     }
     const isSim = !run;
     const map = wrap._battleHpMap || calculateCurrentHp(isSim ? playing.teamA : playing.initialAllies,
