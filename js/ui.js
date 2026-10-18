@@ -950,16 +950,20 @@ function createCombatFx(wrap) {
       }
       // High-opacity crimson slash flash across defender
       const slashWidth = effectHeight(p) * 1.6, slashHeight = slashWidth * 0.5;
+      const actorPoint = point(event.actorId ?? row.actorId);
+      const impactAngle = actorPoint ? Math.atan2(p.y - actorPoint.y, p.x - actorPoint.x) * 180 / Math.PI : 0;
       const slashImpact = element('image', { class: 'gm-combat-brutal-strike-impact-slash',
         x: -slashWidth / 2, y: -slashHeight / 2, width: slashWidth, height: slashHeight,
-        href: 'data/assets/effects/brutal-strike.png', preserveAspectRatio: 'xMidYMid meet' });
+        href: 'data/assets/effects/brutal-strike.png', transform: 'rotate(180)',
+        preserveAspectRatio: 'xMidYMid meet' });
+      slashImpact.setAttribute('data-flip-deg', '180');
       slashImpact.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', 'data/assets/effects/brutal-strike.png');
       burst.append(slashImpact);
       if (!compact()) {
         animate(slashImpact, [
-          { transform: 'scale(1.15) rotate(-10deg)', opacity: 1 },
-          { transform: 'scale(1) rotate(0deg)', opacity: 0.95, offset: 0.3 },
-          { transform: 'scale(0.96) rotate(3deg)', opacity: 0 }
+          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(1.15) rotate(-10deg)`, opacity: 1 },
+          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(1) rotate(0deg)`, opacity: 0.95, offset: 0.3 },
+          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(0.96) rotate(3deg)`, opacity: 0 }
         ], Math.min(220, duration));
       }
       // Trailing embers
