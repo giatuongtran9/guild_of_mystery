@@ -1,7 +1,7 @@
 {
   "schema": "guild.runtime-manifest.v1",
-  "version": "8c193336e9484e05",
-  "bundle": "data/runtime/data.8c193336e9484e05.json",
+  "version": "4236bb4ae514efc0",
+  "bundle": "data/runtime/data.4236bb4ae514efc0.json",
   "scriptVersions": {
     "js/vendor/dayjs.min.js": "9cfdb93f38afcf2d",
     "js/paths.js": "0d440daddbbd53de",
@@ -16,7 +16,7 @@
     "js/engine.js": "066c03a2a3d90997",
     "js/state.js": "06b4d9cd538f377d",
     "js/campaign.js": "cc4a4e65446ccee4",
-    "js/ui.js": "6f73ce8252501182"
+    "js/ui.js": "dd7861985ca2ebbf"
   },
   "serviceWorkerVersion": "e1bc522e1bc66336"
 }

@@ -94,11 +94,14 @@ test('all 20 active abilities have distinct real PNG artwork and a pathway palet
     assert.equal(effect.pathway, pathway, id + ' retains its source pathway');
     assert.match(effect.color, /^#[0-9a-f]{6}$/i);
     assert(['travel', 'strike', 'caster', 'support'].includes(effect.mode));
-    assert.match(effect.asset, /^data\/assets\/effects\/.+\.png$/);
-    assert(!paths.has(effect.asset), id + ' has its own effect artwork'); paths.add(effect.asset);
-    const bytes = fs.readFileSync(path.join(root, effect.asset));
-    assert.equal(bytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', id + ' is a PNG');
-    assert(bytes.readUInt32BE(16) >= 64 && bytes.readUInt32BE(20) >= 64, id + ' has a usable source resolution');
+    const assets = [effect.asset, effect.fallbackAsset].filter(Boolean);
+    for (const asset of assets) {
+      assert.match(asset, /^data\/assets\/effects\/.+\.png$/);
+      if (asset === effect.asset) { assert(!paths.has(asset), id + ' has its own effect artwork'); paths.add(asset); }
+      const bytes = fs.readFileSync(path.join(root, asset));
+      assert.equal(bytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a', id + ' is a PNG');
+      assert(bytes.readUInt32BE(16) >= 64 && bytes.readUInt32BE(20) >= 64, id + ' has a usable source resolution');
+    }
   }
   for (const passive of ['barbaric_physique', 'predictive_parry']) assert(!fx.sequence8Abilities[passive]);
 });
@@ -110,7 +113,7 @@ for (const id of Object.keys(abilities)) test(id + ' gives its PNG a complete re
   assert.equal(node.dataset.abilityId, id);
   assert.equal(node.dataset.ownerId, 'caster');
   assert.equal(node.dataset.effectSrc, fx.sequence8Abilities[id].asset);
-  assert.equal(node.querySelector('image')?.getAttribute('href'), fx.sequence8Abilities[id].asset);
+  assert.equal(node.querySelector('image')?.getAttribute('href'), node.dataset.effectSrc);
   const tracks = tracksFor(f, node);
   assert(tracks.length, 'the artwork uses the managed animation system');
   assert(tracks.every(animation => Number(animation.timing.duration) === 800));
@@ -154,6 +157,7 @@ test('Beast Command fallback strikes its real opponent without inventing a beast
   assert.equal(f.find('[data-effect="beast_command"]'), null);
   f.effects.show({ type: 'damage', row, event: next.event }, 1, 225);
   assert.equal(f.find('.gm-combat-sequence8[data-stage="impact"]').dataset.targetId, 'enemy');
+  assert.equal(f.find('.gm-combat-sequence8[data-stage="impact"]').dataset.effectSrc, fx.sequence8Abilities.beast_command.fallbackAsset);
   assert.equal(f.find('.gm-combat-heal'), null);
 });
 
@@ -331,8 +335,7 @@ test('Shadow Strike, Crafted Blade, Nature Growth and Beast Command render disti
   // Crafted Blade
   const crafted = cast(f, 'crafted_blade');
   f.effects.show({ type: 'damage', row: crafted.row, event: crafted.next.event }, 1, 225);
-  assert(f.find('.gm-combat-crafted-blade-impact-slash'), 'Crafted blade has forged cleave');
-  assert(f.find('.gm-combat-crafted-sparks'), 'Crafted blade has forged sparks');
+  assert.equal(f.find('.gm-combat-sequence8[data-stage="impact"]').dataset.effectSrc, fx.sequence8Abilities.crafted_blade.asset, 'Crafted Blade uses the authored brutal-strike-style PNG on impact');
   f.effects.clear(); f.effects.sync(f.map);
 
   // Nature Growth
@@ -352,8 +355,8 @@ test('Shadow Strike, Crafted Blade, Nature Growth and Beast Command render disti
   // Beast Command fallback
   const beastFallback = cast(f, 'beast_command', 1, { companion: false });
   f.effects.show({ type: 'damage', row: beastFallback.row, event: beastFallback.next.event }, 1, 225);
-  assert(f.find('.gm-combat-beast-claw-slash'), 'Beast Command fallback has savage claw slash');
-  assert(f.find('.gm-combat-beast-claw-sparks'), 'Beast Command fallback has blood/lunar sparks');
+  assert.equal(f.find('.gm-combat-sequence8[data-stage="impact"]').dataset.effectSrc, fx.sequence8Abilities.beast_command.fallbackAsset, 'Beast Command fallback uses the dedicated authored claw PNG');
+  assert(f.find('.gm-combat-beast-claw-sparks'), 'Beast Command fallback retains blood/lunar impact motes');
   f.effects.clear(); f.effects.sync(f.map);
 });
 

@@ -96,9 +96,10 @@
     if (!record(fx.sequence8Abilities) || Object.keys(fx.sequence8Abilities).length !== 20
       || new Set(Object.values(fx.sequence8Abilities).map(value => value?.pathway)).size !== 20) fail('Sequence 8 effects must cover twenty distinct active pathways');
     for (const [id, effect] of Object.entries(fx.sequence8Abilities)) {
-      if (!safeKey(id) || !fields(effect, ['pathway', 'asset', 'color', 'mode'])
+      if (!safeKey(id) || !fields(effect, ['pathway', 'asset', 'color', 'mode'], id === 'beast_command' ? ['fallbackAsset'] : [])
         || !paths.has(effect.pathway)
         || effect.asset !== `data/assets/effects/sequence8/${id.replace(/_/g, '-')}.png`
+        || (effect.fallbackAsset !== undefined && (id !== 'beast_command' || effect.fallbackAsset !== 'data/assets/effects/sequence8/beast-command-claw.png'))
         || typeof effect.color !== 'string' || !/^#[a-f0-9]{6}$/i.test(effect.color)
         || !['travel', 'strike', 'support', 'caster'].includes(effect.mode)) fail(`invalid Sequence 8 effect ${id}`);
     }

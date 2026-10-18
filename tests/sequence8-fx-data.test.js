@@ -32,13 +32,15 @@ test('every ability has its own local PNG and a valid palette color', () => {
   const assets = new Set();
   for (const { ability } of active) {
     const entry = original.sequence8Abilities[ability.id];
-    assert.deepEqual(Object.keys(entry).sort(), ['pathway', 'asset', 'color', 'mode'].sort());
+    assert.deepEqual(Object.keys(entry).sort(), (ability.id === 'beast_command' ? ['pathway', 'asset', 'color', 'mode', 'fallbackAsset'] : ['pathway', 'asset', 'color', 'mode']).sort());
     assert.equal(entry.asset, `data/assets/effects/sequence8/${ability.id.replace(/_/g, '-')}.png`);
+    if (ability.id === 'beast_command') assert.equal(entry.fallbackAsset, 'data/assets/effects/sequence8/beast-command-claw.png');
     assert.match(entry.color, /^#[a-f0-9]{6}$/i);
     assert(['travel', 'strike', 'support', 'caster'].includes(entry.mode));
     assets.add(entry.asset);
   }
-  assert.equal(assets.size, active.length, 'abilities cannot accidentally share one PNG');
+  assert.equal(assets.size, active.length, 'abilities cannot accidentally share their primary PNG');
+  assert.notEqual(original.sequence8Abilities.beast_command.fallbackAsset, original.sequence8Abilities.beast_command.asset);
 });
 test('the authored modes respect support recipients and conditional hostile outcomes', () => {
   assert.equal(original.sequence8Abilities.beast_command.mode, 'support');
@@ -74,6 +76,7 @@ rejects('incomplete effect records are rejected', data => { delete data.sequence
 rejects('null effect records are rejected', data => { data.sequence8Abilities.paper_card_dagger = null; });
 rejects('array effect records are rejected', data => { data.sequence8Abilities.paper_card_dagger = []; });
 rejects('raw markup in effect records is rejected', data => { data.sequence8Abilities.paper_card_dagger.svg = '<svg/>'; });
+rejects('fallback artwork is restricted to Beast Command claw art', data => { data.sequence8Abilities.paper_card_dagger.fallbackAsset = 'data/assets/effects/sequence8/paper-card-dagger-claw.png'; });
 rejects('unknown playback modes are rejected', data => { data.sequence8Abilities.paper_card_dagger.mode = 'area'; });
 rejects('non-string playback modes are rejected', data => { data.sequence8Abilities.paper_card_dagger.mode = ['travel']; });
 rejects('external asset URLs are rejected', data => { data.sequence8Abilities.paper_card_dagger.asset = 'https://example.test/paper-card-dagger.png'; });

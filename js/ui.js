@@ -427,9 +427,12 @@ function createCombatFx(wrap) {
     return config.sequence8Abilities?.[presentationAbility(row)];
   }
   function prepareSequence8Asset(spec) {
-    if (!spec || preparedAssets.has(spec.asset) || typeof window.Image !== 'function') return;
-    preparedAssets.add(spec.asset);
-    const preload = new window.Image(); preload.src = spec.asset;
+    if (!spec || typeof window.Image !== 'function') return;
+    for (const src of [spec.asset, spec.fallbackAsset].filter(Boolean)) {
+      if (preparedAssets.has(src)) continue;
+      preparedAssets.add(src);
+      const preload = new window.Image(); preload.src = src;
+    }
   }
   function prepareSequence8Assets(map) {
     const paths = new Set(Object.values(map || {}).filter(entry => entry && Number(entry.sequence) <= 8).map(entry => entry.path));
@@ -451,14 +454,21 @@ function createCombatFx(wrap) {
     const target = steps.find(step => own(step.event) && step.event.targetId != null);
     return { command: command?.event, hit: hit?.event, target: hit?.event || target?.event };
   }
-  function sequence8Image(row, stage, targetId, mode, p, size) {
+  function sequence8Image(row, stage, targetId, mode, p, size, assetOverride) {
     const spec = sequence8Config(row), root = layer();
     if (!spec || !root) return null;
+    const abilityId = presentationAbility(row);
+    const src = assetOverride || (abilityId === 'beast_command' && mode === 'travel' && spec.fallbackAsset) || spec.asset;
+    const aspect = abilityId === 'crafted_blade' ? 1321 / 339
+      : abilityId === 'beast_command' && src === spec.fallbackAsset ? 2
+        : abilityId === 'beast_command' ? 876 / 995 : 1;
+    const maxWidth = Math.max(1, (canvas()?.getBoundingClientRect().width || 320) - 8);
+    const width = Math.min(size * aspect, maxWidth), height = width / aspect;
     const node = group('gm-combat-sequence8', row.actorId, targetId, spec.color);
-    for (const [key, value] of Object.entries({ 'ability-id': presentationAbility(row), stage, mode,
-      'effect-src': spec.asset, 'effect-height': size })) node.setAttribute(`data-${key}`, value);
+    for (const [key, value] of Object.entries({ 'ability-id': abilityId, stage, mode,
+      'effect-src': src, 'effect-width': width, 'effect-height': height })) node.setAttribute(`data-${key}`, value);
     node.setAttribute('transform', `translate(${p.x} ${p.y})`);
-    const art = image(node, spec.asset, size, size, 'gm-combat-effect-image gm-combat-sequence8-image');
+    const art = image(node, src, width, height, 'gm-combat-effect-image gm-combat-sequence8-image');
     if (presentationAbility(row) === 'raging_blow') {
       art.setAttribute('transform', 'rotate(180)');
       art.setAttribute('data-flip-deg', '180');
@@ -575,7 +585,10 @@ function createCombatFx(wrap) {
     if (!spec || !p || event.isDot || (event.actorId != null && event.actorId !== row.actorId)
       || event.isReflect || (event.isReaction && !event.isSignature)) return;
     const size = Math.min((canvas()?.getBoundingClientRect().width || 320) - 8, effectHeight(p));
-    const node = sequence8Image(row, 'impact', event.targetId, spec.mode, p, size);
+    const fallbackImpact = presentationAbility(row) === 'beast_command'
+      && !row.timeline?.some(step => step.event?.presentationEffect === 'beast_command' && step.event?.targetId !== event.targetId);
+    const node = sequence8Image(row, 'impact', event.targetId, spec.mode, p, size,
+      fallbackImpact ? spec.fallbackAsset : undefined);
     if (!node) return;
     const actor = point(event.actorId ?? row.actorId);
     const moving = ['travel', 'support'].includes(spec.mode);
@@ -1325,29 +1338,7 @@ function createCombatFx(wrap) {
       }
     } else if (beastFallbackHit) {
       burst.setAttribute('data-beast-command-fallback', 'true');
-      // Triple Primal Claw Rend: three savage luminous diagonal claw lacerations
-      const clawWidth = effectHeight(p) * 1.5, clawHeight = clawWidth * 0.6;
-      const clawSlash = element('g', { class: 'gm-combat-beast-claw-slash', transform: `rotate(${impactAngle + 180})` });
-      const clawOffsets = [-clawHeight * 0.28, 0, clawHeight * 0.28];
-      for (const yOff of clawOffsets) {
-        clawSlash.append(element('path', {
-          d: `M ${-clawWidth * 0.42} ${yOff + clawHeight * 0.2} Q 0 ${yOff - clawHeight * 0.3} ${clawWidth * 0.42} ${yOff - clawHeight * 0.15}`,
-          stroke: '#ff4d6d', 'stroke-width': '4', fill: 'none', 'stroke-linecap': 'round', opacity: '0.95'
-        }));
-        clawSlash.append(element('path', {
-          d: `M ${-clawWidth * 0.35} ${yOff + clawHeight * 0.18} Q 0 ${yOff - clawHeight * 0.25} ${clawWidth * 0.35} ${yOff - clawHeight * 0.12}`,
-          stroke: '#ffffff', 'stroke-width': '2', fill: 'none', 'stroke-linecap': 'round', opacity: '1'
-        }));
-      }
-      burst.append(clawSlash);
-      if (!compact()) {
-        animate(clawSlash, [
-          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(1.15)`, opacity: 1 },
-          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(1) rotate(0deg)`, opacity: 0.95, offset: 0.3 },
-          { transform: `rotate(${impactAngle}deg) rotate(180deg) scale(0.96)`, opacity: 0 }
-        ], Math.min(220, duration));
-      }
-      // Ripping blood/lunar sparks
+      // The authored transparent claw PNG supplies the laceration; keep only the supporting impact motes here.
       const clawSparks = element('g', { class: 'gm-combat-beast-claw-sparks' });
       const clawCoords = [[-22, -14, 4, '#ff4d6d'], [-6, -22, 3, '#c8b9e8'], [16, -12, 4, '#ff758f'], [28, 8, 3.5, '#ffffff'], [-10, 16, 3, '#ff4d6d'], [20, 22, 2.5, '#c8b9e8']];
       for (const [cx, cy, r, col] of clawCoords) {

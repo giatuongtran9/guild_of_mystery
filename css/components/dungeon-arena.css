@@ -370,7 +370,21 @@
 
 .gm-combat-sequence8-image {
   image-rendering: pixelated;
+  overflow: visible;
 }
+
+.gm-combat-sequence8[data-ability-id="crafted_blade"] .gm-combat-sequence8-image {
+  filter: drop-shadow(0 0 5px rgba(231, 188, 121, .95)) drop-shadow(0 0 11px rgba(188, 39, 52, .78));
+}
+
+.gm-combat-sequence8[data-ability-id="nature_growth"] .gm-combat-sequence8-image {
+  filter: drop-shadow(0 0 5px rgba(91, 219, 125, .92)) drop-shadow(0 0 10px rgba(31, 111, 66, .75));
+}
+
+.gm-combat-sequence8[data-ability-id="beast_command"] .gm-combat-sequence8-image {
+  filter: drop-shadow(0 0 6px rgba(219, 200, 255, .94)) drop-shadow(0 0 12px rgba(116, 78, 175, .78));
+}
+
 
 .gm-combat-sword-slash-image,
 .gm-combat-sword-slash-projectile {
