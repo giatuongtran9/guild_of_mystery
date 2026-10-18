@@ -37,20 +37,9 @@ function battlePresentationRows(rows, shownCount, eventCount) {
 }
 
 function isReadableAbility(row) {
-  return ['exploit_loophole', 'combat_theft', 'healing_touch',
-    'paper_card_dagger', 'elemental_spark', 'deceptive_feint', 'holy_flash',
-    'raging_blow', 'analysis_weakness', 'shadow_strike', 'midnight_requiem',
-    'undying_touch', 'heavy_cleave', 'provocation', 'instigation', 'mystic_spell',
-    'crafted_blade', 'bad_luck_curse', 'nature_growth', 'beast_command',
-    'desire_ignition', 'madness_curse', 'fines_penalties'].includes(
-    String(row?.sourceAbilityId || row?.abilityId || '').split(':').pop());
-}
-
-function hasReadableOutcomeHold(row) {
-  // Keep the existing Sequence 9 outcome-reading time separate from the
-  // longer Sequence 8 cast cues; those retain ordinary outcome durations.
-  return ['exploit_loophole', 'combat_theft', 'healing_touch'].includes(
-    String(row?.sourceAbilityId || row?.abilityId || '').split(':').pop());
+  const id = String(row?.sourceAbilityId || row?.abilityId || '').split(':').pop();
+  return !!id && id !== 'basic_attack' && !row?.attackKind && !row?.isSkip
+    && row?.abilityType !== 'passive' && row?.abilityKind !== 'passive';
 }
 
 function presentationAbilityId(row) {
@@ -95,16 +84,15 @@ function isCastOnlyAbilityRow(row) {
   return row?.type === 'turn' && isReadableAbility(row) && !row.timeline?.length;
 }
 
-function readableCastDuration(row) { return isReadableAbility(row) || isPaperRebound(row) ? 800 : 300; }
+function readableCastDuration(row) { return isReadableAbility(row) ? 800 : 300; }
 
-// The longer ability casts keep at least 500ms at 2x. Other phases and compact
+// Active ability casts keep at least 500ms at 2x. Other phases and compact
 // playback use their ordinary rate; 1.6 is accepted when a controller forwards
 // an already resolved cast rate to its child effect controllers.
 function battleAnimationRate(row, speed = 1, phaseType, event) {
   const rate = [.5, 1, 1.25, 1.6, 2, 4].includes(Number(speed)) ? Number(speed) : 1;
   if (isPositiveSupportPhase(row, phaseType, event)) return Math.min(rate, 1.25);
   if (phaseType === 'cast' && isReadableAbility(row) && rate === 2) return 1.6;
-  if (phaseType === 'cast' && isPositiveSupportPhase(row, phaseType, event)) return Math.min(rate, 1.25);
   return rate;
 }
 
@@ -139,8 +127,7 @@ function battlePresentationDelay(playing, speed = 1) {
   if (count === 0) return castDuration / rate;
   const weights = { damage: 225, reaction: 325, reflect: 275, heal: 200,
     shield: 200, mythical: 450, death: 350, revive: 300, note: 90 };
-  const activeAbility = hasReadableOutcomeHold(row);
-  const holds = timeline.map(step => isPositiveSupportEvent(step.event, row) ? 500 : activeAbility ? 400 : Math.max(weights[step.type] || 90,
+  const holds = timeline.map(step => isPositiveSupportEvent(step.event, row) ? 500 : Math.max(weights[step.type] || 90,
     step.event.presentationEffect && !step.event.presentationEffect.endsWith('_end') ? 250 : step.event.type === 'thread' ? 175 : 0));
   const total = castDuration + holds.reduce((sum, value) => sum + value, 0);
   const padding = count === timeline.length ? Math.max(0, (periodic ? 300 : 1000) - total) : 0;
@@ -579,9 +566,7 @@ function createCombatFx(wrap) {
     node.setAttribute('data-owner-id', ownerId ?? row.actorId);
     node.setAttribute('transform', `translate(${target.x} ${target.y}) rotate(${angle})`);
     if (!compact()) {
-      const duration = isPositiveSupportEvent(event, row)
-        ? Math.max(1, Number(phaseHold) || 500)
-        : Math.max(1, Math.min(300, Number(phaseHold) || 225));
+      const duration = Math.max(1, Number(phaseHold) || (isPositiveSupportEvent(event, row) ? 500 : 225));
       if (reflecting && actor) animate(node, [
         { transform: `translate(${actor.x}px,${actor.y}px) rotate(${angle}deg) scale(.56)`, opacity: 0 },
         { transform: `translate(${actor.x + (target.x - actor.x) * .18}px,${actor.y + (target.y - actor.y) * .18}px) rotate(${angle}deg) scale(.9)`, opacity: 1, offset: .2 },
@@ -781,9 +766,7 @@ function createCombatFx(wrap) {
     node.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${angle})`);
     node.setAttribute('data-critical', String(!!event.critical));
     node.setAttribute('data-signature-release', String(!!event.isSignature));
-    const impactDuration = isPositiveSupportEvent(event, row)
-      ? Math.max(1, Number(phaseHold) || 500)
-      : Math.max(1, Math.min(225, Number(phaseHold) || 225));
+    const impactDuration = Math.max(1, Number(phaseHold) || (isPositiveSupportEvent(event, row) ? 500 : 225));
     if (compact()) return;
     if (id === 'nature_growth') {
       // Thorn Constriction: vines violently clamp inward (scale(0.86) with twisting bite)
@@ -1373,7 +1356,8 @@ function createCombatFx(wrap) {
       && (!row.timeline?.some(s => s.event?.presentationEffect === 'beast_command' && s.event?.targetId !== event.targetId))
       && event.actorId === row.actorId;
     const hasCustomHit = brutalHit || shadowHit || craftedHit || natureHit || beastFallbackHit;
-    const duration = punchHit || hasCustomHit ? Math.max(settings.durationMs || 160, 320) : settings.durationMs || 160;
+    const duration = isReadableAbility(row) ? Math.max(1, Number(phaseHold) || 225)
+      : punchHit || hasCustomHit ? Math.max(settings.durationMs || 160, 320) : settings.durationMs || 160;
     const actorPoint = point(event.actorId ?? row.actorId);
     const impactAngle = actorPoint ? Math.atan2(p.y - actorPoint.y, p.x - actorPoint.x) * 180 / Math.PI : 0;
     const impactScale = 1;
@@ -1399,7 +1383,7 @@ function createCombatFx(wrap) {
       { transform: 'translate(-2px, -1px)', offset: .6 },
       { transform: 'translate(1px, 1px)', offset: .8 },
       { transform: 'translate(0, 0)' }
-    ], Math.min(160, Math.max(1, Number(phaseHold) || 160)), 0, { remove: false, easing: 'ease-out' });
+    ], isReadableAbility(row) ? duration : Math.min(160, Math.max(1, Number(phaseHold) || 160)), 0, { remove: false, easing: 'ease-out' });
     let punchArt = null;
     if (brutalHit) {
       burst.setAttribute('data-brutal-strike', 'true');
@@ -1553,11 +1537,7 @@ function createCombatFx(wrap) {
   function support(type, event, row, phaseHoldMs) {
     const id = event.targetId ?? event.actorId ?? row.targetId ?? row.actorId, p = point(id);
     if (!p || !layer()) return;
-    const duration = isPositiveSupportEvent(event, row)
-      ? Math.max(1, Number(phaseHoldMs) || 500)
-      : presentationAbility(row) === 'healing_touch'
-        ? Math.min(config.support?.durationMs || 500, Math.max(1, Number(phaseHoldMs) || 500))
-        : config.support?.durationMs || 500;
+    const duration = Math.max(1, Number(phaseHoldMs) || config.support?.durationMs || 500);
     const color = type === 'heal' || type === 'revive' ? '#91dda9' : type === 'shield' ? '#b6dced' : '#dfc898';
     const node = group(`gm-combat-${type === 'revive' ? 'heal' : type}`, event.actorId ?? row.actorId, id, color);
     node.setAttribute('transform', `translate(${p.x} ${p.y})`);
@@ -1595,7 +1575,7 @@ function createCombatFx(wrap) {
       animate(icon, [{ opacity: .9, transform: 'translate(0,6px)' }, { opacity: 1, offset: .4 }, { opacity: 0, transform: 'translate(0,-10px)' }], duration);
     }
   }
-  function abilityChip(row, event) {
+  function abilityChip(row, event, phaseHoldMs) {
     if (row === chipRow || row.abilityId === 'basic_attack' || row.attackKind) return;
     const label = row.ability || row.abilityName || event.ability || event.abilityName;
     const p = point(event.actorId ?? row.actorId), field = canvas()?.getBoundingClientRect();
@@ -1607,7 +1587,8 @@ function createCombatFx(wrap) {
     chip.append(element('rect', { class: 'gm-combat-ability-chip-bg', x: -width / 2, y: -11, width, height: 20, rx: 2 }));
     const text = element('text', { class: 'gm-combat-ability-chip-label', x: 0, y: 3, 'text-anchor': 'middle' });
     text.textContent = String(label).length > 28 ? `${String(label).slice(0, 27)}…` : String(label); chip.append(text); layer().append(chip);
-    animate(chip, [{ opacity: 1 }, { opacity: 1, offset: .8 }, { opacity: 0 }], config.abilityChipMs || 500);
+    animate(chip, [{ opacity: 1 }, { opacity: 1, offset: .8 }, { opacity: 0 }],
+      isReadableAbility(row) ? Math.max(1, Number(phaseHoldMs) || readableCastDuration(row)) : config.abilityChipMs || 500);
   }
   function show(cue, playbackSpeed = 1, phaseHoldMs = 600) {
     const event = cue?.event || {}, row = cue?.row || event;
@@ -1617,7 +1598,7 @@ function createCombatFx(wrap) {
     if (chipRow && row !== chipRow) clearPhase(false); else clearPhase(true);
     if (!cue || cue.type === 'settle') return;
     if (type === 'cast') {
-      areaRows.delete(row); abilityChip(row, event);
+      areaRows.delete(row); abilityChip(row, event, phaseHoldMs);
       abilityCue(row, cue.next, phaseHoldMs);
     }
     if (damageTypes.has(type) || type === 'reflect') {

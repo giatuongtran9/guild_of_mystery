@@ -83,7 +83,7 @@ function assertDuration(animations, duration) {
   assert(animations.every(a => Number(a.timing.duration) === duration), 'all main effect tracks share the provided phase');
 }
 
-test('only the three readable casts use 500ms at 2x and normalize copied source IDs', f => {
+test('all active ability casts use the shared 500ms-at-2x clock and normalize copied source IDs', f => {
   for (const id of readable) for (const row of [rowFor(id), rowFor('record:' + id), rowFor('soul:' + id), rowFor('copy:other', { sourceAbilityId: id })]) {
     assert.equal(f.w.battleAnimationRate(row, 2, 'cast'), 1.6);
     assert.equal(800 / f.w.battleAnimationRate(row, 2, 'cast'), 500);
@@ -92,8 +92,12 @@ test('only the three readable casts use 500ms at 2x and normalize copied source 
     assert.equal(f.w.battleAnimationRate(row, 4, 'cast'), 4, 'compact playback retains 4x');
     for (const phase of ['damage', 'note', 'heal', 'settle']) assert.equal(f.w.battleAnimationRate(row, 2, phase), 2);
   }
-  for (const id of ['basic_attack', 'brutal_strike', 'danger_sense', 'mystic_orb']) {
-    assert.equal(f.w.battleAnimationRate(rowFor(id), 2, 'cast'), 2, id + ' keeps its existing rate');
+  assert.equal(f.w.battleAnimationRate(rowFor('basic_attack'), 2, 'cast'), 2, 'basic attacks keep their existing rate');
+  for (const id of ['danger_sense', 'mystic_orb']) {
+    assert.equal(f.w.battleAnimationRate(rowFor(id, { abilityType: 'passive' }), 2, 'cast'), 2, id + ' passive rows are not treated as active casts');
+  }
+  for (const id of ['brutal_strike', 'unlisted_active_skill']) {
+    assert.equal(f.w.battleAnimationRate(rowFor(id), 2, 'cast'), 1.6, id + ' uses the shared active-ability cast rate');
   }
 });
 
@@ -237,11 +241,12 @@ test('presentation preserves recorded state and does not add passive or basic ut
     assert.equal(JSON.stringify({ row, next }), recorded, 'presentation does not rewrite replay events');
     f.effects.clear(); f.effects.sync(f.map);
   }
-  for (const row of [rowFor('basic_attack', { attackKind: 'weapon' }), rowFor('brutal_strike'), rowFor('danger_sense')]) {
+  for (const row of [rowFor('basic_attack', { attackKind: 'weapon' }), rowFor('brutal_strike'), rowFor('danger_sense', { abilityType: 'passive' })]) {
     f.effects.show({ type: row.abilityId === 'danger_sense' ? 'row' : 'cast', row,
       event: { type: 'story', actorId: 'caster' }, next: nextFor('exploit_loophole') }, 2, 300);
     assert.equal(f.find('.gm-combat-loophole-seal, .gm-combat-theft-siphon, .gm-combat-healing-touch-flight'), null);
-    assert(active(f).every(a => a.playbackRate === 2), 'other casts retain their normal speed');
+    const expectedRate = row.abilityId === 'brutal_strike' ? 1.6 : 2;
+    assert(active(f).every(a => a.playbackRate === expectedRate), 'active ability casts share the universal cast speed; other cues retain normal speed');
     f.effects.clear(); f.effects.sync(f.map);
   }
   assert.equal(JSON.stringify(f.map), before, 'HP, SP and all other combat snapshot values are unchanged');

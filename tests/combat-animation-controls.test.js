@@ -261,9 +261,9 @@ function clean(f) {
         f.tick();
         if (ability === 'healing_touch') assert.equal(hp(ally), '70/100');
         else assert(log(f).textContent.includes('Steals'), 'the first recorded theft appears only after the cue');
-        const expectedOutcomeMs = ability === 'healing_touch' ? 500 : 400 / speed;
+        const expectedOutcomeMs = ability === 'healing_touch' ? 500 : 90 / speed;
         assert.equal(f.timers.values().next().value.delay, expectedOutcomeMs,
-          'healing outcomes keep a 500ms visible effect at faster playback; other outcomes retain their ordinary timing');
+          'support effects retain their 500ms hold; other outcomes use Sequence 8 phase holds');
         if (ability === 'exploit_loophole') { f.tick(); assert.equal(hp(enemy), '30/100'); }
       }, { readableAbility: ability, copied });
     }
@@ -294,7 +294,7 @@ function clean(f) {
       assert.equal(f.timers.values().next().value.delay, 200, 'compact playback retains its 4x scheduler rate');
       assert(f.animations.every(animation => animation.cancelled), 'switching to compact speed removes moving cues');
       assert.equal(hp(f.card(f.enemyId)), '100/100');
-      f.tick(); assert.equal(f.timers.values().next().value.delay, ability === 'healing_touch' ? 500 : 100);
+      f.tick(); assert.equal(f.timers.values().next().value.delay, ability === 'healing_touch' ? 500 : 90 / 4);
     }, { readableAbility: ability });
   }
 
@@ -311,10 +311,10 @@ function clean(f) {
         assert.equal(f.w.battlePresentationRate(playing, 2), 2);
       }
     }
-    for (const ability of ['basic_attack', 'brutal_strike', 'unrelated_ability']) {
+    for (const [ability, expected] of [['basic_attack', 300], ['brutal_strike', 800], ['unrelated_ability', 800]]) {
       const playing = { turnRows: [{ abilityId: ability, timeline: [{ type: 'damage', event: {} }] }], currentTurn: 0, eventCount: 0 };
-      assert.equal(f.w.battlePresentationDelay(playing, 1), 300);
-      assert.equal(f.w.battlePresentationDelay(playing, 2), 150);
+      assert.equal(f.w.battlePresentationDelay(playing, 1), expected);
+      assert.equal(f.w.battlePresentationDelay(playing, 2), expected === 800 ? 500 : 150);
     }
   });
 

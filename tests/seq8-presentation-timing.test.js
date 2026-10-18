@@ -36,7 +36,7 @@ test('all twenty shipped Sequence 8 actives receive readable casts while the two
   for (const key of ['black_emperor', 'visionary']) {
     const passive = g.tierFor(key, 8).abilities[0];
     assert.equal(passive.type, 'passive');
-    assert.equal(api.isReadableAbility({ abilityId: passive.effectId }), false);
+    assert.equal(api.isReadableAbility({ abilityId: passive.effectId, abilityType: 'passive' }), false);
   }
 });
 
@@ -64,7 +64,7 @@ for (const { key, spec } of catalog) test(`${spec.effectId}: native and copied m
   }
 });
 
-test('Sequence 8 outcomes retain their existing short reading phases instead of inheriting Sequence 9 holds', () => {
+test('all active abilities use the same Sequence 8 event-specific outcome holds', () => {
   const note = { type: 'note', event: { type: 'status', text: 'A recorded debuff' } };
   const damage = { type: 'damage', event: { type: 'damage', hpLoss: 3 } };
   const p = playing({ type: 'turn', abilityId: 'undying_touch', timeline: [note, damage] });
@@ -75,12 +75,12 @@ test('Sequence 8 outcomes retain their existing short reading phases instead of 
   assert.equal(api.battlePresentationRate(p, 2), 2, 'the 1.6x exception ends when the cast ends');
   api.advanceBattlePresentation(p);
   assert.equal(api.battlePresentationDelay(p, 1), 225);
-  for (const abilityId of ['exploit_loophole', 'combat_theft', 'healing_touch']) {
-    const old = playing({ type: 'turn', abilityId, timeline: [note, damage] });
-    api.advanceBattlePresentation(old); api.advanceBattlePresentation(old);
-    assert.equal(api.battlePresentationDelay(old, 1), 400, abilityId + ' retains its established outcome hold');
-    api.advanceBattlePresentation(old);
-    assert.equal(api.battlePresentationDelay(old, 1), 400);
+  for (const abilityId of ['exploit_loophole', 'combat_theft', 'healing_touch', 'brutal_strike', 'unlisted_active_skill']) {
+    const active = playing({ type: 'turn', abilityId, timeline: [note, damage] });
+    api.advanceBattlePresentation(active); api.advanceBattlePresentation(active);
+    assert.equal(api.battlePresentationDelay(active, 1), 90, abilityId + ' uses the Sequence 8 note hold');
+    api.advanceBattlePresentation(active);
+    assert.equal(api.battlePresentationDelay(active, 1), 225, abilityId + ' uses the Sequence 8 damage hold');
   }
 });
 
@@ -95,12 +95,10 @@ test('healing, positive buffs, and Paper Figurine Rebound retain readable outcom
     const row = { type: 'turn', abilityId, actorId: 'ally', timeline: [{ type: event.type === 'heal' ? 'heal' : event.type === 'status' ? 'note' : 'reflect', event }] };
     const p = playing(row);
     assert.equal(api.advanceBattlePresentation(p).type, 'cast');
-    const expectedCastWall = abilityId === 'paper_figurine_rebound' ? 800 : 800 / (abilityId === 'healing_touch' ? (speed === 2 ? 1.6 : speed) : (speed === 2 ? 1.6 : speed));
-    if (abilityId === 'paper_figurine_rebound') assert.equal(api.battlePresentationDuration(p, speed), 800 * (speed > 1 ? 1.25 : 1));
-    assert(Number.isFinite(expectedCastWall));
-    const expectedCastRate = abilityId === 'paper_figurine_rebound' || abilityId === 'wind_step'
-      ? Math.min(speed, 1.25) : speed === 2 ? 1.6 : speed;
+    const expectedCastRate = abilityId === 'paper_figurine_rebound' ? Math.min(speed, 1.25) : speed === 2 ? 1.6 : speed;
     assert.equal(api.battlePresentationRate(p, speed), expectedCastRate);
+    assert.equal(api.battlePresentationDuration(p, speed),
+      abilityId === 'paper_figurine_rebound' && speed > 1 ? 1000 : 800);
     api.advanceBattlePresentation(p);
     const expectedOutcomeRate = abilityId === 'healing_touch' ? Math.min(speed, 1.25) : Math.min(speed, 1.25);
     assert.equal(api.battlePresentationRate(p, speed), expectedOutcomeRate);
@@ -151,24 +149,30 @@ test('every native Sequence 8 timeline replays its real events once and preserve
   }
 });
 
-test('periodic damage and unrelated empty rows do not acquire a new ability cast', () => {
+test('periodic damage skips casting while passive and non-ability empty rows stay uncast', () => {
   const dot = { type: 'damage', event: { type: 'damage', isDot: true, hpLoss: 2 } };
   const p = playing({ type: 'turn', abilityId: 'madness_curse', timeline: [dot] });
   assert.equal(api.advanceBattlePresentation(p).type, 'damage');
   assert.equal(api.battlePresentationRate(p, 2), 2);
-  const plain = playing({ type: 'turn', abilityId: 'unrelated_action', timeline: [] });
-  assert.equal(api.battlePresentationDelay(plain, 1), 1000);
+  const passive = playing({ type: 'turn', abilityId: 'inert_passive', abilityType: 'passive', timeline: [] });
+  assert.equal(api.battlePresentationDelay(passive, 1), 1000);
+  assert.equal(api.advanceBattlePresentation(passive).type, 'row');
+  assert.equal(passive.currentTurn, 1);
+  const plain = playing({ type: 'story', timeline: [] });
+  assert.equal(api.battlePresentationDelay(plain, 1), 400);
   assert.equal(api.advanceBattlePresentation(plain).type, 'row');
   assert.equal(plain.currentTurn, 1);
 });
 
-test('ordinary attacks and Brutal Strike keep their original cast duration at every speed', () => {
-  for (const abilityId of ['basic_attack', 'brutal_strike']) for (const speed of [.5, 1, 2, 4]) {
-    const p = playing({ type: 'turn', abilityId, timeline: [{ type: 'damage', event: { type: 'damage' } }] });
-    api.advanceBattlePresentation(p);
-    assert.equal(api.battlePresentationDelay(p, speed), 300 / speed);
-    assert.equal(api.battlePresentationRate(p, speed), speed);
-  }
+test('basic attacks keep their original cast duration while active attacks use the universal ability clock', () => {
+  for (const [abilityId, duration] of [['basic_attack', 300], ['brutal_strike', 800], ['unlisted_active_skill', 800]])
+    for (const speed of [.5, 1, 2, 4]) {
+      const p = playing({ type: 'turn', abilityId, timeline: [{ type: 'damage', event: { type: 'damage' } }] });
+      api.advanceBattlePresentation(p);
+      const rate = duration === 800 && speed === 2 ? 1.6 : speed;
+      assert.equal(api.battlePresentationDelay(p, speed), duration / rate);
+      assert.equal(api.battlePresentationRate(p, speed), rate);
+    }
 });
 
 console.log(`\nSequence 8 presentation timing: ${passed} passed; ${failed} failed.`);
