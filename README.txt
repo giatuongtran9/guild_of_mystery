@@ -24,6 +24,14 @@ Combat animation and playback
   clock and replay clock stay synchronized through Pause and speed changes.
   Read gives these casts 1600ms; 4x retains compact 200ms feedback. Their PNGs
   preload before battle. Recorded/copied uses retain the same presentation.
+  All twenty active Sequence 8 powers have separate transparent PNG effects
+  in data/assets/effects/sequence8, with pathway palettes and modes authored
+  in data/fx.json. They share the 800ms/500ms readable cast timing; passives
+  remain unchanged. Only participating pathways warm their effects before
+  use. Cast-only Bad Luck Curse still gets its full casting cue. Moon command
+  follows its actual recipient or recorded owner attack, and secondary control
+  appears only on successful recorded events. No animation changes targeting,
+  damage, resource rules, extra actions or character artwork.
   Projectile families and damage colors live in data/fx.json. Swords and knives
   share the slash presentation. Pistol basics fire a rounded tracer from a
   compact gun-muzzle.png flash; unarmed basics jab and land a punch impact,
@@ -54,6 +62,8 @@ Combat animation and playback
   combat-action-rhythm.test.js, combat-projectile-fx.test.js, combat-weapon-browser.test.js,
   combat-signature-effects.test.js, signature-presentation-events.test.js,
   battlefield-safe-layout.test.js, phase2-battle.test.js and phase4-ui.test.js.
+  Sequence 8: tests/sequence8-fx-data.test.js, seq8-presentation-timing.test.js,
+  sequence8-fx.test.js and sequence8-browser.test.js.
 
 Opening campaign: The Whispering District
   The Campaign tab introduces Sequence 9 play through five ordered missions:
