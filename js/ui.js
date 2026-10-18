@@ -51,7 +51,9 @@ function battlePresentationDelay(playing, speed = 1) {
   if (count === 0) return (periodic ? 0 : 300) / rate;
   const weights = { damage: 225, reaction: 325, reflect: 275, heal: 200,
     shield: 200, mythical: 450, death: 350, revive: 300, note: 90 };
-  const holds = timeline.map(step => Math.max(weights[step.type] || 90,
+  const activeAbility = ['exploit_loophole', 'combat_theft', 'healing_touch'].includes(
+    String(row.sourceAbilityId || row.abilityId || '').split(':').pop());
+  const holds = timeline.map(step => activeAbility ? 400 : Math.max(weights[step.type] || 90,
     step.event.presentationEffect && !step.event.presentationEffect.endsWith('_end') ? 250 : step.event.type === 'thread' ? 175 : 0));
   const total = (periodic ? 0 : 300) + holds.reduce((sum, value) => sum + value, 0);
   const padding = count === timeline.length ? Math.max(0, (periodic ? 300 : 1000) - total) : 0;
@@ -518,6 +520,9 @@ function createCombatFx(wrap) {
     const actor = point(row.actorId), targetId = event?.targetId ?? row.targetId, target = point(targetId);
     if (!actor || !layer()) return;
     const hold = Math.max(100, Math.min(Number(phaseHold) || 600, 560));
+    const activeAbilityHold = 400;
+    const abilityHold = ['exploit_loophole', 'combat_theft', 'healing_touch'].includes(id)
+      ? activeAbilityHold : hold;
     const src = S9_EFFECTS[id];
     if (id === 'exploit_loophole' && target) {
       const size = effectHeight(target);
@@ -570,37 +575,37 @@ function createCombatFx(wrap) {
       root.append(container);
 
       if (!compact()) {
-        const animIntact = animate(intact, [
+        animate(intact, [
           { transform: 'scale(0.8)', opacity: 0 },
-          { transform: 'scale(1)', opacity: 0.98, offset: 0.2 },
-          { transform: 'scale(1)', opacity: 0.98, offset: 0.38 },
-          { transform: 'scale(1.02)', opacity: 0, offset: 0.42 },
+          { transform: 'scale(1)', opacity: 0.98, offset: 0.375 },
+          { transform: 'scale(1)', opacity: 0.98, offset: 0.75 },
+          { transform: 'scale(1.02)', opacity: 0, offset: 0.78 },
           { transform: 'scale(1.02)', opacity: 0 }
-        ], hold, 0, { remove: false });
+        ], abilityHold, 0, { remove: false });
 
         animate(flash, [
           { opacity: 0 },
-          { opacity: 0, offset: 0.36 },
-          { opacity: 0.95, offset: 0.4 },
-          { opacity: 0, offset: 0.48 },
+          { opacity: 0, offset: 0.75 },
+          { opacity: 0.95, offset: 0.78 },
+          { opacity: 0, offset: 0.86 },
           { opacity: 0 }
-        ], hold, 0, { remove: false });
+        ], abilityHold, 0, { remove: false });
 
         animate(topHalf, [
           { transform: 'translate(0px, 0px) rotate(0deg)', opacity: 0 },
-          { transform: 'translate(0px, 0px) rotate(0deg)', opacity: 0, offset: 0.39 },
-          { transform: 'translate(-4px, -4px) rotate(-1deg)', opacity: 0.98, offset: 0.42 },
-          { transform: 'translate(-28px, -24px) rotate(-8deg)', opacity: 0.8, offset: 0.72 },
+          { transform: 'translate(0px, 0px) rotate(0deg)', opacity: 0, offset: 0.75 },
+          { transform: 'translate(-4px, -4px) rotate(-1deg)', opacity: 0.98, offset: 0.78 },
+          { transform: 'translate(-28px, -24px) rotate(-8deg)', opacity: 0.8, offset: 0.92 },
           { transform: 'translate(-42px, -36px) rotate(-14deg) scale(0.9)', opacity: 0 }
-        ], hold, 0, { remove: false });
+        ], abilityHold, 0, { remove: false });
 
         animate(botHalf, [
           { transform: 'translate(0px, 0px) rotate(0deg)', opacity: 0 },
-          { transform: 'translate(0px, 0px) rotate(0deg)', opacity: 0, offset: 0.39 },
-          { transform: 'translate(4px, 4px) rotate(1deg)', opacity: 0.98, offset: 0.42 },
-          { transform: 'translate(28px, 24px) rotate(8deg)', opacity: 0.8, offset: 0.72 },
+          { transform: 'translate(0px, 0px) rotate(0deg)', opacity: 0, offset: 0.75 },
+          { transform: 'translate(4px, 4px) rotate(1deg)', opacity: 0.98, offset: 0.78 },
+          { transform: 'translate(28px, 24px) rotate(8deg)', opacity: 0.8, offset: 0.92 },
           { transform: 'translate(42px, 36px) rotate(14deg) scale(0.9)', opacity: 0 }
-        ], hold, 0, {
+        ], abilityHold, 0, {
           onfinish: () => {
             clipTop.remove();
             clipBot.remove();
@@ -632,11 +637,11 @@ function createCombatFx(wrap) {
       if (!compact()) {
         animate(node, [
           { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(0.65)`, opacity: 0 },
-          { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(1)`, opacity: 0.98, offset: 0.22 },
-          { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(1.03)`, opacity: 0.92, offset: 0.55 },
-          { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(0.95)`, opacity: 0.85, offset: 0.78 },
+          { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(1)`, opacity: 0.98, offset: 0.375 },
+          { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(1.03)`, opacity: 0.98, offset: 0.75 },
+          { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(0.95)`, opacity: 0.85, offset: 0.9 },
           { transform: `translate(${midX}px,${midY}px) rotate(${angle}deg) scale(0.85)`, opacity: 0 }
-        ], hold);
+        ], abilityHold);
       } else {
         node.setAttribute('transform', `translate(${midX} ${midY}) rotate(${angle})`);
       }
@@ -665,10 +670,10 @@ function createCombatFx(wrap) {
         if (!compact()) {
           animate(node, [
             { transform: `translate(${actor.x}px,${actor.y}px) scale(0.75)`, opacity: 0 },
-            { transform: `translate(${actor.x}px,${actor.y}px) scale(1)`, opacity: 0.98, offset: 0.3 },
-            { transform: `translate(${actor.x}px,${actor.y - 6}px) scale(1.05)`, opacity: 0.9, offset: 0.7 },
+            { transform: `translate(${actor.x}px,${actor.y}px) scale(1)`, opacity: 0.98, offset: 0.375 },
+            { transform: `translate(${actor.x}px,${actor.y - 6}px) scale(1.05)`, opacity: 0.98, offset: 0.75 },
             { transform: `translate(${actor.x}px,${actor.y - 10}px) scale(1)`, opacity: 0 }
-          ], hold);
+          ], abilityHold);
         }
         return;
       }
@@ -699,17 +704,17 @@ function createCombatFx(wrap) {
       if (!compact()) {
         animate(revealRect, [
           { width: `${width * 0.28}px`, offset: 0 },
-          { width: `${width * 0.65}px`, offset: 0.5 },
-          { width: `${width + 30}px`, offset: 0.85 },
+          { width: `${width * 0.65}px`, offset: 0.375 },
+          { width: `${width + 30}px`, offset: 0.75 },
           { width: `${width + 30}px`, offset: 1 }
-        ], hold, 0, { remove: false });
+        ], abilityHold, 0, { remove: false });
 
         animate(node, [
           { opacity: 0 },
-          { opacity: 0.98, offset: 0.2 },
-          { opacity: 0.98, offset: 0.8 },
+          { opacity: 0.98, offset: 0.375 },
+          { opacity: 0.98, offset: 0.75 },
           { opacity: 0 }
-        ], hold, 0, {
+        ], abilityHold, 0, {
           onfinish: () => {
             clip.remove();
             node.remove();
@@ -860,8 +865,9 @@ function createCombatFx(wrap) {
           // Brutal Strike: 1152x576 crimson slash art (ratio 2:1), same size as sword slash
           const slashWidth = size * 1.5, slashHeight = slashWidth * 0.5;
           const slash = element('image', { class: 'gm-combat-brutal-strike-projectile', x: -slashWidth / 2, y: -slashHeight / 2,
-            width: slashWidth, height: slashHeight, href: 'data/assets/effects/brutal-strike.png',
+            width: slashWidth, height: slashHeight, href: 'data/assets/effects/brutal-strike.png', transform: 'rotate(180)',
             preserveAspectRatio: 'xMidYMid meet', opacity: 1 });
+          slash.setAttribute('data-flip-deg', '180');
           slash.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', 'data/assets/effects/brutal-strike.png');
           node.append(slash);
         } else {
