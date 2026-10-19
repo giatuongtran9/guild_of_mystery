@@ -1385,7 +1385,9 @@ function createCombatFx(wrap) {
       || (sequence7Config(row) && (event?.actorId == null || event.actorId === row.actorId));
     const customS8 = sequence8Config(row) && (event?.actorId == null || event.actorId === row.actorId)
       && !event?.isReflect && (!event?.isReaction || event?.isSignature);
-    if (!event || (!damageTypes.has(step.type) && !basicMiss) || event.isDot || customS9 || customS8 || customS7) return;
+    const customS6 = sequence6Config(row) && (event?.actorId == null || event.actorId === row.actorId)
+      && !event?.isReflect && (!event?.isReaction || event?.isSignature);
+    if (!event || (!damageTypes.has(step.type) && !basicMiss) || event.isDot || customS9 || customS8 || customS7 || customS6) return;
     if (unarmedBasic) { punchCue(row, step, phaseHold); return; }
     const ownerId = event.actorId ?? row.actorId, targetId = event.targetId;
     const a = point(ownerId), originalTarget = point(targetId);
@@ -1536,6 +1538,9 @@ function createCombatFx(wrap) {
       { transform: 'translate(1px, 1px)', offset: .8 },
       { transform: 'translate(0, 0)' }
     ], isReadableAbility(row) ? duration : Math.min(160, Math.max(1, Number(phaseHold) || 160)), 0, { remove: false, easing: 'ease-out' });
+    const authoredSequence6Hit = sequence6Config(row) && event.actorId === row.actorId
+      && !event.isReflect && (!event.isReaction || event.isSignature);
+    if (authoredSequence6Hit) return; // retain shared screen shake, but let Sequence 6 own its visible impact.
     let punchArt = null;
     if (brutalHit) {
       burst.setAttribute('data-brutal-strike', 'true');
