@@ -460,9 +460,13 @@ function createCombatFx(wrap) {
     return config.sequence6Abilities?.[presentationAbility(row)];
   }
   function prepareSequence6Asset(spec) {
-    if (!spec || typeof window.Image !== 'function' || preparedAssets.has(spec.asset)) return;
-    preparedAssets.add(spec.asset);
-    const preload = new window.Image(); preload.src = spec.asset;
+    if (!spec || typeof window.Image !== 'function') return;
+    if (preparedAssets.has(spec.asset) && (!spec.ghostAsset || preparedAssets.has(spec.ghostAsset))) return;
+    for (const src of [spec.asset, spec.ghostAsset].filter(Boolean)) {
+      if (preparedAssets.has(src)) continue;
+      preparedAssets.add(src);
+      const preload = new window.Image(); preload.src = src;
+    }
   }
   function sequence6Endpoint(row, mode) {
     if (mode === 'caster') return row.actorId;
@@ -483,11 +487,12 @@ function createCombatFx(wrap) {
     const size = Math.min((canvas()?.getBoundingClientRect().width || 320) - 8, effectHeight(point(targetId) || p) * 1.14);
     const width = Number(geometry.width) > 0 ? Number(geometry.width) : size;
     const height = Number(geometry.height) > 0 ? Number(geometry.height) : size;
+    const src = geometry.asset || spec.asset;
     const node = group('gm-combat-sequence6', row.actorId, targetId, spec.color);
     for (const [key, value] of Object.entries({ 'ability-id': presentationAbility(row), stage, mode,
-      'effect-src': spec.asset, 'effect-width': width, 'effect-height': height })) node.setAttribute(`data-${key}`, value);
+      'effect-src': src, 'effect-width': width, 'effect-height': height })) node.setAttribute(`data-${key}`, value);
     node.setAttribute('transform', `translate(${p.x} ${p.y})`);
-    image(node, spec.asset, width, height, 'gm-combat-effect-image gm-combat-sequence6-image');
+    image(node, src, width, height, 'gm-combat-effect-image gm-combat-sequence6-image');
     if (geometry.stretch) node.querySelector('image')?.setAttribute('preserveAspectRatio', 'none');
     root.append(node);
     return node;
@@ -496,36 +501,67 @@ function createCombatFx(wrap) {
     const spec = sequence6Config(row), actor = point(row.actorId);
     if (!spec || !actor) return;
     let mode = spec.mode, targetId = sequence6Endpoint(row, mode);
+    const abilityId = presentationAbility(row);
+    if (abilityId === 'depravity_mark' && row.targetId != null && point(row.targetId)) { mode = 'strike'; targetId = row.targetId; }
+    const deathTargetId = abilityId === 'spirit_body_door'
+      ? (row.targetId != null && point(row.targetId) ? row.targetId : sequence6Endpoint(row, 'travel')) : targetId;
+    if (abilityId === 'spirit_body_door' && deathTargetId != null) targetId = deathTargetId;
     if (mode === 'support' && targetId === row.actorId && row.targetId != null && point(row.targetId)) targetId = row.targetId;
     const target = point(targetId);
     if (!target) { mode = 'caster'; targetId = row.actorId; }
     const destination = point(targetId) || actor;
-    const spanLightning = presentationAbility(row) === 'lightning_bolt' && mode === 'travel' && targetId !== row.actorId;
+    const spanLightning = abilityId === 'lightning_bolt' && mode === 'travel' && targetId !== row.actorId;
     const moving = mode === 'travel' && targetId !== row.actorId && !spanLightning;
-    const angle = (moving || spanLightning) ? Math.atan2(destination.y - actor.y, destination.x - actor.x) * 180 / Math.PI : 0;
-    const midpoint = spanLightning ? { x: (actor.x + destination.x) / 2, y: (actor.y + destination.y) / 2 } : null;
+    const rustSiphon = abilityId === 'rust_siphon' && targetId !== row.actorId;
+    const deathDoor = abilityId === 'spirit_body_door' && deathTargetId !== row.actorId;
+    const midpoint = spanLightning || rustSiphon ? { x: (actor.x + destination.x) / 2, y: (actor.y + destination.y) / 2 } : null;
+    const angle = rustSiphon ? 180 : (moving || spanLightning) ? Math.atan2(destination.y - actor.y, destination.x - actor.x) * 180 / Math.PI : 0;
     const spanWidth = spanLightning ? Math.hypot(destination.x - actor.x, destination.y - actor.y) : 0;
     const spanHeight = spanLightning ? Math.max(24, effectHeight(point(targetId) || destination) * 1.12) : 0;
-    const node = sequence6Image(row, 'cast', targetId, mode,
-      spanLightning ? midpoint : moving ? destination : (mode === 'caster' ? actor : destination),
+    const node = sequence6Image(row, 'cast', deathDoor ? row.actorId : targetId, deathDoor ? 'caster' : mode,
+      spanLightning || rustSiphon ? midpoint : (deathDoor || mode === 'caster' ? actor : moving ? destination : destination),
       spanLightning ? { width: spanWidth, height: spanHeight, stretch: true } : undefined);
     if (!node) return;
     node.setAttribute('data-angle-deg', String(angle));
-    node.setAttribute('data-flight-path', spanLightning ? 'attacker-to-target-span' : moving ? 'straight' : 'stationary');
+    node.setAttribute('data-flight-path', spanLightning ? 'attacker-to-target-span' : rustSiphon ? 'stationary-midpoint' : moving ? 'straight' : 'stationary');
     if (moving || spanLightning) node.setAttribute('data-flow-direction', 'caster-to-target');
+    if (rustSiphon) node.setAttribute('transform', `translate(${midpoint.x} ${midpoint.y}) rotate(180)`);
+    if (deathDoor && spec.ghostAsset) {
+      node.setAttribute('data-flight-path', 'stationary-caster-door');
+      const ghost = sequence6Image(row, 'ghost-travel', targetId, 'travel', actor, { asset: spec.ghostAsset });
+      if (ghost) {
+        ghost.setAttribute('data-flight-path', 'caster-to-target');
+        ghost.setAttribute('data-flow-direction', 'caster-to-target');
+        if (!compact()) animate(ghost, [
+          { transform: `translate(${actor.x}px,${actor.y}px) scale(.55)`, opacity: 0 },
+          { transform: `translate(${actor.x + (destination.x-actor.x)*.18}px,${actor.y + (destination.y-actor.y)*.18}px) scale(.85)`, opacity: 1, offset: .18 },
+          { transform: `translate(${actor.x + (destination.x-actor.x)*.64}px,${actor.y + (destination.y-actor.y)*.64}px) scale(1)`, opacity: 1, offset: .68 },
+          { transform: `translate(${destination.x}px,${destination.y}px) scale(1.05)`, opacity: 1, offset: .88 },
+          { transform: `translate(${destination.x}px,${destination.y}px) scale(.9)`, opacity: 0 }
+        ], Math.max(1, Number(phaseHold) || readableCastDuration(row)), 140);
+      }
+      // The door stays visibly open around the traveler for the whole cast phase.
+      if (!compact()) animate(node, [
+        { transform: `translate(${actor.x}px,${actor.y}px)`, opacity: .25 },
+        { transform: `translate(${actor.x}px,${actor.y}px) scale(1.04)`, opacity: 1, offset: .16 },
+        { transform: `translate(${actor.x}px,${actor.y}px) scale(1)`, opacity: 1, offset: .94 },
+        { transform: `translate(${actor.x}px,${actor.y}px) scale(.98)`, opacity: .9 }
+      ], Math.max(1, Number(phaseHold) || readableCastDuration(row)) + 140);
+    }
+    if (deathDoor) return;
     const hold = Math.max(1, Number(phaseHold) || readableCastDuration(row));
     if (compact()) return;
     const pose = (progress, scale = 1) => {
-      const x = spanLightning ? midpoint.x : moving ? actor.x + (destination.x - actor.x) * progress : destination.x;
-      const y = spanLightning ? midpoint.y : moving ? actor.y + (destination.y - actor.y) * progress : destination.y;
+      const x = spanLightning || rustSiphon ? midpoint.x : deathDoor || mode === 'caster' ? actor.x : moving ? actor.x + (destination.x - actor.x) * progress : destination.x;
+      const y = spanLightning || rustSiphon ? midpoint.y : deathDoor || mode === 'caster' ? actor.y : moving ? actor.y + (destination.y - actor.y) * progress : destination.y;
       return `translate(${x}px,${y}px) rotate(${angle}deg) scale(${scale}${spanLightning ? ',1' : ''})`;
     };
     if (spanLightning) {
       animate(node, [
-        { transform: pose(0, .08), opacity: .12 },
-        { transform: pose(0, .72), opacity: 1, offset: .2 },
-        { transform: pose(0, 1), opacity: 1, offset: .72 },
-        { transform: pose(0, .98), opacity: 0 }
+        { transform: pose(0, 1), opacity: 0 },
+        { transform: pose(0, 1), opacity: 1, offset: .08 },
+        { transform: pose(0, 1), opacity: 1, offset: .76 },
+        { transform: pose(0, 1), opacity: 0 }
       ], hold);
       return;
     }
@@ -544,7 +580,7 @@ function createCombatFx(wrap) {
   }
   function sequence6Outcome(row, event, phaseHold) {
     const spec = sequence6Config(row);
-    if (!spec || !event || event.isDot || event.isReflect
+    if (!spec || !event || event.isDot || event.isReflect || ['lightning_bolt', 'spirit_body_door'].includes(presentationAbility(row))
       || (event.actorId != null && event.actorId !== row.actorId)) return;
     const support = ['heal', 'shield', 'revive'].includes(event.type) && Number(event.amount ?? 1) > 0
       || event.type === 'status' && (event.beneficial === true || event.subtype === 'cleanse');
@@ -560,15 +596,21 @@ function createCombatFx(wrap) {
     const node = sequence6Image(row, support ? 'outcome' : hostileStatus ? 'impact' : 'impact', id, support ? 'support' : spec.mode, p);
     if (!node) return;
     const actor = point(event.actorId ?? row.actorId);
-    const angle = spec.mode === 'travel' && actor
+    const angle = presentationAbility(row) === 'rust_siphon' ? 180 : spec.mode === 'travel' && actor
       ? Math.atan2(p.y - actor.y, p.x - actor.x) * 180 / Math.PI : 0;
+    let impactX = p.x, impactY = p.y;
+    if (presentationAbility(row) === 'rust_siphon' && actor) {
+      const midpoint = { x: (actor.x+p.x)/2, y: (actor.y+p.y)/2 };
+      impactX = midpoint.x; impactY = midpoint.y;
+      node.setAttribute('data-flight-path','stationary-midpoint');
+    }
     node.setAttribute('data-angle-deg', String(angle));
-    node.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${angle})`);
+    node.setAttribute('transform', `translate(${impactX} ${impactY}) rotate(${angle})`);
     if (!compact()) animate(node, [
-      { transform: `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(.76)`, opacity: .18 },
-      { transform: `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(1.06)`, opacity: 1, offset: .24 },
-      { transform: `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(1)`, opacity: .92, offset: .68 },
-      { transform: `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(.9)`, opacity: 0 }
+      { transform: `translate(${impactX}px,${impactY}px) rotate(${angle}deg) scale(.76)`, opacity: .18 },
+      { transform: `translate(${impactX}px,${impactY}px) rotate(${angle}deg) scale(1.06)`, opacity: 1, offset: .24 },
+      { transform: `translate(${impactX}px,${impactY}px) rotate(${angle}deg) scale(1)`, opacity: .92, offset: .68 },
+      { transform: `translate(${impactX}px,${impactY}px) rotate(${angle}deg) scale(.9)`, opacity: 0 }
     ], Math.max(1, Number(phaseHold) || (support ? 500 : 225)));
   }
   function prepareSequence6Assets(map) {
@@ -1561,7 +1603,7 @@ function createCombatFx(wrap) {
       { transform: 'translate(0, 0)' }
     ], isReadableAbility(row) ? duration : Math.min(160, Math.max(1, Number(phaseHold) || 160)), 0, { remove: false, easing: 'ease-out' });
     const authoredSequence6Hit = sequence6Config(row) && event.actorId === row.actorId
-      && !event.isReflect && (!event.isReaction || event.isSignature);
+      && !event.isReflect && !['lightning_bolt', 'spirit_body_door'].includes(hitAbilityId) && (!event.isReaction || event.isSignature);
     if (authoredSequence6Hit) return; // retain shared screen shake, but let Sequence 6 own its visible impact.
     let punchArt = null;
     if (brutalHit) {

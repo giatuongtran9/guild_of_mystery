@@ -115,7 +115,7 @@ test('Paper Figurine Rebound reserves its guard for the actual hit, then reflect
   const guard=f.find('.gm-combat-sequence7[data-stage="guard"]');assert(guard);assert.equal(guard.dataset.effectSrc,fx.sequence7Abilities.paper_figurine_rebound.asset);assert.equal(guard.dataset.targetId,'caster');
   assert.equal(f.find('.gm-combat-sequence7[data-stage="reflect"]'),null);
   f.effects.clear();f.effects.sync(f.map);
-  const hit=event('damage','caster','enemy',{isReflect:true,sourceAbilityId:'paper_figurine_rebound'});
+  const hit=event('damage','caster','enemy',{isReflect:true,sourceAbilityId:'paper_figurine_rebound',amount:20,hpLoss:20});
   f.effects.show({type:'damage',row:r,event:hit},1,225);
   assert.equal(f.find('.gm-combat-sequence7[data-stage="guard"]'),null,'reflection begins after the guard stage');
   const reflection=f.find('.gm-combat-sequence7[data-stage="reflect"]');assert(reflection);assert.equal(reflection.dataset.effectSrc,fx.sequence7Abilities.paper_figurine_rebound.reflectAsset);assert.equal(reflection.dataset.ownerId,'caster');
@@ -178,6 +178,8 @@ test('Paper reflection heading derives from its actual defender even inside anot
   const frames=active(f).find(a=>a.element===n).keyframes,start=xy(frames[0]),end=xy(frames.at(-1));
   const heading=Math.atan2(end[1]-start[1],end[0]-start[0])*180/Math.PI;
   assert.equal(Number(n.dataset.angleDeg),heading);
+  assert(f.find('.gm-combat-impact'),'shared impact burst appears on original attacker');
+  assert.equal(f.find('.gm-battle-fx-number')?.textContent,'−20','reflected HP loss gets a visible damage number on original attacker');
 });
 try { require(path.join(root,'js/data-loader.js')).validateBattleFx(fx,pathwayKeys); passed++; console.log('PASS Sequence 7 FX metadata validates'); }
 catch(e){failed++;console.error('FAIL Sequence 7 FX metadata validates: '+e.stack);}

@@ -31,13 +31,17 @@ test('each ability has distinct real transparent 256px PNG art and pathway palet
   for (const [id,spec] of Object.entries(fx.sequence6Abilities)) {
     assert.match(spec.color,/^#[0-9a-f]{6}$/i,id); assert(['travel','strike','support','caster'].includes(spec.mode),id);
     const rel=spec.asset.split('?')[0], bytes=fs.readFileSync(path.join(root,rel));
-    assert.match(spec.asset,/^data\/assets\/effects\/sequence6\/sequence6-[a-z0-9-]+\.png\?v=[a-f0-9]{16}$/);
+    assert.match(spec.asset,/^data\/assets\/effects\/sequence6\/[a-z0-9-]+\.png\?v=[a-f0-9]{16}$/);
     assert(!assets.has(rel),id+' duplicate asset'); assets.add(rel);
     assert.equal(bytes.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
     assert.equal(bytes.readUInt32BE(16),256); assert.equal(bytes.readUInt32BE(20),256);
     assert(bytes.includes(Buffer.from([0,0,0,0])),id+' has transparent pixels');
   }
-  assert.equal(assets.size,22);
+  const ghost=fx.sequence6Abilities.spirit_body_door.ghostAsset;
+  assert.match(ghost,/^data\/assets\/effects\/sequence6\/death-spirit-travel-ghost\.png\?v=[a-f0-9]{16}$/);
+  const ghostBytes=fs.readFileSync(path.join(root,ghost.split('?')[0]));
+  assert.equal(ghostBytes.readUInt32BE(16),256);assert.equal(ghostBytes.readUInt32BE(20),256);assert(ghostBytes.includes(Buffer.from([0,0,0,0])));
+  assets.add(ghost.split('?')[0]);assert.equal(assets.size,23);
 });
 test('the three revised concepts use the final retained transparent PNGs',()=>{
   for(const id of ['magma_arrow','combat_record','spell_imitation']){
@@ -52,5 +56,6 @@ rejects('wrong pathway is rejected',d=>{d.sequence6Abilities.magma_arrow.pathway
 rejects('unversioned or external asset path is rejected',d=>{d.sequence6Abilities.magma_arrow.asset='https://example.com/a.png';});
 rejects('wrong per-ability asset path is rejected',d=>{d.sequence6Abilities.magma_arrow.asset=d.sequence6Abilities.lightning_bolt.asset;});
 rejects('unknown presentation mode is rejected',d=>{d.sequence6Abilities.magma_arrow.mode='area';});
+rejects('Death ghost asset is restricted to the approved secondary artwork',d=>{d.sequence6Abilities.spirit_body_door.ghostAsset='data/assets/effects/sequence6/other.png?v=0123456789abcdef';});
 rejects('unsafe metadata keys are rejected',d=>{d.sequence6Abilities.constructor={...d.sequence6Abilities.magma_arrow};});
 console.log(`Sequence 6 FX data regressions: ${passed} passed.`);

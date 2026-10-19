@@ -521,13 +521,14 @@
     },
     "spirit_body_door": {
       "pathway": "death",
-      "asset": "data/assets/effects/sequence6/sequence6-death-spirit-body-door.png?v=df233644e48d6687",
+      "asset": "data/assets/effects/sequence6/death-spirit-body-door.png?v=ebbea97087f83c79",
       "color": "#a6bebc",
-      "mode": "travel"
+      "mode": "caster",
+      "ghostAsset": "data/assets/effects/sequence6/death-spirit-travel-ghost.png?v=f3658f0711b3b1e4"
     },
     "affliction_thread": {
       "pathway": "demoness",
-      "asset": "data/assets/effects/sequence6/sequence6-demoness-affliction-thread.png?v=6068c3878b552a8a",
+      "asset": "data/assets/effects/sequence6/demoness-affliction-thread.png?v=18840cff0b65b5e6",
       "color": "#cab0df",
       "mode": "travel"
     },
@@ -541,7 +542,7 @@
       "pathway": "error",
       "asset": "data/assets/effects/sequence6/sequence6-error-rust-siphon.png?v=64cf8ccea432388f",
       "color": "#c6a0e8",
-      "mode": "travel"
+      "mode": "strike"
     },
     "combat_stance_mimicry": {
       "pathway": "fool",
@@ -611,9 +612,9 @@
     },
     "battle_hypnosis": {
       "pathway": "visionary",
-      "asset": "data/assets/effects/sequence6/sequence6-visionary-battle-hypnosis.png?v=841da3e46db752bc",
+      "asset": "data/assets/effects/sequence6/visionary-battle-hypnosis.png?v=afd8b90899f187ca",
       "color": "#e5aed6",
-      "mode": "travel"
+      "mode": "strike"
     },
     "misfortune_aura": {
       "pathway": "wheel_of_fortune",

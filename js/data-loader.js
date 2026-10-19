@@ -132,14 +132,14 @@
     const sequence6AssetNames = {
       magma_arrow: 'sequence6-abyss-magma-arrow.png', distort_impact: 'sequence6-black-emperor-distort-impact.png',
       spiteful_strike: 'sequence6-chained-spiteful-strike.png', dream_slumber: 'sequence6-darkness-dream-slumber.png',
-      spirit_body_door: 'sequence6-death-spirit-body-door.png', affliction_thread: 'sequence6-demoness-affliction-thread.png',
+      spirit_body_door: 'death-spirit-body-door.png', affliction_thread: 'demoness-affliction-thread.png',
       combat_record: 'sequence6-door-combat-record.png', rust_siphon: 'sequence6-error-rust-siphon.png',
       combat_stance_mimicry: 'sequence6-fool-combat-stance-mimicry.png', depravity_mark: 'sequence6-hanged-man-depravity-mark.png',
       knowledge_arrow: 'sequence6-hermit-knowledge-arrow.png', interdiction_zone: 'sequence6-justiciar-interdiction-zone.png',
       moonlight_shield: 'sequence6-moon-moonlight-shield.png', life_seed: 'sequence6-mother-life-seed.png',
       alchemical_fire: 'sequence6-paragon-alchemical-fire.png', reaper_s_harvest: 'sequence6-red-priest-reaper-s-harvest.png',
       notarize: 'sequence6-sun-notarize.png', light_of_dawn: 'sequence6-twilight-giant-light-of-dawn.png',
-      lightning_bolt: 'sequence6-tyrant-lightning-bolt.png', battle_hypnosis: 'sequence6-visionary-battle-hypnosis.png',
+      lightning_bolt: 'sequence6-tyrant-lightning-bolt.png', battle_hypnosis: 'visionary-battle-hypnosis.png',
       misfortune_aura: 'sequence6-wheel-of-fortune-misfortune-aura.png', spell_imitation: 'sequence6-white-tower-spell-imitation.png'
     };
     const sequence6Pathways = {
@@ -155,13 +155,18 @@
     const sequence6Assets = new Set();
     for (const [id, effect] of Object.entries(fx.sequence6Abilities)) {
       const asset = `data/assets/effects/sequence6/${sequence6AssetNames[id]}`;
-      if (!safeKey(id) || !fields(effect, ['pathway', 'asset', 'color', 'mode'])
+      const optional = id === 'spirit_body_door' ? ['ghostAsset'] : [];
+      if (!safeKey(id) || !fields(effect, ['pathway', 'asset', 'color', 'mode'], optional)
         || effect.pathway !== sequence6Pathways[id] || !paths.has(effect.pathway)
         || typeof effect.asset !== 'string' || !new RegExp(`^${asset.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\?v=[a-f0-9]{16}$`).test(effect.asset)
         || sequence6Assets.has(effect.asset)
+        || (effect.ghostAsset !== undefined && (id !== 'spirit_body_door'
+          || !/^data\/assets\/effects\/sequence6\/death-spirit-travel-ghost\.png\?v=[a-f0-9]{16}$/.test(effect.ghostAsset)
+          || sequence6Assets.has(effect.ghostAsset)))
         || typeof effect.color !== 'string' || !/^#[a-f0-9]{6}$/i.test(effect.color)
         || !['travel', 'strike', 'support', 'caster'].includes(effect.mode)) fail(`invalid Sequence 6 effect ${id}`);
       sequence6Assets.add(effect.asset);
+      if (effect.ghostAsset) sequence6Assets.add(effect.ghostAsset);
     }
     if (!fields(fx.impact, ['frames', 'durationMs', 'critColor', 'critNumberScale'])
       || !number(fx.impact.frames, 3, 4, true) || !number(fx.impact.durationMs, 80, 500, true)
