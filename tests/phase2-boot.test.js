@@ -4,11 +4,11 @@ const path = require('node:path');
 const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
 const source = fs.readFileSync(path.join(root, 'js/boot.js'), 'utf8');
-const scripts = ['vendor/dayjs.min', 'paths', 'v15', 'generate', 'traits', 'market', 'pathway-assets', 'signatures', 'mythical', 'battle-ai', 'engine', 'state', 'campaign', 'ui'].map(name => `js/${name}.js`);
+const scripts = ['vendor/dayjs.min', 'paths', 'v15', 'generate', 'traits', 'market', 'pathway-assets', 'signatures', 'mythical', 'battle-ai', 'engine', 'state', 'campaign', 'ability-preview', 'ui'].map(name => `js/${name}.js`);
 const flush = () => new Promise(resolve => setImmediate(resolve));
 function bootstrap({ reject, registration } = {}) {
   const app = { innerHTML: '' }, appended = [], registrations = [], listeners = new Map();
-  const data = { runtimeManifest: { scriptVersions: Object.fromEntries(scripts.map((src, i) => [src, String(i + 1).repeat(16)])), serviceWorkerVersion: '0123456789abcdef' } };
+  const data = { runtimeManifest: { scriptVersions: Object.fromEntries(scripts.map((src, i) => [src, (i + 1).toString(16).padStart(16, '0')])), serviceWorkerVersion: '0123456789abcdef' } };
   const context = {
     URL, console: { error() {} },
     document: {
@@ -61,7 +61,23 @@ async function test(name, body) {
     const b = bootstrap(); await flush();
     const links = b.appended.filter(node => node.tagName === 'LINK');
     assert.equal(links.length, scripts.length);
-    for (let i = 0; i < scripts.length; i++) assert.equal(new URL(links[i].href).searchParams.get('v'), String(i + 1).repeat(16));
+    for (let i = 0; i < scripts.length; i++) assert.equal(new URL(links[i].href).searchParams.get('v'), (i + 1).toString(16).padStart(16, '0'));
+  });
+  await test('ability preview loads after campaign and before the UI', async () => {
+    const b = bootstrap(); await flush();
+    const previewIndex = scripts.indexOf('js/ability-preview.js');
+    assert.equal(scripts.length, 15);
+    assert.equal(scripts[previewIndex - 1], 'js/campaign.js');
+    assert.equal(scripts[previewIndex + 1], 'js/ui.js');
+    for (let i = 0; i < previewIndex; i++) {
+      b.appended.filter(node => node.tagName === 'SCRIPT')[i].onload(); await flush();
+    }
+    const modules = b.appended.filter(node => node.tagName === 'SCRIPT');
+    assert.equal(modules.length, previewIndex + 1);
+    assert(new URL(modules.at(-1).src).pathname.endsWith('/js/ability-preview.js'));
+    modules.at(-1).onerror(); await flush();
+    assert.equal(b.appended.filter(node => node.tagName === 'SCRIPT').length, modules.length);
+    assert(b.app.innerHTML.includes('Could not load js/ability-preview.js'));
   });
   await test('service worker registration is versioned, same-origin, scoped and does not block engine loading', async () => {
     const b = bootstrap({ registration: () => new Promise(() => {}) }); await flush();

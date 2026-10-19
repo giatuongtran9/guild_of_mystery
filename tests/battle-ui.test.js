@@ -20,6 +20,9 @@ async function main() {
     scrollTop: { get() { return positions.get(this) || 0; }, set(value) { positions.set(this, Math.max(0, Math.min(value, this.scrollHeight - this.clientHeight))); } }
   });
   w.setInterval=()=>1;w.clearInterval=()=>{};w.scrollTo = (x, y) => { w.scrollX = x; w.scrollY = y; };
+  // The scheduler preserves elapsed phase time when changing speeds. Keep the
+  // mocked timers and performance clock consistent instead of consuming real CPU time.
+  w.performance.now = () => 0;
   let timerId = 0;
   const timers = new Map();
   w.setTimeout = (fn, delay) => { timers.set(++timerId, { fn, delay }); return timerId; };
@@ -32,7 +35,7 @@ async function main() {
   fixture.quests = [{ id: 'test-contract', name: 'The Chapel Below', encounter: true, objective: 'combat', difficultySequence: 9, rewards: { funds: 0, reputation: 0, materials: {} }, tags: ['occult'] }];
   require('./pool-fixture')(g,fixture);
   w.localStorage.setItem('guild-rpg-browser-v9', JSON.stringify(fixture));
-  w.eval(['vendor/dayjs.min', 'paths', 'v15', 'generate', 'traits', 'market', 'pathway-assets', 'signatures', 'mythical', 'battle-ai', 'engine', 'state', 'campaign', 'ui'].map(name => fs.readFileSync(path.join(root, `js/${name}.js`), 'utf8')).join('\n'));
+  w.eval(['vendor/dayjs.min', 'paths', 'v15', 'generate', 'traits', 'market', 'pathway-assets', 'signatures', 'mythical', 'battle-ai', 'engine', 'state', 'campaign', 'ability-preview', 'ui'].map(name => fs.readFileSync(path.join(root, `js/${name}.js`), 'utf8')).join('\n'));
   // A deliberately long battle exercises the former 70-event collapsing boundary.
   w.groupEventsToRows = () => [{ round: 1, rows: Array.from({ length: 150 }, (_, i) => ({ type: 'story', text: `Event ${i}: the combatants continue their battle.` })) }];
   const config = w.G9_DATA.contracts.battlefields;
@@ -54,8 +57,8 @@ async function main() {
   image.dispatchEvent(new w.Event('error'));
   assert.equal(image.hidden, true, 'Failed image must hide and reveal dark backdrop');
   assert.equal(w.document.querySelector('.battle-log-wrap').firstElementChild.className, 'battle-toolbar');
-  assert.equal(timers.values().next().value.delay, 500);
-  w.G9.setTickerSpeed(2); assert.equal(timers.size, 1); assert.equal(timers.values().next().value.delay, 250);
+  assert.equal(timers.values().next().value.delay, 300, 'round header uses the current reading hold');
+  w.G9.setTickerSpeed(2); assert.equal(timers.size, 1); assert.equal(timers.values().next().value.delay, 150);
   for (let i = 0; i < 40; i++) tick();
   vp = w.document.querySelector('#battle-viewport');
   assert.equal(vp.scrollTop, vp.scrollHeight - vp.clientHeight, 'Bottom must follow events');
@@ -74,7 +77,7 @@ async function main() {
 
   w.G9.tab('simulator'); w.G9.runSimulation();
   assert.equal(w.document.querySelector('.gm-battlefield-image').getAttribute('src'), config.simulatorImage);
-  w.G9.setTickerSpeed(4); assert.equal(timers.values().next().value.delay, 100);
+  w.G9.setTickerSpeed(4); assert.equal(timers.values().next().value.delay, 75);
   for (let i = 0; i < 45; i++) tick();
   w.document.querySelector('#sim-viewport').scrollTop = 100;
   for (let i = 0; i < 5; i++) tick();

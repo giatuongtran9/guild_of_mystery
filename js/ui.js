@@ -2497,7 +2497,10 @@ function renderBattleLogComponent({
   paused = false,
   eventCount = null,
   animated = false,
-  battlefieldImage = ''
+  battlefieldImage = '',
+  viewportId = '',
+  preview = false,
+  looping = false
 }) {
   const visible = battlePresentationRows(flattenedRows, shownCount, eventCount);
   const hpMap = calculateCurrentHp(allies, enemies, visible);
@@ -2510,7 +2513,7 @@ function renderBattleLogComponent({
   return `<div class="battle-log-wrap" role="log" aria-live="polite" data-shown-count="${shownCount}" data-details="${!!showDetails}" data-paused="${paused}" data-animated="${animated}">
     <div class="battle-toolbar">
       <div class="speed-controls">
-        <button type="button" data-pause ${isDone ? 'disabled' : ''} aria-pressed="${paused}" onclick="window.G9.toggleTickerPause()">${paused ? 'Resume' : 'Pause'}</button>
+        <button type="button" data-pause ${isDone && !(preview && looping) ? 'disabled' : ''} aria-pressed="${paused}" onclick="window.G9.toggleTickerPause()">${paused ? 'Resume' : 'Pause'}</button>
         <button type="button" data-step ${isDone ? 'disabled' : ''} onclick="window.G9.stepTicker()">Step</button>
         <button type="button" data-speed="0.5" class="${speed===.5?'active':''}" onclick="window.G9.setTickerSpeed(.5)">Read</button>
         <button type="button" data-speed="1" class="${speed===1?'active':''}" onclick="window.G9.setTickerSpeed(1)">1x</button>
@@ -2525,12 +2528,12 @@ function renderBattleLogComponent({
       </div>
     </div>
     ${renderHpStrip(hpMap, shownAllies, shownEnemies, battlefieldImage)}
-    <div class="battle-ticker-viewport" id="${isSim ? 'sim-viewport' : 'battle-viewport'}">
+    <div class="battle-ticker-viewport" id="${esc(viewportId || (isSim ? 'sim-viewport' : 'battle-viewport'))}">
       ${contentHtml}
-      ${!isDone ? `<div class="typing" style="padding:6px 8px;font-style:italic;color:var(--muted)">${paused ? 'Paused · Step to read the next action.' : 'Battling…'}</div>` : ''}
+      ${!isDone ? `<div class="typing" style="padding:6px 8px;font-style:italic;color:var(--muted)">${paused ? 'Paused · Step to read the next action.' : preview ? 'Playing preview…' : 'Battling…'}</div>` : ''}
     </div>
     <div class="b-result-box ${success ? 'victory' : 'failure'}" ${isDone && summaryText ? '' : 'hidden'}>
-      <h4>Encounter Summary · ${battleOutcomeLabel(outcome, success, isSim)}</h4>
+      <h4>${preview ? 'Preview complete' : `Encounter Summary · ${battleOutcomeLabel(outcome, success, isSim)}`}</h4>
       <p>${esc(summaryText)}</p>
     </div>
   </div>`;
@@ -2611,7 +2614,7 @@ function updateBattleLogComponent(wrap, props) {
   const partial = visible.find(row => row.presentationPartial);
   if (partial) viewport.insertAdjacentHTML('beforeend', `<div class="battle-partial-row" aria-hidden="true">${renderTurnRowHtml(partial, props.showDetails)}</div>`);
   if (!props.isDone && typing) viewport.append(typing);
-  if (typing) typing.textContent = props.paused ? 'Paused · Step to read the next action.' : 'Battling…';
+  if (typing) typing.textContent = props.paused ? 'Paused · Step to read the next action.' : props.preview ? 'Playing preview…' : 'Battling…';
   wrap.dataset.shownCount = props.shownCount;
   wrap.dataset.details = !!props.showDetails;
   wrap.dataset.paused = !!props.paused;
@@ -2619,7 +2622,7 @@ function updateBattleLogComponent(wrap, props) {
   for (const button of wrap.querySelectorAll('[data-speed]')) button.classList.toggle('active', Number(button.dataset.speed) === props.speed);
   wrap.querySelector('[data-skip]').hidden = props.isDone;
   const pause = wrap.querySelector('[data-pause]');
-  pause.disabled = props.isDone; pause.textContent = props.paused ? 'Resume' : 'Pause'; pause.setAttribute('aria-pressed', !!props.paused);
+  pause.disabled = props.isDone && !(props.preview && props.looping); pause.textContent = props.paused ? 'Resume' : 'Pause'; pause.setAttribute('aria-pressed', !!props.paused);
   wrap.querySelector('[data-step]').disabled = props.isDone;
   const details = wrap.querySelector('button[data-details]');
   details.classList.toggle('active', !!props.showDetails);
@@ -2627,7 +2630,7 @@ function updateBattleLogComponent(wrap, props) {
   const summary = wrap.querySelector('.b-result-box');
   summary.hidden = !props.isDone || !props.summaryText;
   summary.classList.toggle('victory', !!props.success); summary.classList.toggle('failure', !props.success);
-  summary.querySelector('h4').textContent = `Encounter Summary · ${battleOutcomeLabel(props.outcome, props.success, props.isSim)}`;
+  summary.querySelector('h4').textContent = props.preview ? 'Preview complete' : `Encounter Summary · ${battleOutcomeLabel(props.outcome, props.success, props.isSim)}`;
   summary.querySelector('p').textContent = props.summaryText;
   const backdrop = wrap.querySelector('.gm-dungeon-backdrop');
   const image = backdrop.querySelector('img');
@@ -2646,7 +2649,21 @@ if (typeof document !== 'undefined') (() => {
   'use strict';
   const loadedGame=loadGame();
   let state=loadedGame||newGame(), tab='hall', selected=null, previewPath=PATH_KEYS[0], planning=null, run=null, notice='', tickerTimer=null, tickerSpeed=1, showBattleDetails=false, simBattleDetails=false, simMode='1v1', simA=[{path:PATH_KEYS[0],sequence:9},{path:PATH_KEYS[0],sequence:9}], simB=[{path:PATH_KEYS[1]||PATH_KEYS[0],sequence:9},{path:PATH_KEYS[1]||PATH_KEYS[0],sequence:9}], simResult=null;
+  let simulatorSection='battle', animationPath=PATH_KEYS[0], animationSequence=9,
+    animationLoop=false, animationResult=null, animationLoopTimer=null;
   let battleEffects = null, battleEffectsWrap = null, battleEpoch = 0, tickerWait = null;
+  function activeSimulatorPlayback() {
+    return simulatorSection === 'animations' ? animationResult : simResult;
+  }
+  function activePlayback() {
+    return run || (tab === 'simulator' ? activeSimulatorPlayback() : null);
+  }
+  function activePlaybackViewport() {
+    return run ? '#battle-viewport' : simulatorSection === 'animations' ? '#animation-viewport' : '#sim-viewport';
+  }
+  function stopAnimationLoop() {
+    clearTimeout(animationLoopTimer); animationLoopTimer = null;
+  }
   function stopTicker(preserve = false) {
     if (preserve && tickerWait && tickerTimer) {
       const elapsed = Math.max(0, performance.now() - tickerWait.started) * tickerWait.speed;
@@ -2655,8 +2672,68 @@ if (typeof document !== 'undefined') (() => {
     clearTimeout(tickerTimer); tickerTimer = null;
   }
   function clearBattleEffects() {
+    stopAnimationLoop();
     battleEpoch++;
     battleEffects?.clear(); battleEffects = null; battleEffectsWrap = null;
+  }
+  function revealAnimationPreview() {
+    const arena = app.querySelector('#animation-viewport')?.closest('.battle-log-wrap')?.querySelector('.gm-dungeon-arena');
+    if (!arena) return;
+    const box = arena.getBoundingClientRect();
+    if (box.top < 0 || box.bottom > window.innerHeight) arena.scrollIntoView?.({ block: 'center', inline: 'nearest' });
+    if (typeof prioritizeVisiblePartyPortraits === 'function') prioritizeVisiblePartyPortraits();
+  }
+  function replayAnimationPreview(reveal = true) {
+    if (run || tab !== 'simulator' || simulatorSection !== 'animations') return;
+    if (!animationResult) { prepareAnimationPreview(); return; }
+    stopTicker(); clearBattleEffects();
+    Object.assign(animationResult, { currentTurn: 0, eventCount: null, paused: false, entryShown: false });
+    render();
+    if (reveal) revealAnimationPreview();
+  }
+  function prepareAnimationPreview() {
+    if (run || tab !== 'simulator' || simulatorSection !== 'animations') return;
+    const choices = abilityPreviewCatalog().filter(entry => entry.path === animationPath);
+    const selectedAbility = choices.find(entry => entry.sequence === animationSequence) || choices[0];
+    if (!selectedAbility) return;
+    animationSequence = selectedAbility.sequence;
+    notice = '';
+    stopTicker(); clearBattleEffects();
+    try {
+      const demo = buildAbilityPreview({ path: animationPath, sequence: animationSequence });
+      animationResult = { isAnimationPreview: true, currentTurn: 0, eventCount: null, paused: false,
+        path: animationPath, sequence: animationSequence, ability: demo.ability,
+        teamA: demo.initialAllies, teamB: demo.initialEnemies,
+        turnRows: flattenTurnRows(demo.groupedRounds), events: demo.events,
+        setupNotes: demo.notes, summaryText: '', success: false };
+    } catch (error) {
+      console.error('Could not prepare ability preview', error);
+      animationResult = null; animationLoop = false;
+      notice = 'This preview could not be prepared. Select another ability or try Replay.';
+    }
+    render();
+    revealAnimationPreview();
+  }
+  function updateAnimationPreviewStatus() {
+    const status = app.querySelector('[data-animation-status]');
+    if (status) status.textContent = !animationResult ? 'Preview ready'
+      : animationResult.paused ? 'Paused'
+        : animationResult.currentTurn >= animationResult.turnRows.length ? 'Preview complete' : 'Playing preview';
+    const loop = app.querySelector('#animation-loop');
+    if (loop) loop.checked = animationLoop;
+    const pause = app.querySelector('#animation-viewport')?.closest('.battle-log-wrap')?.querySelector('[data-pause]');
+    if (pause && animationResult) pause.disabled = animationResult.currentTurn >= animationResult.turnRows.length && !animationLoop;
+  }
+  function scheduleAnimationLoop() {
+    const playing = activePlayback();
+    if (animationLoopTimer || !animationLoop || !playing?.isAnimationPreview || playing.paused
+      || playing.currentTurn < playing.turnRows.length) return;
+    const epoch = battleEpoch;
+    animationLoopTimer = setTimeout(() => {
+      animationLoopTimer = null;
+      if (epoch !== battleEpoch || activePlayback() !== playing || !animationLoop || playing.paused) return;
+      replayAnimationPreview(false);
+    }, 750);
   }
   const app=document.getElementById('app');
   const clone=v=>JSON.parse(JSON.stringify(v));
@@ -2695,6 +2772,7 @@ if (typeof document !== 'undefined') (() => {
   }
   function toast(msg){notice=msg;render();setTimeout(()=>{if(notice===msg){notice='';render()}},2400)}
   function render(options={}){
+    if (run) animationLoop = false;
     const clockDraft=clone(state);advanceGuildDay(clockDraft);if(clockDraft.day!==state.day&&saveGame(clockDraft))state=clockDraft;
     if(portraitViewer)closePortrait();
     const currentDossier=app.querySelector('.character-dossier');
@@ -2725,10 +2803,12 @@ if (typeof document !== 'undefined') (() => {
     layoutBattlefields(app);
     window.scrollTo(pagePosition.x, pagePosition.y);
     if (typeof prioritizeVisiblePartyPortraits === 'function') prioritizeVisiblePartyPortraits();
-    const playing = run || (tab === 'simulator' ? simResult : null);
-    const battleWrap = app.querySelector(run ? '#battle-viewport' : '#sim-viewport')?.closest('.battle-log-wrap');
+    const playing = activePlayback();
+    const battleWrap = app.querySelector(activePlaybackViewport())?.closest('.battle-log-wrap');
     if (playing && battleWrap && playing.currentTurn < playing.turnRows.length) ensureBattleEffects(playing, battleWrap);
+    updateAnimationPreviewStatus();
     scheduleTicker();
+    scheduleAnimationLoop();
   }
   function closePortrait(){
     if(!portraitViewer)return;
@@ -2806,9 +2886,9 @@ if (typeof document !== 'undefined') (() => {
     if (playing.paused) battleEffects.pause();
   }
   function scheduleTicker() {
-    const playing = run || (tab === 'simulator' ? simResult : null);
+    const playing = activePlayback();
     if (playing && !playing.paused && playing.currentTurn < playing.turnRows.length && !tickerTimer) {
-      const wrap = app.querySelector(run ? '#battle-viewport' : '#sim-viewport')?.closest('.battle-log-wrap');
+      const wrap = app.querySelector(activePlaybackViewport())?.closest('.battle-log-wrap');
       if (!wrap) return;
       ensureBattleEffects(playing, wrap);
       if (!playing.entryShown && playing.currentTurn === 0) {
@@ -2825,7 +2905,7 @@ if (typeof document !== 'undefined') (() => {
       const timer = setTimeout(() => {
         if (tickerTimer !== timer || epoch !== battleEpoch) return;
         tickerTimer = null;
-        const current = run || (tab === 'simulator' ? simResult : null);
+        const current = activePlayback();
         if (current !== playing) return;
         tickerWait = null;
         const cue = advanceBattlePresentation(playing);
@@ -2835,9 +2915,9 @@ if (typeof document !== 'undefined') (() => {
     }
   }
   function refreshBattle(cue = null) {
-    const playing = run || (tab === 'simulator' ? simResult : null);
+    const playing = activePlayback();
     const isSim = !run;
-    const viewport = app.querySelector(isSim ? '#sim-viewport' : '#battle-viewport');
+    const viewport = app.querySelector(activePlaybackViewport());
     if (!playing || !viewport) { render(); return; }
     const summary = isSim ? playing.summaryText : summarizeBattleEvents(playing.result.events || [], playing.result.battleSnapshot).summaryText;
     const isDone = playing.currentTurn >= playing.turnRows.length;
@@ -2852,7 +2932,7 @@ if (typeof document !== 'undefined') (() => {
       summaryText: playing.isCampaign ? summary.replace(/Casualties/g, 'Agents recovered') : summary,
       success: isSim ? playing.success : playing.result.success,
       outcome: isSim ? playing.battleOutcome : playing.result.battleOutcome || playing.result.battleSnapshot?.outcome,
-      isSim,
+      isSim, preview: !!playing.isAnimationPreview, looping: !!playing.isAnimationPreview && animationLoop,
       battlefieldImage: battlefieldImageFor(isSim ? {} : playing.quest, isSim)
     });
     ensureBattleEffects(playing, wrap);
@@ -2862,7 +2942,9 @@ if (typeof document !== 'undefined') (() => {
     const completion = app.querySelector('.battle-completion');
     if (!isSim && completion) completion.hidden = !isDone;
     if (typeof prioritizeVisiblePartyPortraits === 'function') prioritizeVisiblePartyPortraits();
+    updateAnimationPreviewStatus();
     scheduleTicker();
+    scheduleAnimationLoop();
   }
 
   function campaignRewardMarkup(rewards){
@@ -2910,9 +2992,11 @@ if (typeof document !== 'undefined') (() => {
   }
 
   function battleSimulator(){
+    const navigation=`<div class="simulator-sections" role="group" aria-label="Simulator section"><button type="button" aria-pressed="${simulatorSection==='battle'}" class="${simulatorSection==='battle'?'active':''}" onclick="window.G9.simulatorSection('battle')">Battle</button><button type="button" aria-pressed="${simulatorSection==='animations'}" class="${simulatorSection==='animations'?'active':''}" onclick="window.G9.simulatorSection('animations')">Ability animations</button></div>`;
+    if(simulatorSection==='animations')return `<section class="panel battle-simulator"><div class="section-head"><div><h2>Battle Simulator</h2><p>Watch one ability at a time using the game's battle effects.</p></div>${navigation}</div>${animationTester()}</section>`;
     const count=simMode==='1v1'?1:2;
     const side=(arr,label)=>`<div class="sim-side"><h3>${label}</h3>${arr.slice(0,count).map((x,i)=>`<div class="sim-unit"><label>${label} ${i+1} Pathway<select onchange="window.G9.simSet('${label==='Team A'?'A':'B'}',${i},'path',this.value)">${PATH_KEYS.map(k=>`<option value="${k}" ${x.path===k?'selected':''}>${esc(pathOf(k).name)}</option>`).join('')}</select></label><label>Sequence<select onchange="window.G9.simSet('${label==='Team A'?'A':'B'}',${i},'sequence',Number(this.value))">${Array.from({length:10},(_,j)=>9-j).map(n=>`<option value="${n}" ${x.sequence===n?'selected':''}>Sequence ${n}</option>`).join('')}</select></label><label>Trait<select onchange="window.G9.simSet('${label==='Team A'?'A':'B'}',${i},'traitId',this.value)"><option value="">Original trait baseline</option>${TRAIT_TIERS.map(t=>`<optgroup label="${t[0].toUpperCase()+t.slice(1)}">${Object.entries(TRAIT_DATA.entries).filter(([,d])=>d.tier===t).map(([id,d])=>`<option value="${id}" ${x.traitId===id?'selected':''}>${esc(d.name)}</option>`).join('')}</optgroup>`).join('')}</select></label></div>`).join('')}</div>`;
-    return `<section class="panel battle-simulator"><div class="section-head"><div><h2>Battle Simulator</h2><p>Run a deterministic preview battle between any Pathway and Sequence combination.</p></div><div><button class="${simMode==='1v1'?'active':''}" onclick="window.G9.simMode('1v1')">1v1</button><button class="${simMode==='2v2'?'active':''}" onclick="window.G9.simMode('2v2')">2v2</button></div></div><div class="sim-grid">${side(simA,'Team A')}${side(simB,'Team B')}</div><div class="sim-actions"><button class="primary" onclick="window.G9.runSimulation()">Simulate Battle</button><button onclick="window.G9.clearSimulation()">Clear Log</button></div>${simResult?`<div class="sim-result"><div class="section-head"><h3>${battleOutcomeLabel(simResult.battleOutcome,simResult.success,true)}</h3><span>${simResult.rounds} rounds · ${simResult.balanceTrace.length} damage events</span></div><div class="sim-hp"><div><b>Team A</b> ${simResult.teamA.filter(x=>x.alive).length}/${simResult.teamA.length} standing</div><div><b>Team B</b> ${simResult.teamB.filter(x=>x.alive).length}/${simResult.teamB.length} standing</div></div><div class="balance-panel"><div class="section-head"><div><h3>Damage Breakdown</h3><p>Every hit: ability multiplier → raw damage → resistance → DEF → final damage, including effect contributions.</p></div></div><div class="balance-table-wrap"><table class="balance-table"><thead><tr><th>Rnd</th><th>Attacker</th><th>Ability</th><th>Stat</th><th>Mult.</th><th>Raw</th><th>Resist.</th><th>After Resist.</th><th>DEF</th><th>DEF Reduction</th><th>Effects</th><th>Final</th></tr></thead><tbody>${simResult.balanceTrace.map(t=>`<tr><td>${t.round}</td><td>${esc(t.attacker)}</td><td><b>${esc(t.ability)}</b><small>${esc(t.damageType)}${t.critical?' · CRIT':''}</small></td><td>${esc(t.stat)}</td><td>${(Number(t.abilityMultiplier||0)*100).toFixed(0)}%${t.effectiveMultiplier!==t.abilityMultiplier?`<small>eff ${(Number(t.effectiveMultiplier||0)*100).toFixed(0)}%</small>`:''}</td><td>${Math.round(t.raw||0)}</td><td>${Number(t.resistance||0).toFixed(1)}%</td><td>${Math.round(t.afterResistance||0)}</td><td>${Math.round(t.defense||0)}</td><td>${Math.round(t.defenseReduction||0)}</td><td>${t.effectContributions?.length?t.effectContributions.map(e=>`${esc(e.type)}${e.multiplier!=null?` ×${Number(e.multiplier).toFixed(2)}`:''}`).join('<br>'):'—'}</td><td><b>${Math.round(t.incoming??t.final??0)}</b></td></tr>`).join('')}</tbody></table></div></div><div class="sim-battle-log-wrap" style="margin-top:16px">
+    return `<section class="panel battle-simulator"><div class="section-head"><div><h2>Battle Simulator</h2><p>Run a deterministic preview battle between any Pathway and Sequence combination.</p></div>${navigation}</div><div class="sim-battle-options" role="group" aria-label="Battle size"><button class="${simMode==='1v1'?'active':''}" onclick="window.G9.simMode('1v1')">1v1</button><button class="${simMode==='2v2'?'active':''}" onclick="window.G9.simMode('2v2')">2v2</button></div><div class="sim-grid">${side(simA,'Team A')}${side(simB,'Team B')}</div><div class="sim-actions"><button class="primary" onclick="window.G9.runSimulation()">Simulate Battle</button><button onclick="window.G9.clearSimulation()">Clear Log</button></div>${simResult?`<div class="sim-result"><div class="section-head"><h3>${battleOutcomeLabel(simResult.battleOutcome,simResult.success,true)}</h3><span>${simResult.rounds} rounds · ${simResult.balanceTrace.length} damage events</span></div><div class="sim-hp"><div><b>Team A</b> ${simResult.teamA.filter(x=>x.alive).length}/${simResult.teamA.length} standing</div><div><b>Team B</b> ${simResult.teamB.filter(x=>x.alive).length}/${simResult.teamB.length} standing</div></div><div class="balance-panel"><div class="section-head"><div><h3>Damage Breakdown</h3><p>Every hit: ability multiplier → raw damage → resistance → DEF → final damage, including effect contributions.</p></div></div><div class="balance-table-wrap"><table class="balance-table"><thead><tr><th>Rnd</th><th>Attacker</th><th>Ability</th><th>Stat</th><th>Mult.</th><th>Raw</th><th>Resist.</th><th>After Resist.</th><th>DEF</th><th>DEF Reduction</th><th>Effects</th><th>Final</th></tr></thead><tbody>${simResult.balanceTrace.map(t=>`<tr><td>${t.round}</td><td>${esc(t.attacker)}</td><td><b>${esc(t.ability)}</b><small>${esc(t.damageType)}${t.critical?' · CRIT':''}</small></td><td>${esc(t.stat)}</td><td>${(Number(t.abilityMultiplier||0)*100).toFixed(0)}%${t.effectiveMultiplier!==t.abilityMultiplier?`<small>eff ${(Number(t.effectiveMultiplier||0)*100).toFixed(0)}%</small>`:''}</td><td>${Math.round(t.raw||0)}</td><td>${Number(t.resistance||0).toFixed(1)}%</td><td>${Math.round(t.afterResistance||0)}</td><td>${Math.round(t.defense||0)}</td><td>${Math.round(t.defenseReduction||0)}</td><td>${t.effectContributions?.length?t.effectContributions.map(e=>`${esc(e.type)}${e.multiplier!=null?` ×${Number(e.multiplier).toFixed(2)}`:''}`).join('<br>'):'—'}</td><td><b>${Math.round(t.incoming??t.final??0)}</b></td></tr>`).join('')}</tbody></table></div></div><div class="sim-battle-log-wrap" style="margin-top:16px">
   <div class="section-head"><div><h3>Combat Log</h3><p>Unified turn-by-turn combat view.</p></div></div>
   ${renderBattleLogComponent({
     allies: simResult.teamA,
@@ -2931,6 +3015,23 @@ if (typeof document !== 'undefined') (() => {
     battlefieldImage: battlefieldImageFor({}, true)
   })}
 </div></div>`:'<p class="muted">Choose both sides and press Simulate Battle. No guild resources or roster characters are changed.</p>'}</section>`;
+  }
+  function animationTester(){
+    const catalog=abilityPreviewCatalog(), entries=catalog.filter(entry=>entry.path===animationPath);
+    const selectedAbility=entries.find(entry=>entry.sequence===animationSequence)?.ability;
+    const result=animationResult, done=!!result&&result.currentTurn>=result.turnRows.length;
+    const status=!result?'Preview ready':done?'Preview complete':result.paused?'Paused':'Playing preview';
+    const setupNotes=Array.isArray(result?.setupNotes)?result.setupNotes:typeof result?.setupNotes==='string'?[result.setupNotes]:[];
+    return `<section class="animation-tester" aria-labelledby="animation-tester-title">
+      <div class="animation-tester-intro"><h3 id="animation-tester-title">Ability animations</h3><p>Choose a Pathway and Sequence to watch its active ability. The demonstration prepares what it needs without using guild resources.</p></div>
+      <div class="animation-tester-controls">
+        <label for="animation-path">Pathway<select id="animation-path" onchange="window.G9.animationPath(this.value)">${PATH_KEYS.filter(path=>catalog.some(entry=>entry.path===path)).map(path=>`<option value="${path}" ${animationPath===path?'selected':''}>${esc(pathOf(path).name)}</option>`).join('')}</select></label>
+        <label for="animation-sequence">Sequence<select id="animation-sequence" onchange="window.G9.animationSequence(Number(this.value))">${entries.map(entry=>`<option value="${entry.sequence}" ${animationSequence===entry.sequence?'selected':''}>Sequence ${entry.sequence} — ${esc(entry.ability.name)}</option>`).join('')}</select></label>
+      </div>
+      ${selectedAbility?`<div class="animation-ability-heading"><h4>${esc(selectedAbility.name)}</h4><span>${esc(pathOf(animationPath).name)} · Sequence ${animationSequence}</span></div><details class="animation-ability-details"><summary>Ability details</summary><p>${esc(selectedAbility.text||'')}</p><small>SP ${Number(selectedAbility.costSP)||0} · Cooldown ${Number(selectedAbility.cooldown)||0} turns</small>${setupNotes.length?`<ul class="animation-setup-notes">${setupNotes.map(note=>`<li>${esc(note)}</li>`).join('')}</ul>`:''}</details>`:'<p class="muted">No active ability is available for this selection.</p>'}
+      <div class="animation-preview-actions"><button type="button" class="primary" data-animation-replay ${selectedAbility?'':'disabled'} onclick="window.G9.animationReplay()">Replay</button><label class="animation-loop-control" for="animation-loop"><input type="checkbox" id="animation-loop" ${animationLoop?'checked':''} ${selectedAbility?'':'disabled'} onchange="window.G9.animationLoop(this.checked)">Loop</label><button type="button" data-animation-clear ${result?'':'disabled'} onclick="window.G9.clearAnimationPreview()">Clear preview</button><span class="animation-preview-status" data-animation-status role="status">${status}</span></div>
+      ${result?renderBattleLogComponent({allies:result.teamA,enemies:result.teamB,flattenedRows:result.turnRows,shownCount:result.currentTurn,eventCount:result.eventCount,animated:true,isDone:done,showDetails:simBattleDetails,speed:tickerSpeed,paused:!!result.paused,summaryText:'',success:false,isSim:true,preview:true,viewportId:'animation-viewport',battlefieldImage:battlefieldImageFor({},true)}):'<p class="animation-preview-empty muted">Press Replay to watch this ability.</p>'}
+    </section>`;
   }
   function hall(){return `${campaignHallCard()}<section class="grid two"><div class="panel"><div class="section-head"><div><h2>Guild Roster</h2><p>Every character begins as an ordinary person.</p></div><span>${combatReady().length} combat-ready</span></div>${state.roster.map(agentCard).join('')||'<div class="empty"><h3>The roster is empty.</h3><p>Visit the Recruitment Office to hire your first ordinary person.</p></div>'}</div><div class="panel"><div class="section-head"><h2>Guild Ledger</h2><button class="small" onclick="window.G9.reset()">Reset</button></div><div class="ledger"><p><b>Reputation</b></p><p>${state.reputation} · <b>${esc(reputationRank(state.reputation).name)}</b>${nextReputationRank(state.reputation)?` · ${nextReputationRank(state.reputation).minimumReputation-state.reputation} to ${esc(nextReputationRank(state.reputation).name)}`:' · Highest guild rank'}. Higher ranks reveal stronger threats. Sequence 9 work remains available at every rank.</p><p><b>Digesting</b></p><p>Successful quests advance a character's understanding of their current potion. Individual contracts digest faster than team contracts.</p><p><b>Permanent loss</b></p><p>Death and failed advancement remove the character from the roster.</p></div></div></section>`}
   function statusBar(label,value){return `<div class="meter"><div><span>${label}</span><b>${Math.round(value||0)}/100</b></div><i><em style="width:${Math.min(100,Math.max(0,value||0))}%"></em></i></div>`}
@@ -3086,16 +3187,23 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
       refreshBattle();
     },
     toggleTickerPause: () => {
-      const playing = run || (tab === 'simulator' ? simResult : null);
-      if (!playing || playing.currentTurn >= playing.turnRows.length) return;
+      const playing = activePlayback();
+      if (!playing) return;
+      if (playing.isAnimationPreview) stopAnimationLoop();
+      if (playing.currentTurn >= playing.turnRows.length && !playing.isAnimationPreview) return;
       playing.paused = !playing.paused;
       stopTicker(true);
       if (playing.paused) battleEffects?.pause(); else battleEffects?.resume();
       refreshBattle();
     },
     stepTicker: () => {
-      const playing = run || (tab === 'simulator' ? simResult : null);
-      if (!playing || playing.currentTurn >= playing.turnRows.length) return;
+      const playing = activePlayback();
+      if (!playing) return;
+      if (playing.isAnimationPreview) stopAnimationLoop();
+      if (playing.currentTurn >= playing.turnRows.length) {
+        if (playing.isAnimationPreview) { playing.paused = true; refreshBattle(); }
+        return;
+      }
       playing.paused = true;
       stopTicker();
       clearBattleEffects(); playing.eventCount = null;
@@ -3111,7 +3219,33 @@ function equipmentPicker(a){const options=Object.values(WEAPONS).filter(w=>w.id=
       simBattleDetails = !simBattleDetails;
       refreshBattle();
     },
-    tab:t=>{tab=t;render()},previewPath:path=>{if(PATH_KEYS.includes(path)){previewPath=path;render()}},simMode:m=>{simMode=m;render()},simSet:(team,i,key,value)=>{const arr=team==='A'?simA:simB;if(arr[i])arr[i][key]=value;render()},clearSimulation:()=>{stopTicker();simResult=null;render()},runSimulation:()=>{const seed=Date.now()%2147483647;const count=simMode==='1v1'?1:2;const mk=(x,i)=>{const a=makeAgent(Math.random,{sequence:x.sequence,path:x.path,trait:'Stout Vitality',...(x.traitId?{traitId:x.traitId}:{})});a.id=`sim_${i}_${x.path}_${x.sequence}`;a.name=`${pathOf(x.path).name} Seq ${x.sequence}`;a.awakened=true;a.path=x.path;a.sequence=x.sequence;a.injuries=0;a.weaponId='none';a.weaponMastery={};a.sp=maxSPFor(a);restatAgent(a);return a;};const members=simA.slice(0,count).map((x,i)=>mk(x,i));const opponents=simB.slice(0,count).map((x,i)=>({path:x.path,sequence:x.sequence,...(x.traitId?{traitId:x.traitId}:{})}));const q={id:'sim',name:`${simMode} Battle`,brief:'Battle Simulator',story:'A controlled simulation. No guild resources are changed.',objective:'combat',difficultySequence:Math.min(...opponents.map(x=>x.sequence)),encounter:true,mundane:false,rewards:{funds:0,reputation:0,materials:{}},enemyCount:count,requiredPath:opponents[0].path};const res=resolveQuest(members,q,seed,{individual:count===1,simulationOpponents:opponents});const snap=res.battleSnapshot||{allies:[],enemies:[]};const simTurns = flattenTurnRows(groupEventsToRows(res.events||[]));
+    simulatorSection: section => {
+      if (run || tab !== 'simulator' || !['battle', 'animations'].includes(section) || section === simulatorSection) return;
+      stopTicker(); clearBattleEffects();
+      simulatorSection = section;
+      if (section === 'animations') prepareAnimationPreview();
+      else { animationLoop = false; render(); }
+    },
+    animationPath: path => {
+      if (run || !PATH_KEYS.includes(path)) return;
+      animationPath = path; prepareAnimationPreview();
+    },
+    animationSequence: sequence => {
+      if (run || !abilityPreviewCatalog().some(entry => entry.path === animationPath && entry.sequence === Number(sequence))) return;
+      animationSequence = Number(sequence); prepareAnimationPreview();
+    },
+    animationReplay: replayAnimationPreview,
+    animationLoop: enabled => {
+      if (run || tab !== 'simulator' || simulatorSection !== 'animations') return;
+      animationLoop = !!enabled;
+      stopAnimationLoop(); updateAnimationPreviewStatus();
+      scheduleAnimationLoop();
+    },
+    clearAnimationPreview: () => {
+      if (run) return;
+      stopTicker(); clearBattleEffects(); animationLoop = false; animationResult = null; render();
+    },
+    tab:t=>{if(tab==='simulator'&&t!=='simulator'){animationLoop=false;stopAnimationLoop();}tab=t;render()},previewPath:path=>{if(PATH_KEYS.includes(path)){previewPath=path;render()}},simMode:m=>{if(run)return;simMode=m;render()},simSet:(team,i,key,value)=>{if(run)return;const arr=team==='A'?simA:simB;if(arr[i])arr[i][key]=value;render()},clearSimulation:()=>{if(run)return;stopTicker();simResult=null;render()},runSimulation:()=>{if(run)return;const seed=Date.now()%2147483647;const count=simMode==='1v1'?1:2;const mk=(x,i)=>{const a=makeAgent(Math.random,{sequence:x.sequence,path:x.path,trait:'Stout Vitality',...(x.traitId?{traitId:x.traitId}:{})});a.id=`sim_${i}_${x.path}_${x.sequence}`;a.name=`${pathOf(x.path).name} Seq ${x.sequence}`;a.awakened=true;a.path=x.path;a.sequence=x.sequence;a.injuries=0;a.weaponId='none';a.weaponMastery={};a.sp=maxSPFor(a);restatAgent(a);return a;};const members=simA.slice(0,count).map((x,i)=>mk(x,i));const opponents=simB.slice(0,count).map((x,i)=>({path:x.path,sequence:x.sequence,...(x.traitId?{traitId:x.traitId}:{})}));const q={id:'sim',name:`${simMode} Battle`,brief:'Battle Simulator',story:'A controlled simulation. No guild resources are changed.',objective:'combat',difficultySequence:Math.min(...opponents.map(x=>x.sequence)),encounter:true,mundane:false,rewards:{funds:0,reputation:0,materials:{}},enemyCount:count,requiredPath:opponents[0].path};const res=resolveQuest(members,q,seed,{individual:count===1,simulationOpponents:opponents});const snap=res.battleSnapshot||{allies:[],enemies:[]};const simTurns = flattenTurnRows(groupEventsToRows(res.events||[]));
     const simSummary = summarizeBattleEvents(res.events||[], snap);
     simResult={currentTurn:0,success:res.success,battleOutcome:res.battleOutcome||snap.outcome,rounds:(res.events&&res.events.length)?Math.max(1,...res.events.map(e=>e.round||1)):(res.lines?res.lines.filter(x=>/^· Round /.test(x.text)).length:1),lines:res.lines,events:res.events||[],turnRows:simTurns,summaryText:simSummary.summaryText,teamA: members.map((m, i) => ({
   ...m,
@@ -3135,7 +3269,7 @@ teamB: opponents.map((o, i) => ({
   maxHp: snap.enemies[i]?.maxHp ?? 100,
   alive: true,
   ...(snap.initialUnits || []).find(u => u.id === snap.enemies[i]?.id)
-})),balanceTrace:snap.balanceTrace||[]};render()},fastTicker:()=>{if(!run)return;clearBattleEffects();run.eventCount=null;run.currentTurn=Math.min(run.turnRows.length,run.currentTurn+5);stopTicker();refreshBattle();},skipTicker:(isSim=false)=>{const playing=isSim?simResult:run;if(!playing)return;playing.currentTurn=playing.turnRows.length;playing.eventCount=null;stopTicker();clearBattleEffects();refreshBattle();},dossier:id=>{dossierReturnFocus={id:document.activeElement?.id,action:document.activeElement?.getAttribute('onclick')};selected=id;dossierSkillType='active';render({resetDossier:true});document.getElementById('dossier-title')?.focus()},
+})),balanceTrace:snap.balanceTrace||[]};render()},fastTicker:()=>{if(!run)return;clearBattleEffects();run.eventCount=null;run.currentTurn=Math.min(run.turnRows.length,run.currentTurn+5);stopTicker();refreshBattle();},skipTicker:(isSim=false)=>{if(isSim&&run)return;const playing=isSim?activeSimulatorPlayback():run;if(!playing)return;if(playing.isAnimationPreview)animationLoop=false;playing.currentTurn=playing.turnRows.length;playing.eventCount=null;stopTicker();clearBattleEffects();refreshBattle();},dossier:id=>{dossierReturnFocus={id:document.activeElement?.id,action:document.activeElement?.getAttribute('onclick')};selected=id;dossierSkillType='active';render({resetDossier:true});document.getElementById('dossier-title')?.focus()},
     closeDossier:()=>{selected=null;render();const previous=dossierReturnFocus;const opener=previous?.id?document.getElementById(previous.id):previous?.action?Array.from(app.querySelectorAll('[onclick]')).find(el=>el.getAttribute('onclick')===previous.action):null;(opener||app.querySelector('.tabs [aria-current="page"]'))?.focus();dossierReturnFocus=null},
     dossierSkillTab:type=>{const a=state.roster.find(x=>x.id===selected);if(!a||!['active','passive','inventory'].includes(type))return;if(type==='inventory'){if(!pathwayCollection(a))return;render({openSection:'inventory'});document.getElementById('dossier-inventory-title')?.focus();return;}if(!a.awakened)return;dossierSkillType=type;render({openSection:'abilities'});document.getElementById(`dossier-tab-${type}`)?.focus()},
     recruitInfo:id=>{const a=state.recruitPool.find(x=>x.id===id);if(a){toast(`${a.name}: ${a.occupation}. ${traitRarity(a)} — ${traitName(a)}. ${traitDescription(a)}`)}},

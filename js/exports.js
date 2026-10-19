@@ -36,3 +36,5 @@ if (typeof module !== 'undefined' && module.exports) Object.assign(module.export
 if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { battleAIContext, battleAIEvaluate, battleAIBasicDamage, battleAIDamage, battleAIPreviewHeal, battleAIPreviewShield, battleAIReady, battleAIHitChance, battleAIThreadCandidate });
 
 if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { nativeAbilityDamageMultiplier, nativeAbilityCooldown });
+
+if (typeof module !== 'undefined' && module.exports) Object.assign(module.exports, { abilityPreviewCatalog, buildAbilityPreview, castThreadBinding });

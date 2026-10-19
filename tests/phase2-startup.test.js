@@ -18,7 +18,7 @@ const rawBundle = () => ({
 function release(bundle = rawBundle()) {
   const text = JSON.stringify(bundle);
   const version = crypto.createHash('sha256').update(text).digest('hex').slice(0, 16);
-  const scriptVersions = Object.fromEntries(['vendor/dayjs.min', 'paths', 'v15', 'generate', 'traits', 'market', 'pathway-assets', 'signatures', 'mythical', 'battle-ai', 'engine', 'state', 'campaign', 'ui'].map(name => [`js/${name}.js`, '0123456789abcdef']));
+  const scriptVersions = Object.fromEntries(['vendor/dayjs.min', 'paths', 'v15', 'generate', 'traits', 'market', 'pathway-assets', 'signatures', 'mythical', 'battle-ai', 'engine', 'state', 'campaign', 'ability-preview', 'ui'].map(name => [`js/${name}.js`, '0123456789abcdef']));
   return { manifest: { schema: 'guild.runtime-manifest.v1', version, bundle: `data/runtime/data.${version}.json`, scriptVersions }, text };
 }
 function memoryCache() {
@@ -137,6 +137,12 @@ async function test(name, body) {
     const b = browser({ current });
     await assert.rejects(b.load(), /script versions/i);
     assert.equal(b.requests.length, 1, 'an incomplete release must stop before loading gameplay data');
+  });
+  await test('a release without the animation preview module fails before bootstrap', async () => {
+    const current = release(); delete current.manifest.scriptVersions['js/ability-preview.js'];
+    const b = browser({ current });
+    await assert.rejects(b.load(), /script versions/i);
+    assert.equal(b.requests.length, 1, 'an incomplete preview release must stop before loading gameplay data');
   });
   await test('invalid service worker version is rejected', async () => {
     const current = release(); current.manifest.serviceWorkerVersion = '<script>';

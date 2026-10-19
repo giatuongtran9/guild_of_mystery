@@ -12,7 +12,7 @@ const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'guild-runtime-data-test-'));
 try {
   fs.cpSync(path.join(root, 'data'), path.join(temp, 'data'), { recursive: true, filter: name => !name.includes(`${path.sep}assets`) && !name.includes(`${path.sep}runtime`) });
   fs.mkdirSync(path.join(temp, 'js/vendor'),{recursive:true});
-  for (const name of ['vendor/dayjs.min', 'paths', 'v15', 'generate', 'traits', 'market', 'pathway-assets', 'signatures', 'mythical', 'battle-ai', 'engine', 'state', 'campaign', 'ui']) fs.writeFileSync(path.join(temp, `js/${name}.js`), `// ${name}\n`);
+  for (const name of ['vendor/dayjs.min', 'paths', 'v15', 'generate', 'traits', 'market', 'pathway-assets', 'signatures', 'mythical', 'battle-ai', 'engine', 'state', 'campaign', 'ability-preview', 'ui']) fs.writeFileSync(path.join(temp, `js/${name}.js`), `// ${name}\n`);
   for (const name of ['data-loader', 'boot']) fs.writeFileSync(path.join(temp, `js/${name}.js`), `// ${name}\n`);
   fs.mkdirSync(path.join(temp, 'css')); fs.writeFileSync(path.join(temp, 'css/tokens.css'), ':root { color: white; }\n');
   fs.writeFileSync(path.join(temp, 'index.html'), '<link rel="stylesheet" href="css/tokens.css">\n<script src="js/data-loader.js"></script>\n<script src="js/boot.js"></script>\n');
@@ -33,7 +33,8 @@ try {
   assert.equal(bundle.schema, 'guild.runtime-data.v1');
   assert.equal(Object.keys(bundle.pathwayFiles).length, 22);
   assert.equal(Object.values(bundle.pathwayFiles).reduce((n, p) => n + p.sequences.length, 0), 220);
-  assert.equal(Object.keys(manifest.scriptVersions).length, 14);
+  assert.equal(Object.keys(manifest.scriptVersions).length, 15);
+  assert.equal(manifest.scriptVersions['js/ability-preview.js'], hash(path.join(temp, 'js/ability-preview.js')).slice(0, 16));
   assert.match(manifest.serviceWorkerVersion, /^[a-f0-9]{16}$/);
   for (const file of originals) assert.equal(hash(file), before[file], `authored JSON changed: ${file}`);
   assert.equal(buildRuntimeData({ root: temp }).version, first.version, 'same inputs must create identical releases');
@@ -57,6 +58,11 @@ try {
   const scriptRelease = buildRuntimeData({ root: temp });
   assert.equal(scriptRelease.version, next.version, 'script-only updates must not duplicate unchanged gameplay payloads');
   assert.notEqual(scriptRelease.scriptVersions['js/ui.js'], manifest.scriptVersions['js/ui.js']);
+  fs.writeFileSync(path.join(temp, 'js/ability-preview.js'), '// updated ability preview\n');
+  assert.throws(() => buildRuntimeData({ root: temp, check: true }), /stale|out.of.date|rebuild/i);
+  const previewRelease = buildRuntimeData({ root: temp });
+  assert.equal(previewRelease.version, next.version, 'preview-only updates must not duplicate unchanged gameplay payloads');
+  assert.notEqual(previewRelease.scriptVersions['js/ability-preview.js'], manifest.scriptVersions['js/ability-preview.js']);
   fs.mkdirSync(path.join(temp, 'data/assets/runtime/characters'), { recursive: true });
   const source = 'data/assets/characters/fool/fool_seq9.png';
   const descriptor = size => ({ src: `data/assets/runtime/characters/fool/fool_seq9.${size}.0123456789abcdef.webp`, width: size, height: size, bytes: 12345, sha256: '0'.repeat(64) });
