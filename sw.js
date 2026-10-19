@@ -15,7 +15,7 @@ self.addEventListener('fetch', event => {
     || /^data\/assets\/(?:characters|revisions)\/[a-z][a-z0-9_]*\/[a-z][a-z0-9_]*_(?:seq[0-9]|mythical)\.png$/.test(path) && /^\?v=[a-f0-9]{16}$/.test(url.search)
     || /^data\/assets\/revisions\/[a-z][a-z0-9_]*\/[a-z][a-z0-9_]*_(?:seq[0-9]|mythical)\.[a-f0-9]{16}\.png$/.test(path) && url.search === '?v=' + path.slice(-20, -4)
     || /^data\/assets\/effects\/sequence6\/sequence6-[a-z][a-z0-9-]*\.png$/.test(path) && /^\?v=[a-f0-9]{16}$/.test(url.search)
-    || /^data\/assets\/effects\/sequence7\/[a-z][a-z0-9-]*\.png$/.test(path) && /^\?v=[a-f0-9]{16}$/.test(url.search)
+    || /^data\/assets\/effects\/(?:sequence5|sequence7)\/[a-z][a-z0-9-]*\.png$/.test(path) && /^\?v=[a-f0-9]{16}$/.test(url.search)
     || /^data\/runtime\/data\.[a-f0-9]{16}\.json$/.test(path)
     || /^js\/vendor\/dayjs\.min\.js$/.test(path) && /^[a-f0-9]{16}$/.test(url.searchParams.get('v') || '')
     || (/^js\/(data-loader|boot|paths|v15|generate|traits|market|pathway-assets|signatures|mythical|battle-ai|engine|state|campaign|ability-preview|ui)\.js$/.test(path)

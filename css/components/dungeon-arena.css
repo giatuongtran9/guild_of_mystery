@@ -356,6 +356,7 @@
 }
 
 .gm-combat-projectile,
+.gm-combat-sequence5,
 .gm-combat-sequence6,
 .gm-combat-sequence7,
 .gm-combat-sequence8,
@@ -370,6 +371,7 @@
   pointer-events: none;
 }
 
+.gm-combat-sequence5-image,
 .gm-combat-sequence6-image,
 .gm-combat-sequence7-image,
 .gm-combat-sequence8-image {

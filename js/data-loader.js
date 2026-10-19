@@ -70,7 +70,7 @@
     const family = value => typeof value === 'string' && familyKeys.includes(value);
     const paths = new Set(pathwayKeys);
     const safeKey = key => /^[a-z][a-z0-9_]*$/.test(key) && !['constructor', 'prototype'].includes(key);
-    if (!fields(fx, ['schema', 'damageColors', 'families', 'pathwayDefaults', 'pathwayDamageOverrides', 'basicAttack', 'sequence8Abilities', 'sequence7Abilities', 'sequence6Abilities', 'impact', 'support', 'abilityChipMs'])
+    if (!fields(fx, ['schema', 'damageColors', 'families', 'pathwayDefaults', 'pathwayDamageOverrides', 'basicAttack', 'sequence8Abilities', 'sequence7Abilities', 'sequence6Abilities', 'sequence5Abilities', 'impact', 'support', 'abilityChipMs'])
       || fx.schema !== 'guild.battle-fx.v1') fail('invalid battle FX schema');
     if (!record(fx.damageColors) || !['default', 'physical', 'true'].every(key => Object.prototype.hasOwnProperty.call(fx.damageColors, key))
       || Object.entries(fx.damageColors).some(([key, value]) => !safeKey(key) || typeof value !== 'string' || !/^#[a-f0-9]{6}$/i.test(value))) fail('damage colors must be six-digit hex colors');
@@ -167,6 +167,31 @@
         || !['travel', 'strike', 'support', 'caster'].includes(effect.mode)) fail(`invalid Sequence 6 effect ${id}`);
       sequence6Assets.add(effect.asset);
       if (effect.ghostAsset) sequence6Assets.add(effect.ghostAsset);
+    }
+    const sequence5Pathways = {
+      corrupted_flesh: 'abyss', order_distortion: 'black_emperor', desire_control: 'chained',
+      soul_pacification: 'darkness', zombie_transformation: 'death', mirror_substitution: 'demoness',
+      blink_strike: 'door', logic_distortion: 'error', thread_binding: 'fool', soul_drain: 'hanged_man',
+      constellation_constrain: 'hermit', law_enforcement: 'justiciar', vampire_transformation: 'moon',
+      life_bloom: 'mother', matter_fortification: 'paragon', holy_sun_bolt: 'sun',
+      guardian_stance: 'twilight_giant', ocean_calling: 'tyrant', dream_tether: 'visionary', prophetic_evade: 'white_tower'
+    };
+    const sequence5Secondary = {
+      corrupted_flesh: 'abyss-desire-mark', zombie_transformation: 'death-bone-guard',
+      blink_strike: 'door-blink-portal', dream_tether: 'visionary-insight-halo'
+    };
+    const sequence5Asset = (value, name) => typeof value === 'string'
+      && new RegExp(`^data/assets/effects/sequence5/${name}\\.png\\?v=[a-f0-9]{16}$`).test(value);
+    if (!record(fx.sequence5Abilities) || Object.keys(fx.sequence5Abilities).length !== 20
+      || Object.keys(fx.sequence5Abilities).some(id => !Object.hasOwn(sequence5Pathways, id))) fail('Sequence 5 effects must cover exactly twenty known active abilities');
+    for (const [id, effect] of Object.entries(fx.sequence5Abilities)) {
+      const secondary = sequence5Secondary[id];
+      if (!safeKey(id) || !fields(effect, ['pathway', 'asset', 'color', 'mode', ...(secondary ? ['secondaryAsset'] : [])])
+        || effect.pathway !== sequence5Pathways[id] || !paths.has(effect.pathway)
+        || !sequence5Asset(effect.asset, id.replace(/_/g, '-'))
+        || (secondary && !sequence5Asset(effect.secondaryAsset, secondary))
+        || typeof effect.color !== 'string' || !/^#[a-f0-9]{6}$/i.test(effect.color)
+        || !['travel', 'strike', 'support', 'caster'].includes(effect.mode)) fail(`invalid Sequence 5 effect ${id}`);
     }
     if (!fields(fx.impact, ['frames', 'durationMs', 'critColor', 'critNumberScale'])
       || !number(fx.impact.frames, 3, 4, true) || !number(fx.impact.durationMs, 80, 500, true)

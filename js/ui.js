@@ -456,6 +456,124 @@ function createCombatFx(wrap) {
   function sequence8Config(row) {
     return config.sequence8Abilities?.[presentationAbility(row)];
   }
+  const sequence5Damaging = new Set(['order_distortion', 'soul_pacification', 'zombie_transformation', 'blink_strike',
+    'soul_drain', 'law_enforcement', 'holy_sun_bolt', 'ocean_calling', 'dream_tether']);
+  function sequence5Config(row) {
+    if (row?.attackKind || row?.isCounter || row?.isSkip || row?.abilityId === 'basic_attack') return;
+    return config.sequence5Abilities?.[presentationAbility(row)];
+  }
+  function sequence5OwnEvent(row, event) {
+    return event && !event.isDot && !event.isReflect && event.type !== 'reflect'
+      && (!(event.isReaction || event.type === 'reaction') || event.isSignature)
+      && (event.actorId == null || event.actorId === row.actorId);
+  }
+  function sequence5Hit(row, event) {
+    return sequence5Config(row) && sequence5OwnEvent(row, event)
+      && sequence5Damaging.has(presentationAbility(row)) && damageTypes.has(event.type);
+  }
+  function prepareSequence5Asset(spec) {
+    if (!spec || typeof window.Image !== 'function') return;
+    for (const src of [spec.asset, spec.secondaryAsset].filter(Boolean)) {
+      if (preparedAssets.has(src)) continue;
+      preparedAssets.add(src);
+      const preload = new window.Image(); preload.src = src;
+    }
+  }
+  function sequence5Image(row, stage, targetId, p, geometry = {}) {
+    const spec = sequence5Config(row), root = layer();
+    if (!spec || !root || !p) return null;
+    const size = Math.min((canvas()?.getBoundingClientRect().width || 320) - 8, effectHeight(point(targetId) || p) * 1.14);
+    const width = geometry.width || size, height = geometry.height || size, angle = geometry.angle || 0;
+    const src = geometry.asset || spec.asset, node = group('gm-combat-sequence5', row.actorId, targetId, spec.color);
+    for (const [key, value] of Object.entries({ 'ability-id': presentationAbility(row), stage, mode: geometry.mode || spec.mode,
+      'effect-src': src, 'effect-width': width, 'effect-height': height, 'angle-deg': angle,
+      'flight-path': geometry.flightPath || 'stationary' })) node.setAttribute(`data-${key}`, value);
+    if (geometry.flow) node.setAttribute('data-flow-direction', geometry.flow);
+    node.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${angle})`);
+    const art = image(node, src, width, height, 'gm-combat-effect-image gm-combat-sequence5-image');
+    if (geometry.stretch) art.setAttribute('preserveAspectRatio', 'none');
+    root.append(node);
+    return node;
+  }
+  function sequence5Pulse(node, p, angle, duration, fixedSpan = false) {
+    if (!node || compact()) return;
+    const pose = scale => `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(${fixedSpan ? '1,' : ''}${scale})`;
+    animate(node, [{ transform: pose(.76), opacity: 0 }, { transform: pose(1), opacity: 1, offset: .18 },
+      { transform: pose(1.03), opacity: .95, offset: .84 }, { transform: pose(.96), opacity: 0 }], duration);
+  }
+  function sequence5Cast(row, phaseHold) {
+    const spec = sequence5Config(row), actor = point(row.actorId);
+    if (!spec || !actor) return;
+    const endpointRow = { ...row, targetId: row.targetId ?? row.presentationTargetId };
+    const id = presentationAbility(row), targetId = sequence6Endpoint(endpointRow, spec.mode), target = point(targetId);
+    if (!target) return;
+    if (!['caster', 'support'].includes(spec.mode) && targetId === row.actorId && row.targetId == null
+      && !(row.timeline || []).some(step => sequence5OwnEvent(row, step.event)
+        && damageTypes.has(step.type) && step.event.targetId === targetId)) return;
+    const hold = Math.max(1, Number(phaseHold) || readableCastDuration(row));
+    const span = ['thread_binding', 'dream_tether'].includes(id) && targetId !== row.actorId;
+    const reverse = id === 'soul_drain' && targetId !== row.actorId;
+    const moving = spec.mode === 'travel' && targetId !== row.actorId;
+    const from = reverse ? target : actor, toward = reverse ? actor : target;
+    // Extraction fades before reaching the caster; this is SP theft, not an HP-heal pulse.
+    const end = reverse ? { x: from.x + (toward.x - from.x) * .82, y: from.y + (toward.y - from.y) * .82 } : toward;
+    const directional = moving || span || sequence5Damaging.has(id);
+    const angle = directional ? Math.atan2(end.y - from.y, end.x - from.x) * 180 / Math.PI : 0;
+    const center = span ? { x: (actor.x + target.x) / 2, y: (actor.y + target.y) / 2 } : moving ? end : target;
+    const geometry = { angle, flow: moving || span ? reverse ? 'target-to-caster' : 'caster-to-target' : null,
+      flightPath: span ? 'stationary-attacker-to-target-span' : moving ? 'straight' : 'stationary' };
+    if (span) Object.assign(geometry, { width: Math.hypot(target.x - actor.x, target.y - actor.y),
+      height: Math.max(12, effectHeight(target) * (id === 'thread_binding' ? .24 : .16)), stretch: true });
+    const node = sequence5Image(row, 'cast', targetId, center, geometry);
+    if (node && !compact() && moving) {
+      const pose = (progress, scale) => `translate(${from.x + (end.x - from.x) * progress}px,${from.y + (end.y - from.y) * progress}px) rotate(${angle}deg) scale(${scale})`;
+      animate(node, [{ transform: pose(0, .56), opacity: 0 }, { transform: pose(.1, .88), opacity: 1, offset: .16 },
+        { transform: pose(.58, 1), opacity: .98, offset: .62 }, { transform: pose(1, 1.04), opacity: .95, offset: .88 },
+        { transform: pose(1, .9), opacity: 0 }], hold);
+    } else sequence5Pulse(node, center, angle, hold, span);
+    if (spec.secondaryAsset) {
+      const benefit = (row.timeline || []).find(step => sequence5OwnEvent(row, step.event)
+        && step.event.type === 'status' && step.event.beneficial === true && step.event.targetId != null
+        && (id === 'blink_strike' ? step.event.status === 'evade' : step.event.subtype === 'buff'
+          && (!step.event.stat || step.event.stat === (id === 'zombie_transformation' ? 'def' : 'int'))));
+      const secondaryId = id === 'corrupted_flesh' ? sequence6Endpoint(endpointRow, 'travel') : benefit?.event.targetId ?? row.actorId;
+      if (id === 'corrupted_flesh' && secondaryId === row.actorId) return;
+      const p = point(secondaryId);
+      if (p) sequence5Pulse(sequence5Image(row, 'cast-secondary', secondaryId, p,
+        { asset: spec.secondaryAsset, mode: id === 'corrupted_flesh' ? 'strike' : 'caster' }), p, 0, hold);
+    }
+  }
+  function sequence5Outcome(row, event, phaseHold) {
+    const spec = sequence5Config(row), id = presentationAbility(row);
+    if (!spec || !sequence5OwnEvent(row, event) || event.targetId == null || event.recoveryKind === 'lifesteal') return;
+    const targetId = event.targetId, p = point(targetId);
+    if (!p) return;
+    let asset, stage = 'outcome', angle = 0;
+    const positiveHeal = event.type === 'heal' && Number(event.amount) > 0;
+    const positiveStatus = event.type === 'status' && (event.beneficial === true || event.subtype === 'cleanse');
+    const buff = positiveStatus && event.subtype === 'buff';
+    const controlStatus = { desire_control: 'silenced', logic_distortion: 'distorted_logic', constellation_constrain: 'bound' }[id];
+    if (sequence5Hit(row, event)) {
+      asset = spec.asset; stage = 'impact';
+      const actor = point(row.actorId);
+      if (actor && ['travel', 'strike'].includes(spec.mode)) angle = id === 'soul_drain'
+        ? Math.atan2(actor.y - p.y, actor.x - p.x) * 180 / Math.PI : Math.atan2(p.y - actor.y, p.x - actor.x) * 180 / Math.PI;
+    } else if (id === 'corrupted_flesh' && positiveHeal && targetId === row.actorId) asset = spec.asset;
+    else if (id === 'life_bloom' && positiveHeal) asset = spec.asset;
+    else if (id === 'zombie_transformation' && buff && (!event.stat || event.stat === 'def')) asset = spec.secondaryAsset;
+    else if (id === 'blink_strike' && positiveStatus && event.status === 'evade') asset = spec.secondaryAsset;
+    else if (id === 'dream_tether' && buff && (!event.stat || event.stat === 'int')) asset = spec.secondaryAsset;
+    else if (id === 'mirror_substitution' && positiveStatus && (event.subtype === 'cleanse' || event.status === 'evade')) asset = spec.asset;
+    else if (id === 'prophetic_evade' && positiveStatus && event.status === 'evade') asset = spec.asset;
+    else if (['vampire_transformation', 'matter_fortification', 'guardian_stance'].includes(id)
+      && (positiveStatus || id === 'guardian_stance' && event.type === 'shield' && Number(event.amount) > 0)) asset = spec.asset;
+    else if (controlStatus && event.type === 'status' && event.beneficial !== true
+      && event.status === controlStatus) { asset = spec.asset; stage = 'impact'; }
+    // Casts show an attempt. Only the recorded result can add a support or control outcome.
+    if (!asset) return;
+    const node = sequence5Image(row, stage, targetId, p, { asset, angle, mode: stage === 'outcome' ? 'support' : spec.mode });
+    sequence5Pulse(node, p, angle, Math.max(1, Number(phaseHold) || (stage === 'outcome' ? 500 : 225)));
+  }
   function sequence6Config(row) {
     return config.sequence6Abilities?.[presentationAbility(row)];
   }
@@ -1150,6 +1268,7 @@ function createCombatFx(wrap) {
     const id = presentationAbility(row), event = next?.event;
     const actor = point(row.actorId), targetId = event?.targetId ?? row.targetId, target = point(targetId);
     if (!actor || !layer()) return;
+    if (sequence5Config(row)) { sequence5Cast(row, phaseHold); return; }
     if (sequence6Config(row)) { sequence6Cast(row, phaseHold); return; }
     if (sequence8Config(row)) { sequence8Cast(row, phaseHold); return; }
     if (sequence7Config(row)) { sequence7Cast(row, phaseHold); return; }
@@ -1457,7 +1576,8 @@ function createCombatFx(wrap) {
       && !event?.isReflect && (!event?.isReaction || event?.isSignature);
     const customS6 = sequence6Config(row) && (event?.actorId == null || event.actorId === row.actorId)
       && !event?.isReflect && (!event?.isReaction || event?.isSignature);
-    if (!event || (!damageTypes.has(step.type) && !basicMiss) || event.isDot || customS9 || customS8 || customS7 || customS6) return;
+    const customS5 = sequence5Hit(row, event);
+    if (!event || (!damageTypes.has(step.type) && !basicMiss) || event.isDot || customS9 || customS8 || customS7 || customS6 || customS5) return;
     if (unarmedBasic) { punchCue(row, step, phaseHold); return; }
     const ownerId = event.actorId ?? row.actorId, targetId = event.targetId;
     const a = point(ownerId), originalTarget = point(targetId);
@@ -1610,6 +1730,7 @@ function createCombatFx(wrap) {
     ], isReadableAbility(row) ? duration : Math.min(160, Math.max(1, Number(phaseHold) || 160)), 0, { remove: false, easing: 'ease-out' });
     const authoredSequence6Hit = sequence6Config(row) && event.actorId === row.actorId
       && !event.isReflect && !['lightning_bolt', 'spirit_body_door'].includes(hitAbilityId) && (!event.isReaction || event.isSignature);
+    if (sequence5Hit(row, event)) return; // Keep shared shake; the authored hit owns its visible impact.
     if (authoredSequence6Hit) return; // retain shared screen shake, but let Sequence 6 own its visible impact.
     let punchArt = null;
     if (brutalHit) {
@@ -1764,6 +1885,7 @@ function createCombatFx(wrap) {
   function support(type, event, row, phaseHoldMs) {
     const id = event.targetId ?? event.actorId ?? row.targetId ?? row.actorId, p = point(id);
     const duration = Math.max(1, Number(phaseHoldMs) || config.support?.durationMs || 500);
+    sequence5Outcome(row, event, duration);
     sequence6Outcome(row, event, duration);
     sequence7Support(row, event, duration);
     if (!p || !layer()) return;
@@ -1840,6 +1962,7 @@ function createCombatFx(wrap) {
       abilityCue(row, cue.next, phaseHoldMs);
     }
     if (damageTypes.has(type) || type === 'reflect') {
+      sequence5Outcome(row, event, phaseHoldMs);
       sequence6Outcome(row, event, phaseHoldMs);
       sequence7Guard(row, event, phaseHoldMs);
       sequence7Impact(row, event, phaseHoldMs);
@@ -1847,12 +1970,12 @@ function createCombatFx(wrap) {
       impact(row, event, phaseHoldMs);
     }
     else if (['heal', 'shield', 'revive'].includes(type)) support(type, event, row, phaseHoldMs);
-    else if (event.status || event.beneficial || ((sequence6Config(row) || sequence8Config(row) || sequence7Config(row)) && event.type === 'status' && event.targetId != null
+    else if (event.status || event.beneficial || ((sequence5Config(row) || sequence6Config(row) || sequence8Config(row) || sequence7Config(row)) && event.type === 'status' && event.targetId != null
       && !event.presentationEffect) || event.type === 'thread' || ['cc_loss', 'madness_loss', 'banished'].includes(event.subtype)) support('status', event, row, phaseHoldMs);
     travel(row, cue.next, phaseHoldMs);
   }
   return { sync: map => { hpMap = map || Object.create(null); prepareSequence6Assets(hpMap); prepareSequence8Assets(hpMap); prepareSequence7Assets(hpMap); }, show,
-    prepare: rows => { for (const row of rows || []) { prepareSequence6Asset(sequence6Config(row)); prepareSequence8Asset(sequence8Config(row)); prepareSequence7Asset(sequence7Config(row)); } },
+    prepare: rows => { for (const row of rows || []) { prepareSequence5Asset(sequence5Config(row)); prepareSequence6Asset(sequence6Config(row)); prepareSequence8Asset(sequence8Config(row)); prepareSequence7Asset(sequence7Config(row)); } },
     clear: () => { clearPhase(false); surface?.remove(); surface = null; hpMap = Object.create(null); paused = false; areaRows = new WeakSet(); phaseRow = null; phaseType = null; },
     reflow: () => { clearPhase(false); surface?.remove(); surface = null; },
     pause: () => { paused = true; for (const animation of animations.keys()) animation.pause(); },

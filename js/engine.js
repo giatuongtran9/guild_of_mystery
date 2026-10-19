@@ -1453,6 +1453,7 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
       actorName: actor.name,
       actorTeam: teamOf(actor, state),
       ability: castName,
+      presentationTargetId: enemy?.id ?? null,
       sourcePath: presentationSourcePath,
       sourceAbilityId: presentationAbilityId,
       presentationTargetMode,

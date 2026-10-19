@@ -628,5 +628,131 @@
       "color": "#bbaee8",
       "mode": "caster"
     }
+  },
+  "sequence5Abilities": {
+    "corrupted_flesh": {
+      "pathway": "abyss",
+      "asset": "data/assets/effects/sequence5/corrupted-flesh.png?v=501121227ee3547c",
+      "color": "#a92f42",
+      "mode": "caster",
+      "secondaryAsset": "data/assets/effects/sequence5/abyss-desire-mark.png?v=adbe948b422912db"
+    },
+    "order_distortion": {
+      "pathway": "black_emperor",
+      "asset": "data/assets/effects/sequence5/order-distortion.png?v=848a0887dc9fe470",
+      "color": "#deb282",
+      "mode": "strike"
+    },
+    "desire_control": {
+      "pathway": "chained",
+      "asset": "data/assets/effects/sequence5/desire-control.png?v=9baa55eab539ab5c",
+      "color": "#b998d0",
+      "mode": "strike"
+    },
+    "soul_pacification": {
+      "pathway": "darkness",
+      "asset": "data/assets/effects/sequence5/soul-pacification.png?v=69319bffeeaa721d",
+      "color": "#a79bd6",
+      "mode": "strike"
+    },
+    "zombie_transformation": {
+      "pathway": "death",
+      "asset": "data/assets/effects/sequence5/zombie-transformation.png?v=e3301d2be5d60767",
+      "color": "#a6bebc",
+      "mode": "strike",
+      "secondaryAsset": "data/assets/effects/sequence5/death-bone-guard.png?v=d65ff91b5f97e5b5"
+    },
+    "mirror_substitution": {
+      "pathway": "demoness",
+      "asset": "data/assets/effects/sequence5/mirror-substitution.png?v=f9473550b74aee3b",
+      "color": "#cab0df",
+      "mode": "caster"
+    },
+    "blink_strike": {
+      "pathway": "door",
+      "asset": "data/assets/effects/sequence5/blink-strike.png?v=87497830819f113d",
+      "color": "#91d1df",
+      "mode": "strike",
+      "secondaryAsset": "data/assets/effects/sequence5/door-blink-portal.png?v=8030b72b0ef818ff"
+    },
+    "logic_distortion": {
+      "pathway": "error",
+      "asset": "data/assets/effects/sequence5/logic-distortion.png?v=134a861e0938921a",
+      "color": "#c6a0e8",
+      "mode": "strike"
+    },
+    "thread_binding": {
+      "pathway": "fool",
+      "asset": "data/assets/effects/sequence5/thread-binding.png?v=413e0261e8ad1833",
+      "color": "#c5badf",
+      "mode": "strike"
+    },
+    "soul_drain": {
+      "pathway": "hanged_man",
+      "asset": "data/assets/effects/sequence5/soul-drain.png?v=85cdeee10d9e041f",
+      "color": "#b0c897",
+      "mode": "travel"
+    },
+    "constellation_constrain": {
+      "pathway": "hermit",
+      "asset": "data/assets/effects/sequence5/constellation-constrain.png?v=13b52fc97669613f",
+      "color": "#c6afea",
+      "mode": "strike"
+    },
+    "law_enforcement": {
+      "pathway": "justiciar",
+      "asset": "data/assets/effects/sequence5/law-enforcement.png?v=8a68a36ac820cffe",
+      "color": "#e2c9aa",
+      "mode": "travel"
+    },
+    "vampire_transformation": {
+      "pathway": "moon",
+      "asset": "data/assets/effects/sequence5/vampire-transformation.png?v=cfb3440c009e9222",
+      "color": "#c8b9e8",
+      "mode": "caster"
+    },
+    "life_bloom": {
+      "pathway": "mother",
+      "asset": "data/assets/effects/sequence5/life-bloom.png?v=e95355b74001c104",
+      "color": "#a1d69a",
+      "mode": "support"
+    },
+    "matter_fortification": {
+      "pathway": "paragon",
+      "asset": "data/assets/effects/sequence5/matter-fortification.png?v=56274ac18bb6463b",
+      "color": "#e7bc79",
+      "mode": "caster"
+    },
+    "holy_sun_bolt": {
+      "pathway": "sun",
+      "asset": "data/assets/effects/sequence5/holy-sun-bolt.png?v=ae527f0edda15475",
+      "color": "#ead291",
+      "mode": "travel"
+    },
+    "guardian_stance": {
+      "pathway": "twilight_giant",
+      "asset": "data/assets/effects/sequence5/guardian-stance.png?v=7f872a84725cf8a8",
+      "color": "#ead291",
+      "mode": "caster"
+    },
+    "ocean_calling": {
+      "pathway": "tyrant",
+      "asset": "data/assets/effects/sequence5/ocean-calling.png?v=f71339dfeb205994",
+      "color": "#a9cfe5",
+      "mode": "travel"
+    },
+    "dream_tether": {
+      "pathway": "visionary",
+      "asset": "data/assets/effects/sequence5/dream-tether.png?v=d6c996b8e18b0529",
+      "color": "#e5aed6",
+      "mode": "strike",
+      "secondaryAsset": "data/assets/effects/sequence5/visionary-insight-halo.png?v=36b34f9ca17864e2"
+    },
+    "prophetic_evade": {
+      "pathway": "white_tower",
+      "asset": "data/assets/effects/sequence5/prophetic-evade.png?v=8f48fd0d664faf08",
+      "color": "#bbaee8",
+      "mode": "caster"
+    }
   }
 }
