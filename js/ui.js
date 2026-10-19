@@ -511,33 +511,39 @@ function createCombatFx(wrap) {
     if (!target) { mode = 'caster'; targetId = row.actorId; }
     const destination = point(targetId) || actor;
     const spanLightning = abilityId === 'lightning_bolt' && mode === 'travel' && targetId !== row.actorId;
-    const moving = mode === 'travel' && targetId !== row.actorId && !spanLightning;
+    const spanThread = abilityId === 'affliction_thread' && targetId !== row.actorId;
+    const moving = mode === 'travel' && targetId !== row.actorId && !spanLightning && !spanThread;
     const rustSiphon = abilityId === 'rust_siphon' && targetId !== row.actorId;
     const deathDoor = abilityId === 'spirit_body_door' && deathTargetId !== row.actorId;
-    const midpoint = spanLightning || rustSiphon ? { x: (actor.x + destination.x) / 2, y: (actor.y + destination.y) / 2 } : null;
-    const angle = rustSiphon ? 180 : (moving || spanLightning) ? Math.atan2(destination.y - actor.y, destination.x - actor.x) * 180 / Math.PI : 0;
-    const spanWidth = spanLightning ? Math.hypot(destination.x - actor.x, destination.y - actor.y) : 0;
-    const spanHeight = spanLightning ? Math.max(24, effectHeight(point(targetId) || destination) * 1.12) : 0;
+    const midpoint = spanLightning || rustSiphon || spanThread ? { x: (actor.x + destination.x) / 2, y: (actor.y + destination.y) / 2 } : null;
+    const angle = rustSiphon ? 180 : (moving || spanLightning || spanThread) ? Math.atan2(destination.y - actor.y, destination.x - actor.x) * 180 / Math.PI : 0;
+    const spanWidth = spanLightning || spanThread ? Math.hypot(destination.x - actor.x, destination.y - actor.y) : 0;
+    const spanHeight = spanLightning ? Math.max(24, effectHeight(point(targetId) || destination) * 1.12)
+      : spanThread ? Math.max(12, effectHeight(point(targetId) || destination) * .28) : 0;
     const node = sequence6Image(row, 'cast', deathDoor ? row.actorId : targetId, deathDoor ? 'caster' : mode,
-      spanLightning || rustSiphon ? midpoint : (deathDoor || mode === 'caster' ? actor : moving ? destination : destination),
-      spanLightning ? { width: spanWidth, height: spanHeight, stretch: true } : undefined);
+      spanLightning || rustSiphon || spanThread ? midpoint : (deathDoor || mode === 'caster' ? actor : moving ? destination : destination),
+      spanLightning || spanThread ? { width: spanWidth, height: spanHeight, stretch: true } : undefined);
     if (!node) return;
     node.setAttribute('data-angle-deg', String(angle));
-    node.setAttribute('data-flight-path', spanLightning ? 'attacker-to-target-span' : rustSiphon ? 'stationary-midpoint' : moving ? 'straight' : 'stationary');
-    if (moving || spanLightning) node.setAttribute('data-flow-direction', 'caster-to-target');
+    node.setAttribute('data-flight-path', spanLightning ? 'attacker-to-target-span' : spanThread ? 'stationary-attacker-to-target-span' : rustSiphon ? 'stationary-midpoint' : moving ? 'straight' : 'stationary');
+    if (moving || spanLightning || spanThread) node.setAttribute('data-flow-direction', 'caster-to-target');
     if (rustSiphon) node.setAttribute('transform', `translate(${midpoint.x} ${midpoint.y}) rotate(180)`);
     if (deathDoor && spec.ghostAsset) {
       node.setAttribute('data-flight-path', 'stationary-caster-door');
       const ghost = sequence6Image(row, 'ghost-travel', targetId, 'travel', actor, { asset: spec.ghostAsset });
       if (ghost) {
+        const soulAngle = Math.atan2(destination.y - actor.y, destination.x - actor.x) * 180 / Math.PI;
+        const soulPose = (x, y, scale) => `translate(${x}px,${y}px) rotate(${soulAngle}deg) scale(${scale})`;
         ghost.setAttribute('data-flight-path', 'caster-to-target');
         ghost.setAttribute('data-flow-direction', 'caster-to-target');
+        ghost.setAttribute('data-angle-deg', String(soulAngle));
+        ghost.setAttribute('data-orientation', 'toward-target');
         if (!compact()) animate(ghost, [
-          { transform: `translate(${actor.x}px,${actor.y}px) scale(.55)`, opacity: 0 },
-          { transform: `translate(${actor.x + (destination.x-actor.x)*.18}px,${actor.y + (destination.y-actor.y)*.18}px) scale(.85)`, opacity: 1, offset: .18 },
-          { transform: `translate(${actor.x + (destination.x-actor.x)*.64}px,${actor.y + (destination.y-actor.y)*.64}px) scale(1)`, opacity: 1, offset: .68 },
-          { transform: `translate(${destination.x}px,${destination.y}px) scale(1.05)`, opacity: 1, offset: .88 },
-          { transform: `translate(${destination.x}px,${destination.y}px) scale(.9)`, opacity: 0 }
+          { transform: soulPose(actor.x, actor.y, .55), opacity: 0 },
+          { transform: soulPose(actor.x + (destination.x-actor.x)*.18, actor.y + (destination.y-actor.y)*.18, .85), opacity: 1, offset: .18 },
+          { transform: soulPose(actor.x + (destination.x-actor.x)*.64, actor.y + (destination.y-actor.y)*.64, 1), opacity: 1, offset: .68 },
+          { transform: soulPose(destination.x, destination.y, 1.05), opacity: 1, offset: .88 },
+          { transform: soulPose(destination.x, destination.y, .9), opacity: 0 }
         ], Math.max(1, Number(phaseHold) || readableCastDuration(row)), 140);
       }
       // The door stays visibly open around the traveler for the whole cast phase.
@@ -552,8 +558,8 @@ function createCombatFx(wrap) {
     const hold = Math.max(1, Number(phaseHold) || readableCastDuration(row));
     if (compact()) return;
     const pose = (progress, scale = 1) => {
-      const x = spanLightning || rustSiphon ? midpoint.x : deathDoor || mode === 'caster' ? actor.x : moving ? actor.x + (destination.x - actor.x) * progress : destination.x;
-      const y = spanLightning || rustSiphon ? midpoint.y : deathDoor || mode === 'caster' ? actor.y : moving ? actor.y + (destination.y - actor.y) * progress : destination.y;
+      const x = spanLightning || rustSiphon || spanThread ? midpoint.x : deathDoor || mode === 'caster' ? actor.x : moving ? actor.x + (destination.x - actor.x) * progress : destination.x;
+      const y = spanLightning || rustSiphon || spanThread ? midpoint.y : deathDoor || mode === 'caster' ? actor.y : moving ? actor.y + (destination.y - actor.y) * progress : destination.y;
       return `translate(${x}px,${y}px) rotate(${angle}deg) scale(${scale}${spanLightning ? ',1' : ''})`;
     };
     if (spanLightning) {
