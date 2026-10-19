@@ -493,5 +493,139 @@
       "color": "#e2c9aa",
       "mode": "support"
     }
+  },
+  "sequence6Abilities": {
+    "magma_arrow": {
+      "pathway": "abyss",
+      "asset": "data/assets/effects/sequence6/sequence6-abyss-magma-arrow.png?v=ec654674c694c964",
+      "color": "#a92f42",
+      "mode": "travel"
+    },
+    "distort_impact": {
+      "pathway": "black_emperor",
+      "asset": "data/assets/effects/sequence6/sequence6-black-emperor-distort-impact.png?v=60bd1e1bba4e5867",
+      "color": "#deb282",
+      "mode": "strike"
+    },
+    "spiteful_strike": {
+      "pathway": "chained",
+      "asset": "data/assets/effects/sequence6/sequence6-chained-spiteful-strike.png?v=91aa9cb822996398",
+      "color": "#b998d0",
+      "mode": "travel"
+    },
+    "dream_slumber": {
+      "pathway": "darkness",
+      "asset": "data/assets/effects/sequence6/sequence6-darkness-dream-slumber.png?v=a3d0afa2a312110d",
+      "color": "#a79bd6",
+      "mode": "travel"
+    },
+    "spirit_body_door": {
+      "pathway": "death",
+      "asset": "data/assets/effects/sequence6/sequence6-death-spirit-body-door.png?v=736ef54503383b44",
+      "color": "#a6bebc",
+      "mode": "travel"
+    },
+    "affliction_thread": {
+      "pathway": "demoness",
+      "asset": "data/assets/effects/sequence6/sequence6-demoness-affliction-thread.png?v=f508bf7a731ccb42",
+      "color": "#cab0df",
+      "mode": "travel"
+    },
+    "combat_record": {
+      "pathway": "door",
+      "asset": "data/assets/effects/sequence6/sequence6-door-combat-record.png?v=e3f4fab544b920f8",
+      "color": "#91d1df",
+      "mode": "caster"
+    },
+    "rust_siphon": {
+      "pathway": "error",
+      "asset": "data/assets/effects/sequence6/sequence6-error-rust-siphon.png?v=54b1881c7b777a55",
+      "color": "#c6a0e8",
+      "mode": "travel"
+    },
+    "combat_stance_mimicry": {
+      "pathway": "fool",
+      "asset": "data/assets/effects/sequence6/sequence6-fool-combat-stance-mimicry.png?v=6e1a5fb9a56e9686",
+      "color": "#c5badf",
+      "mode": "strike"
+    },
+    "depravity_mark": {
+      "pathway": "hanged_man",
+      "asset": "data/assets/effects/sequence6/sequence6-hanged-man-depravity-mark.png?v=f25b41dcc0627202",
+      "color": "#b0c897",
+      "mode": "strike"
+    },
+    "knowledge_arrow": {
+      "pathway": "hermit",
+      "asset": "data/assets/effects/sequence6/sequence6-hermit-knowledge-arrow.png?v=824d855c8004927d",
+      "color": "#c6afea",
+      "mode": "travel"
+    },
+    "interdiction_zone": {
+      "pathway": "justiciar",
+      "asset": "data/assets/effects/sequence6/sequence6-justiciar-interdiction-zone.png?v=d09af523030bca34",
+      "color": "#e2c9aa",
+      "mode": "strike"
+    },
+    "moonlight_shield": {
+      "pathway": "moon",
+      "asset": "data/assets/effects/sequence6/sequence6-moon-moonlight-shield.png?v=34697637c06cafc5",
+      "color": "#c8b9e8",
+      "mode": "caster"
+    },
+    "life_seed": {
+      "pathway": "mother",
+      "asset": "data/assets/effects/sequence6/sequence6-mother-life-seed.png?v=195b173272dd63d1",
+      "color": "#a1d69a",
+      "mode": "travel"
+    },
+    "alchemical_fire": {
+      "pathway": "paragon",
+      "asset": "data/assets/effects/sequence6/sequence6-paragon-alchemical-fire.png?v=a6711f241661651e",
+      "color": "#e7bc79",
+      "mode": "travel"
+    },
+    "reaper_s_harvest": {
+      "pathway": "red_priest",
+      "asset": "data/assets/effects/sequence6/sequence6-red-priest-reaper-s-harvest.png?v=f6378b441915e69a",
+      "color": "#df9b7a",
+      "mode": "travel"
+    },
+    "notarize": {
+      "pathway": "sun",
+      "asset": "data/assets/effects/sequence6/sequence6-sun-notarize.png?v=887039bc79e6100c",
+      "color": "#ead291",
+      "mode": "strike"
+    },
+    "light_of_dawn": {
+      "pathway": "twilight_giant",
+      "asset": "data/assets/effects/sequence6/sequence6-twilight-giant-light-of-dawn.png?v=9b1582078a9a0db3",
+      "color": "#ead291",
+      "mode": "travel"
+    },
+    "lightning_bolt": {
+      "pathway": "tyrant",
+      "asset": "data/assets/effects/sequence6/sequence6-tyrant-lightning-bolt.png?v=ffb7fa3ee8850df9",
+      "color": "#a9cfe5",
+      "mode": "travel"
+    },
+    "battle_hypnosis": {
+      "pathway": "visionary",
+      "asset": "data/assets/effects/sequence6/sequence6-visionary-battle-hypnosis.png?v=841da3e46db752bc",
+      "color": "#e5aed6",
+      "mode": "travel"
+    },
+    "misfortune_aura": {
+      "pathway": "wheel_of_fortune",
+      "asset": "data/assets/effects/sequence6/sequence6-wheel-of-fortune-misfortune-aura.png?v=433bfe2b4ca9ac3c",
+      "color": "#e4d294",
+      "mode": "strike"
+    },
+    "spell_imitation": {
+      "pathway": "white_tower",
+      "asset": "data/assets/effects/sequence6/sequence6-white-tower-spell-imitation.png?v=b8a1576d2233c479",
+      "color": "#bbaee8",
+      "mode": "caster"
+    }
   }
 }

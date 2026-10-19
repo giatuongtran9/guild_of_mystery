@@ -456,6 +456,103 @@ function createCombatFx(wrap) {
   function sequence8Config(row) {
     return config.sequence8Abilities?.[presentationAbility(row)];
   }
+  function sequence6Config(row) {
+    return config.sequence6Abilities?.[presentationAbility(row)];
+  }
+  function prepareSequence6Asset(spec) {
+    if (!spec || typeof window.Image !== 'function' || preparedAssets.has(spec.asset)) return;
+    preparedAssets.add(spec.asset);
+    const preload = new window.Image(); preload.src = spec.asset;
+  }
+  function sequence6Endpoint(row, mode) {
+    if (mode === 'caster') return row.actorId;
+    const steps = row.timeline || [];
+    const own = event => event.actorId == null || event.actorId === row.actorId;
+    const targetEvent = steps.find(step => own(step.event) && step.event.targetId != null
+      && damageTypes.has(step.type) && !step.event.isDot && !step.event.isReaction && !step.event.isReflect)
+      || steps.find(step => own(step.event) && step.event.targetId != null
+        && step.event.targetId !== row.actorId && !['heal', 'shield', 'revive'].includes(step.type));
+    const supportEvent = steps.find(step => own(step.event) && step.event.targetId != null
+      && ['heal', 'shield', 'revive'].includes(step.type) && Number(step.event.amount ?? 1) > 0);
+    return mode === 'support' ? (supportEvent?.event.targetId ?? row.actorId)
+      : (targetEvent?.event.targetId ?? row.targetId ?? row.actorId);
+  }
+  function sequence6Image(row, stage, targetId, mode, p) {
+    const spec = sequence6Config(row), root = layer();
+    if (!spec || !root || !p) return null;
+    const size = Math.min((canvas()?.getBoundingClientRect().width || 320) - 8, effectHeight(point(targetId) || p) * 1.14);
+    const node = group('gm-combat-sequence6', row.actorId, targetId, spec.color);
+    for (const [key, value] of Object.entries({ 'ability-id': presentationAbility(row), stage, mode,
+      'effect-src': spec.asset, 'effect-width': size, 'effect-height': size })) node.setAttribute(`data-${key}`, value);
+    node.setAttribute('transform', `translate(${p.x} ${p.y})`);
+    image(node, spec.asset, size, size, 'gm-combat-effect-image gm-combat-sequence6-image');
+    root.append(node);
+    return node;
+  }
+  function sequence6Cast(row, phaseHold) {
+    const spec = sequence6Config(row), actor = point(row.actorId);
+    if (!spec || !actor) return;
+    let mode = spec.mode, targetId = sequence6Endpoint(row, mode);
+    if (mode === 'support' && targetId === row.actorId && row.targetId != null && point(row.targetId)) targetId = row.targetId;
+    const target = point(targetId);
+    if (!target) { mode = 'caster'; targetId = row.actorId; }
+    const destination = point(targetId) || actor;
+    const moving = mode === 'travel' && targetId !== row.actorId;
+    const angle = moving ? Math.atan2(destination.y - actor.y, destination.x - actor.x) * 180 / Math.PI : 0;
+    const node = sequence6Image(row, 'cast', targetId, mode, moving ? destination : (mode === 'caster' ? actor : destination));
+    if (!node) return;
+    node.setAttribute('data-angle-deg', String(angle));
+    node.setAttribute('data-flight-path', moving ? 'straight' : 'stationary');
+    if (moving) node.setAttribute('data-flow-direction', 'caster-to-target');
+    const hold = Math.max(1, Number(phaseHold) || readableCastDuration(row));
+    if (compact()) return;
+    const pose = (progress, scale = 1) => {
+      const x = moving ? actor.x + (destination.x - actor.x) * progress : destination.x;
+      const y = moving ? actor.y + (destination.y - actor.y) * progress : destination.y;
+      return `translate(${x}px,${y}px) rotate(${angle}deg) scale(${scale})`;
+    };
+    animate(node, moving ? [
+      { transform: pose(0, .56), opacity: 0 },
+      { transform: pose(.1, .88), opacity: 1, offset: .16 },
+      { transform: pose(.58, 1), opacity: .98, offset: .62 },
+      { transform: pose(1, 1.04), opacity: .95, offset: .88 },
+      { transform: pose(1, .9), opacity: 0 }
+    ] : [
+      { transform: pose(0, .72), opacity: 0 },
+      { transform: pose(0, 1), opacity: 1, offset: .18 },
+      { transform: pose(0, 1.03), opacity: .95, offset: .84 },
+      { transform: pose(0, .96), opacity: 0 }
+    ], hold);
+  }
+  function sequence6Outcome(row, event, phaseHold) {
+    const spec = sequence6Config(row);
+    if (!spec || !event || event.isDot || event.isReflect
+      || (event.actorId != null && event.actorId !== row.actorId)) return;
+    const support = ['heal', 'shield', 'revive'].includes(event.type) && Number(event.amount ?? 1) > 0
+      || event.type === 'status' && (event.beneficial === true || event.subtype === 'cleanse');
+    const hit = damageTypes.has(event.type) && !event.isReaction;
+    const hostileStatus = event.type === 'status' && event.targetId != null && event.targetId !== row.actorId;
+    if (!support && !hit && !hostileStatus) return;
+    const id = event.targetId ?? row.actorId, p = point(id);
+    if (!p) return;
+    const node = sequence6Image(row, support ? 'outcome' : hostileStatus ? 'impact' : 'impact', id, support ? 'support' : spec.mode, p);
+    if (!node) return;
+    const actor = point(event.actorId ?? row.actorId);
+    const angle = spec.mode === 'travel' && actor
+      ? Math.atan2(p.y - actor.y, p.x - actor.x) * 180 / Math.PI : 0;
+    node.setAttribute('data-angle-deg', String(angle));
+    node.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${angle})`);
+    if (!compact()) animate(node, [
+      { transform: `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(.76)`, opacity: .18 },
+      { transform: `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(1.06)`, opacity: 1, offset: .24 },
+      { transform: `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(1)`, opacity: .92, offset: .68 },
+      { transform: `translate(${p.x}px,${p.y}px) rotate(${angle}deg) scale(.9)`, opacity: 0 }
+    ], Math.max(1, Number(phaseHold) || (support ? 500 : 225)));
+  }
+  function prepareSequence6Assets(map) {
+    const paths = new Set(Object.values(map || {}).filter(entry => entry && Number(entry.sequence) <= 6).map(entry => entry.path));
+    for (const spec of Object.values(config.sequence6Abilities || {})) if (paths.has(spec.pathway)) prepareSequence6Asset(spec);
+  }
   function sequence7Config(row) {
     return config.sequence7Abilities?.[presentationAbility(row)];
   }
@@ -983,6 +1080,7 @@ function createCombatFx(wrap) {
     const id = presentationAbility(row), event = next?.event;
     const actor = point(row.actorId), targetId = event?.targetId ?? row.targetId, target = point(targetId);
     if (!actor || !layer()) return;
+    if (sequence6Config(row)) { sequence6Cast(row, phaseHold); return; }
     if (sequence8Config(row)) { sequence8Cast(row, phaseHold); return; }
     if (sequence7Config(row)) { sequence7Cast(row, phaseHold); return; }
     const hold = Math.max(100, Math.min(Number(phaseHold) || 600, 560));
@@ -1591,6 +1689,7 @@ function createCombatFx(wrap) {
   function support(type, event, row, phaseHoldMs) {
     const id = event.targetId ?? event.actorId ?? row.targetId ?? row.actorId, p = point(id);
     const duration = Math.max(1, Number(phaseHoldMs) || config.support?.durationMs || 500);
+    sequence6Outcome(row, event, duration);
     sequence7Support(row, event, duration);
     if (!p || !layer()) return;
     const color = type === 'heal' || type === 'revive' ? '#91dda9' : type === 'shield' ? '#b6dced' : '#dfc898';
@@ -1666,18 +1765,19 @@ function createCombatFx(wrap) {
       abilityCue(row, cue.next, phaseHoldMs);
     }
     if (damageTypes.has(type) || type === 'reflect') {
+      sequence6Outcome(row, event, phaseHoldMs);
       sequence7Guard(row, event, phaseHoldMs);
       sequence7Impact(row, event, phaseHoldMs);
       sequence8Impact(row, event, phaseHoldMs);
       impact(row, event, phaseHoldMs);
     }
     else if (['heal', 'shield', 'revive'].includes(type)) support(type, event, row, phaseHoldMs);
-    else if (event.status || event.beneficial || ((sequence8Config(row) || sequence7Config(row)) && event.type === 'status' && event.targetId != null
+    else if (event.status || event.beneficial || ((sequence6Config(row) || sequence8Config(row) || sequence7Config(row)) && event.type === 'status' && event.targetId != null
       && !event.presentationEffect) || event.type === 'thread' || ['cc_loss', 'madness_loss', 'banished'].includes(event.subtype)) support('status', event, row, phaseHoldMs);
     travel(row, cue.next, phaseHoldMs);
   }
-  return { sync: map => { hpMap = map || Object.create(null); prepareSequence8Assets(hpMap); prepareSequence7Assets(hpMap); }, show,
-    prepare: rows => { for (const row of rows || []) { prepareSequence8Asset(sequence8Config(row)); prepareSequence7Asset(sequence7Config(row)); } },
+  return { sync: map => { hpMap = map || Object.create(null); prepareSequence6Assets(hpMap); prepareSequence8Assets(hpMap); prepareSequence7Assets(hpMap); }, show,
+    prepare: rows => { for (const row of rows || []) { prepareSequence6Asset(sequence6Config(row)); prepareSequence8Asset(sequence8Config(row)); prepareSequence7Asset(sequence7Config(row)); } },
     clear: () => { clearPhase(false); surface?.remove(); surface = null; hpMap = Object.create(null); paused = false; areaRows = new WeakSet(); phaseRow = null; phaseType = null; },
     reflow: () => { clearPhase(false); surface?.remove(); surface = null; },
     pause: () => { paused = true; for (const animation of animations.keys()) animation.pause(); },
