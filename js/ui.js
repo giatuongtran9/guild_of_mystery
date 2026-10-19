@@ -477,15 +477,18 @@ function createCombatFx(wrap) {
     return mode === 'support' ? (supportEvent?.event.targetId ?? row.actorId)
       : (targetEvent?.event.targetId ?? row.targetId ?? row.actorId);
   }
-  function sequence6Image(row, stage, targetId, mode, p) {
+  function sequence6Image(row, stage, targetId, mode, p, geometry = {}) {
     const spec = sequence6Config(row), root = layer();
     if (!spec || !root || !p) return null;
     const size = Math.min((canvas()?.getBoundingClientRect().width || 320) - 8, effectHeight(point(targetId) || p) * 1.14);
+    const width = Number(geometry.width) > 0 ? Number(geometry.width) : size;
+    const height = Number(geometry.height) > 0 ? Number(geometry.height) : size;
     const node = group('gm-combat-sequence6', row.actorId, targetId, spec.color);
     for (const [key, value] of Object.entries({ 'ability-id': presentationAbility(row), stage, mode,
-      'effect-src': spec.asset, 'effect-width': size, 'effect-height': size })) node.setAttribute(`data-${key}`, value);
+      'effect-src': spec.asset, 'effect-width': width, 'effect-height': height })) node.setAttribute(`data-${key}`, value);
     node.setAttribute('transform', `translate(${p.x} ${p.y})`);
-    image(node, spec.asset, size, size, 'gm-combat-effect-image gm-combat-sequence6-image');
+    image(node, spec.asset, width, height, 'gm-combat-effect-image gm-combat-sequence6-image');
+    if (geometry.stretch) node.querySelector('image')?.setAttribute('preserveAspectRatio', 'none');
     root.append(node);
     return node;
   }
@@ -497,20 +500,35 @@ function createCombatFx(wrap) {
     const target = point(targetId);
     if (!target) { mode = 'caster'; targetId = row.actorId; }
     const destination = point(targetId) || actor;
-    const moving = mode === 'travel' && targetId !== row.actorId;
-    const angle = moving ? Math.atan2(destination.y - actor.y, destination.x - actor.x) * 180 / Math.PI : 0;
-    const node = sequence6Image(row, 'cast', targetId, mode, moving ? destination : (mode === 'caster' ? actor : destination));
+    const spanLightning = presentationAbility(row) === 'lightning_bolt' && mode === 'travel' && targetId !== row.actorId;
+    const moving = mode === 'travel' && targetId !== row.actorId && !spanLightning;
+    const angle = (moving || spanLightning) ? Math.atan2(destination.y - actor.y, destination.x - actor.x) * 180 / Math.PI : 0;
+    const midpoint = spanLightning ? { x: (actor.x + destination.x) / 2, y: (actor.y + destination.y) / 2 } : null;
+    const spanWidth = spanLightning ? Math.hypot(destination.x - actor.x, destination.y - actor.y) : 0;
+    const spanHeight = spanLightning ? Math.max(24, effectHeight(point(targetId) || destination) * 1.12) : 0;
+    const node = sequence6Image(row, 'cast', targetId, mode,
+      spanLightning ? midpoint : moving ? destination : (mode === 'caster' ? actor : destination),
+      spanLightning ? { width: spanWidth, height: spanHeight, stretch: true } : undefined);
     if (!node) return;
     node.setAttribute('data-angle-deg', String(angle));
-    node.setAttribute('data-flight-path', moving ? 'straight' : 'stationary');
-    if (moving) node.setAttribute('data-flow-direction', 'caster-to-target');
+    node.setAttribute('data-flight-path', spanLightning ? 'attacker-to-target-span' : moving ? 'straight' : 'stationary');
+    if (moving || spanLightning) node.setAttribute('data-flow-direction', 'caster-to-target');
     const hold = Math.max(1, Number(phaseHold) || readableCastDuration(row));
     if (compact()) return;
     const pose = (progress, scale = 1) => {
-      const x = moving ? actor.x + (destination.x - actor.x) * progress : destination.x;
-      const y = moving ? actor.y + (destination.y - actor.y) * progress : destination.y;
-      return `translate(${x}px,${y}px) rotate(${angle}deg) scale(${scale})`;
+      const x = spanLightning ? midpoint.x : moving ? actor.x + (destination.x - actor.x) * progress : destination.x;
+      const y = spanLightning ? midpoint.y : moving ? actor.y + (destination.y - actor.y) * progress : destination.y;
+      return `translate(${x}px,${y}px) rotate(${angle}deg) scale(${scale}${spanLightning ? ',1' : ''})`;
     };
+    if (spanLightning) {
+      animate(node, [
+        { transform: pose(0, .08), opacity: .12 },
+        { transform: pose(0, .72), opacity: 1, offset: .2 },
+        { transform: pose(0, 1), opacity: 1, offset: .72 },
+        { transform: pose(0, .98), opacity: 0 }
+      ], hold);
+      return;
+    }
     animate(node, moving ? [
       { transform: pose(0, .56), opacity: 0 },
       { transform: pose(.1, .88), opacity: 1, offset: .16 },
@@ -533,7 +551,11 @@ function createCombatFx(wrap) {
     const hit = damageTypes.has(event.type) && !event.isReaction;
     const hostileStatus = event.type === 'status' && event.targetId != null && event.targetId !== row.actorId;
     if (!support && !hit && !hostileStatus) return;
-    const id = event.targetId ?? row.actorId, p = point(id);
+    const id = event.targetId ?? row.actorId;
+    // Offensive art is the cast/hit effect, not a second image for a side support result.
+    // The regular heal/shield/status cue and number remain drawn by support().
+    if (support && id === row.actorId && !['support', 'caster'].includes(spec.mode)) return;
+    const p = point(id);
     if (!p) return;
     const node = sequence6Image(row, support ? 'outcome' : hostileStatus ? 'impact' : 'impact', id, support ? 'support' : spec.mode, p);
     if (!node) return;

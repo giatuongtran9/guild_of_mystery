@@ -497,7 +497,7 @@
   "sequence6Abilities": {
     "magma_arrow": {
       "pathway": "abyss",
-      "asset": "data/assets/effects/sequence6/sequence6-abyss-magma-arrow.png?v=ec654674c694c964",
+      "asset": "data/assets/effects/sequence6/sequence6-abyss-magma-arrow.png?v=4ab114510ccc826c",
       "color": "#a92f42",
       "mode": "travel"
     },
@@ -509,25 +509,25 @@
     },
     "spiteful_strike": {
       "pathway": "chained",
-      "asset": "data/assets/effects/sequence6/sequence6-chained-spiteful-strike.png?v=91aa9cb822996398",
+      "asset": "data/assets/effects/sequence6/sequence6-chained-spiteful-strike.png?v=1e8e71c9155b26f0",
       "color": "#b998d0",
       "mode": "travel"
     },
     "dream_slumber": {
       "pathway": "darkness",
-      "asset": "data/assets/effects/sequence6/sequence6-darkness-dream-slumber.png?v=a3d0afa2a312110d",
+      "asset": "data/assets/effects/sequence6/sequence6-darkness-dream-slumber.png?v=470c8254776ccb0f",
       "color": "#a79bd6",
-      "mode": "travel"
+      "mode": "strike"
     },
     "spirit_body_door": {
       "pathway": "death",
-      "asset": "data/assets/effects/sequence6/sequence6-death-spirit-body-door.png?v=736ef54503383b44",
+      "asset": "data/assets/effects/sequence6/sequence6-death-spirit-body-door.png?v=df233644e48d6687",
       "color": "#a6bebc",
       "mode": "travel"
     },
     "affliction_thread": {
       "pathway": "demoness",
-      "asset": "data/assets/effects/sequence6/sequence6-demoness-affliction-thread.png?v=f508bf7a731ccb42",
+      "asset": "data/assets/effects/sequence6/sequence6-demoness-affliction-thread.png?v=6068c3878b552a8a",
       "color": "#cab0df",
       "mode": "travel"
     },
@@ -539,13 +539,13 @@
     },
     "rust_siphon": {
       "pathway": "error",
-      "asset": "data/assets/effects/sequence6/sequence6-error-rust-siphon.png?v=54b1881c7b777a55",
+      "asset": "data/assets/effects/sequence6/sequence6-error-rust-siphon.png?v=64cf8ccea432388f",
       "color": "#c6a0e8",
       "mode": "travel"
     },
     "combat_stance_mimicry": {
       "pathway": "fool",
-      "asset": "data/assets/effects/sequence6/sequence6-fool-combat-stance-mimicry.png?v=6e1a5fb9a56e9686",
+      "asset": "data/assets/effects/sequence6/sequence6-fool-combat-stance-mimicry.png?v=2c10423920a7a083",
       "color": "#c5badf",
       "mode": "strike"
     },
@@ -575,7 +575,7 @@
     },
     "life_seed": {
       "pathway": "mother",
-      "asset": "data/assets/effects/sequence6/sequence6-mother-life-seed.png?v=195b173272dd63d1",
+      "asset": "data/assets/effects/sequence6/sequence6-mother-life-seed.png?v=bcc3bff0be411e00",
       "color": "#a1d69a",
       "mode": "travel"
     },
@@ -587,7 +587,7 @@
     },
     "reaper_s_harvest": {
       "pathway": "red_priest",
-      "asset": "data/assets/effects/sequence6/sequence6-red-priest-reaper-s-harvest.png?v=f6378b441915e69a",
+      "asset": "data/assets/effects/sequence6/sequence6-red-priest-reaper-s-harvest.png?v=8a6a28e1ee18d96c",
       "color": "#df9b7a",
       "mode": "travel"
     },
@@ -605,7 +605,7 @@
     },
     "lightning_bolt": {
       "pathway": "tyrant",
-      "asset": "data/assets/effects/sequence6/sequence6-tyrant-lightning-bolt.png?v=ffb7fa3ee8850df9",
+      "asset": "data/assets/effects/sequence6/sequence6-tyrant-lightning-bolt.png?v=5683f0871bdb0dfe",
       "color": "#a9cfe5",
       "mode": "travel"
     },
