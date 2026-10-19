@@ -13,10 +13,11 @@
     "js/signatures.js": "3bcd70c9338ff73f",
     "js/mythical.js": "36137b6f05975faf",
     "js/battle-ai.js": "c05665bfb2230a25",
-    "js/engine.js": "704243218b86fc1a",
+    "js/engine.js": "5012b6272061b051",
     "js/state.js": "06b4d9cd538f377d",
     "js/campaign.js": "cc4a4e65446ccee4",
-    "js/ui.js": "453f838f9a17c19f"
+    "js/ability-preview.js": "9a0a218b23f0f5f9",
+    "js/ui.js": "be7df5288cc5cc5b"
   },
-  "serviceWorkerVersion": "09add68b5e59942f"
+  "serviceWorkerVersion": "b756610dcd5f4887"
 }

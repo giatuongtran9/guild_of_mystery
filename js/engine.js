@@ -1658,12 +1658,8 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
 }
 function syncUnitToAgent(u){if(u&&u.agent&&u.agent!==u){for(const k of ['_buffs','_speedDebuff','_threadSpeedDebuff','_threadDodgeDebuff','_threadHitDebuff','_threadLockDodge','_spCostMultiplier','_cooldownPenalty','_dodgeBonus','_counterBonus','_lifestealBonus'])u.agent[k]=u[k];}}
 function defPen(spec,effects){return effects.filter(e=>e.type==='defPen'||e.type==='defense_penetration').reduce((n,e)=>n+Number(e.amount||0),0);}
-function powerEffect(a,actor,enemy,state,lines=[],r,actionContext={}){if(!lines)lines=[];
- const ownTraitAction=traitActive(actor)&&!traitRuntime(actor).actionOpen;if(ownTraitAction)traitBeginAction(actor,state,false);
- try {
-  ensureCombatResource(a); a._hpRatio=actor.hp/Math.max(1,actor.maxHp); tryMythicalForm(a,actor,state,lines,r);
-  const action=choosePathwayBattleAction(a,actor,enemy,state,actionContext);
-  if(action.kind==='thread'&&!actor.summoned&&!hasTrait(actor,'spell_eater')&&a.path==='fool'&&a.sequence<=5&&!hasStatus(actor,'silenced')&&!hasStatus(a,'silenced')&&abilityAvailable(a,'thread_binding')){
+function castThreadBinding(a,actor,enemy,state,lines=[],r){
+  if(!actor.summoned&&!hasTrait(actor,'spell_eater')&&a.path==='fool'&&a.sequence<=5&&!hasStatus(actor,'silenced')&&!hasStatus(a,'silenced')&&abilityAvailable(a,'thread_binding')){
     const threadSpec = unlockedAbilities(a).find(x => x.effectId === 'thread_binding' || x.id === 'thread_binding');
     const threadQuote=traitAbilityQuote(a,threadSpec||{effectId:'thread_binding',costSP:45},actor);
     const threadCost=threadQuote.resource==='sp'?threadQuote.amount:0;
@@ -1689,6 +1685,14 @@ function powerEffect(a,actor,enemy,state,lines=[],r,actionContext={}){if(!lines)
       return true;
     }
   }
+ return false;
+}
+function powerEffect(a,actor,enemy,state,lines=[],r,actionContext={}){if(!lines)lines=[];
+ const ownTraitAction=traitActive(actor)&&!traitRuntime(actor).actionOpen;if(ownTraitAction)traitBeginAction(actor,state,false);
+ try {
+  ensureCombatResource(a); a._hpRatio=actor.hp/Math.max(1,actor.maxHp); tryMythicalForm(a,actor,state,lines,r);
+  const action=choosePathwayBattleAction(a,actor,enemy,state,actionContext);
+  if(action.kind==='thread'&&castThreadBinding(a,actor,enemy,state,lines,r))return true;
   const spec=action.kind==='ability'?action.spec:null;
   if(spec&&applyStructuredAbility(a,actor,enemy,state,lines,r,spec))return true;
   attackOnce(a,actor,enemy,state,lines,r,1);

@@ -26,7 +26,7 @@ const system={...(balance.system||{}),contracts:contracts.system||{},enemy_names
 const characters={FIRST:enemies.FIRST||enemies.human_enemy_names?.first||[],LAST:enemies.LAST||enemies.human_enemy_names?.last||[],TRAITS:enemies.TRAITS||{},TRAIT_NAMES:enemies.TRAIT_NAMES||[],OCCUPATIONS:enemies.OCCUPATIONS||enemies.human_enemy_occupations||[]};
 const fx=require('./data-loader.js').validateBattleFx(readJson('fx.json'),manifest.order);
 const G9_DATA={traits:readJson('traits.json'),pathways,formulas:readJson('formulas.json'),balance,items:readJson('items.json'),enemies,characters,contracts,campaign:readJson('campaign.json'),fx,system};
-const files=['paths.js','v15.js','generate.js','traits.js','market.js','pathway-assets.js','signatures.js','mythical.js','battle-ai.js','engine.js','state.js','campaign.js','exports.js'];
+const files=['paths.js','v15.js','generate.js','traits.js','market.js','pathway-assets.js','signatures.js','mythical.js','battle-ai.js','engine.js','state.js','campaign.js','ability-preview.js','exports.js'];
 const src=files.map(f=>fs.readFileSync(path.join(__dirname,f),'utf8')).join('\n');
 const m={exports:{}};
 new Function('module','exports','require','G9_DATA','dayjs',src)(m,m.exports,require,G9_DATA,require('./vendor/dayjs.min.js'));

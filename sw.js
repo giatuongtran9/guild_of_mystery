@@ -18,7 +18,7 @@ self.addEventListener('fetch', event => {
     || /^data\/assets\/effects\/sequence7\/[a-z][a-z0-9-]*\.png$/.test(path) && /^\?v=[a-f0-9]{16}$/.test(url.search)
     || /^data\/runtime\/data\.[a-f0-9]{16}\.json$/.test(path)
     || /^js\/vendor\/dayjs\.min\.js$/.test(path) && /^[a-f0-9]{16}$/.test(url.searchParams.get('v') || '')
-    || (/^js\/(data-loader|boot|paths|v15|generate|traits|market|pathway-assets|signatures|mythical|battle-ai|engine|state|campaign|ui)\.js$/.test(path)
+    || (/^js\/(data-loader|boot|paths|v15|generate|traits|market|pathway-assets|signatures|mythical|battle-ai|engine|state|campaign|ability-preview|ui)\.js$/.test(path)
       || /^css\/(?:[a-z0-9_-]+\/)*[a-z0-9_-]+\.css$/.test(path)) && /^[a-f0-9]{16}$/.test(url.searchParams.get('v') || '');
   if (!immutable) return;
   event.respondWith((async () => {
