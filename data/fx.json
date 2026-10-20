@@ -754,5 +754,144 @@
       "color": "#bbaee8",
       "mode": "caster"
     }
+  },
+  "sequence4Abilities": {
+    "desire_ignition_burst": {
+      "pathway": "abyss",
+      "asset": "data/assets/effects/sequence4/desire-ignition-burst.png?v=1b89e385717bb68a",
+      "color": "#a92f42",
+      "mode": "strike"
+    },
+    "magnify_disorder": {
+      "pathway": "black_emperor",
+      "asset": "data/assets/effects/sequence4/magnify-disorder.png?v=65c87d7f7aadad60",
+      "color": "#deb282",
+      "mode": "strike"
+    },
+    "spiteful_shackles": {
+      "pathway": "chained",
+      "asset": "data/assets/effects/sequence4/spiteful-shackles.png?v=fe687beea6088c21",
+      "color": "#b998d0",
+      "mode": "strike"
+    },
+    "horror_domain": {
+      "pathway": "darkness",
+      "asset": "data/assets/effects/sequence4/horror-domain.png?v=cb5861d1bc72747a",
+      "color": "#a79bd6",
+      "mode": "strike"
+    },
+    "undying_rebirth_aura": {
+      "pathway": "death",
+      "asset": "data/assets/effects/sequence4/undying-rebirth-aura.png?v=f307f3566cb7318a",
+      "color": "#a6bebc",
+      "mode": "strike",
+      "secondaryAsset": "data/assets/effects/sequence4/death-undying-ward.png?v=02f159161f093313"
+    },
+    "unaging_mirror_clone": {
+      "pathway": "demoness",
+      "asset": "data/assets/effects/sequence4/unaging-mirror-clone.png?v=c41ce49c04be862f",
+      "color": "#cab0df",
+      "mode": "strike"
+    },
+    "door_of_concealment": {
+      "pathway": "door",
+      "asset": "data/assets/effects/sequence4/door-of-concealment.png?v=684265776fc6c56a",
+      "color": "#91d1df",
+      "mode": "strike"
+    },
+    "parasitic_contagion": {
+      "pathway": "error",
+      "asset": "data/assets/effects/sequence4/parasitic-contagion.png?v=85693d488fc9f4a7",
+      "color": "#c6a0e8",
+      "mode": "strike"
+    },
+    "bizarro_transformation": {
+      "pathway": "fool",
+      "asset": "data/assets/effects/sequence4/bizarro-transformation.png?v=9d7b3527993172ba",
+      "color": "#c5badf",
+      "mode": "strike",
+      "secondaryAsset": "data/assets/effects/sequence4/fool-bizarro-shimmer.png?v=bfda478f7705c90b"
+    },
+    "shadow_sword_execution": {
+      "pathway": "hanged_man",
+      "asset": "data/assets/effects/sequence4/shadow-sword-execution.png?v=a6ec9096a53491a8",
+      "color": "#b0c897",
+      "mode": "travel",
+      "secondaryAsset": "data/assets/effects/sequence4/hanged-man-recovery-motes.png?v=cb06e8025ba1e00d"
+    },
+    "fairy_tale_spell": {
+      "pathway": "hermit",
+      "asset": "data/assets/effects/sequence4/fairy-tale-spell.png?v=49db792912ea5ee3",
+      "color": "#c6afea",
+      "mode": "travel"
+    },
+    "imperator_s_decree": {
+      "pathway": "justiciar",
+      "asset": "data/assets/effects/sequence4/imperator-s-decree.png?v=58164a2a86e0e7a1",
+      "color": "#e2c9aa",
+      "mode": "travel"
+    },
+    "scarlet_blood_domain": {
+      "pathway": "moon",
+      "asset": "data/assets/effects/sequence4/scarlet-blood-domain.png?v=3e6177acc0041b11",
+      "color": "#c8b9e8",
+      "mode": "strike",
+      "secondaryAsset": "data/assets/effects/sequence4/moon-sp-siphon.png?v=535c6214646955ed"
+    },
+    "nature_s_growth_surge": {
+      "pathway": "mother",
+      "asset": "data/assets/effects/sequence4/nature-s-growth-surge.png?v=5d4a264b78dff3cc",
+      "color": "#a1d69a",
+      "mode": "strike",
+      "secondaryAsset": "data/assets/effects/sequence4/mother-growth-bloom.png?v=84981e92b87a4837"
+    },
+    "alchemical_overclock": {
+      "pathway": "paragon",
+      "asset": "data/assets/effects/sequence4/alchemical-overclock.png?v=2bfc1528b12dee67",
+      "color": "#e7bc79",
+      "mode": "caster"
+    },
+    "iron_blood_steel_body": {
+      "pathway": "red_priest",
+      "asset": "data/assets/effects/sequence4/iron-blood-steel-body.png?v=0846030de34bef58",
+      "color": "#df9b7a",
+      "mode": "caster"
+    },
+    "unshadowed_execution": {
+      "pathway": "sun",
+      "asset": "data/assets/effects/sequence4/unshadowed-execution.png?v=1a00a20890a2e01a",
+      "color": "#ead291",
+      "mode": "travel"
+    },
+    "dawn_guardian_barrier": {
+      "pathway": "twilight_giant",
+      "asset": "data/assets/effects/sequence4/dawn-guardian-barrier.png?v=04e799bdf099f669",
+      "color": "#ead291",
+      "mode": "caster"
+    },
+    "interdiction_roar": {
+      "pathway": "tyrant",
+      "asset": "data/assets/effects/sequence4/interdiction-roar.png?v=c289bf38e039f7f3",
+      "color": "#a9cfe5",
+      "mode": "strike"
+    },
+    "psychological_invisibility": {
+      "pathway": "visionary",
+      "asset": "data/assets/effects/sequence4/psychological-invisibility.png?v=35ff065b6edd488e",
+      "color": "#e5aed6",
+      "mode": "caster"
+    },
+    "misfortune_inversion": {
+      "pathway": "wheel_of_fortune",
+      "asset": "data/assets/effects/sequence4/misfortune-inversion.png?v=0f55f041b1344f4c",
+      "color": "#e4d294",
+      "mode": "caster"
+    },
+    "prophetic_intervention": {
+      "pathway": "white_tower",
+      "asset": "data/assets/effects/sequence4/prophetic-intervention.png?v=c72d0bdaafb0b006",
+      "color": "#bbaee8",
+      "mode": "caster"
+    }
   }
 }

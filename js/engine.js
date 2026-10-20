@@ -1525,7 +1525,7 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
   else if(e.type==='sp_siphon'){
     const flatAmt=Number(e.amount||0);
     const spRatio=Number(e.spRatio||0);
-    let totalSiphoned=0;
+    let totalSiphoned=0;const siphons=[];
     for(const t of targets){
       if(!t.alive)continue;
       const tAgent=getCombatAgent(t);
@@ -1535,10 +1535,18 @@ function applyStructuredAbility(agent,actor,enemy,state,lines=[],r,spec){if(!lin
       tAgent.sp=Math.max(0,(tAgent.sp||0)-drained);
       t.sp=tAgent.sp;
       totalSiphoned+=drained;
+      if(drained>0)siphons.push({target:t,amount:drained});
     }
+    const spBeforeSiphon=Number(agent.sp||0);
     agent.sp=Math.min(agent.maxSP||99999,(agent.sp||0)+totalSiphoned);
     if(actor!==agent&&actor)actor.sp=agent.sp;
     lines.push({text:`${actor.name} siphons ${totalSiphoned} SP from enemies.`,kind:'status'});
+    let remainingGain=Math.max(0,agent.sp-spBeforeSiphon);
+    for(const siphon of siphons){const t=siphon.target,spGain=Math.min(remainingGain,siphon.amount);remainingGain-=spGain;
+      emitCombatEvent(state,{type:'status',subtype:'sp_siphon',sourceAbilityId:presentationAbilityId,sourcePath:presentationSourcePath,
+        actorId:actor.id,actorName:actor.name,actorTeam:teamOf(actor,state),targetId:t.id,targetName:t.name,targetTeam:teamOf(t,state),
+        amount:siphon.amount,spGain,text:`${actor.name} siphons ${siphon.amount} SP from ${t.name}.`});
+    }
   }
   else if(e.type==='sp_drain')for(const t of targets){
     const a=getCombatAgent(t);

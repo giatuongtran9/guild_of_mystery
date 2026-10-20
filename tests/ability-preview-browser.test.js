@@ -113,10 +113,15 @@ const closeAngle = (a, b) => Math.abs(((a - b + 540) % 360) - 180) < .05;
 
         const inspectReplay = async id => {
           const card = page.locator(cardSelector(id)); await card.scrollIntoViewIfNeeded();
-          await card.locator('[data-gallery-replay]').click();
           return card.evaluate(card => {
-            const node = card.querySelector('.gm-combat-sequence5[data-stage="cast"], .gm-combat-sequence7[data-stage="cast"]') || card.querySelector('.gm-combat-fx-layer > g');
-            if (!node) throw new Error('Missing native cast art: ' + card.dataset.galleryAbility);
+            // Sample this 800ms one-shot in its click task, before browser/driver
+            // scheduling can consume the entire cast. Natural expiry is checked below.
+            card.querySelector('[data-gallery-replay]').click();
+            const node = card.querySelector('.gm-combat-sequence4[data-stage="cast"], .gm-combat-sequence5[data-stage="cast"], .gm-combat-sequence7[data-stage="cast"]') || card.querySelector('.gm-combat-fx-layer > g');
+            if (!node) throw new Error('Missing native cast art: ' + card.dataset.galleryAbility + ' ' + JSON.stringify({
+              playing: card.dataset.playing, status: card.querySelector('[data-gallery-status]').textContent,
+              hidden: document.hidden, stage: card.querySelector('.gallery-stage').getBoundingClientRect().toJSON(),
+              viewport: innerHeight, builds: __galleryBuilds.length }));
             for (const animation of card.querySelector('.gallery-stage').getAnimations({ subtree: true })) {
               animation.pause(); animation.currentTime = 400;
             }
@@ -176,7 +181,9 @@ const closeAngle = (a, b) => Math.abs(((a - b + 540) % 360) - 180) < .05;
             const id = catalog.find(entry => entry.sequence === sequence && (!requested || entry.id === requested)).id;
             const cast = await inspectReplay(id);
             assert.equal(cast.outcomes, 0); assert(cast.opacity > .5); results.push({ width, sequence, ...cast });
-            if ([4, 0].includes(sequence)) assert(await page.locator(cardSelector(id) + ' .gm-combat-projectile').count() > 0,
+            if (sequence === 4) assert(await page.locator(cardSelector(id) + ' .gm-combat-sequence4[data-stage="cast"]').count() > 0,
+              id + ' renders its integrated Sequence 4 PNG');
+            if (sequence === 0) assert(await page.locator(cardSelector(id) + ' .gm-combat-projectile').count() > 0,
               id + ' renders its generic ability projectile, beyond the ability chip');
             if (sequence === 7) {
               assert.equal(await page.locator(cardSelector(id)).getAttribute('data-placement'), 'self');
@@ -202,6 +209,39 @@ const closeAngle = (a, b) => Math.abs(((a - b + 540) % 360) - 180) < .05;
             }
           }
           await page.evaluate(() => G9.gallerySwap(false));
+          await page.selectOption('#gallery-sequence', '4');
+          const sequence4 = catalog.filter(entry => entry.sequence === 4);
+          assert.equal(sequence4.length, 22);
+          assert.equal(await page.locator('.gallery-idle .gallery-effect').count(), 27, 'all five split effects appear beside their primary samples');
+          for (const swapped of [false, true]) {
+            await page.evaluate(swapped => G9.gallerySwap(swapped), swapped);
+            for (const id of ['door_of_concealment', 'spiteful_shackles', 'nature_s_growth_surge']) {
+              const angle = await page.locator(cardSelector(id) + ' .gallery-idle .gallery-effect').first().evaluate(node => {
+                const matrix = new DOMMatrix(getComputedStyle(node).transform); return Math.atan2(matrix.b, matrix.a) * 180 / Math.PI;
+              });
+              assert(closeAngle(angle, 0), id + ' remains upright when sides swap');
+            }
+            const siphon = page.locator(cardSelector('scarlet_blood_domain') + ' .gallery-effect.secondary');
+            assert.equal(await siphon.getAttribute('data-placement'), 'travel');
+            const angle = await siphon.evaluate(node => {
+              const matrix = new DOMMatrix(getComputedStyle(node).transform); return Math.atan2(matrix.b, matrix.a) * 180 / Math.PI;
+            });
+            assert(closeAngle(angle, swapped ? 0 : 180), 'Moon idle motes face from victim to caster');
+          }
+          await page.evaluate(() => G9.gallerySwap(false));
+          for (const entry of sequence4) {
+            const cast = await inspectReplay(entry.id);
+            assert.equal(cast.sourceId, entry.id); assert.equal(cast.outcomes, 0); assert(cast.unchanged);
+            const art = page.locator(cardSelector(entry.id) + ' .gm-combat-sequence4[data-stage="cast"]');
+            assert(await art.count() > 0, entry.id + ' uses the approved PNG in the gallery');
+            assert.equal(await art.first().getAttribute('data-effect-src'), await page.evaluate(id => G9_DATA.fx.sequence4Abilities[id].asset, entry.id));
+            results.push({ width, sequence: 4, ...cast });
+          }
+          for (const card of await page.locator('[data-gallery-ability]').all()) {
+            await card.locator('.gallery-stage').scrollIntoViewIfNeeded();
+            await card.locator('img').evaluateAll(images => Promise.all(images.map(image => image.decode())));
+          }
+          await page.locator('.ability-gallery').screenshot({ path: path.join(output, 'gallery-sequence4-390px.png'), animations: 'disabled' });
           await page.selectOption('#gallery-sequence', '5'); await inspectReplay('holy_sun_bolt');
           await page.locator('#gallery-search').fill('Life Bloom'); assert.equal(await page.locator('.gm-combat-fx-layer').count(), 0, 'filtering cleans the active cast');
           await page.locator('#gallery-search').fill(''); await inspectReplay('holy_sun_bolt');
@@ -220,6 +260,6 @@ const closeAngle = (a, b) => Math.abs(((a - b + 540) % 360) - 180) < .05;
       } finally { await context.close(); }
     }
     fs.writeFileSync(path.join(output, 'verification.json'), JSON.stringify({ catalog: 188, results }, null, 2) + '\n');
-    console.log('PASS Sequence gallery: 188 authored active tiers; all 20 Sequence 5 casts; 320/390/1280px; filters, swap, clocks, cleanup and 1v1/2v2.');
+    console.log('PASS Sequence gallery: 188 authored active tiers; all 20 Sequence 5 and 22 Sequence 4 casts; 320/390/1280px; filters, swap, clocks, cleanup and 1v1/2v2.');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

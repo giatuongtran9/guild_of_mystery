@@ -70,7 +70,7 @@
     const family = value => typeof value === 'string' && familyKeys.includes(value);
     const paths = new Set(pathwayKeys);
     const safeKey = key => /^[a-z][a-z0-9_]*$/.test(key) && !['constructor', 'prototype'].includes(key);
-    if (!fields(fx, ['schema', 'damageColors', 'families', 'pathwayDefaults', 'pathwayDamageOverrides', 'basicAttack', 'sequence8Abilities', 'sequence7Abilities', 'sequence6Abilities', 'sequence5Abilities', 'impact', 'support', 'abilityChipMs'])
+    if (!fields(fx, ['schema', 'damageColors', 'families', 'pathwayDefaults', 'pathwayDamageOverrides', 'basicAttack', 'sequence8Abilities', 'sequence7Abilities', 'sequence6Abilities', 'sequence5Abilities', 'sequence4Abilities', 'impact', 'support', 'abilityChipMs'])
       || fx.schema !== 'guild.battle-fx.v1') fail('invalid battle FX schema');
     if (!record(fx.damageColors) || !['default', 'physical', 'true'].every(key => Object.prototype.hasOwnProperty.call(fx.damageColors, key))
       || Object.entries(fx.damageColors).some(([key, value]) => !safeKey(key) || typeof value !== 'string' || !/^#[a-f0-9]{6}$/i.test(value))) fail('damage colors must be six-digit hex colors');
@@ -192,6 +192,34 @@
         || (secondary && !sequence5Asset(effect.secondaryAsset, secondary))
         || typeof effect.color !== 'string' || !/^#[a-f0-9]{6}$/i.test(effect.color)
         || !['travel', 'strike', 'support', 'caster'].includes(effect.mode)) fail(`invalid Sequence 5 effect ${id}`);
+    }
+    const sequence4Pathways = {
+      desire_ignition_burst: 'abyss', magnify_disorder: 'black_emperor', spiteful_shackles: 'chained',
+      horror_domain: 'darkness', undying_rebirth_aura: 'death', unaging_mirror_clone: 'demoness',
+      door_of_concealment: 'door', parasitic_contagion: 'error', bizarro_transformation: 'fool',
+      shadow_sword_execution: 'hanged_man', fairy_tale_spell: 'hermit', imperator_s_decree: 'justiciar',
+      scarlet_blood_domain: 'moon', nature_s_growth_surge: 'mother', alchemical_overclock: 'paragon',
+      iron_blood_steel_body: 'red_priest', unshadowed_execution: 'sun', dawn_guardian_barrier: 'twilight_giant',
+      interdiction_roar: 'tyrant', psychological_invisibility: 'visionary', misfortune_inversion: 'wheel_of_fortune',
+      prophetic_intervention: 'white_tower'
+    };
+    const sequence4Secondary = {
+      bizarro_transformation: 'fool-bizarro-shimmer', undying_rebirth_aura: 'death-undying-ward',
+      nature_s_growth_surge: 'mother-growth-bloom', scarlet_blood_domain: 'moon-sp-siphon',
+      shadow_sword_execution: 'hanged-man-recovery-motes'
+    };
+    const sequence4Asset = (value, name) => typeof value === 'string'
+      && new RegExp(`^data/assets/effects/sequence4/${name}\\.png\\?v=[a-f0-9]{16}$`).test(value);
+    if (!record(fx.sequence4Abilities) || Object.keys(fx.sequence4Abilities).length !== 22
+      || Object.keys(fx.sequence4Abilities).some(id => !Object.hasOwn(sequence4Pathways, id))) fail('Sequence 4 effects must cover exactly twenty-two known active abilities');
+    for (const [id, effect] of Object.entries(fx.sequence4Abilities)) {
+      const secondary = sequence4Secondary[id];
+      if (!safeKey(id) || !fields(effect, ['pathway', 'asset', 'color', 'mode', ...(secondary ? ['secondaryAsset'] : [])])
+        || effect.pathway !== sequence4Pathways[id] || !paths.has(effect.pathway)
+        || !sequence4Asset(effect.asset, id.replace(/_/g, '-'))
+        || (secondary && !sequence4Asset(effect.secondaryAsset, secondary))
+        || typeof effect.color !== 'string' || !/^#[a-f0-9]{6}$/i.test(effect.color)
+        || !['travel', 'strike', 'support', 'caster'].includes(effect.mode)) fail(`invalid Sequence 4 effect ${id}`);
     }
     if (!fields(fx.impact, ['frames', 'durationMs', 'critColor', 'critNumberScale'])
       || !number(fx.impact.frames, 3, 4, true) || !number(fx.impact.durationMs, 80, 500, true)

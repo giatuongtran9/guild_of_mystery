@@ -168,9 +168,24 @@ async function test(name, run) {
     }
   });
 
-  await test('generic Fool Sequence 4 emits its real projectile despite an earlier setup note', f => {
+  await test('Fool Sequence 4 uses its integrated PNG despite an earlier setup note', f => {
     f.enter(); f.w.G9.gallerySequence(4); f.replay('bizarro_transformation');
-    assert(f.card('bizarro_transformation').querySelector('.gm-combat-projectile'), 'shared projectile must accompany the chip');
+    assert(f.card('bizarro_transformation').querySelector('.gm-combat-sequence4[data-stage="cast"]'), 'approved PNG must accompany the chip');
+  });
+
+  await test('Sequence 4 upright target samples do not inherit the swapped travel angle', f => {
+    f.enter(); f.w.G9.gallerySequence(4); f.w.G9.gallerySwap(true);
+    for (const id of ['door_of_concealment', 'spiteful_shackles', 'nature_s_growth_surge']) {
+      const art = f.card(id).querySelector('.gallery-idle .gallery-effect');
+      assert.equal(art.style.getPropertyValue('--gallery-angle'), '0deg', id + ' stays upright');
+    }
+  });
+
+  await test('Moon Sequence 4 idle spirituality returns through the travel lane', f => {
+    f.enter(); f.w.G9.gallerySequence(4);
+    const art = f.card('scarlet_blood_domain').querySelector('.gallery-idle .gallery-effect.secondary');
+    assert.equal(art.dataset.placement, 'travel');
+    assert.equal(art.style.getPropertyValue('--gallery-art-angle'), '180deg');
   });
 
   await test('gallery navigation cleans its replay and ordinary 1v1/2v2 simulation stays usable', f => {

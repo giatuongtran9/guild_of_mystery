@@ -456,6 +456,127 @@ function createCombatFx(wrap) {
   function sequence8Config(row) {
     return config.sequence8Abilities?.[presentationAbility(row)];
   }
+  const sequence4Damaging = new Set(['bizarro_transformation', 'door_of_concealment', 'unshadowed_execution',
+    'interdiction_roar', 'shadow_sword_execution', 'horror_domain', 'undying_rebirth_aura', 'unaging_mirror_clone',
+    'fairy_tale_spell', 'scarlet_blood_domain', 'desire_ignition_burst', 'spiteful_shackles', 'magnify_disorder', 'imperator_s_decree']);
+  const sequence4Directional = new Set(['bizarro_transformation', 'unaging_mirror_clone', 'interdiction_roar',
+    'shadow_sword_execution', 'fairy_tale_spell', 'imperator_s_decree', 'unshadowed_execution']);
+  function sequence4Config(row) {
+    if (row?.attackKind || row?.isCounter || row?.isSkip || row?.abilityId === 'basic_attack') return;
+    return config.sequence4Abilities?.[presentationAbility(row)];
+  }
+  function sequence4Hit(row, event) {
+    return sequence4Config(row) && sequence5OwnEvent(row, event)
+      && sequence4Damaging.has(presentationAbility(row)) && damageTypes.has(event.type);
+  }
+  function prepareSequence4Asset(spec) {
+    if (!spec || typeof window.Image !== 'function') return;
+    for (const src of [spec.asset, spec.secondaryAsset].filter(Boolean)) {
+      if (preparedAssets.has(src)) continue;
+      preparedAssets.add(src);
+      const preload = new window.Image(); preload.src = src;
+    }
+  }
+  function sequence4Image(row, stage, targetId, p, geometry = {}) {
+    const spec = sequence4Config(row), root = layer();
+    if (!spec || !root || !p) return null;
+    const size = Math.min((canvas()?.getBoundingClientRect().width || 320) - 8, effectHeight(point(targetId) || p) * 1.14);
+    const angle = geometry.angle || 0, src = geometry.asset || spec.asset;
+    const node = group('gm-combat-sequence4', row.actorId, targetId, spec.color);
+    for (const [key, value] of Object.entries({ 'ability-id': presentationAbility(row), stage, mode: geometry.mode || spec.mode,
+      'effect-src': src, 'effect-width': size, 'effect-height': size, 'angle-deg': angle,
+      'flight-path': geometry.flow ? 'straight' : 'stationary' })) node.setAttribute(`data-${key}`, value);
+    if (geometry.flow) node.setAttribute('data-flow-direction', geometry.flow);
+    node.setAttribute('transform', `translate(${p.x} ${p.y}) rotate(${angle})`);
+    image(node, src, size, size, 'gm-combat-effect-image gm-combat-sequence4-image');
+    root.append(node);
+    return node;
+  }
+  function sequence4Flight(node, from, to, angle, hold) {
+    if (!node || compact()) return;
+    const pose = (progress, scale) => `translate(${from.x + (to.x - from.x) * progress}px,${from.y + (to.y - from.y) * progress}px) rotate(${angle}deg) scale(${scale})`;
+    animate(node, [{ transform: pose(0, .56), opacity: 0 }, { transform: pose(.1, .88), opacity: 1, offset: .16 },
+      { transform: pose(.58, 1), opacity: .98, offset: .62 }, { transform: pose(1, 1.04), opacity: .95, offset: .88 },
+      { transform: pose(1, .9), opacity: 0 }], hold);
+  }
+  function sequence4Cast(row, phaseHold) {
+    const spec = sequence4Config(row), actor = point(row.actorId);
+    if (!spec || !actor) return;
+    const id = presentationAbility(row), hold = Math.max(1, Number(phaseHold) || readableCastDuration(row));
+    const targets = spec.mode === 'caster' ? [row.actorId] : [...new Set((row.timeline || [])
+      .filter(step => sequence5OwnEvent(row, step.event) && step.event.targetId != null
+        && step.event.targetId !== row.actorId && !['heal', 'shield', 'revive'].includes(step.event.type)
+        && step.event.beneficial !== true).map(step => step.event.targetId))];
+    if (!targets.length) {
+      const targetId = row.targetId ?? row.presentationTargetId;
+      if (targetId != null && targetId !== row.actorId) targets.push(targetId);
+    }
+    for (const targetId of targets) {
+      const target = point(targetId); if (!target) continue;
+      const moving = spec.mode === 'travel' && targetId !== row.actorId;
+      const angle = sequence4Directional.has(id) && targetId !== row.actorId
+        ? Math.atan2(target.y - actor.y, target.x - actor.x) * 180 / Math.PI : 0;
+      const node = sequence4Image(row, 'cast', targetId, target, { angle, flow: moving ? 'caster-to-target' : null });
+      if (moving) sequence4Flight(node, actor, target, angle, hold);
+      else sequence5Pulse(node, target, angle, hold);
+    }
+    // These are simultaneous cast attempts. Recovery and SP return wait for their recorded results.
+    if (['bizarro_transformation', 'undying_rebirth_aura', 'nature_s_growth_surge'].includes(id)) {
+      const benefit = (row.timeline || []).find(step => sequence5OwnEvent(row, step.event)
+        && step.event.targetId != null && (['heal', 'shield'].includes(step.event.type) || step.event.beneficial === true));
+      const targetId = benefit?.event.targetId ?? row.actorId, target = point(targetId);
+      if (target) sequence5Pulse(sequence4Image(row, 'cast-secondary', targetId, target,
+        { asset: spec.secondaryAsset, mode: 'caster' }), target, 0, hold);
+    }
+  }
+  function sequence4Outcome(row, event, phaseHold) {
+    if (!event) return;
+    const source = String(event.sourceAbilityId || '').split(':').pop();
+    const hold = Math.max(1, Number(phaseHold) || 500);
+    if (event.isReflect && source === 'prophetic_intervention') {
+      const guard = { actorId: event.actorId, abilityId: source }, p = point(event.actorId);
+      if (p) sequence5Pulse(sequence4Image(guard, 'guard', event.actorId, p, { mode: 'support' }), p, 0, hold);
+      return;
+    }
+    if (event.type === 'status' && Number(event.amount) > 0
+      && (event.subtype === 'sp_siphon' && source === 'scarlet_blood_domain'
+        || event.subtype === 'parasite_tick' && source === 'parasitic_contagion')) {
+      const owner = { actorId: event.actorId, abilityId: source }, actor = point(event.actorId), target = point(event.targetId);
+      if (!actor || !target) return;
+      if (source === 'parasitic_contagion') {
+        sequence5Pulse(sequence4Image(owner, 'outcome', event.targetId, target), target, 0, hold);
+      } else if (Number(event.spGain) > 0) {
+        const angle = Math.atan2(actor.y - target.y, actor.x - target.x) * 180 / Math.PI;
+        const node = sequence4Image(owner, 'outcome', event.actorId, actor, {
+          asset: sequence4Config(owner)?.secondaryAsset, mode: 'travel', angle, flow: 'target-to-caster' });
+        sequence4Flight(node, target, actor, angle, hold);
+      }
+      return;
+    }
+    const spec = sequence4Config(row), id = presentationAbility(row);
+    if (!spec || !sequence5OwnEvent(row, event) || event.targetId == null) return;
+    const targetId = event.targetId, p = point(targetId); if (!p) return;
+    const positiveHeal = event.type === 'heal' && Number(event.amount) > 0;
+    const positiveShield = event.type === 'shield' && Number(event.amount) > 0;
+    const positiveStatus = event.type === 'status' && (event.beneficial === true || event.subtype === 'cleanse');
+    const control = { door_of_concealment: 'silenced', unaging_mirror_clone: 'frozen', fairy_tale_spell: 'polymorphed',
+      spiteful_shackles: 'bound', nature_s_growth_surge: 'bound', horror_domain: 'stunned' }[id];
+    let asset, stage = 'outcome', angle = 0;
+    if (sequence4Hit(row, event)) {
+      asset = spec.asset; stage = 'impact';
+      const actor = point(row.actorId);
+      if (actor && sequence4Directional.has(id)) angle = Math.atan2(p.y - actor.y, p.x - actor.x) * 180 / Math.PI;
+    } else if (id === 'bizarro_transformation' && positiveStatus && event.status === 'evade') asset = spec.secondaryAsset;
+    else if (id === 'undying_rebirth_aura' && positiveShield) asset = spec.secondaryAsset;
+    else if (id === 'nature_s_growth_surge' && positiveHeal) asset = spec.secondaryAsset;
+    else if (id === 'shadow_sword_execution' && positiveHeal && event.recoveryKind === 'ability') asset = spec.secondaryAsset;
+    else if (spec.mode === 'caster' && (positiveStatus || positiveShield)) asset = spec.asset;
+    else if (control && event.type === 'status' && event.beneficial !== true && event.status === control) {
+      asset = spec.asset; stage = 'impact';
+    }
+    if (!asset) return;
+    sequence5Pulse(sequence4Image(row, stage, targetId, p, { asset, angle, mode: stage === 'outcome' ? 'support' : spec.mode }), p, angle, hold);
+  }
   const sequence5Damaging = new Set(['order_distortion', 'soul_pacification', 'zombie_transformation', 'blink_strike',
     'soul_drain', 'law_enforcement', 'holy_sun_bolt', 'ocean_calling', 'dream_tether']);
   function sequence5Config(row) {
@@ -1268,6 +1389,7 @@ function createCombatFx(wrap) {
     const id = presentationAbility(row), event = next?.event;
     const actor = point(row.actorId), targetId = event?.targetId ?? row.targetId, target = point(targetId);
     if (!actor || !layer()) return;
+    if (sequence4Config(row)) { sequence4Cast(row, phaseHold); return; }
     if (sequence5Config(row)) { sequence5Cast(row, phaseHold); return; }
     if (sequence6Config(row)) { sequence6Cast(row, phaseHold); return; }
     if (sequence8Config(row)) { sequence8Cast(row, phaseHold); return; }
@@ -1576,8 +1698,8 @@ function createCombatFx(wrap) {
       && !event?.isReflect && (!event?.isReaction || event?.isSignature);
     const customS6 = sequence6Config(row) && (event?.actorId == null || event.actorId === row.actorId)
       && !event?.isReflect && (!event?.isReaction || event?.isSignature);
-    const customS5 = sequence5Hit(row, event);
-    if (!event || (!damageTypes.has(step.type) && !basicMiss) || event.isDot || customS9 || customS8 || customS7 || customS6 || customS5) return;
+    const customS5 = sequence5Hit(row, event), customS4 = sequence4Hit(row, event);
+    if (!event || (!damageTypes.has(step.type) && !basicMiss) || event.isDot || customS9 || customS8 || customS7 || customS6 || customS5 || customS4) return;
     if (unarmedBasic) { punchCue(row, step, phaseHold); return; }
     const ownerId = event.actorId ?? row.actorId, targetId = event.targetId;
     const a = point(ownerId), originalTarget = point(targetId);
@@ -1730,7 +1852,7 @@ function createCombatFx(wrap) {
     ], isReadableAbility(row) ? duration : Math.min(160, Math.max(1, Number(phaseHold) || 160)), 0, { remove: false, easing: 'ease-out' });
     const authoredSequence6Hit = sequence6Config(row) && event.actorId === row.actorId
       && !event.isReflect && !['lightning_bolt', 'spirit_body_door'].includes(hitAbilityId) && (!event.isReaction || event.isSignature);
-    if (sequence5Hit(row, event)) return; // Keep shared shake; the authored hit owns its visible impact.
+    if (sequence4Hit(row, event) || sequence5Hit(row, event)) return; // Keep shared shake; the authored hit owns its visible impact.
     if (authoredSequence6Hit) return; // retain shared screen shake, but let Sequence 6 own its visible impact.
     let punchArt = null;
     if (brutalHit) {
@@ -1961,6 +2083,7 @@ function createCombatFx(wrap) {
       areaRows.delete(row); abilityChip(row, event, phaseHoldMs);
       abilityCue(row, cue.next, phaseHoldMs);
     }
+    else sequence4Outcome(row, event, phaseHoldMs);
     if (damageTypes.has(type) || type === 'reflect') {
       sequence5Outcome(row, event, phaseHoldMs);
       sequence6Outcome(row, event, phaseHoldMs);
@@ -1970,12 +2093,12 @@ function createCombatFx(wrap) {
       impact(row, event, phaseHoldMs);
     }
     else if (['heal', 'shield', 'revive'].includes(type)) support(type, event, row, phaseHoldMs);
-    else if (event.status || event.beneficial || ((sequence5Config(row) || sequence6Config(row) || sequence8Config(row) || sequence7Config(row)) && event.type === 'status' && event.targetId != null
-      && !event.presentationEffect) || event.type === 'thread' || ['cc_loss', 'madness_loss', 'banished'].includes(event.subtype)) support('status', event, row, phaseHoldMs);
+    else if (!['sp_siphon', 'parasite_tick'].includes(event.subtype) && (event.status || event.beneficial || ((sequence4Config(row) || sequence5Config(row) || sequence6Config(row) || sequence8Config(row) || sequence7Config(row)) && event.type === 'status' && event.targetId != null
+      && !event.presentationEffect) || event.type === 'thread' || ['cc_loss', 'madness_loss', 'banished'].includes(event.subtype))) support('status', event, row, phaseHoldMs);
     travel(row, cue.next, phaseHoldMs);
   }
   return { sync: map => { hpMap = map || Object.create(null); prepareSequence6Assets(hpMap); prepareSequence8Assets(hpMap); prepareSequence7Assets(hpMap); }, show,
-    prepare: rows => { for (const row of rows || []) { prepareSequence5Asset(sequence5Config(row)); prepareSequence6Asset(sequence6Config(row)); prepareSequence8Asset(sequence8Config(row)); prepareSequence7Asset(sequence7Config(row)); } },
+    prepare: rows => { for (const row of rows || []) { prepareSequence4Asset(sequence4Config(row)); prepareSequence5Asset(sequence5Config(row)); prepareSequence6Asset(sequence6Config(row)); prepareSequence8Asset(sequence8Config(row)); prepareSequence7Asset(sequence7Config(row)); } },
     clear: () => { clearPhase(false); surface?.remove(); surface = null; hpMap = Object.create(null); paused = false; areaRows = new WeakSet(); phaseRow = null; phaseType = null; },
     reflow: () => { clearPhase(false); surface?.remove(); surface = null; },
     pause: () => { paused = true; for (const animation of animations.keys()) animation.pause(); },
@@ -3233,16 +3356,20 @@ if (typeof document !== 'undefined') (() => {
   function animationGallery(){
     const entries = galleryEntries();
     const placementLabels = { self: 'Caster', target: 'Target', travel: 'Travel', thread: 'Spanning threads', split: 'Split effects' };
-    const idle = (src, placement, secondary = false, spec = {}) => {
+    const idle = (src, placement, secondary = false, spec = {}, fixed = false) => {
       const angle = placement === 'travel' ? (spec.travelDirection === 'target_to_caster' ? 180 : 0) - (Number(spec.nativeAngleDeg) || 0) : 0;
-      return `<img class="gallery-effect${secondary?' secondary':''}" data-placement="${placement}" style="--gallery-art-angle:${angle}deg" src="${esc(src)}" width="256" height="256" loading="lazy" decoding="async" alt="">`;
+      return `<img class="gallery-effect${secondary?' secondary':''}" data-placement="${placement}" style="--gallery-art-angle:${angle}deg${fixed?';--gallery-angle:0deg':''}" src="${esc(src)}" width="256" height="256" loading="lazy" decoding="async" alt="">`;
     };
     const cards = entries.map(entry => {
       const id = entry.ability.effectId || entry.ability.id, spec = galleryArtwork(entry), placement = galleryPlacementFor(entry);
       const description = abilityDescription(entry.ability, entry.path, entry.sequence);
       const caster = { id: 'preview_caster', name: pathName(entry.path), path: entry.path, sequence: entry.sequence };
       const target = { id: 'preview_target_0', name: 'Target', path: 'fool', sequence: 9 };
-      const secondary = spec?.secondaryAsset ? idle(spec.secondaryAsset, id === 'corrupted_flesh' ? 'target' : 'self', true)
+      const fixed = galleryRank === 4 && spec?.mode !== 'travel'
+        && !['bizarro_transformation', 'unaging_mirror_clone', 'interdiction_roar'].includes(id);
+      const secondary = spec?.secondaryAsset ? id === 'scarlet_blood_domain'
+        ? idle(spec.secondaryAsset, 'travel', true, { travelDirection: 'target_to_caster' })
+        : idle(spec.secondaryAsset, id === 'corrupted_flesh' ? 'target' : 'self', true)
         : spec?.ghostAsset ? idle(spec.ghostAsset, 'travel', true) : '';
       return `<article class="gallery-card" data-gallery-ability="${esc(id)}" data-path="${esc(entry.path)}" data-placement="${placement}" data-split="${!!secondary}" data-playing="false">
         <header><div class="gallery-path">${esc(pathName(entry.path))}<span>Active</span></div><h4>${esc(entry.ability.name)}</h4><p class="gallery-rank">Sequence ${entry.sequence} · ${esc(tierName(entry.path, entry.sequence))}</p></header>
@@ -3250,7 +3377,7 @@ if (typeof document !== 'undefined') (() => {
         <div class="gallery-stage gm-dungeon-arena"><div class="gm-battlefield-canvas">
           <div class="gm-arena-unit gallery-unit" data-role="caster" data-unit-id="preview_caster"><div class="gm-unit-sprite-anchor">${getCombatSprite(caster,{variant:'full'})}</div><span class="gallery-unit-label">Caster</span></div>
           <div class="gm-arena-unit gallery-unit" data-role="target" data-unit-id="preview_target_0"><div class="gm-unit-sprite-anchor">${getCombatSprite(target,{variant:'full'})}</div><span class="gallery-unit-label">Target</span></div>
-          <div class="gallery-idle" aria-hidden="true">${spec?.asset ? idle(spec.asset, placement, false, spec) + secondary : '<span class="gallery-standby">Replay to view the cast</span>'}</div>
+          <div class="gallery-idle" aria-hidden="true">${spec?.asset ? idle(spec.asset, placement, false, spec, fixed) + secondary : '<span class="gallery-standby">Replay to view the cast</span>'}</div>
         </div></div>
         <div class="gallery-card-actions"><span>${placementLabels[secondary?'split':placement]} · cast preview</span><div><button type="button" data-gallery-replay onclick="window.G9.galleryReplay(${esc(JSON.stringify(id))})" aria-label="Replay ${esc(entry.ability.name)}">↻ Replay</button><span data-gallery-status role="status">Ready</span></div></div>
       </article>`;
