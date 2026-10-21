@@ -139,10 +139,17 @@ test('Error uses the intended victim despite targetless signature narration', f 
   assert.equal(art(f, 'parasitic_contagion').dataset.targetId, 'preview_target_0'); assert.equal(JSON.stringify(r), before);
   assert.equal(art(f, 'parasitic_contagion', 'outcome'), undefined);
 });
-test('White Tower can prepare its guard with an empty native timeline and no countershot', f => {
-  const r = nativeRow('prophetic_intervention'); assert.equal(r.timeline.length, 0); cast(f, r);
-  assert.equal(art(f, 'prophetic_intervention').dataset.targetId, 'preview_caster');
-  assert.equal(f.find('.gm-combat-projectile, .gm-combat-sequence4[data-stage="impact"]'), null);
+test('White Tower prepares its guard from native ward metadata and older empty timelines without a countershot', f => {
+  const r = nativeRow('prophetic_intervention');
+  const setup = r.timeline.filter(step => step.event.subtype === 'reflect');
+  assert.equal(setup.length, 1); assert.equal(setup[0].event.beneficial, true);
+  assert.equal(setup[0].event.targetId, 'preview_caster');
+  assert.equal(setup[0].event.sourceAbilityId, 'prophetic_intervention');
+  for (const current of [r, { ...r, timeline: [] }]) {
+    reset(f); cast(f, current);
+    assert.equal(art(f, 'prophetic_intervention').dataset.targetId, 'preview_caster');
+    assert.equal(f.find('.gm-combat-projectile, .gm-combat-sequence4[data-stage="impact"]'), null);
+  }
 });
 test('recorded hostile controls use target artwork without summoning clones or creatures', f => {
   for (const [id, status] of [['door_of_concealment', 'silenced'], ['unaging_mirror_clone', 'frozen'], ['fairy_tale_spell', 'polymorphed'], ['spiteful_shackles', 'bound'], ['nature_s_growth_surge', 'bound'], ['horror_domain', 'stunned']]) {

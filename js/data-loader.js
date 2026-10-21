@@ -70,7 +70,7 @@
     const family = value => typeof value === 'string' && familyKeys.includes(value);
     const paths = new Set(pathwayKeys);
     const safeKey = key => /^[a-z][a-z0-9_]*$/.test(key) && !['constructor', 'prototype'].includes(key);
-    if (!fields(fx, ['schema', 'damageColors', 'families', 'pathwayDefaults', 'pathwayDamageOverrides', 'basicAttack', 'sequence8Abilities', 'sequence7Abilities', 'sequence6Abilities', 'sequence5Abilities', 'sequence4Abilities', 'impact', 'support', 'abilityChipMs'])
+    if (!fields(fx, ['schema', 'damageColors', 'families', 'pathwayDefaults', 'pathwayDamageOverrides', 'basicAttack', 'sequence8Abilities', 'sequence7Abilities', 'sequence6Abilities', 'sequence5Abilities', 'sequence4Abilities', 'sequence3Abilities', 'sequence3Motion', 'impact', 'support', 'abilityChipMs'])
       || fx.schema !== 'guild.battle-fx.v1') fail('invalid battle FX schema');
     if (!record(fx.damageColors) || !['default', 'physical', 'true'].every(key => Object.prototype.hasOwnProperty.call(fx.damageColors, key))
       || Object.entries(fx.damageColors).some(([key, value]) => !safeKey(key) || typeof value !== 'string' || !/^#[a-f0-9]{6}$/i.test(value))) fail('damage colors must be six-digit hex colors');
@@ -221,6 +221,34 @@
         || typeof effect.color !== 'string' || !/^#[a-f0-9]{6}$/i.test(effect.color)
         || !['travel', 'strike', 'support', 'caster'].includes(effect.mode)) fail(`invalid Sequence 4 effect ${id}`);
     }
+    const sequence3Rules = {
+      devil_mutation: ['abyss', 'caster'], chaos_field: ['black_emperor', 'support'],
+      zombie_legion: ['chained', 'caster'], concealment_realm: ['darkness', 'strike'],
+      underworld_domain: ['death', 'support'], despair_thread: ['demoness', 'travel'],
+      spatial_concealment: ['door', 'caster'], deceive_impact: ['error', 'caster'],
+      historical_summoning: ['fool', 'caster'], flesh_creation: ['hanged_man', 'caster'],
+      mystic_domain: ['hermit', 'caster'], strict_prohibition: ['justiciar', 'support'],
+      lunar_blessing: ['moon', 'caster'], flesh_mutation: ['mother', 'caster'],
+      energy_cannon: ['paragon', 'travel'], war_command: ['red_priest', 'caster'],
+      exorcism_charter: ['sun', 'travel'], thunder_god_stance: ['tyrant', 'caster'],
+      dream_prison: ['visionary', 'strike'], chaos_probability: ['wheel_of_fortune', 'support']
+    };
+    const sequence3Asset = (value, name) => typeof value === 'string'
+      && new RegExp(`^data/assets/effects/sequence3/${name}\\.png\\?v=[a-f0-9]{16}$`).test(value);
+    if (!record(fx.sequence3Abilities) || Object.keys(fx.sequence3Abilities).length !== 20
+      || Object.keys(fx.sequence3Abilities).some(id => !Object.hasOwn(sequence3Rules, id))) fail('Sequence 3 effects must cover exactly twenty known active abilities');
+    for (const [id, effect] of Object.entries(fx.sequence3Abilities)) {
+      const secondary = id === 'concealment_realm';
+      if (!safeKey(id) || !fields(effect, ['pathway', 'asset', 'color', 'mode', ...(secondary ? ['secondaryAsset'] : [])])
+        || effect.pathway !== sequence3Rules[id][0] || !paths.has(effect.pathway)
+        || effect.mode !== sequence3Rules[id][1]
+        || !sequence3Asset(effect.asset, id.replace(/_/g, '-'))
+        || (secondary && !sequence3Asset(effect.secondaryAsset, 'darkness-concealment-veil'))
+        || typeof effect.color !== 'string' || !/^#[a-f0-9]{6}$/i.test(effect.color)) fail(`invalid Sequence 3 effect ${id}`);
+    }
+    const sequence3Motion = { anticipationMs: 280, activationMs: 180, sustainMs: 500, dissipateMs: 290, stationaryWidth: 120, travelWidth: 108 };
+    if (!fields(fx.sequence3Motion, Object.keys(sequence3Motion))
+      || Object.entries(sequence3Motion).some(([key, value]) => fx.sequence3Motion[key] !== value)) fail('invalid approved Sequence 3 motion profile');
     if (!fields(fx.impact, ['frames', 'durationMs', 'critColor', 'critNumberScale'])
       || !number(fx.impact.frames, 3, 4, true) || !number(fx.impact.durationMs, 80, 500, true)
       || typeof fx.impact.critColor !== 'string' || !/^#[a-f0-9]{6}$/i.test(fx.impact.critColor)

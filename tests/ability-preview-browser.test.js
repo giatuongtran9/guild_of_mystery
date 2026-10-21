@@ -114,10 +114,10 @@ const closeAngle = (a, b) => Math.abs(((a - b + 540) % 360) - 180) < .05;
         const inspectReplay = async id => {
           const card = page.locator(cardSelector(id)); await card.scrollIntoViewIfNeeded();
           return card.evaluate(card => {
-            // Sample this 800ms one-shot in its click task, before browser/driver
+            // Sample the one-shot in its click task, before browser/driver
             // scheduling can consume the entire cast. Natural expiry is checked below.
             card.querySelector('[data-gallery-replay]').click();
-            const node = card.querySelector('.gm-combat-sequence4[data-stage="cast"], .gm-combat-sequence5[data-stage="cast"], .gm-combat-sequence7[data-stage="cast"]') || card.querySelector('.gm-combat-fx-layer > g');
+            const node = card.querySelector('.gm-combat-sequence3[data-stage="cast"], .gm-combat-sequence4[data-stage="cast"], .gm-combat-sequence5[data-stage="cast"], .gm-combat-sequence7[data-stage="cast"]') || card.querySelector('.gm-combat-fx-layer > g');
             if (!node) throw new Error('Missing native cast art: ' + card.dataset.galleryAbility + ' ' + JSON.stringify({
               playing: card.dataset.playing, status: card.querySelector('[data-gallery-status]').textContent,
               hidden: document.hidden, stage: card.querySelector('.gallery-stage').getBoundingClientRect().toJSON(),
@@ -138,7 +138,8 @@ const closeAngle = (a, b) => Math.abs(((a - b + 540) % 360) - 180) < .05;
               expected: Math.atan2(target.y - actor.y, target.x - actor.x) * 180 / Math.PI,
               actorX: actor.x + actor.width / 2, targetX: target.x + target.width / 2,
               flow: node.dataset.flowDirection, flightPath: node.dataset.flightPath,
-              opacity: Number(getComputedStyle(node).opacity), rate: tracks[0]?.playbackRate,
+              opacity: Number(getComputedStyle(node).opacity), rate: tracks[0]?.playbackRate, duration: tracks[0]?.effect.getTiming().duration,
+              offsets: tracks[0]?.effect.getKeyframes().map(frame => frame.offset),
               frames: tracks[0]?.effect.getKeyframes().map(frame => frame.transform),
               outcomes: card.querySelectorAll('.gm-battle-fx-number, .gm-combat-heal, .gm-combat-status, [data-stage="impact"], [data-stage="outcome"]').length,
               idleHidden: getComputedStyle(card.querySelector('.gallery-idle')).visibility === 'hidden',
@@ -161,6 +162,71 @@ const closeAngle = (a, b) => Math.abs(((a - b + 540) % 360) - 180) < .05;
           if (['thread_binding', 'life_bloom'].includes(id)) await page.locator(cardSelector(id)).screenshot({ path: path.join(output, `${id}-${width}px.png`), animations: 'allow' });
           results.push({ width, ...cast });
         }
+        // Sequence 3 preserves its stronger artwork and clock in the actual gallery.
+        await page.selectOption('#gallery-sequence', '3');
+        const sequence3 = catalog.filter(entry => entry.sequence === 3);
+        assert.equal(sequence3.length, 20); assert.equal(await page.locator('[data-gallery-ability]').count(), 20);
+        assert.equal(await page.locator('.gallery-idle .gallery-effect').count(), 21);
+        assert.equal(await page.locator('[data-gallery-ability="giant_s_might"],[data-gallery-ability="omniscient_eye"]').count(), 0);
+        for (const card of await page.locator('[data-gallery-ability]').all()) {
+          await card.locator('.gallery-stage').scrollIntoViewIfNeeded();
+          await card.locator('img').evaluateAll(images => Promise.all(images.map(image => image.decode())));
+          const image = card.locator('.gallery-idle .gallery-effect').first();
+          const id = await card.getAttribute('data-gallery-ability');
+          const spec = await page.evaluate(id => G9_DATA.fx.sequence3Abilities[id], id);
+          assert.equal(await image.getAttribute('src'), spec.asset);
+          assert.equal(await image.getAttribute('data-placement'), spec.mode === 'caster' ? 'self' : spec.mode === 'travel' ? 'travel' : 'target');
+          const box = await image.boundingBox(); assert(Math.abs(box.width - (spec.mode === 'travel' ? 108 : 120)) < .1, id + ' approved idle art footprint');
+        }
+        assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+        const sequence3Replays = width === 390 ? sequence3 : sequence3.filter(entry => ['historical_summoning', 'energy_cannon'].includes(entry.id));
+        for (const entry of sequence3Replays) {
+          const cast = await inspectReplay(entry.id);
+          assert.equal(cast.duration, 1250); assert.equal(cast.sourceId, entry.id); assert.equal(cast.outcomes, 0);
+          assert(cast.unchanged && cast.opacity > .5 && cast.idleHidden);
+          assert(await page.locator(cardSelector(entry.id) + ' .gm-combat-sequence3[data-stage="cast"]').count() > 0);
+          for (const offset of [.224, .368, .768]) assert(cast.offsets.some(value => Math.abs(value - offset) < 1e-5));
+          const spec = await page.evaluate(id => G9_DATA.fx.sequence3Abilities[id], entry.id);
+          if (spec.mode === 'travel') assert(closeAngle(cast.angle, cast.expected));
+          if (spec.mode === 'caster') assert.equal(cast.targetId, cast.actorId);
+          if (entry.id === 'concealment_realm') {
+            const secondary = page.locator(cardSelector(entry.id) + ' .gm-combat-sequence3[data-stage="cast-secondary"]');
+            assert.equal(await secondary.getAttribute('data-target-id'), cast.actorId);
+            assert.equal(await secondary.getAttribute('data-effect-src'), spec.secondaryAsset);
+          }
+          results.push({ width, sequence: 3, ...cast });
+        }
+        if (width === 390) {
+          for (const swapped of [false, true]) {
+            await page.evaluate(swapped => G9.gallerySwap(swapped), swapped);
+            for (const entry of sequence3) {
+              const spec = await page.evaluate(id => G9_DATA.fx.sequence3Abilities[id], entry.id);
+              const angle = await page.locator(cardSelector(entry.id) + ' .gallery-idle .gallery-effect').first().evaluate(node => {
+                const m = new DOMMatrix(getComputedStyle(node).transform); return Math.atan2(m.b, m.a) * 180 / Math.PI;
+              });
+              assert(closeAngle(angle, spec.mode === 'travel' && swapped ? 180 : 0), entry.id + ' truthful idle direction');
+            }
+            for (const id of ['historical_summoning', 'energy_cannon', 'concealment_realm']) {
+              const cast = await inspectReplay(id); assert.equal(cast.outcomes, 0); assert(cast.unchanged);
+              if (id === 'energy_cannon') assert(closeAngle(cast.angle, cast.expected));
+              else assert(closeAngle(cast.nativeAngle, 0), id + ' stationary cast stays upright');
+              results.push({ width, sequence: 3, swapped, ...cast });
+            }
+          }
+          await page.evaluate(() => G9.gallerySwap(false));
+          for (const speed of [.5, 1.5]) {
+            await page.selectOption('#gallery-speed', String(speed));
+            const cast = await inspectReplay('energy_cannon'); assert.equal(cast.rate, speed); assert.equal(cast.duration, 1250);
+          }
+          const card = page.locator(cardSelector('historical_summoning')); await card.scrollIntoViewIfNeeded();
+          await card.locator('[data-gallery-replay]').click();
+          await page.waitForFunction(() => document.querySelector('[data-gallery-ability="historical_summoning"]').dataset.playing === 'false');
+          assert.equal(await card.locator('.gm-combat-fx-layer').count(), 0);
+        }
+        await page.locator('.ability-gallery').evaluate(node => node.scrollIntoView({block:'start'}));
+        await page.locator('.ability-gallery').screenshot({path:path.join(output, `gallery-sequence3-${width}px.png`),animations:'disabled'});
+        await page.selectOption('#gallery-sequence', '5');
+
         if (width === 390) {
           for (const speed of [.5, 1, 1.5]) {
             await page.selectOption('#gallery-speed', String(speed)); const cast = await inspectReplay('holy_sun_bolt'); assert.equal(cast.rate, speed);
@@ -260,6 +326,6 @@ const closeAngle = (a, b) => Math.abs(((a - b + 540) % 360) - 180) < .05;
       } finally { await context.close(); }
     }
     fs.writeFileSync(path.join(output, 'verification.json'), JSON.stringify({ catalog: 188, results }, null, 2) + '\n');
-    console.log('PASS Sequence gallery: 188 authored active tiers; all 20 Sequence 5 and 22 Sequence 4 casts; 320/390/1280px; filters, swap, clocks, cleanup and 1v1/2v2.');
+    console.log('PASS Sequence gallery: 188 authored active tiers; all20 Sequence3,20 Sequence5 and22 Sequence4 casts; 320/390/1280px; filters, swap, clocks, cleanup and 1v1/2v2.');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

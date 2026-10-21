@@ -893,5 +893,136 @@
       "color": "#bbaee8",
       "mode": "caster"
     }
+  },
+  "sequence3Abilities": {
+    "devil_mutation": {
+      "pathway": "abyss",
+      "asset": "data/assets/effects/sequence3/devil-mutation.png?v=639430f2400414fa",
+      "color": "#a92f42",
+      "mode": "caster"
+    },
+    "chaos_field": {
+      "pathway": "black_emperor",
+      "asset": "data/assets/effects/sequence3/chaos-field.png?v=a71b0dffad1961d9",
+      "color": "#deb282",
+      "mode": "support"
+    },
+    "zombie_legion": {
+      "pathway": "chained",
+      "asset": "data/assets/effects/sequence3/zombie-legion.png?v=6e46610d6f6f2742",
+      "color": "#b998d0",
+      "mode": "caster"
+    },
+    "concealment_realm": {
+      "pathway": "darkness",
+      "asset": "data/assets/effects/sequence3/concealment-realm.png?v=295edeeda57328d7",
+      "color": "#a79bd6",
+      "mode": "strike",
+      "secondaryAsset": "data/assets/effects/sequence3/darkness-concealment-veil.png?v=bff74c8b46d1bbd0"
+    },
+    "underworld_domain": {
+      "pathway": "death",
+      "asset": "data/assets/effects/sequence3/underworld-domain.png?v=6be5b1885513e61d",
+      "color": "#a6bebc",
+      "mode": "support"
+    },
+    "despair_thread": {
+      "pathway": "demoness",
+      "asset": "data/assets/effects/sequence3/despair-thread.png?v=eba16ffaa2319a8d",
+      "color": "#cab0df",
+      "mode": "travel"
+    },
+    "spatial_concealment": {
+      "pathway": "door",
+      "asset": "data/assets/effects/sequence3/spatial-concealment.png?v=74db15626344b502",
+      "color": "#91d1df",
+      "mode": "caster"
+    },
+    "deceive_impact": {
+      "pathway": "error",
+      "asset": "data/assets/effects/sequence3/deceive-impact.png?v=ac4e3ef38f3fed54",
+      "color": "#c6a0e8",
+      "mode": "caster"
+    },
+    "historical_summoning": {
+      "pathway": "fool",
+      "asset": "data/assets/effects/sequence3/historical-summoning.png?v=b2a453543d77ff19",
+      "color": "#c5badf",
+      "mode": "caster"
+    },
+    "flesh_creation": {
+      "pathway": "hanged_man",
+      "asset": "data/assets/effects/sequence3/flesh-creation.png?v=5981b5d9d845d911",
+      "color": "#b0c897",
+      "mode": "caster"
+    },
+    "mystic_domain": {
+      "pathway": "hermit",
+      "asset": "data/assets/effects/sequence3/mystic-domain.png?v=24ac63d719e3a472",
+      "color": "#c6afea",
+      "mode": "caster"
+    },
+    "strict_prohibition": {
+      "pathway": "justiciar",
+      "asset": "data/assets/effects/sequence3/strict-prohibition.png?v=9f74b6d4f4225225",
+      "color": "#e2c9aa",
+      "mode": "support"
+    },
+    "lunar_blessing": {
+      "pathway": "moon",
+      "asset": "data/assets/effects/sequence3/lunar-blessing.png?v=b137c028ca1404b7",
+      "color": "#c8b9e8",
+      "mode": "caster"
+    },
+    "flesh_mutation": {
+      "pathway": "mother",
+      "asset": "data/assets/effects/sequence3/flesh-mutation.png?v=e97232b895fac101",
+      "color": "#a1d69a",
+      "mode": "caster"
+    },
+    "energy_cannon": {
+      "pathway": "paragon",
+      "asset": "data/assets/effects/sequence3/energy-cannon.png?v=f4dc428d591a5db8",
+      "color": "#e7bc79",
+      "mode": "travel"
+    },
+    "war_command": {
+      "pathway": "red_priest",
+      "asset": "data/assets/effects/sequence3/war-command.png?v=72bd885063d57a9f",
+      "color": "#df9b7a",
+      "mode": "caster"
+    },
+    "exorcism_charter": {
+      "pathway": "sun",
+      "asset": "data/assets/effects/sequence3/exorcism-charter.png?v=b1440a520ac04604",
+      "color": "#ead291",
+      "mode": "travel"
+    },
+    "thunder_god_stance": {
+      "pathway": "tyrant",
+      "asset": "data/assets/effects/sequence3/thunder-god-stance.png?v=cf992d0e72e1e446",
+      "color": "#a9cfe5",
+      "mode": "caster"
+    },
+    "dream_prison": {
+      "pathway": "visionary",
+      "asset": "data/assets/effects/sequence3/dream-prison.png?v=15689d192852bb59",
+      "color": "#e5aed6",
+      "mode": "strike"
+    },
+    "chaos_probability": {
+      "pathway": "wheel_of_fortune",
+      "asset": "data/assets/effects/sequence3/chaos-probability.png?v=1a04704519a617e7",
+      "color": "#e4d294",
+      "mode": "support"
+    }
+  },
+  "sequence3Motion": {
+    "anticipationMs": 280,
+    "activationMs": 180,
+    "sustainMs": 500,
+    "dissipateMs": 290,
+    "stationaryWidth": 120,
+    "travelWidth": 108
   }
 }

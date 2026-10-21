@@ -43,7 +43,7 @@ async function fixture() {
   const scripts = ['vendor/dayjs.min', 'paths', 'v15', 'generate', 'traits', 'market', 'pathway-assets', 'signatures', 'mythical', 'battle-ai', 'engine', 'state', 'campaign', 'ability-preview'];
   const spy = '\nwindow.__galleryBuilds=[]; const originalGalleryBuilder=buildAbilityPreview; buildAbilityPreview=function(...args){const result=originalGalleryBuilder(...args);window.__galleryBuilds.push({args:JSON.parse(JSON.stringify(args)),events:JSON.stringify(result.events),result});return result;};\n';
   w.eval(scripts.map(name => fs.readFileSync(path.join(root, `js/${name}.js`), 'utf8')).join('\n') + spy
-    + fs.readFileSync(path.join(root, 'js/ui.js'), 'utf8'));
+    + fs.readFileSync(process.env.ABILITY_PREVIEW_UI_SOURCE || path.join(root, 'js/ui.js'), 'utf8'));
   const app = w.document.getElementById('app');
   const cards = () => [...app.querySelectorAll('[data-gallery-ability]')];
   const visible = () => cards().filter(card => !card.hidden);
@@ -186,6 +186,70 @@ async function test(name, run) {
     const art = f.card('scarlet_blood_domain').querySelector('.gallery-idle .gallery-effect.secondary');
     assert.equal(art.dataset.placement, 'travel');
     assert.equal(art.style.getPropertyValue('--gallery-art-angle'), '180deg');
+  });
+
+  await test('Sequence 3 shows all20 approved active PNG samples with its one split layer', f => {
+    f.enter(); f.w.G9.gallerySequence(3);
+    const specs = f.w.G9_DATA.fx.sequence3Abilities;
+    assert.deepEqual(f.cards().map(card => card.dataset.galleryAbility).sort(), Object.keys(specs).sort());
+    assert.equal(f.cards().length, 20); assert.equal(f.app.querySelectorAll('.gallery-idle .gallery-effect').length, 21);
+    assert.equal(f.timers.size, 0); assert.equal(f.w.__galleryBuilds.length, 0);
+    assert(!f.card('giant_s_might') && !f.card('omniscient_eye'), 'passive ranks have no active animation');
+    for (const [id, spec] of Object.entries(specs)) {
+      const art = f.card(id).querySelector('.gallery-idle .gallery-effect');
+      assert.equal(art.getAttribute('src'), spec.asset, id + ' uses its approved asset');
+      assert.equal(art.dataset.placement, spec.mode === 'caster' ? 'self' : spec.mode === 'travel' ? 'travel' : 'target');
+    }
+    assert.equal(f.card('concealment_realm').querySelector('.gallery-effect.secondary').getAttribute('src'), specs.concealment_realm.secondaryAsset);
+    assert.equal(f.card('concealment_realm').querySelector('.gallery-effect.secondary').dataset.placement, 'self');
+  });
+
+  await test('all20 Sequence 3 replays use1250ms native casts without outcomes or save mutations', f => {
+    const before = f.saved(); f.enter(); f.w.G9.gallerySequence(3);
+    const definitions = JSON.stringify(f.w.G9_DATA.fx);
+    for (const id of Object.keys(f.w.G9_DATA.fx.sequence3Abilities)) {
+      f.replay(id);
+      const node = f.card(id).querySelector('.gm-combat-sequence3[data-stage="cast"]');
+      assert(node, id + ' renders the native Sequence3 cast');
+      assert.equal(node.dataset.effectSrc, f.w.G9_DATA.fx.sequence3Abilities[id].asset);
+      assert.equal(f.timers.size, 1); assert.equal(f.timers.values().next().value.delay, 1250);
+      assert.equal(f.card(id).querySelectorAll('.gm-battle-fx-number,.gm-combat-heal,[data-stage="impact"],[data-stage="outcome"]').length, 0);
+      assert.equal(f.w.__galleryBuilds.at(-1).args[0].sequence, 3);
+      f.tick(); assert.equal(f.active().length, 0); assert.equal(f.timers.size, 0);
+    }
+    assert.equal(f.saved(), before); assert.equal(JSON.stringify(f.w.G9_DATA.fx), definitions);
+    for (const build of f.w.__galleryBuilds) assert.equal(JSON.stringify(build.result.events), build.events);
+  });
+
+  await test('Sequence 3 swap keeps stationary samples upright and directs only travel artwork', f => {
+    f.enter(); f.w.G9.gallerySequence(3);
+    for (const swapped of [false, true]) {
+      f.w.G9.gallerySwap(swapped);
+      for (const [id, spec] of Object.entries(f.w.G9_DATA.fx.sequence3Abilities)) {
+        const art = f.card(id).querySelector('.gallery-idle .gallery-effect');
+        if (spec.mode === 'travel') {
+          assert.equal(parseFloat(art.style.getPropertyValue('--gallery-art-angle')), 0, id + ' retains its native art angle');
+          assert.equal(art.style.getPropertyValue('--gallery-angle'), '', id + ' inherits the gallery side angle');
+          assert.equal(f.app.querySelector('.ability-gallery').classList.contains('gallery-swapped'), swapped);
+        } else assert.equal(art.style.getPropertyValue('--gallery-angle'), '0deg', id + ' stays upright');
+      }
+      const veil = f.card('concealment_realm').querySelector('.gallery-effect.secondary');
+      assert.equal(veil.style.getPropertyValue('--gallery-angle'), '0deg');
+      f.replay('concealment_realm');
+      const primary = f.card('concealment_realm').querySelector('.gm-combat-sequence3[data-stage="cast"]');
+      const secondary = f.card('concealment_realm').querySelector('.gm-combat-sequence3[data-stage="cast-secondary"]');
+      assert(primary && secondary); assert.notEqual(primary.dataset.targetId, secondary.dataset.targetId);
+      assert.equal(primary.dataset.angleDeg, '0'); assert.equal(secondary.dataset.angleDeg, '0'); f.tick();
+    }
+  });
+
+  await test('changing Sequence cancels a long Sequence 3 replay and rejects its stale timeout', f => {
+    f.enter(); f.w.G9.gallerySequence(3); f.replay('historical_summoning');
+    const stale = f.timers.values().next().value.fn;
+    f.w.G9.gallerySequence(4); assert.equal(f.timers.size, 0); assert.equal(f.active().length, 0);
+    f.replay('bizarro_transformation'); assert.equal(f.timers.values().next().value.delay, 800);
+    stale(); assert(f.card('bizarro_transformation').querySelector('.gm-combat-sequence4')); assert.equal(f.timers.size, 1);
+    f.tick(); assert.equal(f.timers.size, 0);
   });
 
   await test('gallery navigation cleans its replay and ordinary 1v1/2v2 simulation stays usable', f => {
